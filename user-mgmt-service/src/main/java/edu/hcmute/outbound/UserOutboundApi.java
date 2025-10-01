@@ -62,24 +62,53 @@ public class UserOutboundApi {
         headersMap.add("Authorization", "Bearer " + accessToken);
         headersMap.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
         HttpEntity reqBody = new HttpEntity<>(user, headersMap);
-
-        ResponseEntity<?> resEntity = restTemplate.postForEntity(picma_user_api, reqBody, null);
-        log.info("API response code = {}", resEntity.getStatusCode().value());
-        if (resEntity.getStatusCode().is2xxSuccessful()) {
-            HttpHeaders resHeaders = resEntity.getHeaders();
-            if (resHeaders.containsKey("Location")) {
-                String headersValue = resHeaders.getFirst("Location");
-                log.info("Location = {}", headersValue);
-                String userId = headersValue.replace(picma_user_api + "/", "");
-                log.info("User ID = {}", userId);
-                String groupId = null;
-                if (!StringUtils.hasLength(user.getGroupId())) {
-                    groupId = propertyOwnersGroupsId;
-                } else {
-                    groupId = user.getGroupId();
+        try {
+            ResponseEntity<?> resEntity = restTemplate.postForEntity(picma_user_api, reqBody, null);
+            log.info("API response code = {}", resEntity.getStatusCode().value());
+            if (resEntity.getStatusCode().is2xxSuccessful()) {
+                HttpHeaders resHeaders = resEntity.getHeaders();
+                if (resHeaders.containsKey("Location")) {
+                    String headersValue = resHeaders.getFirst("Location");
+                    log.info("Location = {}", headersValue);
+                    String userId = headersValue.replace(picma_user_api + "/", "");
+                    log.info("User ID = {}", userId);
+                    String groupId = null;
+                    if (!StringUtils.hasLength(user.getGroupId())) {
+                        log.info("Property Owners group ID = {}", groupId);
+                        groupId = propertyOwnersGroupsId;
+                    } else {
+                        log.info("Other group ID = {}", groupId);
+                        groupId = user.getGroupId();
+                    }
+                    boolean isProvisioned = provisioningUser(userId, groupId, accessToken);
+                    if (isProvisioned) {
+                        user.setUserId(userId);
+                        user.setGroupId(groupId);
+                    } else {
+                    }
                 }
+            } else {
+                throw new RuntimeException("Something went wrong while creating user");
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return null;
+        return user;
+    }
+
+    private boolean provisioningUser(String userId, String groupId, String accessToken) {
+        boolean provisioned = false;
+        String provisioningApi = picma_user_api + "/" + userId + "/groups/" + groupId;
+        log.info("Provisioning API = {}", provisioningApi);
+        MultiValueMap<String, String> headersMap = new LinkedMultiValueMap<>();
+        headersMap.add("Authorization", "Bearer " + accessToken);
+
+        HttpEntity<?> req = new HttpEntity<>(headersMap);
+        ResponseEntity resEntity = restTemplate.exchange(provisioningApi, HttpMethod.PUT, req, ResponseEntity.class);
+        log.info("Provisioning API res Code = {}", resEntity.getStatusCode().value());
+        if (resEntity.getStatusCode().is2xxSuccessful()) {
+            provisioned = true;
+        }
+        return provisioned;
     }
 }

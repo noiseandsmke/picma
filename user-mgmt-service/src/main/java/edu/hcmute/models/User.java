@@ -1,5 +1,6 @@
 package edu.hcmute.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,7 +17,10 @@ public class User implements Serializable {
     private String firstName;
     private String lastName;
     private String email;
+    @JsonIgnore
     private String groupId;
+    @JsonIgnore
+    private String userId;
     @Builder.Default
     private boolean emailVerified = true;
     @Builder.Default
