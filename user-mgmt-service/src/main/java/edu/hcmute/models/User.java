@@ -16,6 +16,7 @@ public class User implements Serializable {
     private String firstName;
     private String lastName;
     private String email;
+    private String groupId;
     @Builder.Default
     private boolean emailVerified = true;
     @Builder.Default
