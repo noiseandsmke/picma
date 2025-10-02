@@ -18,7 +18,7 @@ import java.util.List;
 public class UserOutboundApi {
     private RestTemplate restTemplate;
     @Value("${picma.iam.usersApi}")
-    private String picma_user_api;
+    private String picmaUsersApi;
     @Value("${picma.iam.groups.property-owners}")
     private String propertyOwnersGroupsId;
 
@@ -27,19 +27,19 @@ public class UserOutboundApi {
     }
 
     public List<User> getAllPropertyOwners(String accessToken) {
-        log.info("PICMA users API = {}", picma_user_api);
+        log.info("Get POs :: API = {}", picmaUsersApi);
         MultiValueMap<String, String> headersMap = new LinkedMultiValueMap<>();
         headersMap.add("Authorization", "Bearer " + accessToken);
         HttpEntity<String> entity = new HttpEntity<>(headersMap);
         try {
             long start = System.currentTimeMillis();
-            ResponseEntity<?> resEntity = restTemplate.exchange(picma_user_api, HttpMethod.GET, entity, Object.class);
-            log.info("API response code = {}", resEntity.getStatusCode().value());
+            ResponseEntity<?> resEntity = restTemplate.exchange(picmaUsersApi, HttpMethod.GET, entity, Object.class);
+            log.info("Get POs :: Status code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
                 List<User> userListRes = (List<User>) resEntity.getBody();
-                log.info("Count of users = {}", userListRes != null ? userListRes.size() : 0);
+                log.info("Get POs :: NO. users = {}", userListRes != null ? userListRes.size() : 0);
                 long end = System.currentTimeMillis();
-                log.info("Time taken = {}", (end - start));
+                log.info("Get POs :: Executed times = {}", (end - start));
                 return userListRes;
             } else {
                 throw new RuntimeException("HttpStatus code: " + resEntity.getStatusCode().value());
@@ -63,14 +63,14 @@ public class UserOutboundApi {
         headersMap.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
         HttpEntity reqBody = new HttpEntity<>(user, headersMap);
         try {
-            ResponseEntity<?> resEntity = restTemplate.postForEntity(picma_user_api, reqBody, null);
+            ResponseEntity<?> resEntity = restTemplate.postForEntity(picmaUsersApi, reqBody, null);
             log.info("API response code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
                 HttpHeaders resHeaders = resEntity.getHeaders();
                 if (resHeaders.containsKey("Location")) {
                     String headersValue = resHeaders.getFirst("Location");
                     log.info("Location = {}", headersValue);
-                    String userId = headersValue.replace(picma_user_api + "/", "");
+                    String userId = headersValue.replace(picmaUsersApi + "/", "");
                     log.info("User ID = {}", userId);
                     String groupId = null;
                     if (!StringUtils.hasLength(user.getGroupId())) {
@@ -98,17 +98,35 @@ public class UserOutboundApi {
 
     public boolean provisioningUser(String userId, String groupId, String accessToken) {
         boolean provisioned = false;
-        String provisioningApi = picma_user_api + "/" + userId + "/groups/" + groupId;
-        log.info("Provisioning API = {}", provisioningApi);
+        String provisioningApi = picmaUsersApi + "/" + userId + "/groups/" + groupId;
+        log.info("User provisioning :: API = {}", provisioningApi);
         MultiValueMap<String, String> headersMap = new LinkedMultiValueMap<>();
         headersMap.add("Authorization", "Bearer " + accessToken);
 
         HttpEntity<?> req = new HttpEntity<>(headersMap);
         ResponseEntity resEntity = restTemplate.exchange(provisioningApi, HttpMethod.PUT, req, ResponseEntity.class);
-        log.info("Provisioning API res Code = {}", resEntity.getStatusCode().value());
+        log.info("User provisioning :: Status code = {}", resEntity.getStatusCode().value());
         if (resEntity.getStatusCode().is2xxSuccessful()) {
             provisioned = true;
         }
         return provisioned;
+    }
+
+    public boolean deprovisioningUser(String userId, String groupId, String accessToken) {
+        boolean deprovisioned = false;
+        log.info("User deprovisioning :: User ID = {}", userId);
+        log.info("User deprovisioning :: Group ID = {}", groupId);
+        String deprovisioningApi = picmaUsersApi + "/" + userId + "/groups/" + groupId;
+        log.info("User deprovisioning :: API = {}", deprovisioningApi);
+        MultiValueMap<String, String> headersMap = new LinkedMultiValueMap<>();
+        headersMap.add("Authorization", "Bearer " + accessToken);
+
+        HttpEntity<?> req = new HttpEntity<>(headersMap);
+        ResponseEntity resEntity = restTemplate.exchange(deprovisioningApi, HttpMethod.DELETE, req, ResponseEntity.class);
+        log.info("User deprovisioning :: Status code = {}", resEntity.getStatusCode().value());
+        if (resEntity.getStatusCode().is2xxSuccessful()) {
+            deprovisioned = true;
+        }
+        return deprovisioned;
     }
 }
