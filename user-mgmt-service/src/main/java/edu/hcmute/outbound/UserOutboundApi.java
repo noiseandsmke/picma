@@ -96,7 +96,7 @@ public class UserOutboundApi {
         return user;
     }
 
-    private boolean provisioningUser(String userId, String groupId, String accessToken) {
+    public boolean provisioningUser(String userId, String groupId, String accessToken) {
         boolean provisioned = false;
         String provisioningApi = picma_user_api + "/" + userId + "/groups/" + groupId;
         log.info("Provisioning API = {}", provisioningApi);
