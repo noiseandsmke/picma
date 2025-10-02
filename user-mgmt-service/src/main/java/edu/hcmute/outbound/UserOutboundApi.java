@@ -1,12 +1,14 @@
 package edu.hcmute.outbound;
 
 import edu.hcmute.models.User;
+import edu.hcmute.utils.OutboundUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
@@ -28,12 +30,9 @@ public class UserOutboundApi {
     }
 
     public User createUser(User user, String accessToken) {
-        MultiValueMap<String, String> headersMap = new LinkedMultiValueMap<>();
-        headersMap.add("Authorization", "Bearer " + accessToken);
-        headersMap.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
-        HttpEntity<User> reqBody = new HttpEntity<>(user, headersMap);
+        HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(user, accessToken);
         try {
-            ResponseEntity<?> resEntity = restTemplate.postForEntity(picma_users_api, reqBody, Object.class);
+            ResponseEntity<?> resEntity = restTemplate.postForEntity(picma_users_api, reqEntity, Object.class);
             log.info("API response code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
                 HttpHeaders resHeaders = resEntity.getHeaders();
@@ -71,11 +70,8 @@ public class UserOutboundApi {
         boolean provisioned = false;
         String provisioningApi = picma_users_api + "/" + userId + "/groups/" + groupId;
         log.info("User provisioning :: API = {}", provisioningApi);
-        MultiValueMap<String, String> headersMap = new LinkedMultiValueMap<>();
-        headersMap.add("Authorization", "Bearer " + accessToken);
-
-        HttpEntity<?> req = new HttpEntity<>(headersMap);
-        ResponseEntity<?> resEntity = restTemplate.exchange(provisioningApi, HttpMethod.PUT, req, Object.class);
+        HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
+        ResponseEntity<?> resEntity = restTemplate.exchange(provisioningApi, HttpMethod.PUT, reqEntity, Object.class);
         log.info("User provisioning :: Status code = {}", resEntity.getStatusCode().value());
         if (resEntity.getStatusCode().is2xxSuccessful()) {
             provisioned = true;
@@ -89,11 +85,8 @@ public class UserOutboundApi {
         log.info("User deprovisioning :: Group ID = {}", groupId);
         String deprovisioningApi = picma_users_api + "/" + userId + "/groups/" + groupId;
         log.info("User deprovisioning :: API = {}", deprovisioningApi);
-        MultiValueMap<String, String> headersMap = new LinkedMultiValueMap<>();
-        headersMap.add("Authorization", "Bearer " + accessToken);
-
-        HttpEntity<?> req = new HttpEntity<>(headersMap);
-        ResponseEntity<?> resEntity = restTemplate.exchange(deprovisioningApi, HttpMethod.DELETE, req, Object.class);
+        HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
+        ResponseEntity<?> resEntity = restTemplate.exchange(deprovisioningApi, HttpMethod.DELETE, reqEntity, Object.class);
         log.info("User deprovisioning :: Status code = {}", resEntity.getStatusCode().value());
         if (resEntity.getStatusCode().is2xxSuccessful()) {
             deprovisioned = true;
@@ -103,11 +96,9 @@ public class UserOutboundApi {
 
     public List<User> getAllUsers(String accessToken) {
         log.info("Get Users :: API = {}", picma_users_api);
-        MultiValueMap<String, String> headersMap = new LinkedMultiValueMap<>();
-        headersMap.add("Authorization", "Bearer " + accessToken);
-        HttpEntity<String> entity = new HttpEntity<>(headersMap);
+        HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
         try {
-            ResponseEntity<?> resEntity = restTemplate.exchange(picma_users_api, HttpMethod.GET, entity, Object.class);
+            ResponseEntity<?> resEntity = restTemplate.exchange(picma_users_api, HttpMethod.GET, reqEntity, Object.class);
             log.info("Get Users :: Status code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
                 List<User> userListRes = (List<User>) resEntity.getBody();
@@ -125,11 +116,9 @@ public class UserOutboundApi {
         log.info("Get POs :: API = {}", picma_groups_api);
         picma_groups_api = picma_groups_api + "/" + groupId + "/members";
         log.info("Get POs :: API = {}", picma_groups_api);
-        MultiValueMap<String, String> headersMap = new LinkedMultiValueMap<>();
-        headersMap.add("Authorization", "Bearer " + accessToken);
-        HttpEntity<String> entity = new HttpEntity<>(headersMap);
+        HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
         try {
-            ResponseEntity<?> resEntity = restTemplate.exchange(picma_groups_api, HttpMethod.GET, entity, Object.class);
+            ResponseEntity<?> resEntity = restTemplate.exchange(picma_groups_api, HttpMethod.GET, reqEntity, Object.class);
             log.info("Get POs :: Status code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
                 List<User> userListRes = (List<User>) resEntity.getBody();
