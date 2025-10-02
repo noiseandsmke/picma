@@ -114,11 +114,11 @@ public class UserOutboundApi {
 
     public List<User> getAllMembersOfGroup(String groupId, String accessToken) {
         log.info("Get POs :: API = {}", picma_groups_api);
-        picma_groups_api = picma_groups_api + "/" + groupId + "/members";
-        log.info("Get POs :: API = {}", picma_groups_api);
+        String picmaGroupsApi = picma_groups_api + "/" + groupId + "/members";
+        log.info("Get POs :: API = {}", picmaGroupsApi);
         HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
         try {
-            ResponseEntity<?> resEntity = restTemplate.exchange(picma_groups_api, HttpMethod.GET, reqEntity, Object.class);
+            ResponseEntity<?> resEntity = restTemplate.exchange(picmaGroupsApi, HttpMethod.GET, reqEntity, Object.class);
             log.info("Get POs :: Status code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
                 List<User> userListRes = (List<User>) resEntity.getBody();
