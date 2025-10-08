@@ -71,10 +71,16 @@ public class UserOutboundApi {
         String provisioningApi = picma_users_api + "/" + userId + "/groups/" + groupId;
         log.info("User provisioning :: API = {}", provisioningApi);
         HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
-        ResponseEntity<?> resEntity = restTemplate.exchange(provisioningApi, HttpMethod.PUT, reqEntity, Object.class);
-        log.info("User provisioning :: Status code = {}", resEntity.getStatusCode().value());
-        if (resEntity.getStatusCode().is2xxSuccessful()) {
-            provisioned = true;
+        try {
+            ResponseEntity<?> resEntity = restTemplate.exchange(provisioningApi, HttpMethod.PUT, reqEntity, Object.class);
+            log.info("User provisioning :: Status code = {}", resEntity.getStatusCode().value());
+            if (resEntity.getStatusCode().is2xxSuccessful()) {
+                provisioned = true;
+            } else {
+                throw new RuntimeException("Something went wrong while provisioning user");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return provisioned;
     }
@@ -86,10 +92,16 @@ public class UserOutboundApi {
         String deprovisioningApi = picma_users_api + "/" + userId + "/groups/" + groupId;
         log.info("User deprovisioning :: API = {}", deprovisioningApi);
         HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
-        ResponseEntity<?> resEntity = restTemplate.exchange(deprovisioningApi, HttpMethod.DELETE, reqEntity, Object.class);
-        log.info("User deprovisioning :: Status code = {}", resEntity.getStatusCode().value());
-        if (resEntity.getStatusCode().is2xxSuccessful()) {
-            deprovisioned = true;
+        try {
+            ResponseEntity<?> resEntity = restTemplate.exchange(deprovisioningApi, HttpMethod.DELETE, reqEntity, Object.class);
+            log.info("User deprovisioning :: Status code = {}", resEntity.getStatusCode().value());
+            if (resEntity.getStatusCode().is2xxSuccessful()) {
+                deprovisioned = true;
+            } else {
+                throw new RuntimeException("Something went wrong while deprovisioning user");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return deprovisioned;
     }
