@@ -32,6 +32,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserBean getUserById(String userId, String accessToken) {
+        try {
+            return modelMapper.map(userOutboundApi.getUserById(userId, accessToken), UserBean.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public boolean deleteUserById(String userId, String accessToken) {
+        try {
+            return userOutboundApi.deleteUserById(userId, accessToken);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public List<UserBean> getAllUsers(String accessToken) {
         List<User> userList = userOutboundApi.getAllUsers(accessToken);
         if (!CollectionUtils.isEmpty(userList)) {

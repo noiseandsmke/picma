@@ -124,6 +124,26 @@ public class UserOutboundApi {
         }
     }
 
+    public boolean deleteUserById(String userId, String accessToken) {
+        boolean isDeleted = false;
+        log.info("Delete User by ID :: User ID = {}", userId);
+        String userApi = picma_users_api + "/users/" + userId;
+        log.info("Delete User by ID :: API = {}", userApi);
+        HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
+        try {
+            ResponseEntity<?> resEntity = restTemplate.exchange(userApi, HttpMethod.GET, reqEntity, ResponseEntity.class);
+            log.info("Delete User by ID :: Status code = {}", resEntity.getStatusCode().value());
+            if (resEntity.getStatusCode().is2xxSuccessful()) {
+                isDeleted = true;
+            } else {
+                throw new RuntimeException("Something went wrong while getting user by ID");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return isDeleted;
+    }
+
     public List<User> getAllUsers(String accessToken) {
         log.info("Get Users :: API = {}", picma_users_api);
         HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
