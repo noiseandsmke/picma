@@ -1,13 +1,13 @@
 package edu.hcmute.beans;
 
-import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
 
-@Builder
+@NoArgsConstructor
 @Setter
 @Getter
 public class UserBean implements Serializable {
@@ -18,10 +18,10 @@ public class UserBean implements Serializable {
     private String lastName;
     private String email;
 
-    @Builder.Default
+    //    @Builder.Default
     private boolean emailVerified = true;
-    @Builder.Default
+    //    @Builder.Default
     private boolean enabled = true;
-    @Builder.Default
+    //    @Builder.Default
     private boolean totp = false;
 }

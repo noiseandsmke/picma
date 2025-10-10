@@ -4,6 +4,7 @@ import edu.hcmute.models.User;
 import edu.hcmute.utils.OutboundUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -13,6 +14,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -148,15 +150,25 @@ public class UserOutboundApi {
         log.info("Get Users :: API = {}", picma_users_api);
         HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
         try {
-            ResponseEntity<?> resEntity = restTemplate.exchange(picma_users_api, HttpMethod.GET, reqEntity, Object.class);
+            ResponseEntity<List<User>> resEntity = restTemplate.exchange(picma_users_api, HttpMethod.GET, reqEntity, new ParameterizedTypeReference<>() {
+            });
             log.info("Get Users :: Status code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
-                List<User> userListRes = (List<User>) resEntity.getBody();
-                log.info("Get Users :: NO. users = {}", userListRes != null ? userListRes.size() : 0);
-                return userListRes;
+                List<User> userList = resEntity.getBody();
+                log.info("Get Users :: NO. users = {}", userList != null ? userList.size() : 0);
+                return Optional.ofNullable(userList).get();
             } else {
                 throw new RuntimeException("HttpStatus code: " + resEntity.getStatusCode().value());
             }
+//            ResponseEntity<?> resEntity = restTemplate.exchange(picma_users_api, HttpMethod.GET, reqEntity, Object.class);
+//            log.info("Get Users :: Status code = {}", resEntity.getStatusCode().value());
+//            if (resEntity.getStatusCode().is2xxSuccessful()) {
+//                List<User> userListRes = (List<User>) resEntity.getBody();
+//                log.info("Get Users :: NO. users = {}", userListRes != null ? userListRes.size() : 0);
+//                return userListRes;
+//            } else {
+//                throw new RuntimeException("HttpStatus code: " + resEntity.getStatusCode().value());
+//            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
