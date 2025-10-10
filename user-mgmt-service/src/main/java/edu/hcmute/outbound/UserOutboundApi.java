@@ -106,6 +106,24 @@ public class UserOutboundApi {
         return deprovisioned;
     }
 
+    public User getUserById(String userId, String accessToken) {
+        log.info("Get User by ID :: User ID = {}", userId);
+        String userApi = picma_users_api + "/users/" + userId;
+        log.info("Get User by ID :: API = {}", userApi);
+        HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
+        try {
+            ResponseEntity<User> resEntity = restTemplate.exchange(userApi, HttpMethod.GET, reqEntity, User.class);
+            log.info("Get User by ID :: Status code = {}", resEntity.getStatusCode().value());
+            if (resEntity.getStatusCode().is2xxSuccessful()) {
+                return resEntity.getBody();
+            } else {
+                throw new RuntimeException("Something went wrong while getting user by ID");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public List<User> getAllUsers(String accessToken) {
         log.info("Get Users :: API = {}", picma_users_api);
         HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
