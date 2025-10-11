@@ -18,21 +18,21 @@ import java.util.List;
 public class UserController {
     private String bearerPrefix = "Bearer ";
     private UserService userService;
+    private HttpServletRequest request;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, HttpServletRequest request) {
         this.userService = userService;
+        this.request = request;
     }
 
     @GetMapping("/users")
     @Operation(description = "getAllUsers", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<UserBean>> getAllUsers(HttpServletRequest request) {
+    public ResponseEntity<List<UserBean>> getAllUsers() {
         log.info("UserController :: getAllUsers");
         String accessToken = request.getHeader("Authorization");
-        log.info("bearer token = {}", accessToken);
         if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
             accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
         }
-        log.info("token = {}", accessToken);
         List<UserBean> userList = userService.getAllUsers(accessToken);
         return new ResponseEntity<>(userList, HttpStatus.OK);
     }
@@ -53,8 +53,14 @@ public class UserController {
     }
 
     @PostMapping("/users")
-    public ResponseEntity<UserBean> createUser() {
-        return null;
+    @Operation(description = "createUser", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<UserBean> createUser(@RequestBody UserBean userBean) {
+        String accessToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
+            accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
+        }
+        userBean = userService.createUser(userBean, accessToken);
+        return new ResponseEntity<>(userBean, HttpStatus.CREATED);
     }
 
     @GetMapping("/users/{userId}")

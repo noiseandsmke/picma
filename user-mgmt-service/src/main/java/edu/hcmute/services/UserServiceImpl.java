@@ -24,6 +24,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserBean createUser(UserBean userBean, String accessToken) {
+        log.info("Request data = {}", userBean.toString());
         User user = modelMapper.map(userBean, User.class);
         log.info("User :: {}", user.toString());
         user = userOutboundApi.createUser(user, accessToken);

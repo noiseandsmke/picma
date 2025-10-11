@@ -1,8 +1,6 @@
 package edu.hcmute.beans;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -10,6 +8,8 @@ import java.io.Serializable;
 @NoArgsConstructor
 @Setter
 @Getter
+@ToString
+@AllArgsConstructor
 public class UserBean implements Serializable {
     @Serial
     private static final long serialVersionUID = 8751531877435884363L;
@@ -17,7 +17,8 @@ public class UserBean implements Serializable {
     private String firstName;
     private String lastName;
     private String email;
-
+    private String groupId;
+    private String userId;
     //    @Builder.Default
     private boolean emailVerified = true;
     //    @Builder.Default

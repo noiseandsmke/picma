@@ -1,24 +1,25 @@
 package edu.hcmute.models;
 
-import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
 
 @Data
-@Builder
+//@Builder
+@NoArgsConstructor
 public class UserAccess implements Serializable {
     @Serial
     private static final long serialVersionUID = -5790951155079618416L;
-    @Builder.Default
+    //    @Builder.Default
     boolean manageGroupMembership = true;
-    @Builder.Default
+    //    @Builder.Default
     boolean view = true;
-    @Builder.Default
+    //    @Builder.Default
     boolean mapRoles = true;
-    @Builder.Default
+    //    @Builder.Default
     boolean impersonate = true;
-    @Builder.Default
+    //    @Builder.Default
     boolean manage = true;
 }
