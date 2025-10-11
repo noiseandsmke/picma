@@ -11,7 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @Slf4j
@@ -76,7 +78,16 @@ public class UserController {
     }
 
     @DeleteMapping("/users/{userId}")
-    public ResponseEntity<UserBean> deleteUserById(@PathVariable String userId) {
-        return null;
+    @Operation(description = "deleteUserById", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> deleteUserById(@PathVariable String userId) {
+        log.info("deleteUserById :: Id = {}", userId);
+        String accessToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
+            accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
+        }
+        boolean isDeleted = userService.deleteUserById(userId, accessToken);
+        Map<String, String> message = new HashMap<>();
+        message.put("Message", "User with Id = " + userId + " deleted " + isDeleted);
+        return ResponseEntity.ok(message);
     }
 }
