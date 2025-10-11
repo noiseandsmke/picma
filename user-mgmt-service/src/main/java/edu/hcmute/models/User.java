@@ -20,8 +20,8 @@ public class User implements Serializable {
     private String email;
     @JsonIgnore
     private String groupId;
-    @JsonIgnore
-    private String userId;
+    //    @JsonIgnore
+    private String id;
     //    @Builder.Default
     private boolean emailVerified = true;
     //    @Builder.Default

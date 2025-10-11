@@ -53,7 +53,6 @@ public class UserOutboundApi {
                     }
                     boolean isProvisioned = provisioningUser(userId, groupId, accessToken);
                     if (isProvisioned) {
-                        user.setUserId(userId);
                         user.setGroupId(groupId);
                     } else {
                         // delete user
@@ -117,7 +116,8 @@ public class UserOutboundApi {
             ResponseEntity<User> resEntity = restTemplate.exchange(userApi, HttpMethod.GET, reqEntity, User.class);
             log.info("Get User by ID :: Status code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
-                return resEntity.getBody();
+                User user = resEntity.getBody();
+                return user;
             } else {
                 throw new RuntimeException("Something went wrong while getting user by ID");
             }

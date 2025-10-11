@@ -54,7 +54,7 @@ class UserMgmtServiceApplicationTests {
         newUser.setEmail(newUser.getEmail() + DateUtil.now().getTime() % 10);
         newUser = userOutboundApi.createUser(newUser, token);
         assertThat(newUser);
-        assertThat(newUser.getUserId());
+        assertThat(newUser.getId());
         assertThat(newUser.getGroupId());
     }
 
@@ -66,7 +66,7 @@ class UserMgmtServiceApplicationTests {
         newUser.setGroupId(brokersGroupId);
         newUser = userOutboundApi.createUser(newUser, token);
         assertThat(newUser);
-        assertThat(newUser.getUserId());
+        assertThat(newUser.getId());
         assertThat(newUser.getGroupId());
     }
 
@@ -78,7 +78,7 @@ class UserMgmtServiceApplicationTests {
         newUser.setGroupId(agentsGroupId);
         newUser = userOutboundApi.createUser(newUser, token);
         assertThat(newUser);
-        assertThat(newUser.getUserId());
+        assertThat(newUser.getId());
         assertThat(newUser.getGroupId());
     }
 
@@ -109,7 +109,7 @@ class UserMgmtServiceApplicationTests {
     @Disabled
     @Test
     public void testDeprovisionUser() {
-        boolean isDeprovisioned = userOutboundApi.deprovisioningUser(newUser.getUserId(), newUser.getGroupId(), token);
+        boolean isDeprovisioned = userOutboundApi.deprovisioningUser(newUser.getId(), newUser.getGroupId(), token);
         assertThat(isDeprovisioned);
     }
 }

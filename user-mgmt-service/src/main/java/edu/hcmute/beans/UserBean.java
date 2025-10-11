@@ -18,7 +18,7 @@ public class UserBean implements Serializable {
     private String lastName;
     private String email;
     private String groupId;
-    private String userId;
+    private String id;
     //    @Builder.Default
     private boolean emailVerified = true;
     //    @Builder.Default
