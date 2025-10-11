@@ -64,8 +64,15 @@ public class UserController {
     }
 
     @GetMapping("/users/{userId}")
+    @Operation(description = "getUserById", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<UserBean> getUserById(@PathVariable String userId) {
-        return null;
+        log.info("getUserById :: Id = {}", userId);
+        String accessToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
+            accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
+        }
+        UserBean userBean = userService.getUserById(userId, accessToken);
+        return ResponseEntity.ok(userBean);
     }
 
     @DeleteMapping("/users/{userId}")
