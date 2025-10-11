@@ -40,8 +40,15 @@ public class UserController {
     }
 
     @GetMapping("/users/owners")
-    public ResponseEntity<List<UserBean>> getAllPropertyOwners() {
-        return null;
+    @Operation(description = "getAllPropertyOwners", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<List<UserBean>> getAllPropertyOwners(String groupId) {
+        log.info("UserController :: getAllPropertyOwners :: groupId = {}", groupId);
+        String accessToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
+            accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
+        }
+        List<UserBean> ownersList = userService.getAllMembersOfGroup(groupId, accessToken);
+        return ResponseEntity.ok(ownersList);
     }
 
     @GetMapping("/users/agents")
