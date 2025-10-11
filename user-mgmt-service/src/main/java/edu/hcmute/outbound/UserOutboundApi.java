@@ -10,9 +10,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -180,12 +182,20 @@ public class UserOutboundApi {
         log.info("Get POs :: API = {}", picmaGroupsApi);
         HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
         try {
-            ResponseEntity<?> resEntity = restTemplate.exchange(picmaGroupsApi, HttpMethod.GET, reqEntity, Object.class);
+            ResponseEntity<List<User>> resEntity = restTemplate.exchange(picmaGroupsApi, HttpMethod.GET, reqEntity, new ParameterizedTypeReference<>() {
+            });
             log.info("Get POs :: Status code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
-                List<User> userListRes = (List<User>) resEntity.getBody();
-                log.info("Get POs :: NO. users = {}", userListRes != null ? userListRes.size() : 0);
-                return userListRes;
+                List<User> modifiedUsersList = new ArrayList<>();
+                List<User> usersList = resEntity.getBody();
+                log.info("Get POs :: NO. users = {}", usersList != null ? usersList.size() : 0);
+                if (!CollectionUtils.isEmpty(usersList)) {
+                    usersList.stream().forEach(user -> {
+                        user.setGroupId(groupId);
+                        modifiedUsersList.add(user);
+                    });
+                }
+                return modifiedUsersList;
             } else {
                 throw new RuntimeException("HttpStatus code: " + resEntity.getStatusCode().value());
             }
