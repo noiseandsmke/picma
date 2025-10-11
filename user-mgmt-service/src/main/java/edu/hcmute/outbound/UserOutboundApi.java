@@ -110,7 +110,7 @@ public class UserOutboundApi {
 
     public User getUserById(String userId, String accessToken) {
         log.info("Get User by ID :: User ID = {}", userId);
-        String userApi = picma_users_api + "/users/" + userId;
+        String userApi = picma_users_api + "/" + userId;
         log.info("Get User by ID :: API = {}", userApi);
         HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
         try {
@@ -129,7 +129,7 @@ public class UserOutboundApi {
     public boolean deleteUserById(String userId, String accessToken) {
         boolean isDeleted = false;
         log.info("Delete User by ID :: User ID = {}", userId);
-        String userApi = picma_users_api + "/users/" + userId;
+        String userApi = picma_users_api + "/" + userId;
         log.info("Delete User by ID :: API = {}", userApi);
         HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
         try {
