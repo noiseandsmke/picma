@@ -1,6 +1,7 @@
 package edu.hcmute.controllers;
 
 import edu.hcmute.beans.UserBean;
+import edu.hcmute.exceptions.UserException;
 import edu.hcmute.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -29,7 +30,7 @@ public class UserController {
 
     @GetMapping("/users")
     @Operation(description = "getAllUsers", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<UserBean>> getAllUsers() {
+    public ResponseEntity<List<UserBean>> getAllUsers() throws UserException {
         log.info("UserController :: getAllUsers");
         String accessToken = request.getHeader("Authorization");
         if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {

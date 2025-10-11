@@ -1,14 +1,12 @@
 package edu.hcmute.outbound;
 
+import edu.hcmute.exceptions.UserException;
 import edu.hcmute.models.User;
 import edu.hcmute.utils.OutboundUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -148,7 +146,7 @@ public class UserOutboundApi {
         return isDeleted;
     }
 
-    public List<User> getAllUsers(String accessToken) {
+    public List<User> getAllUsers(String accessToken) throws UserException {
         log.info("Get Users :: API = {}", picma_users_api);
         HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
         try {
@@ -160,19 +158,11 @@ public class UserOutboundApi {
                 log.info("Get Users :: NO. users = {}", userList != null ? userList.size() : 0);
                 return Optional.ofNullable(userList).get();
             } else {
-                throw new RuntimeException("HttpStatus code: " + resEntity.getStatusCode().value());
+                throw new UserException(resEntity.toString(), resEntity.getStatusCode().value());
             }
-//            ResponseEntity<?> resEntity = restTemplate.exchange(picma_users_api, HttpMethod.GET, reqEntity, Object.class);
-//            log.info("Get Users :: Status code = {}", resEntity.getStatusCode().value());
-//            if (resEntity.getStatusCode().is2xxSuccessful()) {
-//                List<User> userListRes = (List<User>) resEntity.getBody();
-//                log.info("Get Users :: NO. users = {}", userListRes != null ? userListRes.size() : 0);
-//                return userListRes;
-//            } else {
-//                throw new RuntimeException("HttpStatus code: " + resEntity.getStatusCode().value());
-//            }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("Exception = {}", e.getLocalizedMessage());
+            throw new UserException(e.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 

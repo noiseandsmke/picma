@@ -12,9 +12,18 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Slf4j
 @RestControllerAdvice
 public class UserExceptionController extends ResponseEntityExceptionHandler {
+
+
     @ExceptionHandler(UserException.class)
     public ResponseEntity<UserExceptionBean> handleBusinessException(UserException userException) {
-        log.info("Business Exception = {}", userException.toString());
+        log.info("Business Exception :: {}", userException.toString());
+        log.info("Get class = {}", userException.getClass());
+        for (StackTraceElement ste : userException.fillInStackTrace().getStackTrace()) {
+            log.info("Method name = {}", ste.getMethodName());
+            log.info("Class name = {}", ste.getClassName());
+            log.info("Line number = {}", ste.getLineNumber());
+        }
+        userException.printStackTrace();
         UserExceptionBean userExceptionBean = UserExceptionBean.builder()
                 .message(userException.getErrorMessage())
                 .code(userException.getErrorCode())
@@ -24,7 +33,21 @@ public class UserExceptionController extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(UserRestException.class)
     public ResponseEntity<UserRestException> handleControllerException(UserRestException userException) {
-        log.info("Controller Exception " + userException);
+        log.info("Controller Exception {}", userException);
         return ResponseEntity.ok(userException);
     }
+
+//    @Nullable
+//    private Method getMappedMethod(Class<? extends Throwable> exceptionType) {
+//        List<Class<? extends Throwable>> matches = new ArrayList<>();
+//        for (Class<? extends Throwable> mappedException : this.mappedMethods.keySet()) {
+//            if (mappedException.isAssignableFrom(exceptionType)) {
+//                matches.add(mappedException);
+//            }
+//        }
+//        if (!matches.isEmpty()) {
+//            matches.sort(new ExceptionDepthComparator(exceptionType));
+//            return this.mappedMethods.get(matches.get(0));
+//        } else return null;
+//    }
 }
