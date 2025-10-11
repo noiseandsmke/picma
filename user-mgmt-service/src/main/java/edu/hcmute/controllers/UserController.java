@@ -64,8 +64,15 @@ public class UserController {
     }
 
     @GetMapping("/users/brokers")
-    public ResponseEntity<List<UserBean>> getAllBrokers() {
-        return null;
+    @Operation(description = "getAllBrokers", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<List<UserBean>> getAllBrokers(String groupId) {
+        log.info("UserController :: getAllBrokers :: groupId = {}", groupId);
+        String accessToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
+            accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
+        }
+        List<UserBean> brokersList = userService.getAllMembersOfGroup(groupId, accessToken);
+        return ResponseEntity.ok(brokersList);
     }
 
     @PostMapping("/users")
