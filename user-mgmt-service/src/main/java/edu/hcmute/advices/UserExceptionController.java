@@ -4,10 +4,18 @@ import edu.hcmute.beans.UserExceptionBean;
 import edu.hcmute.exceptions.UserException;
 import edu.hcmute.exceptions.UserRestException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @RestControllerAdvice
@@ -37,17 +45,18 @@ public class UserExceptionController extends ResponseEntityExceptionHandler {
         return ResponseEntity.ok(userException);
     }
 
-//    @Nullable
-//    private Method getMappedMethod(Class<? extends Throwable> exceptionType) {
-//        List<Class<? extends Throwable>> matches = new ArrayList<>();
-//        for (Class<? extends Throwable> mappedException : this.mappedMethods.keySet()) {
-//            if (mappedException.isAssignableFrom(exceptionType)) {
-//                matches.add(mappedException);
-//            }
-//        }
-//        if (!matches.isEmpty()) {
-//            matches.sort(new ExceptionDepthComparator(exceptionType));
-//            return this.mappedMethods.get(matches.get(0));
-//        } else return null;
-//    }
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        log.info("Handle method argument not valid");
+        List<UserExceptionBean> validationErrors = new ArrayList<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            UserExceptionBean userExceptionBean = UserExceptionBean.builder()
+                    .message(error.getDefaultMessage())
+                    .code(HttpStatus.BAD_REQUEST.value())
+                    .build();
+            validationErrors.add(userExceptionBean);
+        });
+        log.info("Validation errors size :: {}", validationErrors.size());
+        return ResponseEntity.badRequest().body(validationErrors);
+    }
 }
