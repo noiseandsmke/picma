@@ -8,7 +8,7 @@ import java.io.Serial;
 @Getter
 //@Builder
 @AllArgsConstructor
-public class UserException extends RuntimeException {
+public class UserException extends Exception {
     @Serial
     private static final long serialVersionUID = -8761721031457177925L;
 
