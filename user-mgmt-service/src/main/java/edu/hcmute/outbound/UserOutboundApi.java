@@ -133,7 +133,7 @@ public class UserOutboundApi {
         log.info("Delete User by ID :: API = {}", userApi);
         HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
         try {
-            ResponseEntity<?> resEntity = restTemplate.exchange(userApi, HttpMethod.GET, reqEntity, ResponseEntity.class);
+            ResponseEntity<?> resEntity = restTemplate.exchange(userApi, HttpMethod.DELETE, reqEntity, ResponseEntity.class);
             log.info("Delete User by ID :: Status code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
                 isDeleted = true;
