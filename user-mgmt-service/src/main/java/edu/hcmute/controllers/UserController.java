@@ -89,7 +89,7 @@ public class UserController {
     @GetMapping("/users/{userId}")
     @Operation(description = "getUserById", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<UserBean> getUserById(@PathVariable String userId) {
-        log.info("getUserById :: Id = {}", userId);
+        log.info("UserController :: getUserById :: Id = {}", userId);
         String accessToken = request.getHeader("Authorization");
         if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
             accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
@@ -101,7 +101,7 @@ public class UserController {
     @DeleteMapping("/users/{userId}")
     @Operation(description = "deleteUserById", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> deleteUserById(@PathVariable String userId) {
-        log.info("deleteUserById :: Id = {}", userId);
+        log.info("UserController :: deleteUserById :: Id = {}", userId);
         String accessToken = request.getHeader("Authorization");
         if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
             accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
