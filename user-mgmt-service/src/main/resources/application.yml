@@ -5,7 +5,7 @@ server:
   port: ${APP_PORT:5051}
 picma:
   iam:
-    usersApi: ${PROTOCOL:http}://${IAM_USERS_API_HOST:127.0.0.1}:${IAM_USERS_API_PORT:8081}/admin/realms/${IAM_REALM:picma}/users11
+    usersApi: ${PROTOCOL:http}://${IAM_USERS_API_HOST:127.0.0.1}:${IAM_USERS_API_PORT:8081}/admin/realms/${IAM_REALM:picma}/users
     groupsApi: ${PROTOCOL:http}://${IAM_USERS_API_HOST:127.0.0.1}:${IAM_USERS_API_PORT:8081}/admin/realms/${IAM_REALM:picma}/groups
     groups:
       property-owners: ${PROPERTY_OWNERS_GROUP_ID:163e8a2c-8788-4bfc-bff8-e0d349bc9ac2}

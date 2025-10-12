@@ -6,7 +6,6 @@ import lombok.Getter;
 import java.io.Serial;
 
 @Getter
-//@Builder
 @AllArgsConstructor
 public class UserException extends Exception {
     @Serial

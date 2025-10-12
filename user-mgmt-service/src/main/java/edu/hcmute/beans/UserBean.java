@@ -40,10 +40,8 @@ public class UserBean implements Serializable {
 
     private String groupId;
     private String id;
-    //    @Builder.Default
+
     private boolean emailVerified = true;
-    //    @Builder.Default
     private boolean enabled = true;
-    //    @Builder.Default
     private boolean totp = false;
 }
