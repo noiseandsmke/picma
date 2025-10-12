@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: user-authnz-service
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            provider: keycloak
+            client-id: dai-ichi-insurer
+            client-secret: aiEusrRrOM4XHRTDA4enKF1ELh4ecgu3
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/introspect"
+            scope:
+              - openid
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8081/realms/picma
+            token-uri: http://localhost:8081/realms/picma/protocol/openid-connect/token
+server:
+  port: ${APP_PORT:5052}
