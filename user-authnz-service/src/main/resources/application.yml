@@ -8,11 +8,10 @@ spring:
           keycloak:
             provider: keycloak
             client-id: dai-ichi-insurer
-            client-secret: aiEusrRrOM4XHRTDA4enKF1ELh4ecgu3
+            client-secret: WJmbj3fln4LK1sHr9xh2b7y8Eum9iXWc
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/introspect"
-            scope:
-              - openid
+            redirect-uri: "{baseUrl}/login/oauth2/code/"
+            scope: openid
         provider:
           keycloak:
             issuer-uri: http://localhost:8081/realms/picma
