@@ -24,3 +24,14 @@ spring:
             token-uri: http://localhost:8081/realms/picma/protocol/openid-connect/token
 server:
   port: ${APP_PORT:5052}
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${REGISTRY_HOST:localhost}:${REGISTRY_PORT:8761}/eureka/
+  instance:
+    hostname: ${AUTHNZ_HOST:localhost}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
