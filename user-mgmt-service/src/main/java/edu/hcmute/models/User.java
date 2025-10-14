@@ -9,7 +9,6 @@ import java.io.Serializable;
 import java.util.List;
 
 @Data
-//@Builder()
 @NoArgsConstructor
 public class User implements Serializable {
     @Serial
@@ -20,13 +19,9 @@ public class User implements Serializable {
     private String email;
     @JsonIgnore
     private String groupId;
-    //    @JsonIgnore
     private String id;
-    //    @Builder.Default
     private boolean emailVerified = true;
-    //    @Builder.Default
     private boolean enabled = true;
-    //    @Builder.Default
     private boolean totp = false;
     private List<String> realmRoles;
     private UserAccess access;
