@@ -1,6 +1,12 @@
 spring:
   application:
     name: user-authnz-service
+  data:
+    redis:
+      host: ${PICMA_CACHE_HOST:localhost}
+      port: ${PICMA_CACHE_PORT:6379}
+      password: ${PICMA_CACHE_PASSWORD:password}
+      username: ${PICMA_CACHE_USERNAME:username}
   security:
     oauth2:
       client:
