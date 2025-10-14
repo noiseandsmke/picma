@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: registry-server
+server:
+  port: ${REGISTRY_PORT:8761}
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+  instance:
+    hostname: ${REGISTRY_HOST:localhost}
+#    prefer-ip-address: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
