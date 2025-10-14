@@ -55,6 +55,7 @@ public class TokenProcessController {
         JSONObject jsonObject = new JSONObject(usersMap);
         log.info("JSON object of usersMap: {}", jsonObject);
         cacheServer.opsForHash().put(subId, subId, accessToken);
+        cacheServer.opsForHash().put(accessToken, accessToken, subId);
 
         String hostname = request.getServerName();
         log.info("Hostname: {}", hostname);
