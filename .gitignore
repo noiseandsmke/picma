@@ -1,7 +1,7 @@
 # Default ignored files
 /shelf
 /.idea
-/picma-docker
+/.picma-docker
 # Editor-based HTTP Client requests
 /httpRequests/
 # Datasource local storage ignored files
