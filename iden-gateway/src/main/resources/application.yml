@@ -11,3 +11,7 @@ management:
   endpoint:
     gateway:
       access: unrestricted
+eureka:
+  client:
+    service-url:
+      default-zone: http://${REGISTRY_HOST:localhost}:${REGISTRY_PORT:8761}/eureka/
