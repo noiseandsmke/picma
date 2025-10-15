@@ -25,6 +25,9 @@ spring:
 server:
   port: ${APP_PORT:5052}
 eureka:
+  client:
+    service-url:
+      default-zone: http://${REGISTRY_HOST:localhost}:${REGISTRY_PORT:8761}/eureka/
   instance:
     hostname: ${AUTHNZ_HOST:localhost}
     instance-id: ${spring.application.name}:${server.port}
