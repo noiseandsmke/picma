@@ -31,8 +31,8 @@ public class UserController {
 
     @GetMapping({"/users", "/users/"})
     @Operation(description = "getAllUsers", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<UserBean>> getAllUsers() throws UserException {
-        log.info("UserController :: getAllUsers");
+    public ResponseEntity<List<UserBean>> getAllUsers(@RequestHeader String userType) throws UserException {
+        log.info("UserController :: getAllUsers :: userType : {}", userType);
         String accessToken = request.getHeader("Authorization");
         if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
             accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
