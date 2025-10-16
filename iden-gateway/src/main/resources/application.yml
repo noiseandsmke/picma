@@ -9,6 +9,9 @@ spring:
           discovery:
             locator:
               enabled: true
+          filter:
+            local-response-cache:
+              enabled: true
           routes:
             - id: userMgmt-getAllUsers-route
               predicates:
