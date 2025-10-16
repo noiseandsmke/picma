@@ -29,7 +29,7 @@ public class UserController {
         this.request = request;
     }
 
-    @GetMapping("/users")
+    @GetMapping({"/users", "/users/"})
     @Operation(description = "getAllUsers", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<List<UserBean>> getAllUsers() throws UserException {
         log.info("UserController :: getAllUsers");
@@ -77,7 +77,7 @@ public class UserController {
         return ResponseEntity.ok(brokersList);
     }
 
-    @PostMapping("/users")
+    @PostMapping({"/users", "/users/"})
     @Operation(description = "createUser", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<UserBean> createUser(@Valid @RequestBody UserBean userBean) {
         String accessToken = request.getHeader("Authorization");
