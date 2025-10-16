@@ -13,12 +13,13 @@ spring:
             local-response-cache:
               enabled: true
           routes:
-            - id: userMgmt-getAllUsers-route
-              predicates:
-                - Path=/picma/users/**
-              uri: lb://USER-MGMT-SERVICE
-              filters:
-                - RewritePath=/picma/users/?(?<segment>.*),/users/$\{segment}
+            #            - id: userMgmt-getAllUsers-route
+            #              predicates:
+            #                - Path=/picma/users/**
+            #              uri: lb://USER-MGMT-SERVICE
+            #              filters:
+            #                - RewritePath=/picma/users/?(?<segment>.*),/users/$\{segment}
+            #                - AddRequestHeader=userType,owner
             - id: userMgmt-documents-route-01
               predicates:
                 - Path=/swagger-ui.html
