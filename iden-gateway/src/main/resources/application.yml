@@ -39,7 +39,7 @@ spring:
               uri: lb://USER-MGMT-SERVICE
             - id: userAuthNZ-token-route
               predicates:
-                - Path=/login
+                - Path=/login/**
               uri: lb://USER-AUTHNZ-SERVICE
               filters:
                 - RewritePath=/login/?(?<segment>.*), /token/$\{segment}
