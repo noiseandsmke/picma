@@ -1,6 +1,11 @@
 spring:
   application:
     name: iden-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/picma
   cloud:
     gateway:
       server:
