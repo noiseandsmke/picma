@@ -38,10 +38,8 @@ public class GatewayFilter implements GlobalFilter {
             }
 
             MultiValueMap<String, ResponseCookie> responseCookie = exchange.getResponse().getCookies();
-            if (responseCookie != null) {
-                log.info("Removing JSESSIONID...");
-                responseCookie.remove("JSESSIONID", responseCookie.get("JSESSIONID"));
-            }
+            log.info("Removing JSESSIONID...");
+            responseCookie.remove("JSESSIONID", responseCookie.get("JSESSIONID"));
             if (encodedJSessionId != null) {
                 responseCookie.addIfAbsent("PicmaIgCookie", ResponseCookie.fromClientResponse("JSESSIONID", encodedJSessionId).build());
             }
