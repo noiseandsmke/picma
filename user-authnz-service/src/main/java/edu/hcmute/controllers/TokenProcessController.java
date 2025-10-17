@@ -64,7 +64,7 @@ public class TokenProcessController {
         log.info("Context path: {}", contextPath);
         Cookie cookie = new Cookie("picma_cookie", Base64.getEncoder().encodeToString(jsonObject.toString().getBytes()));
         cookie.setPath(contextPath);
-        cookie.setMaxAge(authorizedClient.getAccessToken().getExpiresAt().getNano());
+        cookie.setMaxAge(authorizedClient.getAccessToken().getExpiresAt() != null ? authorizedClient.getAccessToken().getExpiresAt().getNano() : 0);
         cookie.setDomain(hostname);
         response.addCookie(cookie);
         return usersMap;
