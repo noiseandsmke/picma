@@ -33,8 +33,9 @@ public class TokenProcessController {
         this.request = request;
     }
 
-    @GetMapping("/token")
+    @GetMapping({"/token", "/token/"})
     public Map<String, String> generateToken(OAuth2AuthenticationToken authentication) {
+        log.info("Policy type: {}", request.getHeader("policyType"));
         String subId = authentication.getName();
         log.info("Logged in user: {}", authentication.getName());
         OAuth2AuthorizedClient authorizedClient = authorizedClientService.loadAuthorizedClient(authentication.getAuthorizedClientRegistrationId(), authentication.getName());
