@@ -41,6 +41,8 @@ spring:
               predicates:
                 - Path=/login
               uri: lb://USER-AUTHNZ-SERVICE
+              filters:
+                - RewritePath=/login/?(?<segment>.*), /token/$\{segment}
 server:
   port: 6060
 management:
