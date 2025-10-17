@@ -39,7 +39,7 @@ spring:
               uri: lb://USER-MGMT-SERVICE
             - id: userAuthNZ-token-route
               predicates:
-                - Path=/token
+                - Path=/login
               uri: lb://USER-AUTHNZ-SERVICE
 server:
   port: 6060
