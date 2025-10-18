@@ -91,6 +91,7 @@
     </dependencies>
 
     <build>
+        <finalName>user-authnz-service</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
