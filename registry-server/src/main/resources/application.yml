@@ -9,6 +9,7 @@ eureka:
     fetch-registry: false
   instance:
     hostname: ${DISCOVERY_HOST:localhost}
+    prefer-ip-address: ${REGISTRY_PREFER_IP:true}
 management:
   endpoints:
     web:
