@@ -29,8 +29,9 @@ eureka:
     service-url:
       defaultZone: http://${REGISTRY_HOST:localhost}:${REGISTRY_PORT:8761}/eureka/
   instance:
-    hostname: ${AUTHNZ_REGISTRY_HOST:localhost}
+    hostname: ${REGISTRY_HOST:localhost}
     instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: ${REGISTRY_PREFER_IP:true}
 management:
   endpoints:
     web:
