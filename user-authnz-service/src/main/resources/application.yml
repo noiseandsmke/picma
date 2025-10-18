@@ -27,7 +27,7 @@ server:
 eureka:
   client:
     service-url:
-      defaultZone: http://${REGISTRY_HOST:localhost}:${REGISTRY_PORT:8761}/eureka/
+      defaultZone: http://${eureka.instance.hostname}:${REGISTRY_PORT:8761}/eureka/
   instance:
     hostname: ${REGISTRY_HOST:localhost}
     instance-id: ${spring.application.name}:${server.port}

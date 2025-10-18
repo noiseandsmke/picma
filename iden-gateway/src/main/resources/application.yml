@@ -56,7 +56,7 @@ management:
 eureka:
   client:
     service-url:
-      defaultZone: http://${REGISTRY_HOST:localhost}:${REGISTRY_PORT:8761}/eureka/
+      defaultZone: http://${eureka.instance.hostname}:${REGISTRY_PORT:8761}/eureka/
     fetch-registry: true
   instance:
     hostname: ${REGISTRY_HOST:localhost}
