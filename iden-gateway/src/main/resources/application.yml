@@ -56,8 +56,9 @@ management:
 eureka:
   client:
     service-url:
-      default-zone: http://${REGISTRY_HOST:localhost}:${REGISTRY_PORT:8761}/eureka/
+      defaultZone: http://${REGISTRY_HOST:localhost}:${REGISTRY_PORT:8761}/eureka/
     fetch-registry: true
   instance:
     hostname: ${REGISTRY_HOST:localhost}
     instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: ${REGISTRY_PREFER_IP:true}
