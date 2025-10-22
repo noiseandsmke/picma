@@ -10,9 +10,9 @@ import java.io.Serializable;
 
 @Document(collection = "${properties.management.collection.name}")
 @Data
-public class PropertyType implements Serializable {
+public class ConstructionType implements Serializable {
     @Serial
-    private static final long serialVersionUID = -3253022478967494885L;
+    private static final long serialVersionUID = 2720368548116058327L;
     @Id
     private String id;
     @Indexed(unique = true)

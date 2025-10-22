@@ -3,21 +3,18 @@ package edu.hcmute.service;
 import edu.hcmute.dto.PropertyTypeDto;
 import edu.hcmute.model.PropertyType;
 import edu.hcmute.repo.PropertyTypeRepo;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 @Service
+@AllArgsConstructor
 @Slf4j
 public class PropertyTypeServiceImpl implements PropertyTypeService {
     private PropertyTypeRepo propertyTypeRepo;
     private ModelMapper modelMapper;
-
-    public PropertyTypeServiceImpl(PropertyTypeRepo propertyTypeRepo, ModelMapper modelMapper) {
-        this.propertyTypeRepo = propertyTypeRepo;
-        this.modelMapper = modelMapper;
-    }
 
     @Override
     public PropertyTypeDto createPropertyType(PropertyTypeDto propertyTypeDto) {
@@ -40,7 +37,7 @@ public class PropertyTypeServiceImpl implements PropertyTypeService {
     }
 
     @Override
-    public PropertyTypeDto getPropertyTypeById(String id) {
+    public PropertyTypeDto getPropertyById(String id) {
         log.info("### Getting property type by id ###");
         log.info("PropertyTypeBean Id: {}", id);
         if (StringUtils.hasText(id)) {

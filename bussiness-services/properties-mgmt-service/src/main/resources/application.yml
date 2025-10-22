@@ -9,3 +9,7 @@ spring:
       auto-index-creation: true
 server:
   port: 7100
+properties:
+  management:
+    collection:
+      name: ${COLLECTION_NAME:properties_management}
