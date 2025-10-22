@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: properties-mgmt-service
+  data:
+    mongodb:
+      host: ${PROPERTIES_HOST:localhost}
+      database: ${PROPERTIES_DB:picma}
+      port: ${PROPERTIES_PORT:27017}
+      auto-index-creation: true
+server:
+  port: 7100

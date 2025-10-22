@@ -1,7 +1,9 @@
 package edu.hcmute;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
 public class PropertiesMgmtServiceApplication {
@@ -10,4 +12,8 @@ public class PropertiesMgmtServiceApplication {
         SpringApplication.run(PropertiesMgmtServiceApplication.class, args);
     }
 
+    @Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
+    }
 }
