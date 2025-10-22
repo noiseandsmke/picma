@@ -1,4 +1,4 @@
-package edu.hcmute.models;
+package edu.hcmute.model;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

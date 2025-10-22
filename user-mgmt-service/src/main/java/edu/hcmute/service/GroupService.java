@@ -1,4 +1,4 @@
-package edu.hcmute.services;
+package edu.hcmute.service;
 
 public interface GroupService {
     boolean provisoningUser(String userId, String groupId, String accessToken);

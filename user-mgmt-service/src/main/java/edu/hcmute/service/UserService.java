@@ -1,7 +1,7 @@
-package edu.hcmute.services;
+package edu.hcmute.service;
 
-import edu.hcmute.beans.UserBean;
-import edu.hcmute.exceptions.UserException;
+import edu.hcmute.bean.UserBean;
+import edu.hcmute.exception.UserException;
 
 import java.util.List;
 

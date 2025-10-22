@@ -1,4 +1,4 @@
-package edu.hcmute.models;
+package edu.hcmute.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package edu.hcmute.controllers;
+package edu.hcmute.controller;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

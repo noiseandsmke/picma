@@ -1,4 +1,4 @@
-package edu.hcmute.beans;
+package edu.hcmute.bean;
 
 import lombok.Builder;
 import lombok.Getter;

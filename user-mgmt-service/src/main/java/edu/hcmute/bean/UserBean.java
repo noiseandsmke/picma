@@ -1,4 +1,4 @@
-package edu.hcmute.beans;
+package edu.hcmute.bean;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;

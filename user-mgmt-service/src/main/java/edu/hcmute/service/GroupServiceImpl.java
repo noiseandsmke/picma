@@ -1,4 +1,4 @@
-package edu.hcmute.services;
+package edu.hcmute.service;
 
 import edu.hcmute.outbound.UserOutboundApi;
 import org.springframework.stereotype.Service;

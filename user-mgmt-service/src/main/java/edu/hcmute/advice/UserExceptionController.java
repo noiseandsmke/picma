@@ -1,8 +1,8 @@
-package edu.hcmute.advices;
+package edu.hcmute.advice;
 
-import edu.hcmute.beans.UserExceptionBean;
-import edu.hcmute.exceptions.UserException;
-import edu.hcmute.exceptions.UserRestException;
+import edu.hcmute.bean.UserExceptionBean;
+import edu.hcmute.exception.UserException;
+import edu.hcmute.exception.UserRestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

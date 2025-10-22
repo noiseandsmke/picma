@@ -1,8 +1,8 @@
-package edu.hcmute.services;
+package edu.hcmute.service;
 
-import edu.hcmute.beans.UserBean;
-import edu.hcmute.exceptions.UserException;
-import edu.hcmute.models.User;
+import edu.hcmute.bean.UserBean;
+import edu.hcmute.exception.UserException;
+import edu.hcmute.model.User;
 import edu.hcmute.outbound.UserOutboundApi;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;

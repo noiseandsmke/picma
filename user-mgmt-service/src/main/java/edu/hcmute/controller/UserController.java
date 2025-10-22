@@ -1,8 +1,8 @@
-package edu.hcmute.controllers;
+package edu.hcmute.controller;
 
-import edu.hcmute.beans.UserBean;
-import edu.hcmute.exceptions.UserException;
-import edu.hcmute.services.UserService;
+import edu.hcmute.bean.UserBean;
+import edu.hcmute.exception.UserException;
+import edu.hcmute.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;

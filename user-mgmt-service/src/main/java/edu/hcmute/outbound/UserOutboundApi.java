@@ -1,8 +1,8 @@
 package edu.hcmute.outbound;
 
-import edu.hcmute.exceptions.UserException;
-import edu.hcmute.models.User;
-import edu.hcmute.utils.OutboundUtils;
+import edu.hcmute.exception.UserException;
+import edu.hcmute.model.User;
+import edu.hcmute.util.OutboundUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;

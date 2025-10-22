@@ -1,4 +1,4 @@
-package edu.hcmute.exceptions;
+package edu.hcmute.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
