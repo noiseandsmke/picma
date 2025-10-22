@@ -1,4 +1,4 @@
-package edu.hcmute.bean;
+package edu.hcmute.dto;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
@@ -13,7 +13,7 @@ import java.io.Serializable;
 @Getter
 @ToString
 @AllArgsConstructor
-public class UserBean implements Serializable {
+public class UserDto implements Serializable {
     @Serial
     private static final long serialVersionUID = 8751531877435884363L;
 

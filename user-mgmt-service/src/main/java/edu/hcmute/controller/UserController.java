@@ -1,6 +1,6 @@
 package edu.hcmute.controller;
 
-import edu.hcmute.bean.UserBean;
+import edu.hcmute.dto.UserDto;
 import edu.hcmute.exception.UserException;
 import edu.hcmute.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,73 +31,73 @@ public class UserController {
 
     @GetMapping({"/users", "/users/"})
     @Operation(description = "getAllUsers", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<UserBean>> getAllUsers(@RequestHeader String userType) throws UserException {
+    public ResponseEntity<List<UserDto>> getAllUsers(@RequestHeader String userType) throws UserException {
         log.info("UserController :: getAllUsers :: userType : {}", userType);
         String accessToken = request.getHeader("Authorization");
         if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
             accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
         }
-        List<UserBean> userList = userService.getAllUsers(accessToken);
+        List<UserDto> userList = userService.getAllUsers(accessToken);
         return new ResponseEntity<>(userList, HttpStatus.OK);
     }
 
     @GetMapping("/users/owners")
     @Operation(description = "getAllPropertyOwners", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<UserBean>> getAllPropertyOwners(String groupId) {
+    public ResponseEntity<List<UserDto>> getAllPropertyOwners(String groupId) {
         log.info("UserController :: getAllPropertyOwners :: groupId = {}", groupId);
         String accessToken = request.getHeader("Authorization");
         if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
             accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
         }
-        List<UserBean> ownersList = userService.getAllMembersOfGroup(groupId, accessToken);
+        List<UserDto> ownersList = userService.getAllMembersOfGroup(groupId, accessToken);
         return ResponseEntity.ok(ownersList);
     }
 
     @GetMapping("/users/agents")
     @Operation(description = "getAllAgents", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<UserBean>> getAllAgents(String groupId) {
+    public ResponseEntity<List<UserDto>> getAllAgents(String groupId) {
         log.info("UserController :: getAllAgents :: groupId = {}", groupId);
         String accessToken = request.getHeader("Authorization");
         if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
             accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
         }
-        List<UserBean> agentsList = userService.getAllMembersOfGroup(groupId, accessToken);
+        List<UserDto> agentsList = userService.getAllMembersOfGroup(groupId, accessToken);
         return ResponseEntity.ok(agentsList);
     }
 
     @GetMapping("/users/brokers")
     @Operation(description = "getAllBrokers", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<UserBean>> getAllBrokers(String groupId) {
+    public ResponseEntity<List<UserDto>> getAllBrokers(String groupId) {
         log.info("UserController :: getAllBrokers :: groupId = {}", groupId);
         String accessToken = request.getHeader("Authorization");
         if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
             accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
         }
-        List<UserBean> brokersList = userService.getAllMembersOfGroup(groupId, accessToken);
+        List<UserDto> brokersList = userService.getAllMembersOfGroup(groupId, accessToken);
         return ResponseEntity.ok(brokersList);
     }
 
     @PostMapping({"/users", "/users/"})
     @Operation(description = "createUser", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<UserBean> createUser(@Valid @RequestBody UserBean userBean) {
+    public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {
         String accessToken = request.getHeader("Authorization");
         if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
             accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
         }
-        userBean = userService.createUser(userBean, accessToken);
-        return new ResponseEntity<>(userBean, HttpStatus.CREATED);
+        userDto = userService.createUser(userDto, accessToken);
+        return new ResponseEntity<>(userDto, HttpStatus.CREATED);
     }
 
     @GetMapping("/users/{userId}")
     @Operation(description = "getUserById", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<UserBean> getUserById(@PathVariable String userId) {
+    public ResponseEntity<UserDto> getUserById(@PathVariable String userId) {
         log.info("UserController :: getUserById :: Id = {}", userId);
         String accessToken = request.getHeader("Authorization");
         if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
             accessToken = StringUtils.replace(accessToken, bearerPrefix, "");
         }
-        UserBean userBean = userService.getUserById(userId, accessToken);
-        return ResponseEntity.ok(userBean);
+        UserDto userDto = userService.getUserById(userId, accessToken);
+        return ResponseEntity.ok(userDto);
     }
 
     @DeleteMapping("/users/{userId}")

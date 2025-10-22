@@ -1,6 +1,6 @@
 package edu.hcmute.service;
 
-import edu.hcmute.bean.UserBean;
+import edu.hcmute.dto.UserDto;
 import edu.hcmute.exception.UserException;
 import edu.hcmute.model.User;
 import edu.hcmute.outbound.UserOutboundApi;
@@ -24,19 +24,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserBean createUser(UserBean userBean, String accessToken) {
-        log.info("Request data = {}", userBean.toString());
-        User user = modelMapper.map(userBean, User.class);
+    public UserDto createUser(UserDto userDto, String accessToken) {
+        log.info("Request data = {}", userDto.toString());
+        User user = modelMapper.map(userDto, User.class);
         log.info("User :: {}", user.toString());
         user = userOutboundApi.createUser(user, accessToken);
-        userBean = modelMapper.map(user, UserBean.class);
-        return userBean;
+        userDto = modelMapper.map(user, UserDto.class);
+        return userDto;
     }
 
     @Override
-    public UserBean getUserById(String userId, String accessToken) {
+    public UserDto getUserById(String userId, String accessToken) {
         try {
-            return modelMapper.map(userOutboundApi.getUserById(userId, accessToken), UserBean.class);
+            return modelMapper.map(userOutboundApi.getUserById(userId, accessToken), UserDto.class);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -52,24 +52,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserBean> getAllUsers(String accessToken) throws UserException {
+    public List<UserDto> getAllUsers(String accessToken) throws UserException {
         log.info("UserServiceImpl :: getAllUsers");
         List<User> userList = userOutboundApi.getAllUsers(accessToken);
-        List<UserBean> uiUserList = new ArrayList<>();
+        List<UserDto> uiUserList = new ArrayList<>();
         userList.stream().forEach((user) -> {
-            uiUserList.add(modelMapper.map(user, UserBean.class));
+            uiUserList.add(modelMapper.map(user, UserDto.class));
         });
         log.info("UserServiceImpl :: uiUserList size = {}", uiUserList.size());
         return uiUserList;
     }
 
     @Override
-    public List<UserBean> getAllMembersOfGroup(String groupId, String accessToken) {
+    public List<UserDto> getAllMembersOfGroup(String groupId, String accessToken) {
         List<User> userList = userOutboundApi.getAllMembersOfGroup(groupId, accessToken);
         if (!CollectionUtils.isEmpty(userList)) {
-            List<UserBean> uiUserList = new ArrayList<>();
+            List<UserDto> uiUserList = new ArrayList<>();
             userList.stream().forEach((user) -> {
-                uiUserList.add(modelMapper.map(user, UserBean.class));
+                uiUserList.add(modelMapper.map(user, UserDto.class));
             });
             return uiUserList;
         } else {

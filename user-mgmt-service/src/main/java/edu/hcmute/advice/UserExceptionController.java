@@ -1,6 +1,6 @@
 package edu.hcmute.advice;
 
-import edu.hcmute.bean.UserExceptionBean;
+import edu.hcmute.dto.UserExceptionDto;
 import edu.hcmute.exception.UserException;
 import edu.hcmute.exception.UserRestException;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ public class UserExceptionController extends ResponseEntityExceptionHandler {
 
 
     @ExceptionHandler(UserException.class)
-    public ResponseEntity<UserExceptionBean> handleBusinessException(UserException userException) {
+    public ResponseEntity<UserExceptionDto> handleBusinessException(UserException userException) {
         log.info("Business Exception :: {}", userException.toString());
         log.info("Get class = {}", userException.getClass());
         for (StackTraceElement ste : userException.fillInStackTrace().getStackTrace()) {
@@ -32,11 +32,11 @@ public class UserExceptionController extends ResponseEntityExceptionHandler {
             log.info("Line number = {}", ste.getLineNumber());
         }
         userException.printStackTrace();
-        UserExceptionBean userExceptionBean = UserExceptionBean.builder()
+        UserExceptionDto userExceptionDto = UserExceptionDto.builder()
                 .message(userException.getErrorMessage())
                 .code(userException.getErrorCode())
                 .build();
-        return ResponseEntity.ok(userExceptionBean);
+        return ResponseEntity.ok(userExceptionDto);
     }
 
     @ExceptionHandler(UserRestException.class)
@@ -48,13 +48,13 @@ public class UserExceptionController extends ResponseEntityExceptionHandler {
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
         log.info("Handle method argument not valid");
-        List<UserExceptionBean> validationErrors = new ArrayList<>();
+        List<UserExceptionDto> validationErrors = new ArrayList<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
-            UserExceptionBean userExceptionBean = UserExceptionBean.builder()
+            UserExceptionDto userExceptionDto = UserExceptionDto.builder()
                     .message(error.getDefaultMessage())
                     .code(HttpStatus.BAD_REQUEST.value())
                     .build();
-            validationErrors.add(userExceptionBean);
+            validationErrors.add(userExceptionDto);
         });
         log.info("Validation errors size :: {}", validationErrors.size());
         return ResponseEntity.badRequest().body(validationErrors);
