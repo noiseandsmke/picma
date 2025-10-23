@@ -43,6 +43,20 @@ public class PropertyInfoServiceImpl implements PropertyInfoService {
     }
 
     @Override
+    public List<PropertyInfoDto> getPropertiesByZipCode(String zipcode) {
+        try {
+            List<PropertyInfo> propertiesInfo = propertyInfoRepo.findPropertiesByZipCode(zipcode);
+            if (!CollectionUtils.isEmpty(propertiesInfo) && !propertiesInfo.isEmpty()) {
+                return propertiesInfo.stream().map(this::mapModelToDto).toList();
+            } else {
+                throw new RuntimeException("No properties found within zipcode = " + zipcode);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e.getLocalizedMessage());
+        }
+    }
+
+    @Override
     public List<PropertyInfoDto> getAllProperties() {
         try {
             List<PropertyInfo> propertiesInfo = propertyInfoRepo.findAll();

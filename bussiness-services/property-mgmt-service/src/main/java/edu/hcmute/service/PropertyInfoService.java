@@ -9,5 +9,7 @@ public interface PropertyInfoService {
 
     PropertyInfoDto getPropertyInfoById(String id);
 
+    List<PropertyInfoDto> getPropertiesByZipCode(String zipcode);
+
     List<PropertyInfoDto> getAllProperties();
 }
