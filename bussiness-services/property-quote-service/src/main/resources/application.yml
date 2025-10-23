@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: property-quote-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url:
+    username:
+    password:
+server:
+  port: 7101
