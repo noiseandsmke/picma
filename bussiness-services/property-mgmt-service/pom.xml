@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>edu.hcmute</groupId>
-    <artifactId>properties-mgmt-service</artifactId>
+    <artifactId>property-mgmt-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>properties-mgmt-service</name>
-    <description>properties-mgmt-service</description>
+    <name>property-mgmt-service</name>
+    <description>property-mgmt-service</description>
     <url/>
     <licenses>
         <license/>

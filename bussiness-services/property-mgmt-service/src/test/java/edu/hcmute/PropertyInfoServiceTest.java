@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class PropertyInfoServiceTest extends PropertiesMgmtServiceApplicationTests {
+public class PropertyInfoServiceTest extends PropertyMgmtServiceApplicationTests {
     PropertyInfoDto propertyInfoDto = null;
     PropertyTypeDto propertyTypeDto = null;
     ConstructionTypeDto constructionTypeDto = null;

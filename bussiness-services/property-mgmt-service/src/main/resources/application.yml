@@ -1,6 +1,6 @@
 spring:
   application:
-    name: properties-mgmt-service
+    name: property-mgmt-service
   data:
     mongodb:
       host: ${PROPERTIES_HOST:localhost}

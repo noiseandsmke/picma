@@ -6,10 +6,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
-public class PropertiesMgmtServiceApplication {
+public class PropertyMgmtServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(PropertiesMgmtServiceApplication.class, args);
+        SpringApplication.run(PropertyMgmtServiceApplication.class, args);
     }
 
     @Bean
