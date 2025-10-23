@@ -12,4 +12,4 @@ server:
 properties:
   management:
     collection:
-      name: ${COLLECTION_NAME:properties_management}
+      name: ${COLLECTION_NAME:property_management}
