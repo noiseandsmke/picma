@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 
@@ -23,32 +25,51 @@ public class PropertyInfoServiceImpl implements PropertyInfoService {
         log.info("PropertyInfo: {}", propertyInfo.toString());
 
         propertyInfo = propertyInfoRepo.save(propertyInfo);
-        PropertyInfoDto resPropertyInfoDto = modelMapper.map(propertyInfo, PropertyInfoDto.class);
-        log.info("propertyInfo::getPropertyType = {}", propertyInfo.getPropertyType());
-        if (propertyInfo.getPropertyType() != null) {
-            resPropertyInfoDto.setPropertyTypeDto(modelMapper.map(propertyInfo.getPropertyType(), PropertyTypeDto.class));
-        }
-        log.info("propertyInfo::getConstructionType = {}", propertyInfo.getConstructionType());
-        if (propertyInfo.getConstructionType() != null) {
-            resPropertyInfoDto.setConstructionTypeDto(modelMapper.map(propertyInfo.getConstructionType(), ConstructionTypeDto.class));
-        }
-        if (propertyInfo.getOccupancyType() != null) {
-            resPropertyInfoDto.setOccupancyTypeDto(modelMapper.map(propertyInfo.getOccupancyType(), OccupancyTypeDto.class));
-        }
-        if (propertyInfo.getPropertyAddress() != null) {
-            resPropertyInfoDto.setPropertyAddressDto(modelMapper.map(propertyInfo.getPropertyAddress(), PropertyAddressDto.class));
-        }
-        log.info("PropertyInfoDto: {}", resPropertyInfoDto);
-        return resPropertyInfoDto;
+        return mapModelToDto(propertyInfo);
     }
 
     @Override
     public PropertyInfoDto getPropertyInfoById(String id) {
-        return null;
+        try {
+            PropertyInfo propertyInfo = propertyInfoRepo.findById(id).orElseThrow();
+            if (!ObjectUtils.isEmpty(propertyInfo)) {
+                return mapModelToDto(propertyInfo);
+            } else {
+                throw new RuntimeException("Not found PropertyInfo with id = " + id);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e.getLocalizedMessage());
+        }
     }
 
     @Override
     public List<PropertyInfoDto> getAllProperties() {
-        return List.of();
+        try {
+            List<PropertyInfo> propertiesInfo = propertyInfoRepo.findAll();
+            if (!CollectionUtils.isEmpty(propertiesInfo) && !propertiesInfo.isEmpty()) {
+                return propertiesInfo.stream().map(this::mapModelToDto).toList();
+            } else {
+                throw new RuntimeException("No properties found");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e.getLocalizedMessage());
+        }
+    }
+
+    private PropertyInfoDto mapModelToDto(PropertyInfo propertyInfo) {
+        PropertyInfoDto propertyInfoDto = modelMapper.map(propertyInfo, PropertyInfoDto.class);
+        if (propertyInfo.getPropertyType() != null) {
+            propertyInfoDto.setPropertyTypeDto(modelMapper.map(propertyInfo.getPropertyType(), PropertyTypeDto.class));
+        }
+        if (propertyInfo.getConstructionType() != null) {
+            propertyInfoDto.setConstructionTypeDto(modelMapper.map(propertyInfo.getConstructionType(), ConstructionTypeDto.class));
+        }
+        if (propertyInfo.getOccupancyType() != null) {
+            propertyInfoDto.setOccupancyTypeDto(modelMapper.map(propertyInfo.getOccupancyType(), OccupancyTypeDto.class));
+        }
+        if (propertyInfo.getPropertyAddress() != null) {
+            propertyInfoDto.setPropertyAddressDto(modelMapper.map(propertyInfo.getPropertyAddress(), PropertyAddressDto.class));
+        }
+        return propertyInfoDto;
     }
 }
