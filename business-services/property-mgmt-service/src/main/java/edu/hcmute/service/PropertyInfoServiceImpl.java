@@ -1,7 +1,7 @@
 package edu.hcmute.service;
 
 import edu.hcmute.dto.*;
-import edu.hcmute.model.PropertyInfo;
+import edu.hcmute.entity.PropertyInfo;
 import edu.hcmute.repo.PropertyInfoRepo;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

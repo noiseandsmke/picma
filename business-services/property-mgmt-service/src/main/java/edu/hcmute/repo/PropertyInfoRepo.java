@@ -1,6 +1,6 @@
 package edu.hcmute.repo;
 
-import edu.hcmute.model.PropertyInfo;
+import edu.hcmute.entity.PropertyInfo;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 

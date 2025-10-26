@@ -1,4 +1,4 @@
-package edu.hcmute.model;
+package edu.hcmute.entity;
 
 import lombok.Data;
 

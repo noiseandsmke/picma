@@ -1,7 +1,7 @@
 package edu.hcmute.service;
 
 import edu.hcmute.dto.PerilTypeDto;
-import edu.hcmute.model.PerilType;
+import edu.hcmute.entity.PerilType;
 import edu.hcmute.repo.PerilTypeRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

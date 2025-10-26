@@ -1,7 +1,7 @@
 package edu.hcmute;
 
+import edu.hcmute.entity.User;
 import edu.hcmute.exception.UserException;
-import edu.hcmute.model.User;
 import edu.hcmute.outbound.UserOutboundApi;
 import org.assertj.core.util.DateUtil;
 import org.junit.jupiter.api.*;

@@ -2,7 +2,7 @@ package edu.hcmute;
 
 import edu.hcmute.dto.CoverageTypeDto;
 import edu.hcmute.dto.PolicyTypeDto;
-import edu.hcmute.model.CoverageType;
+import edu.hcmute.entity.CoverageType;
 import edu.hcmute.repo.CoverageTypeRepo;
 import edu.hcmute.service.PolicyTypeService;
 import org.junit.jupiter.api.Assertions;

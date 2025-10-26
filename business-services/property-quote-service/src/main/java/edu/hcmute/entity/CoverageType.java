@@ -1,4 +1,4 @@
-package edu.hcmute.model;
+package edu.hcmute.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;

@@ -2,7 +2,7 @@ package edu.hcmute;
 
 import edu.hcmute.dto.CoverageTypeDto;
 import edu.hcmute.dto.PerilTypeDto;
-import edu.hcmute.model.PerilType;
+import edu.hcmute.entity.PerilType;
 import edu.hcmute.repo.PerilTypeRepo;
 import edu.hcmute.service.CoverageTypeService;
 import org.junit.jupiter.api.Assertions;

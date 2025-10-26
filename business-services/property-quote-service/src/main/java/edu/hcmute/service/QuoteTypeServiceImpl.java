@@ -1,7 +1,7 @@
 package edu.hcmute.service;
 
 import edu.hcmute.dto.QuoteTypeDto;
-import edu.hcmute.model.QuoteType;
+import edu.hcmute.entity.QuoteType;
 import edu.hcmute.repo.QuoteTypeRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

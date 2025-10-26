@@ -2,8 +2,8 @@ package edu.hcmute.service;
 
 import edu.hcmute.dto.CoverageTypeDto;
 import edu.hcmute.dto.PerilTypeDto;
-import edu.hcmute.model.CoverageType;
-import edu.hcmute.model.PerilType;
+import edu.hcmute.entity.CoverageType;
+import edu.hcmute.entity.PerilType;
 import edu.hcmute.repo.CoverageTypeRepo;
 import edu.hcmute.repo.PerilTypeRepo;
 import lombok.RequiredArgsConstructor;

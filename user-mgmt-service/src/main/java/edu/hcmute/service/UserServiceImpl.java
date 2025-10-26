@@ -1,8 +1,8 @@
 package edu.hcmute.service;
 
 import edu.hcmute.dto.UserDto;
+import edu.hcmute.entity.User;
 import edu.hcmute.exception.UserException;
-import edu.hcmute.model.User;
 import edu.hcmute.outbound.UserOutboundApi;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;

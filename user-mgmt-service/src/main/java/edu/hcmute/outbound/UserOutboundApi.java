@@ -1,7 +1,7 @@
 package edu.hcmute.outbound;
 
+import edu.hcmute.entity.User;
 import edu.hcmute.exception.UserException;
-import edu.hcmute.model.User;
 import edu.hcmute.util.OutboundUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

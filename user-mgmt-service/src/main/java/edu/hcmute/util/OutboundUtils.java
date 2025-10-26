@@ -1,6 +1,6 @@
 package edu.hcmute.util;
 
-import edu.hcmute.model.User;
+import edu.hcmute.entity.User;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;

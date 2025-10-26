@@ -3,7 +3,7 @@ package edu.hcmute.service;
 import edu.hcmute.dto.CoverageTypeDto;
 import edu.hcmute.dto.PerilTypeDto;
 import edu.hcmute.dto.PolicyTypeDto;
-import edu.hcmute.model.PolicyType;
+import edu.hcmute.entity.PolicyType;
 import edu.hcmute.repo.PolicyTypeRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
