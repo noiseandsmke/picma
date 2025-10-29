@@ -11,6 +11,6 @@ public class PolicyType {
     private Integer id;
     @Column(nullable = false, unique = true)
     private String type;
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     private CoverageType coverageType;
 }

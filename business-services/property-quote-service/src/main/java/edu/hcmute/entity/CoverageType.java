@@ -15,7 +15,7 @@ public class CoverageType {
     @Column(nullable = false, unique = true)
     private String type;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "coverage_peril_type",
             joinColumns = @JoinColumn(name = "coverage_type_id"),
