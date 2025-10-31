@@ -9,5 +9,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    properties:
+      org:
+        hibernate:
+          envers:
 server:
-  port: 7101
+  port: 7102

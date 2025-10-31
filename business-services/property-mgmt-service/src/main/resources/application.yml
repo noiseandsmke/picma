@@ -8,7 +8,7 @@ spring:
       port: ${PROPERTIES_PORT:27017}
       auto-index-creation: true
 server:
-  port: 7100
+  port: 7101
 properties:
   management:
     collection:
