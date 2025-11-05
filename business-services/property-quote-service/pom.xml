@@ -73,6 +73,11 @@
             <version>2.2.36</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-envers</artifactId>
+            <version>6.6.33.Final</version>
+        </dependency>
     </dependencies>
 
     <build>

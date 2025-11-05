@@ -22,14 +22,14 @@ public class CoverageTypeServiceTest extends PropertyQuoteServiceApplicationTest
 
     @BeforeEach
     public void init() {
-        PerilType firePeril = perilTypeRepo.findById(1)
+        PerilType firePeril = perilTypeRepo.findById(4)
                 .orElseThrow(() -> new RuntimeException("Fire PerilType not found with id 1"));
 
         PerilType typhoonPeril = perilTypeRepo.findById(3)
                 .orElseThrow(() -> new RuntimeException("Typhoon PerilType not found with id 2"));
 
         coverageTypeDto = new CoverageTypeDto();
-        coverageTypeDto.setType("Premium");
+        coverageTypeDto.setType("Platinum");
 
         PerilTypeDto firePerilDto = new PerilTypeDto();
         firePerilDto.setId(firePeril.getId());

@@ -1,0 +1,129 @@
+package edu.hcmute.service;
+
+import edu.hcmute.dto.*;
+import edu.hcmute.entity.PropertyLead;
+import edu.hcmute.entity.PropertyLeadDetail;
+import edu.hcmute.entity.PropertyQuote;
+import edu.hcmute.entity.PropertyQuoteDetail;
+import edu.hcmute.repo.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailService {
+    private final PropertyQuoteDetailRepo propertyQuoteDetailRepo;
+    private final PropertyQuoteRepo propertyQuoteRepo;
+    private final QuoteTypeRepo quoteTypeRepo;
+    private final CoverageTypeRepo coverageTypeRepo;
+    private final PolicyTypeRepo policyTypeRepo;
+    private final PropertyLeadRepo propertyLeadRepo;
+    private final PropertyLeadDetailRepo propertyLeadDetailRepo;
+    private final ModelMapper modelMapper;
+
+    @Override
+    @Transactional
+    public PropertyQuoteDetailDto createPropertyQuoteDetail(PropertyQuoteDetailDto propertyQuoteDetailDto) {
+        log.info("### Create PropertyQuote ###");
+        log.info("PropertyQuoteDetailDto: {}", propertyQuoteDetailDto.toString());
+        try {
+            PropertyQuoteDetail propertyQuoteDetail = mapDtoToEntity(propertyQuoteDetailDto);
+            propertyQuoteDetail = propertyQuoteDetailRepo.save(propertyQuoteDetail);
+            log.info("PropertyQuote saved with id: {}", propertyQuoteDetail.getId());
+
+            PropertyLead propertyLead = PropertyLead.builder()
+                    .userInfo(propertyQuoteDetail.getPropertyQuote().getUserInfo())
+                    .propertyInfo(propertyQuoteDetail.getPropertyQuote().getPropertyInfo())
+                    .status("ACTIVE").build();
+            propertyLeadRepo.save(propertyLead);
+            PropertyLeadDetail propertyLeadDetail = new PropertyLeadDetail();
+            propertyLeadDetail.setPropertyLead(propertyLead);
+            propertyLeadDetail.setPropertyQuote(propertyQuoteDetail.getPropertyQuote());
+            propertyLeadDetailRepo.save(propertyLeadDetail);
+
+            return mapEntityToDto(propertyQuoteDetail);
+        } catch (Exception e) {
+            log.error("Error creating PropertyQuote: {}", e.getMessage(), e);
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PropertyQuoteDetailDto getPropertyQuoteDetailById(Integer id) {
+        log.info("### Get PropertyQuote by Id ###");
+        log.info("PropertyQuoteDetailDto id: {}", id);
+        PropertyQuoteDetail propertyQuoteDetail = propertyQuoteDetailRepo.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("No PropertyQuote found with id: {}", id);
+                    return new RuntimeException("No PropertyQuote found with id: " + id);
+                });
+        return mapEntityToDto(propertyQuoteDetail);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PropertyQuoteDetailDto> getAllPropertyQuoteDetail() {
+        log.info("### Get All PropertyQuotes ###");
+        List<PropertyQuoteDetail> propertyQuoteDetailList = propertyQuoteDetailRepo.findAll();
+        if (propertyQuoteDetailList.isEmpty()) {
+            log.warn("No PropertyQuotes found in database");
+            throw new RuntimeException("No PropertyQuotes found in database");
+        }
+        log.info("Found {} PropertyQuotes", propertyQuoteDetailList.size());
+        return propertyQuoteDetailList.stream()
+                .map(this::mapEntityToDto)
+                .toList();
+    }
+
+    private PropertyQuoteDetailDto mapEntityToDto(PropertyQuoteDetail propertyQuoteDetail) {
+        PropertyQuoteDetailDto propertyQuoteDetailDto = new PropertyQuoteDetailDto();
+        propertyQuoteDetailDto.setId(propertyQuoteDetail.getId());
+        if (propertyQuoteDetail.getPropertyQuote() != null) {
+            propertyQuoteDetailDto.setPropertyQuoteDto(modelMapper.map(propertyQuoteDetail.getPropertyQuote(), PropertyQuoteDto.class));
+        }
+        if (propertyQuoteDetail.getQuoteType() != null) {
+            propertyQuoteDetailDto.setQuoteTypeDto(modelMapper.map(propertyQuoteDetail.getQuoteType(), QuoteTypeDto.class));
+        }
+        if (propertyQuoteDetail.getCoverageType() != null) {
+            propertyQuoteDetailDto.setCoverageTypeDto(modelMapper.map(propertyQuoteDetail.getCoverageType(), CoverageTypeDto.class));
+        }
+        if (propertyQuoteDetail.getPolicyType() != null) {
+            propertyQuoteDetailDto.setPolicyTypeDto(modelMapper.map(propertyQuoteDetail.getPolicyType(), PolicyTypeDto.class));
+        }
+        return propertyQuoteDetailDto;
+    }
+
+    private PropertyQuoteDetail mapDtoToEntity(PropertyQuoteDetailDto propertyQuoteDetailDto) {
+        PropertyQuoteDetail propertyQuoteDetail = new PropertyQuoteDetail();
+        if (propertyQuoteDetailDto.getPropertyQuoteDto() != null) {
+            if (propertyQuoteDetailDto.getPropertyQuoteDto().getId() != null) {
+                propertyQuoteDetail.setPropertyQuote(propertyQuoteRepo.findById(propertyQuoteDetailDto
+                        .getPropertyQuoteDto().getId()).orElseThrow(() -> new RuntimeException("PropertyInfo not found")));
+            } else {
+                PropertyQuote propertyQuote = modelMapper.map(propertyQuoteDetailDto.getPropertyQuoteDto(), PropertyQuote.class);
+                propertyQuote = propertyQuoteRepo.save(propertyQuote);
+                propertyQuoteDetail.setPropertyQuote(propertyQuote);
+            }
+        }
+        if (propertyQuoteDetailDto.getQuoteTypeDto() != null && propertyQuoteDetailDto.getQuoteTypeDto().getId() != null) {
+            propertyQuoteDetail.setQuoteType(quoteTypeRepo.findById(propertyQuoteDetailDto.getQuoteTypeDto().getId())
+                    .orElseThrow(() -> new RuntimeException("QuoteType not found")));
+        }
+        if (propertyQuoteDetailDto.getCoverageTypeDto() != null && propertyQuoteDetailDto.getCoverageTypeDto().getId() != null) {
+            propertyQuoteDetail.setCoverageType(coverageTypeRepo.findById(propertyQuoteDetailDto.getCoverageTypeDto().getId())
+                    .orElseThrow(() -> new RuntimeException("CoverageType not found")));
+        }
+        if (propertyQuoteDetailDto.getPolicyTypeDto() != null && propertyQuoteDetailDto.getPolicyTypeDto().getId() != null) {
+            propertyQuoteDetail.setPolicyType(policyTypeRepo.findById(propertyQuoteDetailDto.getPolicyTypeDto().getId())
+                    .orElseThrow(() -> new RuntimeException("PolicyType not found")));
+        }
+        return propertyQuoteDetail;
+    }
+}
