@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: property-lead-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5435}/${DB_NAME:property_quote_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      org:
+        hibernate:
+          envers:
+            audit_table_suffix:
+            audit_table_prefix: AU_
+            revision_field_name: REV_ID
+            revision_type_field_name: REV_TYPE
+            store_data_at_delete: true
+server:
+  port: 7103
