@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Date;
 
 @Data
 @Builder
@@ -15,4 +16,6 @@ public class PropertyLeadDto implements Serializable {
     private String userInfo;
     private String propertyInfo;
     private String status;
+    private Date startDate;
+    private Date expiryDate;
 }

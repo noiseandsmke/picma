@@ -29,6 +29,6 @@ public class PropertyLead extends Auditable {
     private String userInfo;
     private String propertyInfo;
     private String status;
-    private Date validFrom;
-    private Date validTo;
+    private Date startDate;
+    private Date expiryDate;
 }

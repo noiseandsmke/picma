@@ -1,5 +1,6 @@
 package edu.hcmute.audit;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
@@ -17,10 +18,11 @@ import java.util.Date;
 @Data
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
+@JsonIgnoreProperties(value = {"createdAt", "updatedAt", "createdBy", "modifiedBy"}, allowGetters = true)
 public abstract class Auditable implements Serializable {
     @Serial
     private static final long serialVersionUID = -1711146978707808074L;
-    
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private Date createdAt;
