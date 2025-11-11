@@ -10,7 +10,7 @@ import org.hibernate.envers.AuditTable;
 import org.hibernate.envers.Audited;
 
 import java.io.Serial;
-import java.util.Date;
+import java.time.Instant;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -29,6 +29,6 @@ public class PropertyLead extends Auditable {
     private String userInfo;
     private String propertyInfo;
     private String status;
-    private Date startDate;
-    private Date expiryDate;
+    private Instant startDate;
+    private Instant expiryDate;
 }
