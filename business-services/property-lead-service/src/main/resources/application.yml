@@ -9,14 +9,14 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    properties:
-      org:
-        hibernate:
-          envers:
-            audit_table_suffix:
-            audit_table_prefix: AU_
-            revision_field_name: REV_ID
-            revision_type_field_name: REV_TYPE
-            store_data_at_delete: true
+#    properties:
+#      org:
+#        hibernate:
+#          envers:
+#            audit_table_suffix:
+#            audit_table_prefix: AU_
+#            revision_field_name: REV_ID
+#            revision_type_field_name: REV_TYPE
+#            store_data_at_delete: true
 server:
   port: 7103
