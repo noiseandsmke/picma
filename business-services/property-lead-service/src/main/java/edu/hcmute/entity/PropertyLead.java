@@ -22,7 +22,7 @@ import java.time.Instant;
 @AuditTable(value = "AU_PROPERTY_LEAD")
 public class PropertyLead extends Auditable {
     @Serial
-    private static final long serialVersionUID = 9021889328077473363L;
+    private static final long serialVersionUID = 3643158305653966965L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
