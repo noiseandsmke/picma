@@ -1,37 +1,25 @@
 package edu.hcmute.audit;
 
-import jakarta.persistence.Column;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Date;
+import java.time.Instant;
 
 @Data
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
+@JsonIgnoreProperties(value = {"createdAt", "updatedAt", "createdBy", "modifiedBy"}, allowGetters = true)
 public abstract class Auditable implements Serializable {
     @Serial
     private static final long serialVersionUID = -1711146978707808074L;
-    
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private Date createdAt;
 
-    @LastModifiedDate
-    private Date updatedAt;
-
-    @CreatedBy
-    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
+    private Instant updatedAt;
     private String createdBy;
-
-    @LastModifiedBy
     private String modifiedBy;
 }
