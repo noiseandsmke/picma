@@ -13,13 +13,13 @@ import java.time.Instant;
 @Data
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-@JsonIgnoreProperties(value = {"createdAt", "updatedAt", "createdBy", "modifiedBy"}, allowGetters = true)
+@JsonIgnoreProperties(value = {"createdAt", "modifiedAt", "createdBy", "modifiedBy"}, allowGetters = true)
 public abstract class Auditable implements Serializable {
     @Serial
     private static final long serialVersionUID = -1711146978707808074L;
 
     private Instant createdAt;
-    private Instant updatedAt;
+    private Instant modifiedAt;
     private String createdBy;
     private String modifiedBy;
 }
