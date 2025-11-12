@@ -1,5 +1,6 @@
 package edu.hcmute.service;
 
+import edu.hcmute.domain.LeadStatus;
 import edu.hcmute.dto.PropertyLeadDto;
 import edu.hcmute.entity.PropertyLead;
 import edu.hcmute.entity.PropertyLeadDetail;
@@ -12,6 +13,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
@@ -25,8 +27,37 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
     private final ModelMapper modelMapper;
 
     @Override
+    @Transactional
     public PropertyLeadDto createOrUpdatePropertyLead(PropertyLeadDto propertyLeadDto) {
-        return null;
+        log.info("### Create or Update PropertyLead ###");
+        try {
+            PropertyLead propertyLead;
+            if (propertyLeadDto.getId() != null) {
+                propertyLead = propertyLeadRepo.findById(propertyLeadDto.getId())
+                        .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + propertyLeadDto.getId()));
+                log.info("Updating existing PropertyLead with id: {}", propertyLeadDto.getId());
+                propertyLead.setModifiedBy("noiseandsmke");
+                propertyLead.setModifiedAt(Instant.now());
+            } else {
+                propertyLead = new PropertyLead();
+                propertyLead.setCreatedBy("noiseandsmke");
+                propertyLead.setCreatedAt(Instant.now());
+                propertyLead.setModifiedBy("noiseandsmke");
+                propertyLead.setModifiedAt(Instant.now());
+                log.info("Creating new PropertyLead");
+            }
+            propertyLead.setUserInfo(propertyLeadDto.getUserInfo());
+            propertyLead.setPropertyInfo(propertyLeadDto.getPropertyInfo());
+            propertyLead.setStatus(propertyLeadDto.getStatus() != null ? propertyLeadDto.getStatus() : LeadStatus.ACTIVE.name());
+            propertyLead.setStartDate(propertyLeadDto.getStartDate() != null ? propertyLeadDto.getStartDate() : LocalDate.now());
+            propertyLead.setExpiryDate(propertyLeadDto.getExpiryDate() != null ? propertyLeadDto.getExpiryDate() : LocalDate.now().plusDays(30));
+            propertyLead = propertyLeadRepo.save(propertyLead);
+            log.info("PropertyLead saved with id: {}", propertyLead.getId());
+            return modelMapper.map(propertyLead, PropertyLeadDto.class);
+        } catch (Exception e) {
+            log.error("Error creating or updating PropertyLead: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to create or update PropertyLead: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -84,13 +115,84 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PropertyLeadDto getPropertyLeadById(Integer leadId) {
+        log.info("### Get PropertyLead by Id = {} ###", leadId);
+        PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
+                .orElseThrow(() -> {
+                    log.warn("No PropertyLead found with id: {}", leadId);
+                    return new RuntimeException("No PropertyLead found with id: " + leadId);
+                });
+
+        log.info("Found PropertyLead: {}", propertyLead);
+        return modelMapper.map(propertyLead, PropertyLeadDto.class);
+    }
+
+    @Override
+    public PropertyLeadDto updateLeadStatus(Integer leadId, String status) {
+        log.info("### Updating lead status for leadId = {} to status = {} ###", leadId, status);
+        try {
+            // Validate status
+            LeadStatus newStatus;
+            try {
+                newStatus = LeadStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid status: " + status + ". Valid statuses are: " +
+                        String.join(", ", java.util.Arrays.stream(LeadStatus.values())
+                                .map(Enum::name).toArray(String[]::new)));
+            }
+            PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
+                    .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + leadId));
+            if (LeadStatus.ACTIVE.name().equalsIgnoreCase(propertyLead.getStatus())
+                    && LeadStatus.ACCEPTED.name().equals(newStatus.name())) {
+                propertyLead.setStatus(newStatus.name());
+                propertyLead.setModifiedBy("noiseandsmke");
+                propertyLead.setModifiedAt(Instant.now());
+                propertyLead = propertyLeadRepo.save(propertyLead);
+                log.info("Updated PropertyLead status to: {}", newStatus.name());
+            } else {
+                throw new RuntimeException("Cannot update lead status. Lead must be ACTIVE to be ACCEPTED. Current status: " + propertyLead.getStatus());
+            }
+            return modelMapper.map(propertyLead, PropertyLeadDto.class);
+        } catch (Exception e) {
+            log.error("Error updating lead status: {}", e.getMessage(), e);
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @Override
     public List<PropertyLeadDto> findAllPropertyLeads() {
-        return List.of();
+        log.info("### Get All PropertyLeads ###");
+        List<PropertyLead> propertyLeadList = propertyLeadRepo.findAll().stream()
+                .filter(lead -> LeadStatus.ACTIVE.name().equalsIgnoreCase(lead.getStatus()))
+                .toList();
+        if (propertyLeadList.isEmpty()) {
+            log.warn("No active PropertyLeads found in database");
+            return List.of();
+        }
+        log.info("Found {} active PropertyLeads", propertyLeadList.size());
+        return propertyLeadList.stream()
+                .map(lead -> modelMapper.map(lead, PropertyLeadDto.class))
+                .toList();
     }
 
     @Override
     public List<PropertyLeadDto> findPropertyLeadsByStatus(String status) {
-        return List.of();
+        log.info("### Get PropertyLeads by status = {} ###", status);
+        try {
+            LeadStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid status: " + status);
+        }
+        List<PropertyLead> propertyLeadList = propertyLeadRepo.findByStatus(status.toUpperCase());
+        if (propertyLeadList.isEmpty()) {
+            log.warn("No PropertyLeads found with status: {}", status);
+            return List.of();
+        }
+        log.info("Found {} PropertyLeads with status: {}", propertyLeadList.size(), status);
+        return propertyLeadList.stream()
+                .map(lead -> modelMapper.map(lead, PropertyLeadDto.class))
+                .toList();
     }
 
     @Override
@@ -104,7 +206,22 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
     }
 
     @Override
-    public PropertyLeadDto deletePropertyLeadById(Integer leadId) {
-        return null;
+    public List<PropertyLeadDto> deletePropertyLeadById(Integer leadId) {
+        log.info("### Delete PropertyLead by id = {} ###", leadId);
+        try {
+            List<PropertyLeadDetail> leadDetailList = propertyLeadDetailRepo.findAll().stream()
+                    .filter(detail -> detail.getPropertyLead() != null && detail.getPropertyLead().getId().equals(leadId))
+                    .toList();
+            if (!leadDetailList.isEmpty()) {
+                propertyLeadDetailRepo.deleteAll(leadDetailList);
+                log.info("Deleted {} PropertyLeadDetail records", leadDetailList.size());
+            }
+            propertyLeadRepo.deleteById(leadId);
+            log.info("Deleted PropertyLead with id: {}", leadId);
+            return findAllPropertyLeads();
+        } catch (Exception e) {
+            log.error("Error deleting PropertyLead: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to delete PropertyLead: " + e.getMessage(), e);
+        }
     }
 }

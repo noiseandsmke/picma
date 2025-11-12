@@ -9,6 +9,10 @@ public interface PropertyLeadService {
 
     PropertyLeadDto createPropertyLeadByQuote(Integer quoteId);
 
+    PropertyLeadDto getPropertyLeadById(Integer leadId);
+
+    PropertyLeadDto updateLeadStatus(Integer leadId, String status);
+
     List<PropertyLeadDto> findAllPropertyLeads();
 
     List<PropertyLeadDto> findPropertyLeadsByStatus(String status);
@@ -17,5 +21,5 @@ public interface PropertyLeadService {
 
     List<PropertyLeadDto> findPropertyLeadsOfAgent(Integer agentId);
 
-    PropertyLeadDto deletePropertyLeadById(Integer leadId);
+    List<PropertyLeadDto> deletePropertyLeadById(Integer leadId);
 }
