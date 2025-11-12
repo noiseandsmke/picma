@@ -1,16 +1,13 @@
 package edu.hcmute.entity;
 
 import edu.hcmute.audit.Auditable;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.envers.AuditTable;
 import org.hibernate.envers.Audited;
 
 import java.io.Serial;
-import java.time.Instant;
+import java.time.LocalDate;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -29,6 +26,9 @@ public class PropertyLead extends Auditable {
     private String userInfo;
     private String propertyInfo;
     private String status;
-    private Instant startDate;
-    private Instant expiryDate;
+
+    @Temporal(TemporalType.DATE)
+    private LocalDate startDate;
+    @Temporal(TemporalType.DATE)
+    private LocalDate expiryDate;
 }

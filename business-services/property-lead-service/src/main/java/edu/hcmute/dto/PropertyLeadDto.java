@@ -1,14 +1,18 @@
 package edu.hcmute.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PropertyLeadDto implements Serializable {
     @Serial
     private static final long serialVersionUID = -1738411917471044843L;
@@ -16,6 +20,6 @@ public class PropertyLeadDto implements Serializable {
     private String userInfo;
     private String propertyInfo;
     private String status;
-    private Date startDate;
-    private Date expiryDate;
+    private LocalDate startDate;
+    private LocalDate expiryDate;
 }

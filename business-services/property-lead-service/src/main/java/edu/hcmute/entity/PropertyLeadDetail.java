@@ -5,14 +5,15 @@ import lombok.Data;
 
 @Entity
 @Data
+@Table
 public class PropertyLeadDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private PropertyLead propertyLead;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private PropertyQuote propertyQuote;
 }
