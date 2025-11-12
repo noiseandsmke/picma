@@ -12,6 +12,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -34,14 +36,32 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
         log.info("PropertyQuoteDetailDto: {}", propertyQuoteDetailDto.toString());
         try {
             PropertyQuoteDetail propertyQuoteDetail = mapDtoToEntity(propertyQuoteDetailDto);
+            propertyQuoteDetail.getPropertyQuote().setCreateDate(LocalDate.now());
+            propertyQuoteDetail.getPropertyQuote().setExpiryDate(LocalDate.now().plusDays(60));
+            propertyQuoteDetail.getPropertyQuote().setCreatedBy("noiseandsmke");
+            propertyQuoteDetail.getPropertyQuote().setModifiedBy("noiseandsmke");
             propertyQuoteDetail = propertyQuoteDetailRepo.save(propertyQuoteDetail);
-            log.info("PropertyQuote saved with id: {}", propertyQuoteDetail.getId());
+            log.info("PropertyQuoteDetail saved with id: {}", propertyQuoteDetail.getId());
+
+            LocalDate leadExpiryDate = LocalDate.now().plusDays(30);
+            if (leadExpiryDate.isAfter(propertyQuoteDetail.getPropertyQuote().getExpiryDate())) {
+                leadExpiryDate = propertyQuoteDetail.getPropertyQuote().getExpiryDate();
+            }
 
             PropertyLead propertyLead = PropertyLead.builder()
                     .userInfo(propertyQuoteDetail.getPropertyQuote().getUserInfo())
                     .propertyInfo(propertyQuoteDetail.getPropertyQuote().getPropertyInfo())
-                    .status("ACTIVE").build();
-            propertyLeadRepo.save(propertyLead);
+                    .status("ACTIVE")
+                    .startDate(LocalDate.now())
+                    .expiryDate(leadExpiryDate)
+                    .build();
+            propertyLead.setCreatedBy("noiseandsmke");
+            propertyLead.setCreatedAt(Instant.now());
+            propertyLead.setModifiedBy("noiseandsmke");
+            propertyLead.setModifiedAt(Instant.now());
+
+            propertyLead = propertyLeadRepo.save(propertyLead);
+
             PropertyLeadDetail propertyLeadDetail = new PropertyLeadDetail();
             propertyLeadDetail.setPropertyLead(propertyLead);
             propertyLeadDetail.setPropertyQuote(propertyQuoteDetail.getPropertyQuote());
@@ -105,10 +125,17 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
         if (propertyQuoteDetailDto.getPropertyQuoteDto() != null) {
             if (propertyQuoteDetailDto.getPropertyQuoteDto().getId() != null) {
                 propertyQuoteDetail.setPropertyQuote(propertyQuoteRepo.findById(propertyQuoteDetailDto
-                        .getPropertyQuoteDto().getId()).orElseThrow(() -> new RuntimeException("PropertyInfo not found")));
+                                .getPropertyQuoteDto().getId())
+                        .orElseThrow(() -> new RuntimeException("PropertyInfo not found")));
             } else {
-                PropertyQuote propertyQuote = modelMapper.map(propertyQuoteDetailDto.getPropertyQuoteDto(), PropertyQuote.class);
+                PropertyQuote propertyQuote = new PropertyQuote();
+                propertyQuote.setUserInfo(String.valueOf(propertyQuoteDetailDto.getPropertyQuoteDto().getUserInfo()));
+                propertyQuote.setPropertyInfo(String.valueOf(propertyQuoteDetailDto.getPropertyQuoteDto().getPropertyInfo()));
+                propertyQuote.setCreateDate(LocalDate.now());
+                propertyQuote.setExpiryDate(LocalDate.now().plusDays(30));
+
                 propertyQuote = propertyQuoteRepo.save(propertyQuote);
+                log.info("PropertyQuote saved with id: {}", propertyQuote.getId());
                 propertyQuoteDetail.setPropertyQuote(propertyQuote);
             }
         }

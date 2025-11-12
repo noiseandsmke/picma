@@ -6,7 +6,6 @@ import edu.hcmute.repo.*;
 import edu.hcmute.service.PropertyQuoteDetailService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -29,7 +28,7 @@ public class PropertyQuoteDetailServiceTest extends PropertyQuoteServiceApplicat
     public void init() {
         propertyQuoteDetailDto = new PropertyQuoteDetailDto();
 
-        PropertyQuote propertyQuote = propertyQuoteRepo.findById(4)
+        PropertyQuote propertyQuote = propertyQuoteRepo.findById(1)
                 .orElseThrow(() -> new RuntimeException("Not found property info"));
         PropertyQuoteDto propertyQuoteDto = new PropertyQuoteDto();
         propertyQuoteDto.setId(propertyQuote.getId());
@@ -62,7 +61,6 @@ public class PropertyQuoteDetailServiceTest extends PropertyQuoteServiceApplicat
         propertyQuoteDetailDto.setPolicyTypeDto(policyTypeDto);
     }
 
-    @Disabled
     @Test
     void createPropertyQuoteTest() {
         PropertyQuoteDetailDto savedPropertyQuoteDetailDto = propertyQuoteDetailService.createPropertyQuoteDetail(propertyQuoteDetailDto);

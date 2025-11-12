@@ -15,8 +15,8 @@ public class PropertyQuoteServiceTest extends PropertyQuoteServiceApplicationTes
     @BeforeEach
     public void init() {
         propertyQuoteDto = new PropertyQuoteDto();
-        propertyQuoteDto.setUserInfo("Quynh Nhu");
-        propertyQuoteDto.setPropertyInfo("Vision 2023");
+        propertyQuoteDto.setUserInfo("Duc Huy");
+        propertyQuoteDto.setPropertyInfo("Honda Blade 110");
     }
 
     @Test
