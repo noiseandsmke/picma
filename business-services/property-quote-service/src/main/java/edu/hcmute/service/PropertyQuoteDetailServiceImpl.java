@@ -5,6 +5,7 @@ import edu.hcmute.entity.PropertyLead;
 import edu.hcmute.entity.PropertyLeadDetail;
 import edu.hcmute.entity.PropertyQuote;
 import edu.hcmute.entity.PropertyQuoteDetail;
+import edu.hcmute.event.PropertyLeadProducer;
 import edu.hcmute.repo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
     private final PolicyTypeRepo policyTypeRepo;
     private final PropertyLeadRepo propertyLeadRepo;
     private final PropertyLeadDetailRepo propertyLeadDetailRepo;
+    private final PropertyLeadProducer leadProducer;
     private final ModelMapper modelMapper;
 
     @Override
@@ -59,7 +61,6 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
             propertyLead.setCreatedAt(Instant.now());
             propertyLead.setModifiedBy("noiseandsmke");
             propertyLead.setModifiedAt(Instant.now());
-
             propertyLead = propertyLeadRepo.save(propertyLead);
 
             PropertyLeadDetail propertyLeadDetail = new PropertyLeadDetail();
@@ -67,6 +68,10 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
             propertyLeadDetail.setPropertyQuote(propertyQuoteDetail.getPropertyQuote());
             propertyLeadDetailRepo.save(propertyLeadDetail);
 
+            if (propertyLead.getId() > 0 && propertyLeadDetail.getId() > 0) {
+                boolean isLeadSent = leadProducer.produceLead(propertyLead);
+                log.info("Lead sent {}", isLeadSent ? "successful" : "failed");
+            }
             return mapEntityToDto(propertyQuoteDetail);
         } catch (Exception e) {
             log.error("Error creating PropertyQuote: {}", e.getMessage(), e);
