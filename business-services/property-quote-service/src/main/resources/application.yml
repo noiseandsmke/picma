@@ -18,5 +18,18 @@ spring:
             revision_field_name: rev_id
             revision_type_field_name: rev_type
             store_data_at_delete: true
+  kafka:
+    bootstrap-servers: ${BROKER_HOST:localhost}:${BROKER_PORT:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 server:
   port: 7102
+picma:
+  properties:
+    quote:
+      expiry: ${QUOTE_EXPIRY_DAYS:60}
+    lead:
+      expiry: ${LEAD_EXPIRY_DAYS:30}
+      topic: ${LEADS_TOPIC_NAME:property-lead}
+      partitions: ${LEADS_TOPIC_PARTITIONS:1}
