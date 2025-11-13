@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: property-agent-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5435}/${DB_NAME:picma_users}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin}
+  jpa:
+    hibernate:
+      ddl-auto: update
+  kafka:
+    consumer:
+      bootstrap-servers: ${BROKER_HOST:localhost}:${BROKER_PORT:9092}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: lead-group
+
+server:
+  port: 7104
+picma:
+  properties:
+    lead:
+      topic: ${LEADS_TOPIC_NAME:property-lead}
+      partitions: ${LEADS_TOPIC_PARTITIONS:1}
