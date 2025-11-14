@@ -23,3 +23,5 @@ picma:
     lead:
       topic: ${LEADS_TOPIC_NAME:property-lead}
       partitions: ${LEADS_TOPIC_PARTITIONS:1}
+    management:
+      base-uri: http://${PROPERTY_MGMT_HOST:localhost}:${PROPERTY_MGMT_PORT:7101}
