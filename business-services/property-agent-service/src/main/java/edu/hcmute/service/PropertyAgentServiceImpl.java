@@ -21,7 +21,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<String> fetchAgentWithinZipCode(String propertyId) {
+    public List<String> fetchAgentWithinZipCode(String propertyId, int leadId) {
         try {
             log.info("### Fetching agent within zip code: {} ###", propertyId);
             String propertyInfo = propertyInfoFeignClient.getPropertyInfoById(propertyId);

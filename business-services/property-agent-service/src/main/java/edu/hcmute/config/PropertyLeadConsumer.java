@@ -23,7 +23,7 @@ public class PropertyLeadConsumer {
         try {
             PropertyLead propertyLead = objectMapper.readValue(value.getBytes(), PropertyLead.class);
             log.info("Received lead: {}", propertyLead);
-            propertyAgentService.fetchAgentWithinZipCode(propertyLead.getPropertyInfo());
+            propertyAgentService.fetchAgentWithinZipCode(propertyLead.getPropertyInfo(), propertyLead.getId());
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
         }
