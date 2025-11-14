@@ -2,6 +2,7 @@ package edu.hcmute.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.hcmute.entity.PropertyLead;
+import edu.hcmute.service.PropertyAgentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PropertyLeadConsumer {
     private final ObjectMapper objectMapper;
+    private final PropertyAgentService propertyAgentService;
 
     @KafkaListener(topics = "${picma.properties.lead.topic}")
     public void receiveLead(ConsumerRecord<String, String> record) {
@@ -21,9 +23,7 @@ public class PropertyLeadConsumer {
         try {
             PropertyLead propertyLead = objectMapper.readValue(value.getBytes(), PropertyLead.class);
             log.info("Received lead: {}", propertyLead);
-            // TODO: 1 - call property-info-api => address info
-            // TODO: 2 - pull all agents within zipcode as property lead
-            // TODO: 3 - send notification to all agents with property lead
+            propertyAgentService.fetchAgentWithinZipCode(propertyLead.getPropertyInfo());
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
         }
