@@ -57,6 +57,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
                 List<String> agentIds = userAddressRepo.findUserIdsByZipCode(zipCode);
                 log.info("ZipCode = {}", zipCode);
                 log.info("### agentIds = {}", agentIds);
+                // TODO: send notification to all agents with lead information
                 return agentIds;
             } else {
                 log.warn("zipCode is null or empty, cannot fetch agents");
