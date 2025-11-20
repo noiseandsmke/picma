@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 @FeignClient(value = "property-lead-service", url = "${picma.properties.lead.base-uri}")
 public interface PropertyLeadFeignClient {
-    @PutMapping("/property-leads/{leadId}")
+    @PutMapping("/property-lead/{leadId}")
     String updateLeadActionById(@PathVariable Integer leadId, @RequestHeader String leadStatus);
 }

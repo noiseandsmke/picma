@@ -13,11 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/property-leads")
+@RequestMapping("/property-lead")
 @Slf4j
 @RequiredArgsConstructor
 public class PropertyLeadController {
-
     private final PropertyLeadService propertyLeadService;
 
     @PostMapping
@@ -36,7 +35,7 @@ public class PropertyLeadController {
     }
 
     @GetMapping("/{leadId}")
-    @Operation(description = "Get property lead by ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "get property lead by ID", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<PropertyLeadDto> getLeadById(@PathVariable Integer leadId) {
         log.info("### Get Lead by Id = {} ###", leadId);
         return ResponseEntity.ok(propertyLeadService.getPropertyLeadById(leadId));
@@ -51,9 +50,8 @@ public class PropertyLeadController {
 
     @GetMapping("/zipcode")
     @Operation(description = "get all property leads by zipcode", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<PropertyLeadDto>> getAllLeadsByZipCode(@RequestHeader Integer zipCode) {
+    public ResponseEntity<List<PropertyLeadDto>> getAllLeadsByZipCode(@RequestHeader String zipCode) {
         log.info("### get all property leads by zipcode = {} ###", zipCode);
-
         List<PropertyLeadDto> leadList = propertyLeadService.findPropertyLeadsByZipcode(zipCode);
         return ResponseEntity.ok(leadList);
     }
@@ -62,7 +60,6 @@ public class PropertyLeadController {
     @Operation(description = "get all property leads of an agent", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<List<PropertyLeadDto>> getLeadsByAgent(@PathVariable Integer agentId) {
         log.info("### get all property leads of an agent = {} ###", agentId);
-
         List<PropertyLeadDto> leadList = propertyLeadService.findPropertyLeadsOfAgent(agentId);
         return ResponseEntity.ok(leadList);
     }
@@ -87,7 +84,7 @@ public class PropertyLeadController {
 
     @DeleteMapping("/{leadId}")
     @Operation(description = "delete property lead by Id", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<PropertyLeadDto>> deleteLeadById(@PathVariable("leadId") Integer leadId) {
+    public ResponseEntity<List<PropertyLeadDto>> deleteLeadById(@PathVariable Integer leadId) {
         log.info("### delete property lead by Id = {} ###", leadId);
         List<PropertyLeadDto> remainingLeads = propertyLeadService.deletePropertyLeadById(leadId);
         return ResponseEntity.ok(remainingLeads);
