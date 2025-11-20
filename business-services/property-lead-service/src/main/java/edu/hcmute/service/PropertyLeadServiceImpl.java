@@ -132,32 +132,68 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
     public PropertyLeadDto updateLeadStatus(Integer leadId, String status) {
         log.info("### Updating lead status for leadId = {} to status = {} ###", leadId, status);
         try {
-            // Validate status
             LeadStatus newStatus;
             try {
                 newStatus = LeadStatus.valueOf(status.toUpperCase());
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid status: " + status + ". Valid statuses are: " +
+                throw new IllegalArgumentException("Invalid status: " + status + ". Valid statuses are: " +
                         String.join(", ", java.util.Arrays.stream(LeadStatus.values())
                                 .map(Enum::name).toArray(String[]::new)));
             }
+
             PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
                     .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + leadId));
-            if (LeadStatus.ACTIVE.name().equalsIgnoreCase(propertyLead.getStatus())
-                    && LeadStatus.ACCEPTED.name().equals(newStatus.name())) {
-                propertyLead.setStatus(newStatus.name());
-                propertyLead.setModifiedBy("noiseandsmke");
-                propertyLead.setModifiedAt(Instant.now());
-                propertyLead = propertyLeadRepo.save(propertyLead);
-                log.info("Updated PropertyLead status to: {}", newStatus.name());
-            } else {
-                throw new RuntimeException("Cannot update lead status. Lead must be ACTIVE to be ACCEPTED. Current status: " + propertyLead.getStatus());
-            }
+            LeadStatus currentStatus = LeadStatus.valueOf(propertyLead.getStatus());
+            validateStatusTransition(currentStatus, newStatus);
+
+            propertyLead.setStatus(newStatus.name());
+            propertyLead.setModifiedBy("noiseandsmke");
+            propertyLead.setModifiedAt(Instant.now());
+            propertyLead = propertyLeadRepo.save(propertyLead);
+            log.info("Successfully updated PropertyLead status from {} to {}", currentStatus.name(), newStatus.name());
             return modelMapper.map(propertyLead, PropertyLeadDto.class);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.error("Validation error updating lead status: {}", e.getMessage());
+            throw e;
         } catch (Exception e) {
             log.error("Error updating lead status: {}", e.getMessage(), e);
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("Failed to update lead status: " + e.getMessage(), e);
         }
+    }
+
+    private void validateStatusTransition(LeadStatus currentStatus, LeadStatus newStatus) {
+        if (currentStatus == newStatus) {
+            log.info("Status unchanged: {}", currentStatus.name());
+            return;
+        }
+        switch (currentStatus) {
+            case ACTIVE:
+                if (newStatus != LeadStatus.ACCEPTED && newStatus != LeadStatus.REJECTED && newStatus != LeadStatus.EXPIRED) {
+                    throw new IllegalStateException(
+                            String.format("Invalid status transition from %s to %s. " +
+                                            "ACTIVE leads can only be changed to ACCEPTED, REJECTED, or EXPIRED.",
+                                    currentStatus, newStatus));
+                }
+                break;
+            case ACCEPTED:
+                if (newStatus != LeadStatus.EXPIRED) {
+                    throw new IllegalStateException(
+                            String.format("Invalid status transition from %s to %s. " +
+                                            "ACCEPTED leads can only be changed to EXPIRED.",
+                                    currentStatus, newStatus));
+                }
+                break;
+            case REJECTED:
+            case EXPIRED:
+                throw new IllegalStateException(
+                        String.format("Cannot change status from %s to %s. " +
+                                        "%s is a final state and cannot be changed.",
+                                currentStatus, newStatus, currentStatus));
+            default:
+                throw new IllegalStateException(
+                        String.format("Unknown status: %s", currentStatus));
+        }
+        log.info("Status transition validated: {} -> {}", currentStatus.name(), newStatus.name());
     }
 
     @Override
