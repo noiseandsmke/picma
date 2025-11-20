@@ -26,3 +26,5 @@ picma:
       base-uri: http://${PROPERTY_LEAD_HOST:localhost}:${PROPERTY_LEAD_PORT:7103}
     management:
       base-uri: http://${PROPERTY_MGMT_HOST:localhost}:${PROPERTY_MGMT_PORT:7101}
+    notification:
+      base-uri: http://${PROPERTY_NOTI_HOST:localhost}:${PROPERTY_NOTI_PORT:7105}
