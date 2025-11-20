@@ -17,7 +17,7 @@ public interface PropertyLeadService {
 
     List<PropertyLeadDto> findPropertyLeadsByStatus(String status);
 
-    List<PropertyLeadDto> findPropertyLeadsByZipcode(Integer zipcode);
+    List<PropertyLeadDto> findPropertyLeadsByZipcode(String zipcode);
 
     List<PropertyLeadDto> findPropertyLeadsOfAgent(Integer agentId);
 
