@@ -3,9 +3,15 @@ package edu.hcmute.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.hcmute.config.PropertyInfoFeignClient;
+import edu.hcmute.config.PropertyLeadFeignClient;
+import edu.hcmute.domain.LeadAction;
+import edu.hcmute.dto.AgentLeadDto;
+import edu.hcmute.entity.AgentLead;
+import edu.hcmute.repo.AgentLeadRepo;
 import edu.hcmute.repo.UserAddressRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -17,8 +23,24 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PropertyAgentServiceImpl implements PropertyAgentService {
     private final PropertyInfoFeignClient propertyInfoFeignClient;
+    private final PropertyLeadFeignClient propertyLeadFeignClient;
     private final UserAddressRepo userAddressRepo;
+    private final AgentLeadRepo agentLeadRepo;
     private final ObjectMapper objectMapper;
+    private final ModelMapper modelMapper;
+
+    @Override
+    public AgentLeadDto updateLeadAction(AgentLeadDto agentLeadDto) {
+        log.info("AgentLeadDto: {}", agentLeadDto.toString());
+        LeadAction action = agentLeadDto.getLeadAction();
+        if (action.equals(LeadAction.ACCEPTED)) {
+            String updatedLeadAction = propertyLeadFeignClient.updateLeadActionById(agentLeadDto.getLeadId(), String.valueOf(agentLeadDto.getLeadAction()));
+            log.info("~~> leadAction updated: {}", updatedLeadAction);
+        }
+        AgentLead agentLead = modelMapper.map(agentLeadDto, AgentLead.class);
+        agentLeadRepo.save(agentLead);
+        return modelMapper.map(agentLead, AgentLeadDto.class);
+    }
 
     @Override
     public List<String> fetchAgentWithinZipCode(String propertyId, int leadId) {
