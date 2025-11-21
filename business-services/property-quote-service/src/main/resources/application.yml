@@ -34,5 +34,3 @@ picma:
       base-uri: http://${PROPERTY_MGMT_HOST:localhost}:${PROPERTY_MGMT_PORT:7101}
     agent:
       base-uri: http://${PROPERTY_AGENT_HOST:localhost}:${PROPERTY_AGENT_PORT:7104}
-  notifications:
-    topic: notification-topic
