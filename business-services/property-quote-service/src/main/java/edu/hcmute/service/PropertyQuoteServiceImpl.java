@@ -1,19 +1,12 @@
 package edu.hcmute.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.hcmute.config.PropertyAgentFeignClient;
-import edu.hcmute.config.PropertyMgmtFeignClient;
-import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.PropertyQuote;
-import edu.hcmute.event.NotificationProducer;
 import edu.hcmute.repo.PropertyQuoteRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -23,10 +16,6 @@ import java.util.List;
 public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     private final PropertyQuoteRepo repo;
     private final ModelMapper modelMapper;
-    private final PropertyMgmtFeignClient propertyMgmtFeignClient;
-    private final PropertyAgentFeignClient propertyAgentFeignClient;
-    private final NotificationProducer notificationProducer;
-    private final ObjectMapper objectMapper;
 
     @Override
     public PropertyQuoteDto createPropertyQuote(PropertyQuoteDto propertyQuoteDto) {
@@ -36,36 +25,6 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
             PropertyQuote propertyQuote = modelMapper.map(propertyQuoteDto, PropertyQuote.class);
             propertyQuote = repo.save(propertyQuote);
             log.info("PropertyQuote saved with id: {}", propertyQuote.getId());
-
-            if (StringUtils.hasText(propertyQuoteDto.getPropertyInfo())) {
-                String propertyId = propertyQuoteDto.getPropertyInfo();
-                try {
-                    String propertyJson = propertyMgmtFeignClient.getPropertyInfoById(propertyId);
-                    JsonNode jsonObj = objectMapper.readTree(propertyJson);
-
-                    String zipCode = null;
-                    if (jsonObj.has("propertyAddressDto")) {
-                        JsonNode addressObj = jsonObj.get("propertyAddressDto");
-                        if (addressObj.has("zipCode")) {
-                            zipCode = addressObj.get("zipCode").asText();
-                        }
-                    }
-
-                    if (StringUtils.hasText(zipCode)) {
-                        List<String> agentIds = propertyAgentFeignClient.getAgentsByZipCode(zipCode);
-                        for (String agentId : agentIds) {
-                            NotificationRequestDto notification = NotificationRequestDto.builder()
-                                    .recipientId(agentId)
-                                    .title("New Property Quote Request")
-                                    .message("A new quote request for property " + propertyId + " in your area (" + zipCode + "). Quote ID: " + propertyQuote.getId())
-                                    .build();
-                            notificationProducer.sendNotification(notification);
-                        }
-                    }
-                } catch (Exception e) {
-                    log.error("Error processing property agent notification: {}", e.getMessage());
-                }
-            }
             return mapModelToDto(propertyQuote);
         } catch (Exception e) {
             log.error("Error creating PropertyQuote: {}", e.getMessage(), e);
