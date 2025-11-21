@@ -17,7 +17,7 @@ public class PropertyAgentController {
 
     @PutMapping("/agent")
     public ResponseEntity<AgentLeadDto> updateLeadAction(@RequestBody AgentLeadDto agentLeadDto) {
-        log.info("Update Lead Action");
+        log.info("~~> update leadAction");
         return ResponseEntity.ok(propertyAgentService.updateLeadAction(agentLeadDto));
     }
 }
