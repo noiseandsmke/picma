@@ -1,8 +1,8 @@
 package edu.hcmute;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.hcmute.config.PropertyInfoFeignClient;
 import edu.hcmute.config.PropertyLeadFeignClient;
+import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.repo.AgentLeadRepo;
 import edu.hcmute.repo.UserAddressRepo;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class PropertyAgentServiceUnitTest {
     @Mock
-    private PropertyInfoFeignClient propertyInfoFeignClient;
+    private PropertyMgmtFeignClient propertyMgmtFeignClient;
 
     @Mock
     private PropertyLeadFeignClient propertyLeadFeignClient;
@@ -51,7 +51,7 @@ public class PropertyAgentServiceUnitTest {
     public void setUp() {
         ObjectMapper objectMapper = new ObjectMapper();
         propertyAgentService = new PropertyAgentServiceImpl(
-                propertyInfoFeignClient,
+                propertyMgmtFeignClient,
                 propertyLeadFeignClient,
                 notificationFeignClient,
                 userAddressRepo,
@@ -78,7 +78,7 @@ public class PropertyAgentServiceUnitTest {
                 }
                 """;
 
-        when(propertyInfoFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyInfoJson);
+        when(propertyMgmtFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyInfoJson);
 
         List<String> agentIds = Arrays.asList("101", "102", "103");
         when(userAddressRepo.findUserIdsByZipCode(zipCode)).thenReturn(agentIds);
@@ -128,7 +128,7 @@ public class PropertyAgentServiceUnitTest {
                 }
                 """;
 
-        when(propertyInfoFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyInfoJson);
+        when(propertyMgmtFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyInfoJson);
 
         List<String> agentIds = Arrays.asList("101", "invalid", "103");
         when(userAddressRepo.findUserIdsByZipCode(zipCode)).thenReturn(agentIds);
@@ -156,7 +156,7 @@ public class PropertyAgentServiceUnitTest {
                 }
                 """;
 
-        when(propertyInfoFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyInfoJson);
+        when(propertyMgmtFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyInfoJson);
 
         List<String> agentIds = Arrays.asList("101", "102");
         when(userAddressRepo.findUserIdsByZipCode(zipCode)).thenReturn(agentIds);
@@ -186,7 +186,7 @@ public class PropertyAgentServiceUnitTest {
                 }
                 """;
 
-        when(propertyInfoFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyInfoJson);
+        when(propertyMgmtFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyInfoJson);
 
         List<String> result = propertyAgentService.fetchAgentWithinZipCode(propertyId, leadId);
 
@@ -210,7 +210,7 @@ public class PropertyAgentServiceUnitTest {
                 }
                 """;
 
-        when(propertyInfoFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyInfoJson);
+        when(propertyMgmtFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyInfoJson);
         when(userAddressRepo.findUserIdsByZipCode(zipCode)).thenReturn(List.of());
 
         List<String> result = propertyAgentService.fetchAgentWithinZipCode(propertyId, leadId);

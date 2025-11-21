@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(value = "property-mgmt-service", url = "${picma.properties.management.base-uri}")
-public interface PropertyInfoFeignClient {
+public interface PropertyMgmtFeignClient {
     @GetMapping("/propertyInfo/{propertyId}")
     String getPropertyInfoById(@PathVariable String propertyId);
 }

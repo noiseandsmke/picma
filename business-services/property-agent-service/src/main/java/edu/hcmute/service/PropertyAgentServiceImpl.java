@@ -2,8 +2,8 @@ package edu.hcmute.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.hcmute.config.PropertyInfoFeignClient;
 import edu.hcmute.config.PropertyLeadFeignClient;
+import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.domain.LeadAction;
 import edu.hcmute.dto.AgentLeadDto;
 import edu.hcmute.dto.NotificationRequestDto;
@@ -27,7 +27,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class PropertyAgentServiceImpl implements PropertyAgentService {
-    private final PropertyInfoFeignClient propertyInfoFeignClient;
+    private final PropertyMgmtFeignClient propertyMgmtFeignClient;
     private final PropertyLeadFeignClient propertyLeadFeignClient;
     private final NotificationProducer notificationProducer;
     private final UserAddressRepo userAddressRepo;
@@ -111,7 +111,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     public List<String> fetchAgentWithinZipCode(String propertyId, int leadId) {
         try {
             log.info("### Fetching agent within zip code: {} ###", propertyId);
-            String propertyInfo = propertyInfoFeignClient.getPropertyInfoById(propertyId);
+            String propertyInfo = propertyMgmtFeignClient.getPropertyInfoById(propertyId);
             JsonNode jsonObj = objectMapper.readTree(propertyInfo);
             log.info("~~> calling property-info-api to get address-info");
 

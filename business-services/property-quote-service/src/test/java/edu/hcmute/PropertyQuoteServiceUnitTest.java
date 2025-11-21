@@ -1,10 +1,5 @@
 package edu.hcmute;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.hcmute.config.NotificationFeignClient;
-import edu.hcmute.config.PropertyAgentFeignClient;
-import edu.hcmute.config.PropertyMgmtFeignClient;
-import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.PropertyQuote;
 import edu.hcmute.repo.PropertyQuoteRepo;
@@ -12,7 +7,6 @@ import edu.hcmute.service.PropertyQuoteServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,33 +29,19 @@ public class PropertyQuoteServiceUnitTest {
     @Mock
     private ModelMapper modelMapper;
 
-    @Mock
-    private PropertyMgmtFeignClient propertyMgmtFeignClient;
-
-    @Mock
-    private PropertyAgentFeignClient propertyAgentFeignClient;
-
-    @Mock
-    private NotificationFeignClient notificationFeignClient;
-
     @InjectMocks
     private PropertyQuoteServiceImpl propertyQuoteService;
 
     @BeforeEach
     public void setUp() {
-        ObjectMapper objectMapper = new ObjectMapper();
         propertyQuoteService = new PropertyQuoteServiceImpl(
                 propertyQuoteRepo,
-                modelMapper,
-                propertyMgmtFeignClient,
-                propertyAgentFeignClient,
-                notificationFeignClient,
-                objectMapper
+                modelMapper
         );
     }
 
     @Test
-    public void testCreatePropertyQuote_SendsNotifications() {
+    public void testCreatePropertyQuote_Success() {
         PropertyQuoteDto inputDto = new PropertyQuoteDto();
         inputDto.setPropertyInfo("prop-123");
         inputDto.setUserInfo("user-1");
@@ -75,54 +55,9 @@ public class PropertyQuoteServiceUnitTest {
         when(propertyQuoteRepo.save(savedQuote)).thenReturn(savedQuote);
         when(modelMapper.map(savedQuote, PropertyQuoteDto.class)).thenReturn(inputDto);
 
-        String propertyInfoJson = """
-                {
-                    "id": "prop-123",
-                    "propertyAddressDto": {
-                        "zipCode": "90210"
-                    }
-                }
-                """;
-        when(propertyMgmtFeignClient.getPropertyInfoById("prop-123")).thenReturn(propertyInfoJson);
-
-        List<String> agentIds = Arrays.asList("101", "102");
-        when(propertyAgentFeignClient.getAgentsByZipCode("90210")).thenReturn(agentIds);
         PropertyQuoteDto result = propertyQuoteService.createPropertyQuote(inputDto);
         assertNotNull(result);
-        verify(notificationFeignClient, times(2)).createNotification(any(NotificationRequestDto.class));
-
-        ArgumentCaptor<NotificationRequestDto> captor = ArgumentCaptor.forClass(NotificationRequestDto.class);
-        verify(notificationFeignClient, times(2)).createNotification(captor.capture());
-
-        List<NotificationRequestDto> notifications = captor.getAllValues();
-        assertEquals("101", notifications.get(0).getRecipientId());
-        assertEquals("102", notifications.get(1).getRecipientId());
-        assertEquals("New Property Quote Request", notifications.get(0).getTitle());
-    }
-
-    @Test
-    public void testCreatePropertyQuote_NoZipCode_NoNotifications() {
-        PropertyQuoteDto inputDto = new PropertyQuoteDto();
-        inputDto.setPropertyInfo("prop-123");
-
-        PropertyQuote savedQuote = new PropertyQuote();
-        savedQuote.setId(10);
-        savedQuote.setPropertyInfo("prop-123");
-
-        when(modelMapper.map(inputDto, PropertyQuote.class)).thenReturn(savedQuote);
-        when(propertyQuoteRepo.save(savedQuote)).thenReturn(savedQuote);
-        when(modelMapper.map(savedQuote, PropertyQuoteDto.class)).thenReturn(inputDto);
-
-        String propertyInfoJson = """
-                {
-                    "id": "prop-123",
-                    "propertyAddressDto": {}
-                }
-                """;
-        when(propertyMgmtFeignClient.getPropertyInfoById("prop-123")).thenReturn(propertyInfoJson);
-        propertyQuoteService.createPropertyQuote(inputDto);
-        verify(propertyAgentFeignClient, never()).getAgentsByZipCode(any());
-        verify(notificationFeignClient, never()).createNotification(any());
+        verify(propertyQuoteRepo).save(savedQuote);
     }
 
     @Test
@@ -169,24 +104,4 @@ public class PropertyQuoteServiceUnitTest {
         assertEquals(2, results.size());
         verify(propertyQuoteRepo).findAll();
     }
-
-    @Test
-    public void testCreatePropertyQuote_FeignClientFailure_ContinuesGracefully() {
-        PropertyQuoteDto inputDto = new PropertyQuoteDto();
-        inputDto.setPropertyInfo("prop-123");
-
-        PropertyQuote savedQuote = new PropertyQuote();
-        savedQuote.setId(10);
-
-        when(modelMapper.map(inputDto, PropertyQuote.class)).thenReturn(savedQuote);
-        when(propertyQuoteRepo.save(savedQuote)).thenReturn(savedQuote);
-        when(modelMapper.map(savedQuote, PropertyQuoteDto.class)).thenReturn(inputDto);
-        when(propertyMgmtFeignClient.getPropertyInfoById("prop-123"))
-                .thenThrow(new RuntimeException("Service unavailable"));
-        PropertyQuoteDto result = propertyQuoteService.createPropertyQuote(inputDto);
-
-        assertNotNull(result);
-        verify(notificationFeignClient, never()).createNotification(any());
-    }
-
 }
