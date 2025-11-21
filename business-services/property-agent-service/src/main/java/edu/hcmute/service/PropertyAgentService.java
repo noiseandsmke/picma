@@ -8,4 +8,6 @@ public interface PropertyAgentService {
     List<String> fetchAgentWithinZipCode(String propertyId, int leadId);
 
     AgentLeadDto updateLeadAction(AgentLeadDto agentLeadDto);
+
+    List<Integer> getAgentsByZipCode(String zipCode);
 }

@@ -5,9 +5,9 @@ import edu.hcmute.service.PropertyAgentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -19,5 +19,11 @@ public class PropertyAgentController {
     public ResponseEntity<AgentLeadDto> updateLeadAction(@RequestBody AgentLeadDto agentLeadDto) {
         log.info("~~> update leadAction");
         return ResponseEntity.ok(propertyAgentService.updateLeadAction(agentLeadDto));
+    }
+
+    @GetMapping("/agents/zipcode")
+    public ResponseEntity<List<Integer>> getAgentsByZipCode(@RequestHeader String zipCode) {
+        log.info("~~> getting agents by zipCode: {}", zipCode);
+        return ResponseEntity.ok(propertyAgentService.getAgentsByZipCode(zipCode));
     }
 }

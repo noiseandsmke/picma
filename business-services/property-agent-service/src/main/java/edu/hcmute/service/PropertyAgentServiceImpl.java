@@ -22,6 +22,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -84,6 +85,27 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
             }
         }
         return modelMapper.map(agentLead, AgentLeadDto.class);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Integer> getAgentsByZipCode(String zipCode) {
+        log.info("### Fetching agents by zip code: {} ###", zipCode);
+        if (!StringUtils.hasText(zipCode)) {
+            return Collections.emptyList();
+        }
+        List<String> agentIds = userAddressRepo.findUserIdsByZipCode(zipCode);
+        return agentIds.stream()
+                .map(idStr -> {
+                    try {
+                        return Integer.parseInt(idStr);
+                    } catch (NumberFormatException e) {
+                        log.warn("~~> invalid agent ID format: {}", idStr);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     @Override
