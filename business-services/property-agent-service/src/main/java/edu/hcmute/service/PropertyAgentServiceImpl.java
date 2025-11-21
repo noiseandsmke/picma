@@ -2,13 +2,13 @@ package edu.hcmute.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.hcmute.config.NotificationFeignClient;
 import edu.hcmute.config.PropertyInfoFeignClient;
 import edu.hcmute.config.PropertyLeadFeignClient;
 import edu.hcmute.domain.LeadAction;
 import edu.hcmute.dto.AgentLeadDto;
 import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.entity.AgentLead;
+import edu.hcmute.event.NotificationProducer;
 import edu.hcmute.repo.AgentLeadRepo;
 import edu.hcmute.repo.UserAddressRepo;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ import java.util.List;
 public class PropertyAgentServiceImpl implements PropertyAgentService {
     private final PropertyInfoFeignClient propertyInfoFeignClient;
     private final PropertyLeadFeignClient propertyLeadFeignClient;
-    private final NotificationFeignClient notificationFeignClient;
+    private final NotificationProducer notificationProducer;
     private final UserAddressRepo userAddressRepo;
     private final AgentLeadRepo agentLeadRepo;
     private final ObjectMapper objectMapper;
@@ -134,7 +134,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
                                 .title("New Lead Available")
                                 .message("A new lead matches your zip code: " + zipCode + ". Lead ID: " + leadId)
                                 .build();
-                        notificationFeignClient.createNotification(notification);
+                        notificationProducer.sendNotification(notification);
                         log.info("~~> notification sent to agent: {}", agentIdStr);
                     } catch (Exception e) {
                         log.error("~~> failed to send notification to agent: {}", agentIdStr, e);

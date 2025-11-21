@@ -2,12 +2,12 @@ package edu.hcmute.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.hcmute.config.NotificationFeignClient;
 import edu.hcmute.config.PropertyAgentFeignClient;
 import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.PropertyQuote;
+import edu.hcmute.event.NotificationProducer;
 import edu.hcmute.repo.PropertyQuoteRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     private final ModelMapper modelMapper;
     private final PropertyMgmtFeignClient propertyMgmtFeignClient;
     private final PropertyAgentFeignClient propertyAgentFeignClient;
-    private final NotificationFeignClient notificationFeignClient;
+    private final NotificationProducer notificationProducer;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -59,7 +59,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
                                     .title("New Property Quote Request")
                                     .message("A new quote request for property " + propertyId + " in your area (" + zipCode + "). Quote ID: " + propertyQuote.getId())
                                     .build();
-                            notificationFeignClient.createNotification(notification);
+                            notificationProducer.sendNotification(notification);
                         }
                     }
                 } catch (Exception e) {

@@ -1,7 +1,6 @@
 package edu.hcmute;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.hcmute.config.NotificationFeignClient;
 import edu.hcmute.config.PropertyInfoFeignClient;
 import edu.hcmute.config.PropertyLeadFeignClient;
 import edu.hcmute.dto.NotificationRequestDto;

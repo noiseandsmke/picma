@@ -15,6 +15,10 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       group-id: lead-group
+    producer:
+      bootstrap-servers: ${BROKER_HOST:localhost}:${BROKER_PORT:9092}
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 server:
   port: 7104
@@ -26,5 +30,5 @@ picma:
       base-uri: http://${PROPERTY_LEAD_HOST:localhost}:${PROPERTY_LEAD_PORT:7103}
     management:
       base-uri: http://${PROPERTY_MGMT_HOST:localhost}:${PROPERTY_MGMT_PORT:7101}
-    notification:
-      base-uri: http://${PROPERTY_NOTI_HOST:localhost}:${PROPERTY_NOTI_PORT:7105}
+  notifications:
+    topic: notification-topic
