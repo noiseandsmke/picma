@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.hcmute.config.PropertyLeadFeignClient;
 import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.dto.NotificationRequestDto;
+import edu.hcmute.event.NotificationProducer;
 import edu.hcmute.repo.AgentLeadRepo;
 import edu.hcmute.repo.UserAddressRepo;
 import edu.hcmute.service.PropertyAgentServiceImpl;
@@ -33,7 +34,7 @@ public class PropertyAgentServiceUnitTest {
     private PropertyLeadFeignClient propertyLeadFeignClient;
 
     @Mock
-    private NotificationFeignClient notificationFeignClient;
+    private NotificationProducer notificationProducer;
 
     @Mock
     private UserAddressRepo userAddressRepo;
@@ -53,7 +54,7 @@ public class PropertyAgentServiceUnitTest {
         propertyAgentService = new PropertyAgentServiceImpl(
                 propertyMgmtFeignClient,
                 propertyLeadFeignClient,
-                notificationFeignClient,
+                notificationProducer,
                 userAddressRepo,
                 agentLeadRepo,
                 objectMapper,
@@ -87,10 +88,10 @@ public class PropertyAgentServiceUnitTest {
 
         assertEquals(3, result.size());
 
-        verify(notificationFeignClient, times(3)).createNotification(any(NotificationRequestDto.class));
+        verify(notificationProducer, times(3)).sendNotification(any(NotificationRequestDto.class));
 
         ArgumentCaptor<NotificationRequestDto> notificationCaptor = ArgumentCaptor.forClass(NotificationRequestDto.class);
-        verify(notificationFeignClient, times(3)).createNotification(notificationCaptor.capture());
+        verify(notificationProducer, times(3)).sendNotification(notificationCaptor.capture());
 
         List<NotificationRequestDto> capturedNotifications = notificationCaptor.getAllValues();
 
@@ -137,7 +138,7 @@ public class PropertyAgentServiceUnitTest {
 
         assertEquals(3, result.size());
 
-        verify(notificationFeignClient, times(3)).createNotification(any(NotificationRequestDto.class));
+        verify(notificationProducer, times(3)).sendNotification(any(NotificationRequestDto.class));
 
         System.out.println("~~> Processed all agent IDs including non-numeric");
     }
@@ -163,13 +164,13 @@ public class PropertyAgentServiceUnitTest {
 
         doThrow(new RuntimeException("Service unavailable"))
                 .doNothing()
-                .when(notificationFeignClient).createNotification(any(NotificationRequestDto.class));
+                .when(notificationProducer).sendNotification(any(NotificationRequestDto.class));
 
         List<String> result = propertyAgentService.fetchAgentWithinZipCode(propertyId, leadId);
 
         assertEquals(2, result.size());
 
-        verify(notificationFeignClient, times(2)).createNotification(any(NotificationRequestDto.class));
+        verify(notificationProducer, times(2)).sendNotification(any(NotificationRequestDto.class));
 
         System.out.println("~~> Continues sending notifications even when one fails");
     }
@@ -191,7 +192,7 @@ public class PropertyAgentServiceUnitTest {
         List<String> result = propertyAgentService.fetchAgentWithinZipCode(propertyId, leadId);
 
         assertTrue(result.isEmpty());
-        verify(notificationFeignClient, never()).createNotification(any());
+        verify(notificationProducer, never()).sendNotification(any());
 
         System.out.println("~~> No notifications sent when zipCode is missing");
     }
@@ -216,7 +217,7 @@ public class PropertyAgentServiceUnitTest {
         List<String> result = propertyAgentService.fetchAgentWithinZipCode(propertyId, leadId);
 
         assertTrue(result.isEmpty());
-        verify(notificationFeignClient, never()).createNotification(any());
+        verify(notificationProducer, never()).sendNotification(any());
 
         System.out.println("~~> No notifications sent when no agents found");
     }
