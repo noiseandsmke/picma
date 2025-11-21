@@ -27,9 +27,12 @@ server:
   port: 7102
 picma:
   properties:
-    quote:
-      expiry: ${QUOTE_EXPIRY_DAYS:60}
     lead:
-      expiry: ${LEAD_EXPIRY_DAYS:30}
       topic: ${LEADS_TOPIC_NAME:property-lead}
       partitions: ${LEADS_TOPIC_PARTITIONS:1}
+    management:
+      base-uri: http://${PROPERTY_MGMT_HOST:localhost}:${PROPERTY_MGMT_PORT:7101}
+    agent:
+      base-uri: http://${PROPERTY_AGENT_HOST:localhost}:${PROPERTY_AGENT_PORT:7104}
+    notification:
+      base-uri: http://${PROPERTY_NOTI_HOST:localhost}:${PROPERTY_NOTI_PORT:7105}
