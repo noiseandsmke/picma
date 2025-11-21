@@ -15,7 +15,7 @@ import java.io.Serializable;
 public class NotificationRequestDto implements Serializable {
     @Serial
     private static final long serialVersionUID = 2148681602351642249L;
-    private Integer recipientId;
+    private String recipientId;
     private String title;
     private String message;
 }

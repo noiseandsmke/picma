@@ -21,7 +21,7 @@ public class NotificationController {
     }
 
     @GetMapping("/{recipientId}")
-    public ResponseEntity<List<NotificationDto>> getNotifications(@PathVariable Integer recipientId) {
+    public ResponseEntity<List<NotificationDto>> getNotifications(@PathVariable String recipientId) {
         return ResponseEntity.ok(notificationService.getNotifications(recipientId));
     }
 
@@ -31,7 +31,7 @@ public class NotificationController {
     }
 
     @GetMapping("/{recipientId}/unread-count")
-    public ResponseEntity<Long> getUnreadCount(@PathVariable Integer recipientId) {
+    public ResponseEntity<Long> getUnreadCount(@PathVariable String recipientId) {
         return ResponseEntity.ok(notificationService.getUnreadCount(recipientId));
     }
 }

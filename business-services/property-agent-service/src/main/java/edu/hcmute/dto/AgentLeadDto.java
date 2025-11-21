@@ -13,6 +13,6 @@ public class AgentLeadDto implements Serializable {
 
     private int id;
     private LeadAction leadAction;
-    private int agentId;
+    private String agentId;
     private int leadId;
 }

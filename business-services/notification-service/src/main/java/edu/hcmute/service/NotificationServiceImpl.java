@@ -33,7 +33,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public List<NotificationDto> getNotifications(Integer recipientId) {
+    public List<NotificationDto> getNotifications(String recipientId) {
         log.info("### Fetching notifications for recipient: {}", recipientId);
         List<Notification> notifications = notificationRepo.findByRecipientIdOrderByCreatedAtDesc(recipientId);
         return notifications.stream()
@@ -52,7 +52,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public long getUnreadCount(Integer recipientId) {
+    public long getUnreadCount(String recipientId) {
         return notificationRepo.countByRecipientIdAndIsReadFalse(recipientId);
     }
 }

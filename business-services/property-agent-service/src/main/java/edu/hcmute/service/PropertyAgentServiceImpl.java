@@ -22,7 +22,6 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @Slf4j
@@ -89,22 +88,21 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Integer> getAgentsByZipCode(String zipCode) {
+    public List<String> getAgentsByZipCode(String zipCode) {
         log.info("### Fetching agents by zip code: {} ###", zipCode);
         if (!StringUtils.hasText(zipCode)) {
             return Collections.emptyList();
         }
-        List<String> agentIds = userAddressRepo.findUserIdsByZipCode(zipCode);
-        return agentIds.stream()
-                .map(idStr -> {
-                    try {
-                        return Integer.parseInt(idStr);
-                    } catch (NumberFormatException e) {
-                        log.warn("~~> invalid agent ID format: {}", idStr);
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
+        return userAddressRepo.findUserIdsByZipCode(zipCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AgentLeadDto> getAgentLeads(String agentId) {
+        log.info("### Fetching agent leads for agent: {} ###", agentId);
+        List<AgentLead> agentLeads = agentLeadRepo.findByAgentId(agentId);
+        return agentLeads.stream()
+                .map(lead -> modelMapper.map(lead, AgentLeadDto.class))
                 .toList();
     }
 
@@ -125,22 +123,19 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
                 log.info("~~> agentIds = {}", agentIds);
                 for (String agentIdStr : agentIds) {
                     try {
-                        Integer agentId = Integer.parseInt(agentIdStr);
                         AgentLead agentLead = new AgentLead();
-                        agentLead.setAgentId(agentId);
+                        agentLead.setAgentId(agentIdStr);
                         agentLead.setLeadId(leadId);
                         agentLead.setLeadAction(LeadAction.INTERESTED);
                         agentLead.setCreatedAt(LocalDateTime.now());
                         agentLeadRepo.save(agentLead);
                         NotificationRequestDto notification = NotificationRequestDto.builder()
-                                .recipientId(agentId)
+                                .recipientId(agentIdStr)
                                 .title("New Lead Available")
                                 .message("A new lead matches your zip code: " + zipCode + ". Lead ID: " + leadId)
                                 .build();
                         notificationFeignClient.createNotification(notification);
-                        log.info("~~> notification sent to agent: {}", agentId);
-                    } catch (NumberFormatException e) {
-                        log.error("~~> invalid agent ID format: {}", agentIdStr);
+                        log.info("~~> notification sent to agent: {}", agentIdStr);
                     } catch (Exception e) {
                         log.error("~~> failed to send notification to agent: {}", agentIdStr, e);
                     }

@@ -17,6 +17,6 @@ public class AgentLeadDto implements Serializable {
     private static final long serialVersionUID = 105336597657793105L;
     private int id;
     private String leadAction;
-    private int agentId;
+    private String agentId;
     private int leadId;
 }

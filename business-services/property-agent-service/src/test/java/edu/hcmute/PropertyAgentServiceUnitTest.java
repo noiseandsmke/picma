@@ -96,17 +96,17 @@ public class PropertyAgentServiceUnitTest {
         List<NotificationRequestDto> capturedNotifications = notificationCaptor.getAllValues();
 
         NotificationRequestDto notification1 = capturedNotifications.get(0);
-        assertEquals(101, notification1.getRecipientId());
+        assertEquals("101", notification1.getRecipientId());
         assertEquals("New Lead Available", notification1.getTitle());
         assertTrue(notification1.getMessage().contains("12345"));
         assertTrue(notification1.getMessage().contains("Lead ID: 100"));
 
         NotificationRequestDto notification2 = capturedNotifications.get(1);
-        assertEquals(102, notification2.getRecipientId());
+        assertEquals("102", notification2.getRecipientId());
         assertEquals("New Lead Available", notification2.getTitle());
 
         NotificationRequestDto notification3 = capturedNotifications.get(2);
-        assertEquals(103, notification3.getRecipientId());
+        assertEquals("103", notification3.getRecipientId());
         assertEquals("New Lead Available", notification3.getTitle());
 
         System.out.println("~~> All 3 notifications verified:");
@@ -138,9 +138,9 @@ public class PropertyAgentServiceUnitTest {
 
         assertEquals(3, result.size());
 
-        verify(notificationFeignClient, times(2)).createNotification(any(NotificationRequestDto.class));
+        verify(notificationFeignClient, times(3)).createNotification(any(NotificationRequestDto.class));
 
-        System.out.println("~~> Correctly skipped invalid agent ID");
+        System.out.println("~~> Processed all agent IDs including non-numeric");
     }
 
     @Test

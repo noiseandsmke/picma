@@ -33,11 +33,11 @@ public class PropertyAgentServiceTest {
         AgentLeadDto agentLeadDto = new AgentLeadDto();
         agentLeadDto.setLeadId(12);
         agentLeadDto.setLeadAction(LeadAction.ACCEPTED);
-        agentLeadDto.setAgentId(103);
+        agentLeadDto.setAgentId("103");
 
         AgentLead agentLead = new AgentLead();
         agentLead.setLeadId(12);
-        agentLead.setAgentId(103);
+        agentLead.setAgentId("103");
         agentLead.setLeadAction(LeadAction.ACCEPTED);
 
         when(propertyLeadFeignClient.updateLeadActionById(12, "ACCEPTED")).thenReturn("ACCEPTED");

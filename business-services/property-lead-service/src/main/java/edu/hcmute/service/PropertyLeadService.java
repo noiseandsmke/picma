@@ -19,7 +19,7 @@ public interface PropertyLeadService {
 
     List<PropertyLeadDto> findPropertyLeadsByZipcode(String zipcode);
 
-    List<PropertyLeadDto> findPropertyLeadsOfAgent(Integer agentId);
+    List<PropertyLeadDto> findPropertyLeadsOfAgent(String agentId);
 
     List<PropertyLeadDto> deletePropertyLeadById(Integer leadId);
 }

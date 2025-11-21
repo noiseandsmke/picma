@@ -22,8 +22,14 @@ public class PropertyAgentController {
     }
 
     @GetMapping("/agents/zipcode")
-    public ResponseEntity<List<Integer>> getAgentsByZipCode(@RequestHeader String zipCode) {
+    public ResponseEntity<List<String>> getAgentsByZipCode(@RequestHeader String zipCode) {
         log.info("~~> getting agents by zipCode: {}", zipCode);
         return ResponseEntity.ok(propertyAgentService.getAgentsByZipCode(zipCode));
+    }
+
+    @GetMapping("/agent/leads")
+    public ResponseEntity<List<AgentLeadDto>> getAgentLeads(@RequestParam String agentId) {
+        log.info("~~> getting leads for agentId: {}", agentId);
+        return ResponseEntity.ok(propertyAgentService.getAgentLeads(agentId));
     }
 }

@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(name = "notification-service", url = "${picma.properties.notification.base-uri}")
 public interface NotificationFeignClient {
-    @PostMapping("/notification")
+    @PostMapping("/notifications")
     void createNotification(@RequestBody NotificationRequestDto notificationRequestDto);
 }

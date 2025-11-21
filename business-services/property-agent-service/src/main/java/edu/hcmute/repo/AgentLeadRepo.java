@@ -10,5 +10,7 @@ import java.util.List;
 public interface AgentLeadRepo extends JpaRepository<AgentLead, Integer> {
     List<AgentLead> findByLeadId(int leadId);
 
+    List<AgentLead> findByAgentId(String agentId);
+
     List<AgentLead> findByLeadActionAndCreatedAtBefore(LeadAction action, LocalDateTime dateTime);
 }

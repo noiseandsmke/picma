@@ -9,5 +9,7 @@ public interface PropertyAgentService {
 
     AgentLeadDto updateLeadAction(AgentLeadDto agentLeadDto);
 
-    List<Integer> getAgentsByZipCode(String zipCode);
+    List<String> getAgentsByZipCode(String zipCode);
+
+    List<AgentLeadDto> getAgentLeads(String agentId);
 }

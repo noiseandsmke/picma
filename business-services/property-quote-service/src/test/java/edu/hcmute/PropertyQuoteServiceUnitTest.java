@@ -3,7 +3,7 @@ package edu.hcmute;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.hcmute.config.NotificationFeignClient;
 import edu.hcmute.config.PropertyAgentFeignClient;
-import edu.hcmute.config.PropertyInfoFeignClient;
+import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.PropertyQuote;
@@ -36,7 +36,7 @@ public class PropertyQuoteServiceUnitTest {
     private ModelMapper modelMapper;
 
     @Mock
-    private PropertyInfoFeignClient propertyInfoFeignClient;
+    private PropertyMgmtFeignClient propertyMgmtFeignClient;
 
     @Mock
     private PropertyAgentFeignClient propertyAgentFeignClient;
@@ -53,7 +53,7 @@ public class PropertyQuoteServiceUnitTest {
         propertyQuoteService = new PropertyQuoteServiceImpl(
                 propertyQuoteRepo,
                 modelMapper,
-                propertyInfoFeignClient,
+                propertyMgmtFeignClient,
                 propertyAgentFeignClient,
                 notificationFeignClient,
                 objectMapper
@@ -83,9 +83,9 @@ public class PropertyQuoteServiceUnitTest {
                     }
                 }
                 """;
-        when(propertyInfoFeignClient.getPropertyInfoById("prop-123")).thenReturn(propertyInfoJson);
+        when(propertyMgmtFeignClient.getPropertyInfoById("prop-123")).thenReturn(propertyInfoJson);
 
-        List<Integer> agentIds = Arrays.asList(101, 102);
+        List<String> agentIds = Arrays.asList("101", "102");
         when(propertyAgentFeignClient.getAgentsByZipCode("90210")).thenReturn(agentIds);
         PropertyQuoteDto result = propertyQuoteService.createPropertyQuote(inputDto);
         assertNotNull(result);
@@ -95,8 +95,8 @@ public class PropertyQuoteServiceUnitTest {
         verify(notificationFeignClient, times(2)).createNotification(captor.capture());
 
         List<NotificationRequestDto> notifications = captor.getAllValues();
-        assertEquals(101, notifications.get(0).getRecipientId());
-        assertEquals(102, notifications.get(1).getRecipientId());
+        assertEquals("101", notifications.get(0).getRecipientId());
+        assertEquals("102", notifications.get(1).getRecipientId());
         assertEquals("New Property Quote Request", notifications.get(0).getTitle());
     }
 
@@ -119,7 +119,7 @@ public class PropertyQuoteServiceUnitTest {
                     "propertyAddressDto": {}
                 }
                 """;
-        when(propertyInfoFeignClient.getPropertyInfoById("prop-123")).thenReturn(propertyInfoJson);
+        when(propertyMgmtFeignClient.getPropertyInfoById("prop-123")).thenReturn(propertyInfoJson);
         propertyQuoteService.createPropertyQuote(inputDto);
         verify(propertyAgentFeignClient, never()).getAgentsByZipCode(any());
         verify(notificationFeignClient, never()).createNotification(any());
@@ -181,7 +181,7 @@ public class PropertyQuoteServiceUnitTest {
         when(modelMapper.map(inputDto, PropertyQuote.class)).thenReturn(savedQuote);
         when(propertyQuoteRepo.save(savedQuote)).thenReturn(savedQuote);
         when(modelMapper.map(savedQuote, PropertyQuoteDto.class)).thenReturn(inputDto);
-        when(propertyInfoFeignClient.getPropertyInfoById("prop-123"))
+        when(propertyMgmtFeignClient.getPropertyInfoById("prop-123"))
                 .thenThrow(new RuntimeException("Service unavailable"));
         PropertyQuoteDto result = propertyQuoteService.createPropertyQuote(inputDto);
 

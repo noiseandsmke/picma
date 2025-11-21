@@ -14,7 +14,7 @@ public class AgentLead {
     private int id;
     @Enumerated(EnumType.STRING)
     private LeadAction leadAction;
-    private int agentId;
+    private String agentId;
     private int leadId;
     private LocalDateTime createdAt;
 }

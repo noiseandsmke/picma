@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.hcmute.config.NotificationFeignClient;
 import edu.hcmute.config.PropertyAgentFeignClient;
-import edu.hcmute.config.PropertyInfoFeignClient;
+import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.PropertyQuote;
@@ -23,7 +23,7 @@ import java.util.List;
 public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     private final PropertyQuoteRepo repo;
     private final ModelMapper modelMapper;
-    private final PropertyInfoFeignClient propertyInfoFeignClient;
+    private final PropertyMgmtFeignClient propertyMgmtFeignClient;
     private final PropertyAgentFeignClient propertyAgentFeignClient;
     private final NotificationFeignClient notificationFeignClient;
     private final ObjectMapper objectMapper;
@@ -40,7 +40,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
             if (StringUtils.hasText(propertyQuoteDto.getPropertyInfo())) {
                 String propertyId = propertyQuoteDto.getPropertyInfo();
                 try {
-                    String propertyJson = propertyInfoFeignClient.getPropertyInfoById(propertyId);
+                    String propertyJson = propertyMgmtFeignClient.getPropertyInfoById(propertyId);
                     JsonNode jsonObj = objectMapper.readTree(propertyJson);
 
                     String zipCode = null;
@@ -52,8 +52,8 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
                     }
 
                     if (StringUtils.hasText(zipCode)) {
-                        List<Integer> agentIds = propertyAgentFeignClient.getAgentsByZipCode(zipCode);
-                        for (Integer agentId : agentIds) {
+                        List<String> agentIds = propertyAgentFeignClient.getAgentsByZipCode(zipCode);
+                        for (String agentId : agentIds) {
                             NotificationRequestDto notification = NotificationRequestDto.builder()
                                     .recipientId(agentId)
                                     .title("New Property Quote Request")

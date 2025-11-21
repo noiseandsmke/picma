@@ -58,7 +58,7 @@ public class PropertyLeadController {
 
     @GetMapping("/agent/{agentId}")
     @Operation(description = "get all property leads of an agent", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<PropertyLeadDto>> getLeadsByAgent(@PathVariable Integer agentId) {
+    public ResponseEntity<List<PropertyLeadDto>> getLeadsByAgent(@PathVariable String agentId) {
         log.info("### get all property leads of an agent = {} ###", agentId);
         List<PropertyLeadDto> leadList = propertyLeadService.findPropertyLeadsOfAgent(agentId);
         return ResponseEntity.ok(leadList);

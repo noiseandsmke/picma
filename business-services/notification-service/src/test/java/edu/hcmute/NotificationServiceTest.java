@@ -35,7 +35,7 @@ public class NotificationServiceTest {
     private NotificationRequestDto notificationRequestDto;
     private Notification notification;
     private NotificationDto notificationDto;
-    private Integer testRecipientId = 106;
+    private String testRecipientId = "106";
 
     @BeforeEach
     public void setUp() {
@@ -63,7 +63,6 @@ public class NotificationServiceTest {
 
     @Test
     public void testCreateNotification() {
-        when(modelMapper.map(any(NotificationRequestDto.class), any())).thenReturn(notification);
         when(notificationRepo.save(any(Notification.class))).thenReturn(notification);
         when(modelMapper.map(any(Notification.class), any())).thenReturn(notificationDto);
 

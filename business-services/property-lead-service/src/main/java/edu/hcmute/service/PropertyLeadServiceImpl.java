@@ -265,9 +265,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
                     .toList();
 
             log.info("~~> found {} ACTIVE leads for zipcode {}", matchingLeads.size(), zipcode);
-            matchingLeads.forEach(lead -> {
-                log.info(lead.toString());
-            });
+            matchingLeads.forEach(lead -> log.info(lead.toString()));
 
             return matchingLeads.stream()
                     .map(lead -> modelMapper.map(lead, PropertyLeadDto.class))
@@ -300,7 +298,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PropertyLeadDto> findPropertyLeadsOfAgent(Integer agentId) {
+    public List<PropertyLeadDto> findPropertyLeadsOfAgent(String agentId) {
         log.info("### Get property leads visible to agent {} ###", agentId);
         try {
             List<PropertyLead> activeLeads = propertyLeadRepo.findByStatus(LeadStatus.ACTIVE.name());
@@ -327,7 +325,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         }
     }
 
-    private List<Integer> getAcceptedLeadIdsForAgent(Integer agentId) {
+    private List<Integer> getAcceptedLeadIdsForAgent(String agentId) {
         try {
             String agentLeadsJson = propertyAgentFeignClient.getAgentLeadsByAgentId(agentId);
             if (agentLeadsJson == null || agentLeadsJson.trim().isEmpty()) {
