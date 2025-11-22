@@ -6,6 +6,7 @@ import edu.hcmute.repo.CoverageTypeRepo;
 import edu.hcmute.repo.PolicyTypeRepo;
 import edu.hcmute.repo.PropertyQuoteRepo;
 import edu.hcmute.repo.QuoteTypeRepo;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -14,6 +15,7 @@ import org.mapstruct.Named;
 import java.time.LocalDate;
 
 @RequiredArgsConstructor
+@NoArgsConstructor(force = true)
 @Mapper(componentModel = "spring")
 public abstract class PropertyQuoteMapper {
     protected final PropertyQuoteRepo propertyQuoteRepo;
@@ -23,6 +25,12 @@ public abstract class PropertyQuoteMapper {
 
     public abstract PropertyQuoteDto toDto(PropertyQuote propertyQuote);
 
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "modifiedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "modifiedBy", ignore = true)
+    @Mapping(target = "createDate", ignore = true)
+    @Mapping(target = "expiryDate", ignore = true)
     public abstract PropertyQuote toEntity(PropertyQuoteDto propertyQuoteDto);
 
     @Mapping(target = "propertyQuote", source = "propertyQuoteDto", qualifiedByName = "resolvePropertyQuote")

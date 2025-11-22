@@ -1,28 +1,56 @@
 package edu.hcmute;
 
 import edu.hcmute.dto.PropertyQuoteDto;
-import edu.hcmute.service.PropertyQuoteService;
+import edu.hcmute.entity.PropertyQuote;
+import edu.hcmute.mapper.PropertyQuoteMapper;
+import edu.hcmute.repo.PropertyQuoteRepo;
+import edu.hcmute.service.PropertyQuoteServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class PropertyQuoteServiceTest extends PropertyQuoteServiceApplicationTests {
-    PropertyQuoteDto propertyQuoteDto;
-    @Autowired
-    private PropertyQuoteService service;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+public class PropertyQuoteServiceTest {
+    @Mock
+    private PropertyQuoteRepo propertyQuoteRepo;
+
+    @Mock
+    private PropertyQuoteMapper propertyQuoteMapper;
+
+    @InjectMocks
+    private PropertyQuoteServiceImpl service;
+
+    private PropertyQuoteDto propertyQuoteDto;
+    private PropertyQuote propertyQuote;
 
     @BeforeEach
     public void init() {
         propertyQuoteDto = new PropertyQuoteDto();
         propertyQuoteDto.setUserInfo("Duc Huy");
         propertyQuoteDto.setPropertyInfo("Honda Blade 110");
+
+        propertyQuote = new PropertyQuote();
+        propertyQuote.setId(1);
+        propertyQuote.setUserInfo("Duc Huy");
+        propertyQuote.setPropertyInfo("Honda Blade 110");
     }
 
     @Test
     void createPropertyQuoteTest() {
+        when(propertyQuoteMapper.toEntity(any(PropertyQuoteDto.class))).thenReturn(propertyQuote);
+        when(propertyQuoteRepo.save(any(PropertyQuote.class))).thenReturn(propertyQuote);
+        when(propertyQuoteMapper.toDto(any(PropertyQuote.class))).thenReturn(propertyQuoteDto);
+        propertyQuoteDto.setId(1);
+
         PropertyQuoteDto savedPropertyQuoteDto = service.createPropertyQuote(propertyQuoteDto);
         Assertions.assertNotNull(savedPropertyQuoteDto);
-        Assertions.assertNotNull(savedPropertyQuoteDto.getId());
+        Assertions.assertEquals(1, savedPropertyQuoteDto.getId());
     }
 }

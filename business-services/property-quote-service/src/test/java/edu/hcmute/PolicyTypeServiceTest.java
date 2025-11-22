@@ -3,38 +3,65 @@ package edu.hcmute;
 import edu.hcmute.dto.CoverageTypeDto;
 import edu.hcmute.dto.PolicyTypeDto;
 import edu.hcmute.entity.CoverageType;
-import edu.hcmute.repo.CoverageTypeRepo;
-import edu.hcmute.service.PolicyTypeService;
+import edu.hcmute.entity.PolicyType;
+import edu.hcmute.mapper.PropertyQuoteMapper;
+import edu.hcmute.repo.PolicyTypeRepo;
+import edu.hcmute.service.PolicyTypeServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class PolicyTypeServiceTest extends PropertyQuoteServiceApplicationTests {
-    PolicyTypeDto policyTypeDto;
-    @Autowired
-    private PolicyTypeService policyTypeService;
-    @Autowired
-    private CoverageTypeRepo coverageTypeRepo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+public class PolicyTypeServiceTest {
+    @Mock
+    private PolicyTypeRepo policyTypeRepo;
+
+    @Mock
+    private PropertyQuoteMapper propertyQuoteMapper;
+
+    @InjectMocks
+    private PolicyTypeServiceImpl policyTypeService;
+
+    private PolicyTypeDto policyTypeDto;
+    private PolicyType policyType;
 
     @BeforeEach
     public void init() {
-        CoverageType basicCoverageType = coverageTypeRepo.findById(2)
-                .orElseThrow(() -> new RuntimeException("Basic Coverage Type not found with id 1"));
         CoverageTypeDto basicCoverageTypeDto = new CoverageTypeDto();
-        basicCoverageTypeDto.setId(basicCoverageType.getId());
-        basicCoverageTypeDto.setType(basicCoverageType.getType());
+        basicCoverageTypeDto.setId(2);
+        basicCoverageTypeDto.setType("Basic");
 
         policyTypeDto = new PolicyTypeDto();
         policyTypeDto.setType("HO-3");
         policyTypeDto.setCoverageTypeDto(basicCoverageTypeDto);
+
+        policyType = new PolicyType();
+        policyType.setId(1);
+        policyType.setType("HO-3");
+
+        CoverageType coverageType = new CoverageType();
+        coverageType.setId(2);
+        coverageType.setType("Basic");
+        policyType.setCoverageType(coverageType);
     }
 
     @Test
     void createPolicyTypeTest() {
+        when(propertyQuoteMapper.toEntity(any(PolicyTypeDto.class))).thenReturn(policyType);
+        when(policyTypeRepo.save(any(PolicyType.class))).thenReturn(policyType);
+        when(propertyQuoteMapper.toDto(any(PolicyType.class))).thenReturn(policyTypeDto);
+        policyTypeDto.setId(1);
+
         PolicyTypeDto savedPolicyTypeDto = policyTypeService.createPolicyType(policyTypeDto);
         Assertions.assertNotNull(savedPolicyTypeDto);
-        Assertions.assertNotNull(savedPolicyTypeDto.getId());
+        Assertions.assertEquals(1, savedPolicyTypeDto.getId());
         Assertions.assertEquals(policyTypeDto.getType(), savedPolicyTypeDto.getType());
         Assertions.assertEquals(policyTypeDto.getCoverageTypeDto().getType(), savedPolicyTypeDto.getCoverageTypeDto().getType());
     }

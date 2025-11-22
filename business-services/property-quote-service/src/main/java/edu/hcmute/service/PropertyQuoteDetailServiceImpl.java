@@ -63,7 +63,7 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
             PropertyLeadDetail propertyLeadDetail = new PropertyLeadDetail();
             propertyLeadDetail.setPropertyLead(propertyLead);
             propertyLeadDetail.setPropertyQuote(propertyQuoteDetail.getPropertyQuote());
-            propertyLeadDetailRepo.save(propertyLeadDetail);
+            propertyLeadDetail = propertyLeadDetailRepo.save(propertyLeadDetail);
 
             if (propertyLead.getId() > 0 && propertyLeadDetail.getId() > 0) {
                 boolean isLeadSent = leadProducer.produceLead(propertyLead);
