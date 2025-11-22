@@ -3,6 +3,7 @@ package edu.hcmute;
 import edu.hcmute.dto.NotificationDto;
 import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.entity.Notification;
+import edu.hcmute.mapper.NotificationMapper;
 import edu.hcmute.repo.NotificationRepo;
 import edu.hcmute.service.NotificationServiceImpl;
 import org.junit.jupiter.api.Assertions;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.modelmapper.ModelMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,7 +30,7 @@ public class NotificationServiceTest {
     private NotificationRepo notificationRepo;
 
     @Mock
-    private ModelMapper modelMapper;
+    private NotificationMapper notificationMapper;
 
     private NotificationRequestDto notificationRequestDto;
     private Notification notification;
@@ -64,7 +64,7 @@ public class NotificationServiceTest {
     @Test
     public void testCreateNotification() {
         when(notificationRepo.save(any(Notification.class))).thenReturn(notification);
-        when(modelMapper.map(any(Notification.class), any())).thenReturn(notificationDto);
+        when(notificationMapper.toDto(any(Notification.class))).thenReturn(notificationDto);
 
         NotificationDto createdNotification = notificationService.createNotification(notificationRequestDto);
 
@@ -75,7 +75,7 @@ public class NotificationServiceTest {
     @Test
     public void testGetNotifications() {
         when(notificationRepo.findByRecipientIdOrderByCreatedAtDesc(testRecipientId)).thenReturn(List.of(notification));
-        when(modelMapper.map(any(Notification.class), any())).thenReturn(notificationDto);
+        when(notificationMapper.toDto(any(Notification.class))).thenReturn(notificationDto);
 
         List<NotificationDto> notifications = notificationService.getNotifications(testRecipientId);
 
@@ -90,7 +90,7 @@ public class NotificationServiceTest {
         notificationDto.setRead(true);
         when(notificationRepo.findById(1)).thenReturn(Optional.of(notification));
         when(notificationRepo.save(any(Notification.class))).thenReturn(notification);
-        when(modelMapper.map(any(Notification.class), any())).thenReturn(notificationDto);
+        when(notificationMapper.toDto(any(Notification.class))).thenReturn(notificationDto);
 
         NotificationDto updatedNotification = notificationService.markAsRead(1);
 

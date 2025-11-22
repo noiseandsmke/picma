@@ -11,11 +11,11 @@ import edu.hcmute.dto.PropertyLeadDto;
 import edu.hcmute.entity.PropertyLead;
 import edu.hcmute.entity.PropertyLeadDetail;
 import edu.hcmute.entity.PropertyQuote;
+import edu.hcmute.mapper.PropertyLeadMapper;
 import edu.hcmute.repo.PropertyLeadDetailRepo;
 import edu.hcmute.repo.PropertyLeadRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +32,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
     private final PropertyLeadDetailRepo propertyLeadDetailRepo;
     private final PropertyMgmtFeignClient propertyMgmtFeignClient;
     private final PropertyAgentFeignClient propertyAgentFeignClient;
-    private final ModelMapper modelMapper;
+    private final PropertyLeadMapper propertyLeadMapper;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -45,24 +45,29 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
                 propertyLead = propertyLeadRepo.findById(propertyLeadDto.getId())
                         .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + propertyLeadDto.getId()));
                 log.info("Updating existing PropertyLead with id: {}", propertyLeadDto.getId());
+                propertyLeadMapper.updateEntity(propertyLead, propertyLeadDto);
                 propertyLead.setModifiedBy("noiseandsmke");
                 propertyLead.setModifiedAt(Instant.now());
             } else {
-                propertyLead = new PropertyLead();
+                propertyLead = propertyLeadMapper.toEntity(propertyLeadDto);
                 propertyLead.setCreatedBy("noiseandsmke");
                 propertyLead.setCreatedAt(Instant.now());
                 propertyLead.setModifiedBy("noiseandsmke");
                 propertyLead.setModifiedAt(Instant.now());
                 log.info("~~> creating new PropertyLead");
             }
-            propertyLead.setUserInfo(propertyLeadDto.getUserInfo());
-            propertyLead.setPropertyInfo(propertyLeadDto.getPropertyInfo());
-            propertyLead.setStatus(propertyLeadDto.getStatus() != null ? propertyLeadDto.getStatus() : LeadStatus.ACTIVE.name());
-            propertyLead.setStartDate(propertyLeadDto.getStartDate() != null ? propertyLeadDto.getStartDate() : LocalDate.now());
-            propertyLead.setExpiryDate(propertyLeadDto.getExpiryDate() != null ? propertyLeadDto.getExpiryDate() : LocalDate.now().plusDays(30));
+            if (propertyLead.getStatus() == null) {
+                propertyLead.setStatus(LeadStatus.ACTIVE.name());
+            }
+            if (propertyLead.getStartDate() == null) {
+                propertyLead.setStartDate(LocalDate.now());
+            }
+            if (propertyLead.getExpiryDate() == null) {
+                propertyLead.setExpiryDate(LocalDate.now().plusDays(30));
+            }
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> PropertyLead saved with id: {}", propertyLead.getId());
-            return modelMapper.map(propertyLead, PropertyLeadDto.class);
+            return propertyLeadMapper.toDto(propertyLead);
         } catch (Exception e) {
             log.error("~~> error creating or updating PropertyLead: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to create or update PropertyLead: " + e.getMessage(), e);
@@ -113,7 +118,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
             propertyLeadDetail.setPropertyLead(propertyLead);
             propertyLeadDetail.setPropertyQuote(propertyQuote);
             propertyLeadDetailRepo.save(propertyLeadDetail);
-            return modelMapper.map(propertyLead, PropertyLeadDto.class);
+            return propertyLeadMapper.toDto(propertyLead);
         } catch (IllegalArgumentException | IllegalStateException e) {
             log.error("~~> business logic error: {}", e.getMessage());
             throw e;
@@ -133,7 +138,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
                     return new RuntimeException("No PropertyLead found with id: " + leadId);
                 });
         log.info("~~> found PropertyLead: {}", propertyLead);
-        return modelMapper.map(propertyLead, PropertyLeadDto.class);
+        return propertyLeadMapper.toDto(propertyLead);
     }
 
     @Override
@@ -160,7 +165,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
             propertyLead.setModifiedAt(Instant.now());
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> successfully updated PropertyLead status from {} to {}", currentStatus.name(), newStatus.name());
-            return modelMapper.map(propertyLead, PropertyLeadDto.class);
+            return propertyLeadMapper.toDto(propertyLead);
         } catch (IllegalArgumentException | IllegalStateException e) {
             log.error("~~> validation error updating lead status: {}", e.getMessage());
             throw e;
@@ -218,7 +223,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         }
         log.info("~~> found {} active PropertyLeads", propertyLeadList.size());
         return propertyLeadList.stream()
-                .map(lead -> modelMapper.map(lead, PropertyLeadDto.class))
+                .map(propertyLeadMapper::toDto)
                 .toList();
     }
 
@@ -238,7 +243,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         }
         log.info("~~> found {} PropertyLeads with status: {}", propertyLeadList.size(), status);
         return propertyLeadList.stream()
-                .map(lead -> modelMapper.map(lead, PropertyLeadDto.class))
+                .map(propertyLeadMapper::toDto)
                 .toList();
     }
 
@@ -268,7 +273,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
             matchingLeads.forEach(lead -> log.info(lead.toString()));
 
             return matchingLeads.stream()
-                    .map(lead -> modelMapper.map(lead, PropertyLeadDto.class))
+                    .map(propertyLeadMapper::toDto)
                     .toList();
         } catch (Exception e) {
             log.error("~~> error fetching leads by zipcode {}: {}", zipcode, e.getMessage(), e);
@@ -315,7 +320,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
             allVisibleLeads.addAll(acceptedLeads);
             log.info("~~> total {} leads visible to agent {}", allVisibleLeads.size(), agentId);
             return allVisibleLeads.stream()
-                    .map(lead -> modelMapper.map(lead, PropertyLeadDto.class))
+                    .map(propertyLeadMapper::toDto)
                     .sorted(Comparator.comparing(PropertyLeadDto::getId))
                     .collect(Collectors.toList());
         } catch (Exception e) {

@@ -9,11 +9,11 @@ import edu.hcmute.dto.AgentLeadDto;
 import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.entity.AgentLead;
 import edu.hcmute.event.NotificationProducer;
+import edu.hcmute.mapper.PropertyAgentMapper;
 import edu.hcmute.repo.AgentLeadRepo;
 import edu.hcmute.repo.UserAddressRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +33,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     private final UserAddressRepo userAddressRepo;
     private final AgentLeadRepo agentLeadRepo;
     private final ObjectMapper objectMapper;
-    private final ModelMapper modelMapper;
+    private final PropertyAgentMapper propertyAgentMapper;
 
     @Override
     @Transactional
@@ -42,9 +42,9 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
         AgentLead agentLead;
         if (agentLeadDto.getId() > 0) {
             agentLead = agentLeadRepo.findById(agentLeadDto.getId())
-                    .orElse(modelMapper.map(agentLeadDto, AgentLead.class));
+                    .orElseGet(() -> propertyAgentMapper.toEntity(agentLeadDto));
         } else {
-            agentLead = modelMapper.map(agentLeadDto, AgentLead.class);
+            agentLead = propertyAgentMapper.toEntity(agentLeadDto);
         }
         if (agentLead.getCreatedAt() != null) {
             LocalDateTime expiry = agentLead.getCreatedAt().plusDays(7);
@@ -83,7 +83,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
                 }
             }
         }
-        return modelMapper.map(agentLead, AgentLeadDto.class);
+        return propertyAgentMapper.toDto(agentLead);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
         log.info("### Fetching agent leads for agent: {} ###", agentId);
         List<AgentLead> agentLeads = agentLeadRepo.findByAgentId(agentId);
         return agentLeads.stream()
-                .map(lead -> modelMapper.map(lead, AgentLeadDto.class))
+                .map(propertyAgentMapper::toDto)
                 .toList();
     }
 

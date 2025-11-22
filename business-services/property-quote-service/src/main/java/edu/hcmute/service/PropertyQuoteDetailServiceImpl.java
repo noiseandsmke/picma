@@ -1,15 +1,16 @@
 package edu.hcmute.service;
 
-import edu.hcmute.dto.*;
+import edu.hcmute.dto.PropertyQuoteDetailDto;
 import edu.hcmute.entity.PropertyLead;
 import edu.hcmute.entity.PropertyLeadDetail;
-import edu.hcmute.entity.PropertyQuote;
 import edu.hcmute.entity.PropertyQuoteDetail;
 import edu.hcmute.event.PropertyLeadProducer;
-import edu.hcmute.repo.*;
+import edu.hcmute.mapper.PropertyQuoteMapper;
+import edu.hcmute.repo.PropertyLeadDetailRepo;
+import edu.hcmute.repo.PropertyLeadRepo;
+import edu.hcmute.repo.PropertyQuoteDetailRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,28 +23,24 @@ import java.util.List;
 @Slf4j
 public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailService {
     private final PropertyQuoteDetailRepo propertyQuoteDetailRepo;
-    private final PropertyQuoteRepo propertyQuoteRepo;
-    private final QuoteTypeRepo quoteTypeRepo;
-    private final CoverageTypeRepo coverageTypeRepo;
-    private final PolicyTypeRepo policyTypeRepo;
     private final PropertyLeadRepo propertyLeadRepo;
     private final PropertyLeadDetailRepo propertyLeadDetailRepo;
     private final PropertyLeadProducer leadProducer;
-    private final ModelMapper modelMapper;
+    private final PropertyQuoteMapper propertyQuoteMapper;
 
     @Override
     @Transactional
     public PropertyQuoteDetailDto createPropertyQuoteDetail(PropertyQuoteDetailDto propertyQuoteDetailDto) {
         log.info("### Create PropertyQuote ###");
-        log.info("PropertyQuoteDetailDto: {}", propertyQuoteDetailDto.toString());
+        log.info("`~> propertyQuoteDetailDto: {}", propertyQuoteDetailDto.toString());
         try {
-            PropertyQuoteDetail propertyQuoteDetail = mapDtoToEntity(propertyQuoteDetailDto);
+            PropertyQuoteDetail propertyQuoteDetail = propertyQuoteMapper.toEntity(propertyQuoteDetailDto);
             propertyQuoteDetail.getPropertyQuote().setCreateDate(LocalDate.now());
             propertyQuoteDetail.getPropertyQuote().setExpiryDate(LocalDate.now().plusDays(60));
             propertyQuoteDetail.getPropertyQuote().setCreatedBy("noiseandsmke");
             propertyQuoteDetail.getPropertyQuote().setModifiedBy("noiseandsmke");
             propertyQuoteDetail = propertyQuoteDetailRepo.save(propertyQuoteDetail);
-            log.info("PropertyQuoteDetail saved with id: {}", propertyQuoteDetail.getId());
+            log.info("~~> propertyQuoteDetail saved with id: {}", propertyQuoteDetail.getId());
 
             LocalDate leadExpiryDate = LocalDate.now().plusDays(30);
             if (leadExpiryDate.isAfter(propertyQuoteDetail.getPropertyQuote().getExpiryDate())) {
@@ -70,11 +67,11 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
 
             if (propertyLead.getId() > 0 && propertyLeadDetail.getId() > 0) {
                 boolean isLeadSent = leadProducer.produceLead(propertyLead);
-                log.info("Lead sent {}", isLeadSent ? "successful" : "failed");
+                log.info("~~> lead sent {}", isLeadSent ? "successful" : "failed");
             }
-            return mapEntityToDto(propertyQuoteDetail);
+            return propertyQuoteMapper.toDto(propertyQuoteDetail);
         } catch (Exception e) {
-            log.error("Error creating PropertyQuote: {}", e.getMessage(), e);
+            log.error("~~> error creating PropertyQuote: {}", e.getMessage(), e);
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -83,13 +80,13 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
     @Transactional(readOnly = true)
     public PropertyQuoteDetailDto getPropertyQuoteDetailById(Integer id) {
         log.info("### Get PropertyQuote by Id ###");
-        log.info("PropertyQuoteDetailDto id: {}", id);
+        log.info("~~> propertyQuoteDetailDto id: {}", id);
         PropertyQuoteDetail propertyQuoteDetail = propertyQuoteDetailRepo.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("No PropertyQuote found with id: {}", id);
+                    log.warn("~~> no PropertyQuote found with id: {}", id);
                     return new RuntimeException("No PropertyQuote found with id: " + id);
                 });
-        return mapEntityToDto(propertyQuoteDetail);
+        return propertyQuoteMapper.toDto(propertyQuoteDetail);
     }
 
     @Override
@@ -98,64 +95,12 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
         log.info("### Get All PropertyQuotes ###");
         List<PropertyQuoteDetail> propertyQuoteDetailList = propertyQuoteDetailRepo.findAll();
         if (propertyQuoteDetailList.isEmpty()) {
-            log.warn("No PropertyQuotes found in database");
+            log.warn("~~> no PropertyQuotes found in database");
             throw new RuntimeException("No PropertyQuotes found in database");
         }
-        log.info("Found {} PropertyQuotes", propertyQuoteDetailList.size());
+        log.info("~~> found {} PropertyQuotes", propertyQuoteDetailList.size());
         return propertyQuoteDetailList.stream()
-                .map(this::mapEntityToDto)
+                .map(propertyQuoteMapper::toDto)
                 .toList();
-    }
-
-    private PropertyQuoteDetailDto mapEntityToDto(PropertyQuoteDetail propertyQuoteDetail) {
-        PropertyQuoteDetailDto propertyQuoteDetailDto = new PropertyQuoteDetailDto();
-        propertyQuoteDetailDto.setId(propertyQuoteDetail.getId());
-        if (propertyQuoteDetail.getPropertyQuote() != null) {
-            propertyQuoteDetailDto.setPropertyQuoteDto(modelMapper.map(propertyQuoteDetail.getPropertyQuote(), PropertyQuoteDto.class));
-        }
-        if (propertyQuoteDetail.getQuoteType() != null) {
-            propertyQuoteDetailDto.setQuoteTypeDto(modelMapper.map(propertyQuoteDetail.getQuoteType(), QuoteTypeDto.class));
-        }
-        if (propertyQuoteDetail.getCoverageType() != null) {
-            propertyQuoteDetailDto.setCoverageTypeDto(modelMapper.map(propertyQuoteDetail.getCoverageType(), CoverageTypeDto.class));
-        }
-        if (propertyQuoteDetail.getPolicyType() != null) {
-            propertyQuoteDetailDto.setPolicyTypeDto(modelMapper.map(propertyQuoteDetail.getPolicyType(), PolicyTypeDto.class));
-        }
-        return propertyQuoteDetailDto;
-    }
-
-    private PropertyQuoteDetail mapDtoToEntity(PropertyQuoteDetailDto propertyQuoteDetailDto) {
-        PropertyQuoteDetail propertyQuoteDetail = new PropertyQuoteDetail();
-        if (propertyQuoteDetailDto.getPropertyQuoteDto() != null) {
-            if (propertyQuoteDetailDto.getPropertyQuoteDto().getId() != null) {
-                propertyQuoteDetail.setPropertyQuote(propertyQuoteRepo.findById(propertyQuoteDetailDto
-                                .getPropertyQuoteDto().getId())
-                        .orElseThrow(() -> new RuntimeException("PropertyInfo not found")));
-            } else {
-                PropertyQuote propertyQuote = new PropertyQuote();
-                propertyQuote.setUserInfo(String.valueOf(propertyQuoteDetailDto.getPropertyQuoteDto().getUserInfo()));
-                propertyQuote.setPropertyInfo(String.valueOf(propertyQuoteDetailDto.getPropertyQuoteDto().getPropertyInfo()));
-                propertyQuote.setCreateDate(LocalDate.now());
-                propertyQuote.setExpiryDate(LocalDate.now().plusDays(30));
-
-                propertyQuote = propertyQuoteRepo.save(propertyQuote);
-                log.info("PropertyQuote saved with id: {}", propertyQuote.getId());
-                propertyQuoteDetail.setPropertyQuote(propertyQuote);
-            }
-        }
-        if (propertyQuoteDetailDto.getQuoteTypeDto() != null && propertyQuoteDetailDto.getQuoteTypeDto().getId() != null) {
-            propertyQuoteDetail.setQuoteType(quoteTypeRepo.findById(propertyQuoteDetailDto.getQuoteTypeDto().getId())
-                    .orElseThrow(() -> new RuntimeException("QuoteType not found")));
-        }
-        if (propertyQuoteDetailDto.getCoverageTypeDto() != null && propertyQuoteDetailDto.getCoverageTypeDto().getId() != null) {
-            propertyQuoteDetail.setCoverageType(coverageTypeRepo.findById(propertyQuoteDetailDto.getCoverageTypeDto().getId())
-                    .orElseThrow(() -> new RuntimeException("CoverageType not found")));
-        }
-        if (propertyQuoteDetailDto.getPolicyTypeDto() != null && propertyQuoteDetailDto.getPolicyTypeDto().getId() != null) {
-            propertyQuoteDetail.setPolicyType(policyTypeRepo.findById(propertyQuoteDetailDto.getPolicyTypeDto().getId())
-                    .orElseThrow(() -> new RuntimeException("PolicyType not found")));
-        }
-        return propertyQuoteDetail;
     }
 }

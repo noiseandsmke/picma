@@ -5,6 +5,7 @@ import edu.hcmute.config.PropertyAgentFeignClient;
 import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.dto.PropertyLeadDto;
 import edu.hcmute.entity.PropertyLead;
+import edu.hcmute.mapper.PropertyLeadMapper;
 import edu.hcmute.repo.PropertyLeadDetailRepo;
 import edu.hcmute.repo.PropertyLeadRepo;
 import edu.hcmute.service.PropertyLeadServiceImpl;
@@ -14,13 +15,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.modelmapper.ModelMapper;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,7 +34,7 @@ public class PropertyLeadServiceUnitTest {
     @Mock
     private PropertyAgentFeignClient propertyAgentFeignClient;
     @Mock
-    private ModelMapper modelMapper;
+    private PropertyLeadMapper propertyLeadMapper;
 
     @InjectMocks
     private PropertyLeadServiceImpl propertyLeadService;
@@ -47,7 +46,7 @@ public class PropertyLeadServiceUnitTest {
                 propertyLeadDetailRepo,
                 propertyMgmtFeignClient,
                 propertyAgentFeignClient,
-                modelMapper,
+                propertyLeadMapper,
                 new ObjectMapper()
         );
     }
@@ -75,7 +74,7 @@ public class PropertyLeadServiceUnitTest {
         when(propertyLeadRepo.findByStatus("ACTIVE")).thenReturn(List.of(activeLead));
         when(propertyLeadRepo.findAllById(List.of(1))).thenReturn(List.of(acceptedLead));
 
-        when(modelMapper.map(any(PropertyLead.class), eq(PropertyLeadDto.class)))
+        when(propertyLeadMapper.toDto(any(PropertyLead.class)))
                 .thenAnswer(invocation -> {
                     PropertyLead source = invocation.getArgument(0);
                     PropertyLeadDto dto = new PropertyLeadDto();

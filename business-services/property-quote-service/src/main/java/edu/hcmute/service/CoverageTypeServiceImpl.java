@@ -4,11 +4,11 @@ import edu.hcmute.dto.CoverageTypeDto;
 import edu.hcmute.dto.PerilTypeDto;
 import edu.hcmute.entity.CoverageType;
 import edu.hcmute.entity.PerilType;
+import edu.hcmute.mapper.PropertyQuoteMapper;
 import edu.hcmute.repo.CoverageTypeRepo;
 import edu.hcmute.repo.PerilTypeRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -21,7 +21,7 @@ import java.util.List;
 public class CoverageTypeServiceImpl implements CoverageTypeService {
     private final CoverageTypeRepo coverageTypeRepo;
     private final PerilTypeRepo perilTypeRepo;
-    private final ModelMapper modelMapper;
+    private final PropertyQuoteMapper propertyQuoteMapper;
 
     @Override
     @Transactional
@@ -29,7 +29,7 @@ public class CoverageTypeServiceImpl implements CoverageTypeService {
         log.info("### Create CoverageType ###");
         log.info("CoverageTypeDto: {}", coverageTypeDto.getType());
         try {
-            CoverageType coverageType = modelMapper.map(coverageTypeDto, CoverageType.class);
+            CoverageType coverageType = propertyQuoteMapper.toEntity(coverageTypeDto);
             if (!CollectionUtils.isEmpty(coverageTypeDto.getPerilTypeList())) {
                 List<Integer> perilTypeIds = coverageTypeDto.getPerilTypeList().stream()
                         .map(PerilTypeDto::getId)
@@ -76,6 +76,6 @@ public class CoverageTypeServiceImpl implements CoverageTypeService {
     }
 
     private CoverageTypeDto mapModelToDto(CoverageType coverageType) {
-        return modelMapper.map(coverageType, CoverageTypeDto.class);
+        return propertyQuoteMapper.toDto(coverageType);
     }
 }

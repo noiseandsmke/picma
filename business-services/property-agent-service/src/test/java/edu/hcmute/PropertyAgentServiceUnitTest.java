@@ -5,6 +5,7 @@ import edu.hcmute.config.PropertyLeadFeignClient;
 import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.event.NotificationProducer;
+import edu.hcmute.mapper.PropertyAgentMapper;
 import edu.hcmute.repo.AgentLeadRepo;
 import edu.hcmute.repo.UserAddressRepo;
 import edu.hcmute.service.PropertyAgentServiceImpl;
@@ -15,7 +16,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.modelmapper.ModelMapper;
 
 import java.util.Arrays;
 import java.util.List;
@@ -43,7 +43,7 @@ public class PropertyAgentServiceUnitTest {
     private AgentLeadRepo agentLeadRepo;
 
     @Mock
-    private ModelMapper modelMapper;
+    private PropertyAgentMapper propertyAgentMapper;
 
     @InjectMocks
     private PropertyAgentServiceImpl propertyAgentService;
@@ -58,7 +58,7 @@ public class PropertyAgentServiceUnitTest {
                 userAddressRepo,
                 agentLeadRepo,
                 objectMapper,
-                modelMapper
+                propertyAgentMapper
         );
     }
 

@@ -4,6 +4,7 @@ import edu.hcmute.config.PropertyLeadFeignClient;
 import edu.hcmute.domain.LeadAction;
 import edu.hcmute.dto.AgentLeadDto;
 import edu.hcmute.entity.AgentLead;
+import edu.hcmute.mapper.PropertyAgentMapper;
 import edu.hcmute.repo.AgentLeadRepo;
 import edu.hcmute.service.PropertyAgentServiceImpl;
 import org.junit.jupiter.api.Assertions;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.modelmapper.ModelMapper;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,7 +26,7 @@ public class PropertyAgentServiceTest {
     @Mock
     private AgentLeadRepo agentLeadRepo;
     @Mock
-    private ModelMapper modelMapper;
+    private PropertyAgentMapper propertyAgentMapper;
 
     @Test
     public void testUpdateLeadAction() {
@@ -41,9 +41,9 @@ public class PropertyAgentServiceTest {
         agentLead.setLeadAction(LeadAction.ACCEPTED);
 
         when(propertyLeadFeignClient.updateLeadActionById(12, "ACCEPTED")).thenReturn("ACCEPTED");
-        when(modelMapper.map(agentLeadDto, AgentLead.class)).thenReturn(agentLead);
+        when(propertyAgentMapper.toEntity(agentLeadDto)).thenReturn(agentLead);
         when(agentLeadRepo.save(agentLead)).thenReturn(agentLead);
-        when(modelMapper.map(agentLead, AgentLeadDto.class)).thenReturn(agentLeadDto);
+        when(propertyAgentMapper.toDto(agentLead)).thenReturn(agentLeadDto);
 
         AgentLeadDto result = propertyAgentService.updateLeadAction(agentLeadDto);
 

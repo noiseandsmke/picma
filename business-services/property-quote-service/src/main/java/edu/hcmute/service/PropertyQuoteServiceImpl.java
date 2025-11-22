@@ -2,10 +2,10 @@ package edu.hcmute.service;
 
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.PropertyQuote;
+import edu.hcmute.mapper.PropertyQuoteMapper;
 import edu.hcmute.repo.PropertyQuoteRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,14 +15,14 @@ import java.util.List;
 @Slf4j
 public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     private final PropertyQuoteRepo repo;
-    private final ModelMapper modelMapper;
+    private final PropertyQuoteMapper propertyQuoteMapper;
 
     @Override
     public PropertyQuoteDto createPropertyQuote(PropertyQuoteDto propertyQuoteDto) {
         log.info("### Create PropertyQuote ###");
         log.info("PropertyQuoteDto: {}", propertyQuoteDto.toString());
         try {
-            PropertyQuote propertyQuote = modelMapper.map(propertyQuoteDto, PropertyQuote.class);
+            PropertyQuote propertyQuote = propertyQuoteMapper.toEntity(propertyQuoteDto);
             propertyQuote = repo.save(propertyQuote);
             log.info("PropertyQuote saved with id: {}", propertyQuote.getId());
             return mapModelToDto(propertyQuote);
@@ -59,6 +59,6 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     }
 
     private PropertyQuoteDto mapModelToDto(PropertyQuote propertyQuote) {
-        return modelMapper.map(propertyQuote, PropertyQuoteDto.class);
+        return propertyQuoteMapper.toDto(propertyQuote);
     }
 }

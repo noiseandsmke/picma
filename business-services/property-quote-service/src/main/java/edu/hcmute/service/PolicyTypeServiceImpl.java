@@ -1,15 +1,12 @@
 package edu.hcmute.service;
 
-import edu.hcmute.dto.CoverageTypeDto;
-import edu.hcmute.dto.PerilTypeDto;
 import edu.hcmute.dto.PolicyTypeDto;
 import edu.hcmute.entity.PolicyType;
+import edu.hcmute.mapper.PropertyQuoteMapper;
 import edu.hcmute.repo.PolicyTypeRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 
@@ -18,19 +15,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PolicyTypeServiceImpl implements PolicyTypeService {
     private final PolicyTypeRepo repo;
-    private final ModelMapper modelMapper;
+    private final PropertyQuoteMapper propertyQuoteMapper;
 
     @Override
     public PolicyTypeDto createPolicyType(PolicyTypeDto policyTypeDto) {
         log.info("### Create PolicyType ###");
-        log.info("PolicyTypeDto: {}", policyTypeDto.toString());
+        log.info("~~> policyTypeDto: {}", policyTypeDto.toString());
         try {
-            PolicyType policyType = modelMapper.map(policyTypeDto, PolicyType.class);
+            PolicyType policyType = propertyQuoteMapper.toEntity(policyTypeDto);
             policyType = repo.save(policyType);
-            log.info("PolicyType saved with id: {}", policyType.getId());
+            log.info("~~> policyType saved with id: {}", policyType.getId());
             return mapModelToDto(policyType);
         } catch (Exception e) {
-            log.error("Error creating PolicyType: {}", e.getMessage(), e);
+            log.error("~~> error creating PolicyType: {}", e.getMessage(), e);
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -38,11 +35,11 @@ public class PolicyTypeServiceImpl implements PolicyTypeService {
     @Override
     public PolicyTypeDto getPolicyTypeById(Integer id) {
         log.info("### Get PolicyType by Id ###");
-        log.info("PolicyTypeDto id: {}", id);
+        log.info("~~> policyTypeDto id: {}", id);
         PolicyType policyType = repo.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("No PolicyType found with id: {}", id);
-                    return new RuntimeException("No PolicyType found with id: " + id);
+                    log.warn("~~> no PolicyType found with id: {}", id);
+                    return new RuntimeException("~~> no PolicyType found with id: " + id);
                 });
         return mapModelToDto(policyType);
     }
@@ -52,39 +49,16 @@ public class PolicyTypeServiceImpl implements PolicyTypeService {
         log.info("### Get All PolicyTypes ###");
         List<PolicyType> policyTypeList = repo.findAll();
         if (policyTypeList.isEmpty()) {
-            log.warn("No PolicyTypes found in database");
-            throw new RuntimeException("No PolicyTypes found in database");
+            log.warn("~~> no PolicyTypes found in database");
+            throw new RuntimeException("~~> no PolicyTypes found in database");
         }
-        log.info("Found {} PolicyTypes", policyTypeList.size());
+        log.info("~~> found {} PolicyTypes", policyTypeList.size());
         return policyTypeList.stream()
                 .map(this::mapModelToDto)
                 .toList();
     }
 
     private PolicyTypeDto mapModelToDto(PolicyType policyType) {
-        PolicyTypeDto policyTypeDto = new PolicyTypeDto();
-        policyTypeDto.setId(policyType.getId());
-        policyTypeDto.setType(policyType.getType());
-        if (policyType.getCoverageType() != null) {
-            CoverageTypeDto coverageTypeDto = new CoverageTypeDto();
-            coverageTypeDto.setId(policyType.getCoverageType().getId());
-            coverageTypeDto.setType(policyType.getCoverageType().getType());
-
-            if (!CollectionUtils.isEmpty(policyType.getCoverageType().getPerilTypeList())) {
-                List<PerilTypeDto> perilTypeDtoList = policyType.getCoverageType()
-                        .getPerilTypeList()
-                        .stream()
-                        .map(perilType -> {
-                            PerilTypeDto perilTypeDto = new PerilTypeDto();
-                            perilTypeDto.setId(perilType.getId());
-                            perilTypeDto.setType(perilType.getType());
-                            return perilTypeDto;
-                        })
-                        .toList();
-                coverageTypeDto.setPerilTypeList(perilTypeDtoList);
-            }
-            policyTypeDto.setCoverageTypeDto(coverageTypeDto);
-        }
-        return policyTypeDto;
+        return propertyQuoteMapper.toDto(policyType);
     }
 }

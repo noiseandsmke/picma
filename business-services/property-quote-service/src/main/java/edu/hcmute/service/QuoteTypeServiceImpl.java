@@ -2,10 +2,10 @@ package edu.hcmute.service;
 
 import edu.hcmute.dto.QuoteTypeDto;
 import edu.hcmute.entity.QuoteType;
+import edu.hcmute.mapper.PropertyQuoteMapper;
 import edu.hcmute.repo.QuoteTypeRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,14 +15,14 @@ import java.util.List;
 @Slf4j
 public class QuoteTypeServiceImpl implements QuoteTypeService {
     private final QuoteTypeRepo repo;
-    private final ModelMapper modelMapper;
+    private final PropertyQuoteMapper propertyQuoteMapper;
 
     @Override
     public QuoteTypeDto createQuoteType(QuoteTypeDto quoteTypeDto) {
         log.info("### Create QuoteType ###");
         log.info("QuoteTypeDto: {}", quoteTypeDto.toString());
         try {
-            QuoteType quoteType = modelMapper.map(quoteTypeDto, QuoteType.class);
+            QuoteType quoteType = propertyQuoteMapper.toEntity(quoteTypeDto);
             quoteType = repo.save(quoteType);
             log.info("QuoteType saved with id: {}", quoteType.getId());
             return mapModelToDto(quoteType);
@@ -59,6 +59,6 @@ public class QuoteTypeServiceImpl implements QuoteTypeService {
     }
 
     private QuoteTypeDto mapModelToDto(QuoteType quoteType) {
-        return modelMapper.map(quoteType, QuoteTypeDto.class);
+        return propertyQuoteMapper.toDto(quoteType);
     }
 }

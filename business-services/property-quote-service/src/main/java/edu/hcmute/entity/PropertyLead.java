@@ -3,8 +3,6 @@ package edu.hcmute.entity;
 import edu.hcmute.audit.Auditable;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.envers.AuditTable;
-import org.hibernate.envers.Audited;
 
 import java.io.Serial;
 import java.time.LocalDate;
@@ -15,8 +13,6 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Audited
-@AuditTable(value = "AU_PROPERTY_LEAD")
 public class PropertyLead extends Auditable {
     @Serial
     private static final long serialVersionUID = 9021889328077473363L;

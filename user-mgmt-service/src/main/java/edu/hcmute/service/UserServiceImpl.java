@@ -3,9 +3,9 @@ package edu.hcmute.service;
 import edu.hcmute.dto.UserDto;
 import edu.hcmute.entity.User;
 import edu.hcmute.exception.UserException;
+import edu.hcmute.mapper.UserMapper;
 import edu.hcmute.outbound.UserOutboundApi;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -16,27 +16,27 @@ import java.util.List;
 @Slf4j
 public class UserServiceImpl implements UserService {
     private UserOutboundApi userOutboundApi;
-    private ModelMapper modelMapper;
+    private UserMapper userMapper;
 
-    public UserServiceImpl(UserOutboundApi userOutboundApi, ModelMapper modelMapper) {
+    public UserServiceImpl(UserOutboundApi userOutboundApi, UserMapper userMapper) {
         this.userOutboundApi = userOutboundApi;
-        this.modelMapper = modelMapper;
+        this.userMapper = userMapper;
     }
 
     @Override
     public UserDto createUser(UserDto userDto, String accessToken) {
         log.info("Request data = {}", userDto.toString());
-        User user = modelMapper.map(userDto, User.class);
+        User user = userMapper.toEntity(userDto);
         log.info("User :: {}", user.toString());
         user = userOutboundApi.createUser(user, accessToken);
-        userDto = modelMapper.map(user, UserDto.class);
+        userDto = userMapper.toDto(user);
         return userDto;
     }
 
     @Override
     public UserDto getUserById(String userId, String accessToken) {
         try {
-            return modelMapper.map(userOutboundApi.getUserById(userId, accessToken), UserDto.class);
+            return userMapper.toDto(userOutboundApi.getUserById(userId, accessToken));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -57,7 +57,7 @@ public class UserServiceImpl implements UserService {
         List<User> userList = userOutboundApi.getAllUsers(accessToken);
         List<UserDto> uiUserList = new ArrayList<>();
         userList.stream().forEach((user) -> {
-            uiUserList.add(modelMapper.map(user, UserDto.class));
+            uiUserList.add(userMapper.toDto(user));
         });
         log.info("UserServiceImpl :: uiUserList size = {}", uiUserList.size());
         return uiUserList;
@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
         if (!CollectionUtils.isEmpty(userList)) {
             List<UserDto> uiUserList = new ArrayList<>();
             userList.stream().forEach((user) -> {
-                uiUserList.add(modelMapper.map(user, UserDto.class));
+                uiUserList.add(userMapper.toDto(user));
             });
             return uiUserList;
         } else {

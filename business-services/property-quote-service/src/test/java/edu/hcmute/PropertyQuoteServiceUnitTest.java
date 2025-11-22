@@ -2,6 +2,7 @@ package edu.hcmute;
 
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.PropertyQuote;
+import edu.hcmute.mapper.PropertyQuoteMapper;
 import edu.hcmute.repo.PropertyQuoteRepo;
 import edu.hcmute.service.PropertyQuoteServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.modelmapper.ModelMapper;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,7 +18,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PropertyQuoteServiceUnitTest {
@@ -27,7 +28,7 @@ public class PropertyQuoteServiceUnitTest {
     private PropertyQuoteRepo propertyQuoteRepo;
 
     @Mock
-    private ModelMapper modelMapper;
+    private PropertyQuoteMapper propertyQuoteMapper;
 
     @InjectMocks
     private PropertyQuoteServiceImpl propertyQuoteService;
@@ -36,7 +37,7 @@ public class PropertyQuoteServiceUnitTest {
     public void setUp() {
         propertyQuoteService = new PropertyQuoteServiceImpl(
                 propertyQuoteRepo,
-                modelMapper
+                propertyQuoteMapper
         );
     }
 
@@ -51,9 +52,9 @@ public class PropertyQuoteServiceUnitTest {
         savedQuote.setPropertyInfo("prop-123");
         savedQuote.setUserInfo("user-1");
 
-        when(modelMapper.map(inputDto, PropertyQuote.class)).thenReturn(savedQuote);
+        when(propertyQuoteMapper.toEntity(inputDto)).thenReturn(savedQuote);
         when(propertyQuoteRepo.save(savedQuote)).thenReturn(savedQuote);
-        when(modelMapper.map(savedQuote, PropertyQuoteDto.class)).thenReturn(inputDto);
+        when(propertyQuoteMapper.toDto(savedQuote)).thenReturn(inputDto);
 
         PropertyQuoteDto result = propertyQuoteService.createPropertyQuote(inputDto);
         assertNotNull(result);
@@ -70,7 +71,7 @@ public class PropertyQuoteServiceUnitTest {
         dto.setId(1);
 
         when(propertyQuoteRepo.findById(1)).thenReturn(Optional.of(quote));
-        when(modelMapper.map(quote, PropertyQuoteDto.class)).thenReturn(dto);
+        when(propertyQuoteMapper.toDto(quote)).thenReturn(dto);
 
         PropertyQuoteDto result = propertyQuoteService.getPropertyQuoteById(1);
 
@@ -96,7 +97,7 @@ public class PropertyQuoteServiceUnitTest {
         quote2.setId(2);
 
         when(propertyQuoteRepo.findAll()).thenReturn(Arrays.asList(quote1, quote2));
-        when(modelMapper.map(any(PropertyQuote.class), eq(PropertyQuoteDto.class)))
+        when(propertyQuoteMapper.toDto(any(PropertyQuote.class)))
                 .thenReturn(new PropertyQuoteDto());
 
         List<PropertyQuoteDto> results = propertyQuoteService.getAllPropertyQuotes();

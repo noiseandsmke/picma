@@ -2,10 +2,10 @@ package edu.hcmute.service;
 
 import edu.hcmute.dto.PerilTypeDto;
 import edu.hcmute.entity.PerilType;
+import edu.hcmute.mapper.PropertyQuoteMapper;
 import edu.hcmute.repo.PerilTypeRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,14 +15,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PerilTypeServiceImpl implements PerilTypeService {
     private final PerilTypeRepo repo;
-    private final ModelMapper modelMapper;
+    private final PropertyQuoteMapper propertyQuoteMapper;
 
     @Override
     public PerilTypeDto createPerilType(PerilTypeDto perilTypeDto) {
         log.info("### Create PerilType ###");
         log.info("PerilTypeDto: {}", perilTypeDto.toString());
         try {
-            PerilType perilType = modelMapper.map(perilTypeDto, PerilType.class);
+            PerilType perilType = propertyQuoteMapper.toEntity(perilTypeDto);
             perilType = repo.save(perilType);
             log.info("PerilType saved with id: {}", perilType.getId());
             return mapModelToDto(perilType);
@@ -59,6 +59,6 @@ public class PerilTypeServiceImpl implements PerilTypeService {
     }
 
     private PerilTypeDto mapModelToDto(PerilType perilType) {
-        return modelMapper.map(perilType, PerilTypeDto.class);
+        return propertyQuoteMapper.toDto(perilType);
     }
 }

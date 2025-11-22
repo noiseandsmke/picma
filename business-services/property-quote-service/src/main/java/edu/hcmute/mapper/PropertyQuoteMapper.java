@@ -1,0 +1,104 @@
+package edu.hcmute.mapper;
+
+import edu.hcmute.dto.*;
+import edu.hcmute.entity.*;
+import edu.hcmute.repo.CoverageTypeRepo;
+import edu.hcmute.repo.PolicyTypeRepo;
+import edu.hcmute.repo.PropertyQuoteRepo;
+import edu.hcmute.repo.QuoteTypeRepo;
+import lombok.RequiredArgsConstructor;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+
+import java.time.LocalDate;
+
+@RequiredArgsConstructor
+@Mapper(componentModel = "spring")
+public abstract class PropertyQuoteMapper {
+    protected final PropertyQuoteRepo propertyQuoteRepo;
+    protected final QuoteTypeRepo quoteTypeRepo;
+    protected final CoverageTypeRepo coverageTypeRepo;
+    protected final PolicyTypeRepo policyTypeRepo;
+
+    public abstract PropertyQuoteDto toDto(PropertyQuote propertyQuote);
+
+    public abstract PropertyQuote toEntity(PropertyQuoteDto propertyQuoteDto);
+
+    @Mapping(target = "propertyQuote", source = "propertyQuoteDto", qualifiedByName = "resolvePropertyQuote")
+    @Mapping(target = "quoteType", source = "quoteTypeDto", qualifiedByName = "resolveQuoteType")
+    @Mapping(target = "coverageType", source = "coverageTypeDto", qualifiedByName = "resolveCoverageType")
+    @Mapping(target = "policyType", source = "policyTypeDto", qualifiedByName = "resolvePolicyType")
+    public abstract PropertyQuoteDetail toEntity(PropertyQuoteDetailDto propertyQuoteDetailDto);
+
+    @Named("resolvePropertyQuote")
+    protected PropertyQuote resolvePropertyQuote(PropertyQuoteDto dto) {
+        if (dto == null) {
+            return null;
+        }
+
+        if (dto.getId() != null) {
+            return propertyQuoteRepo.findById(dto.getId())
+                    .orElseThrow(() -> new RuntimeException("PropertyInfo not found"));
+        } else {
+            PropertyQuote propertyQuote = new PropertyQuote();
+            propertyQuote.setUserInfo(String.valueOf(dto.getUserInfo()));
+            propertyQuote.setPropertyInfo(String.valueOf(dto.getPropertyInfo()));
+            propertyQuote.setCreateDate(LocalDate.now());
+            propertyQuote.setExpiryDate(LocalDate.now().plusDays(30));
+
+            return propertyQuoteRepo.save(propertyQuote);
+        }
+    }
+
+    @Named("resolveQuoteType")
+    protected QuoteType resolveQuoteType(QuoteTypeDto dto) {
+        if (dto == null || dto.getId() == null) {
+            return null;
+        }
+        return quoteTypeRepo.findById(dto.getId())
+                .orElseThrow(() -> new RuntimeException("QuoteType not found"));
+    }
+
+    @Named("resolveCoverageType")
+    protected CoverageType resolveCoverageType(CoverageTypeDto dto) {
+        if (dto == null || dto.getId() == null) {
+            return null;
+        }
+        return coverageTypeRepo.findById(dto.getId())
+                .orElseThrow(() -> new RuntimeException("CoverageType not found"));
+    }
+
+    @Named("resolvePolicyType")
+    protected PolicyType resolvePolicyType(PolicyTypeDto dto) {
+        if (dto == null || dto.getId() == null) {
+            return null;
+        }
+        return policyTypeRepo.findById(dto.getId())
+                .orElseThrow(() -> new RuntimeException("PolicyType not found"));
+    }
+
+    @Mapping(source = "propertyQuote", target = "propertyQuoteDto")
+    @Mapping(source = "quoteType", target = "quoteTypeDto")
+    @Mapping(source = "coverageType", target = "coverageTypeDto")
+    @Mapping(source = "policyType", target = "policyTypeDto")
+    public abstract PropertyQuoteDetailDto toDto(PropertyQuoteDetail propertyQuoteDetail);
+
+    public abstract QuoteTypeDto toDto(QuoteType quoteType);
+
+    public abstract QuoteType toEntity(QuoteTypeDto quoteTypeDto);
+
+    public abstract CoverageType toEntity(CoverageTypeDto coverageTypeDto);
+
+    public abstract CoverageTypeDto toDto(CoverageType coverageType);
+
+    public abstract PerilTypeDto toDto(PerilType perilType);
+
+    public abstract PerilType toEntity(PerilTypeDto perilTypeDto);
+
+    @Mapping(source = "coverageTypeDto", target = "coverageType")
+    public abstract PolicyType toEntity(PolicyTypeDto policyTypeDto);
+
+    @Mapping(source = "coverageType", target = "coverageTypeDto")
+    public abstract PolicyTypeDto toDto(PolicyType policyType);
+}

@@ -1,11 +1,11 @@
 package edu.hcmute.service;
 
-import edu.hcmute.dto.*;
+import edu.hcmute.dto.PropertyInfoDto;
 import edu.hcmute.entity.PropertyInfo;
+import edu.hcmute.mapper.PropertyMgmtMapper;
 import edu.hcmute.repo.PropertyInfoRepo;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -17,11 +17,11 @@ import java.util.List;
 @AllArgsConstructor
 public class PropertyInfoServiceImpl implements PropertyInfoService {
     private PropertyInfoRepo propertyInfoRepo;
-    private ModelMapper modelMapper;
+    private PropertyMgmtMapper propertyMgmtMapper;
 
     @Override
     public PropertyInfoDto createPropertyInfo(PropertyInfoDto propertyInfoDto) {
-        PropertyInfo propertyInfo = modelMapper.map(propertyInfoDto, PropertyInfo.class);
+        PropertyInfo propertyInfo = propertyMgmtMapper.toEntity(propertyInfoDto);
         log.info("PropertyInfo: {}", propertyInfo.toString());
 
         propertyInfo = propertyInfoRepo.save(propertyInfo);
@@ -71,19 +71,6 @@ public class PropertyInfoServiceImpl implements PropertyInfoService {
     }
 
     private PropertyInfoDto mapModelToDto(PropertyInfo propertyInfo) {
-        PropertyInfoDto propertyInfoDto = modelMapper.map(propertyInfo, PropertyInfoDto.class);
-        if (propertyInfo.getPropertyType() != null) {
-            propertyInfoDto.setPropertyTypeDto(modelMapper.map(propertyInfo.getPropertyType(), PropertyTypeDto.class));
-        }
-        if (propertyInfo.getConstructionType() != null) {
-            propertyInfoDto.setConstructionTypeDto(modelMapper.map(propertyInfo.getConstructionType(), ConstructionTypeDto.class));
-        }
-        if (propertyInfo.getOccupancyType() != null) {
-            propertyInfoDto.setOccupancyTypeDto(modelMapper.map(propertyInfo.getOccupancyType(), OccupancyTypeDto.class));
-        }
-        if (propertyInfo.getPropertyAddress() != null) {
-            propertyInfoDto.setPropertyAddressDto(modelMapper.map(propertyInfo.getPropertyAddress(), PropertyAddressDto.class));
-        }
-        return propertyInfoDto;
+        return propertyMgmtMapper.toDto(propertyInfo);
     }
 }
