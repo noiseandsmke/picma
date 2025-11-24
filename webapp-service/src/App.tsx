@@ -1,6 +1,7 @@
 import React from 'react';
 import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom';
 import DashboardLayout from '@/layouts/DashboardLayout';
+import ProtectedRoute from '@/layouts/ProtectedRoute';
 import AuthLayout from '@/layouts/AuthLayout';
 import LoginView from '@/features/auth/views/LoginView';
 import AdminDashboard from '@/features/admin/views/AdminDashboard';
@@ -14,10 +15,11 @@ const App: React.FC = () => {
                 <Route element={<AuthLayout/>}>
                     <Route path="/login" element={<LoginView/>}/>
                 </Route>
-
+                <Route element={<ProtectedRoute/>}>
+                    <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
+                </Route>
                 <Route element={<DashboardLayout/>}>
                     <Route path="/" element={<Navigate to="/admin/dashboard" replace/>}/>
-                    <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
                     <Route path="/agent/dashboard" element={<AgentDashboard/>}/>
                     <Route path="/owner/dashboard" element={<OwnerDashboard/>}/>
                 </Route>
