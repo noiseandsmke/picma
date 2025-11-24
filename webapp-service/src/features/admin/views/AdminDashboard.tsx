@@ -24,7 +24,8 @@ const AdminDashboard: React.FC = () => {
         isError: isLeadsError
     } = useQuery({
         queryKey: ['admin-leads'],
-        queryFn: fetchAllLeads
+        queryFn: fetchAllLeads,
+        select: (data) => [...data].sort((a, b) => a.id - b.id)
     });
 
     const formatDate = (dateStr: string) => {
@@ -64,9 +65,6 @@ const AdminDashboard: React.FC = () => {
                                 {isStatsLoading ?
                                     <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.totalLeads ?? 0}
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">
-                                +12% from last month
-                            </p>
                         </CardContent>
                     </Card>
 
@@ -80,10 +78,6 @@ const AdminDashboard: React.FC = () => {
                                 {isStatsLoading ?
                                     <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.acceptedLeads ?? 0}
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">
-                                Conversion
-                                rate: {stats && stats.totalLeads > 0 ? Math.round((stats.acceptedLeads / stats.totalLeads) * 100) : 0}%
-                            </p>
                         </CardContent>
                     </Card>
 
@@ -97,15 +91,12 @@ const AdminDashboard: React.FC = () => {
                                 {isStatsLoading ?
                                     <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.rejectedLeads ?? 0}
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">
-                                Requires attention
-                            </p>
                         </CardContent>
                     </Card>
 
                     <Card className="bg-slate-900 border-slate-800 text-white">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-400">Expired</CardTitle>
+                            <CardTitle className="text-sm font-medium text-slate-400">Overdue</CardTitle>
                             <AlertTriangle className="h-4 w-4 text-amber-500"/>
                         </CardHeader>
                         <CardContent>
@@ -113,9 +104,6 @@ const AdminDashboard: React.FC = () => {
                                 {isStatsLoading ?
                                     <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.overdueLeads ?? 0}
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">
-                                System health check
-                            </p>
                         </CardContent>
                     </Card>
                 </div>
@@ -173,7 +161,7 @@ const AdminDashboard: React.FC = () => {
                                     leads.map((lead) => (
                                         <TableRow key={lead.id}
                                                   className="border-slate-800 hover:bg-slate-900/50 transition-colors">
-                                            <TableCell className="font-medium text-slate-300">#{lead.id}</TableCell>
+                                            <TableCell className="font-medium text-slate-300">{lead.id}</TableCell>
                                             <TableCell className="text-slate-300">
                                                 <div className="flex flex-col">
                                                     <span className="font-medium text-indigo-400">{lead.userInfo}</span>
