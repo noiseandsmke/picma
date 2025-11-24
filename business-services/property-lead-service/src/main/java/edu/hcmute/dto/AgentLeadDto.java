@@ -1,22 +1,9 @@
 package edu.hcmute.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.io.Serial;
-import java.io.Serializable;
-
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class AgentLeadDto implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 105336597657793105L;
-    private int id;
-    private String leadAction;
-    private String agentId;
-    private int leadId;
+public record AgentLeadDto(
+        int id,
+        String leadAction,
+        String agentId,
+        int leadId
+) {
 }

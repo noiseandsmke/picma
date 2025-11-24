@@ -30,10 +30,7 @@ public class PropertyAgentServiceTest {
 
     @Test
     public void testUpdateLeadAction() {
-        AgentLeadDto agentLeadDto = new AgentLeadDto();
-        agentLeadDto.setLeadId(12);
-        agentLeadDto.setLeadAction(LeadAction.ACCEPTED);
-        agentLeadDto.setAgentId("103");
+        AgentLeadDto agentLeadDto = new AgentLeadDto(0, LeadAction.ACCEPTED, "103", 12);
 
         AgentLead agentLead = new AgentLead();
         agentLead.setLeadId(12);
@@ -48,7 +45,7 @@ public class PropertyAgentServiceTest {
         AgentLeadDto result = propertyAgentService.updateLeadAction(agentLeadDto);
 
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(LeadAction.ACCEPTED, result.getLeadAction());
+        Assertions.assertEquals(LeadAction.ACCEPTED, result.leadAction());
         verify(propertyLeadFeignClient).updateLeadActionById(12, "ACCEPTED");
         verify(agentLeadRepo).save(agentLead);
     }

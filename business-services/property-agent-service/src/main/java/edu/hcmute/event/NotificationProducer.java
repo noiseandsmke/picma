@@ -23,7 +23,7 @@ public class NotificationProducer {
         log.info("Sending notification to kafka topic: {}", topicName);
         try {
             String value = objectMapper.writeValueAsString(notification);
-            String key = notification.getRecipientId();
+            String key = notification.recipientId();
             kafkaTemplate.send(topicName, key, value);
             log.info("Notification sent to Kafka for recipient: {}", key);
         } catch (JsonProcessingException e) {

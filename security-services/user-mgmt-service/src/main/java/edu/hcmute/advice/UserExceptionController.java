@@ -32,10 +32,10 @@ public class UserExceptionController extends ResponseEntityExceptionHandler {
             log.info("Line number = {}", ste.getLineNumber());
         }
         userException.printStackTrace();
-        UserExceptionDto userExceptionDto = UserExceptionDto.builder()
-                .message(userException.getErrorMessage())
-                .code(userException.getErrorCode())
-                .build();
+        UserExceptionDto userExceptionDto = new UserExceptionDto(
+                userException.getErrorMessage(),
+                userException.getErrorCode()
+        );
         return ResponseEntity.ok(userExceptionDto);
     }
 
@@ -50,10 +50,10 @@ public class UserExceptionController extends ResponseEntityExceptionHandler {
         log.info("Handle method argument not valid");
         List<UserExceptionDto> validationErrors = new ArrayList<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
-            UserExceptionDto userExceptionDto = UserExceptionDto.builder()
-                    .message(error.getDefaultMessage())
-                    .code(HttpStatus.BAD_REQUEST.value())
-                    .build();
+            UserExceptionDto userExceptionDto = new UserExceptionDto(
+                    error.getDefaultMessage(),
+                    HttpStatus.BAD_REQUEST.value()
+            );
             validationErrors.add(userExceptionDto);
         });
         log.info("Validation errors size :: {}", validationErrors.size());

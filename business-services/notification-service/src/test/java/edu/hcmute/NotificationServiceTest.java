@@ -39,10 +39,11 @@ public class NotificationServiceTest {
 
     @BeforeEach
     public void setUp() {
-        notificationRequestDto = new NotificationRequestDto();
-        notificationRequestDto.setRecipientId(testRecipientId);
-        notificationRequestDto.setTitle("Test Notification");
-        notificationRequestDto.setMessage("This is a test notification message");
+        notificationRequestDto = new NotificationRequestDto(
+                testRecipientId,
+                "Test Notification",
+                "This is a test notification message"
+        );
         notification = Notification.builder()
                 .id(1)
                 .recipientId(testRecipientId)
@@ -52,13 +53,14 @@ public class NotificationServiceTest {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        notificationDto = new NotificationDto();
-        notificationDto.setId(1);
-        notificationDto.setRecipientId(testRecipientId);
-        notificationDto.setTitle("Test Notification");
-        notificationDto.setMessage("This is a test notification message");
-        notificationDto.setRead(false);
-        notificationDto.setCreatedAt(LocalDateTime.now());
+        notificationDto = new NotificationDto(
+                1,
+                testRecipientId,
+                "Test Notification",
+                "This is a test notification message",
+                false,
+                LocalDateTime.now()
+        );
     }
 
     @Test
@@ -69,7 +71,7 @@ public class NotificationServiceTest {
         NotificationDto createdNotification = notificationService.createNotification(notificationRequestDto);
 
         Assertions.assertNotNull(createdNotification);
-        Assertions.assertEquals(testRecipientId, createdNotification.getRecipientId());
+        Assertions.assertEquals(testRecipientId, createdNotification.recipientId());
     }
 
     @Test
@@ -81,13 +83,20 @@ public class NotificationServiceTest {
 
         Assertions.assertNotNull(notifications);
         Assertions.assertFalse(notifications.isEmpty());
-        Assertions.assertEquals(testRecipientId, notifications.get(0).getRecipientId());
+        Assertions.assertEquals(testRecipientId, notifications.get(0).recipientId());
     }
 
     @Test
     public void testMarkAsRead() {
         notification.setRead(true);
-        notificationDto.setRead(true);
+        notificationDto = new NotificationDto(
+                1,
+                testRecipientId,
+                "Test Notification",
+                "This is a test notification message",
+                true,
+                LocalDateTime.now()
+        );
         when(notificationRepo.findById(1)).thenReturn(Optional.of(notification));
         when(notificationRepo.save(any(Notification.class))).thenReturn(notification);
         when(notificationMapper.toDto(any(Notification.class))).thenReturn(notificationDto);

@@ -34,13 +34,9 @@ public class PolicyTypeServiceTest {
 
     @BeforeEach
     public void init() {
-        CoverageTypeDto basicCoverageTypeDto = new CoverageTypeDto();
-        basicCoverageTypeDto.setId(2);
-        basicCoverageTypeDto.setType("Basic");
+        CoverageTypeDto basicCoverageTypeDto = new CoverageTypeDto(2, "Basic", null);
 
-        policyTypeDto = new PolicyTypeDto();
-        policyTypeDto.setType("HO-3");
-        policyTypeDto.setCoverageTypeDto(basicCoverageTypeDto);
+        policyTypeDto = new PolicyTypeDto(null, "HO-3", basicCoverageTypeDto);
 
         policyType = new PolicyType();
         policyType.setId(1);
@@ -56,13 +52,13 @@ public class PolicyTypeServiceTest {
     void createPolicyTypeTest() {
         when(propertyQuoteMapper.toEntity(any(PolicyTypeDto.class))).thenReturn(policyType);
         when(policyTypeRepo.save(any(PolicyType.class))).thenReturn(policyType);
-        when(propertyQuoteMapper.toDto(any(PolicyType.class))).thenReturn(policyTypeDto);
-        policyTypeDto.setId(1);
+        PolicyTypeDto resultDto = new PolicyTypeDto(1, "HO-3", policyTypeDto.coverageTypeDto());
+        when(propertyQuoteMapper.toDto(any(PolicyType.class))).thenReturn(resultDto);
 
         PolicyTypeDto savedPolicyTypeDto = policyTypeService.createPolicyType(policyTypeDto);
         Assertions.assertNotNull(savedPolicyTypeDto);
-        Assertions.assertEquals(1, savedPolicyTypeDto.getId());
-        Assertions.assertEquals(policyTypeDto.getType(), savedPolicyTypeDto.getType());
-        Assertions.assertEquals(policyTypeDto.getCoverageTypeDto().getType(), savedPolicyTypeDto.getCoverageTypeDto().getType());
+        Assertions.assertEquals(1, savedPolicyTypeDto.id());
+        Assertions.assertEquals(policyTypeDto.type(), savedPolicyTypeDto.type());
+        Assertions.assertEquals(policyTypeDto.coverageTypeDto().type(), savedPolicyTypeDto.coverageTypeDto().type());
     }
 }

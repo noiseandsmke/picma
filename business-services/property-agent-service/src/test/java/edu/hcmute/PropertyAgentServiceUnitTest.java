@@ -96,22 +96,22 @@ public class PropertyAgentServiceUnitTest {
         List<NotificationRequestDto> capturedNotifications = notificationCaptor.getAllValues();
 
         NotificationRequestDto notification1 = capturedNotifications.get(0);
-        assertEquals("101", notification1.getRecipientId());
-        assertEquals("New Lead Available", notification1.getTitle());
-        assertTrue(notification1.getMessage().contains("12345"));
-        assertTrue(notification1.getMessage().contains("Lead ID: 100"));
+        assertEquals("101", notification1.recipientId());
+        assertEquals("New Lead Available", notification1.title());
+        assertTrue(notification1.message().contains("12345"));
+        assertTrue(notification1.message().contains("Lead ID: 100"));
 
         NotificationRequestDto notification2 = capturedNotifications.get(1);
-        assertEquals("102", notification2.getRecipientId());
-        assertEquals("New Lead Available", notification2.getTitle());
+        assertEquals("102", notification2.recipientId());
+        assertEquals("New Lead Available", notification2.title());
 
         NotificationRequestDto notification3 = capturedNotifications.get(2);
-        assertEquals("103", notification3.getRecipientId());
-        assertEquals("New Lead Available", notification3.getTitle());
+        assertEquals("103", notification3.recipientId());
+        assertEquals("New Lead Available", notification3.title());
 
         System.out.println("~~> All 3 notifications verified:");
         capturedNotifications.forEach(n ->
-                System.out.println("  - Agent " + n.getRecipientId() + ": " + n.getMessage())
+                System.out.println("  - Agent " + n.recipientId() + ": " + n.message())
         );
     }
 

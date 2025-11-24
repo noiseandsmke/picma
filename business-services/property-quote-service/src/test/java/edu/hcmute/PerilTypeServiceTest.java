@@ -31,8 +31,7 @@ public class PerilTypeServiceTest {
 
     @BeforeEach
     public void init() {
-        perilTypeDto = new PerilTypeDto();
-        perilTypeDto.setType("Fire");
+        perilTypeDto = new PerilTypeDto(null, "Fire");
 
         perilType = new PerilType();
         perilType.setId(1);
@@ -43,12 +42,12 @@ public class PerilTypeServiceTest {
     void createPerilTypeTest() {
         when(propertyQuoteMapper.toEntity(any(PerilTypeDto.class))).thenReturn(perilType);
         when(perilTypeRepo.save(any(PerilType.class))).thenReturn(perilType);
-        when(propertyQuoteMapper.toDto(any(PerilType.class))).thenReturn(perilTypeDto);
-        perilTypeDto.setId(1);
+        PerilTypeDto resultDto = new PerilTypeDto(1, "Fire");
+        when(propertyQuoteMapper.toDto(any(PerilType.class))).thenReturn(resultDto);
 
         PerilTypeDto savedPerilTypeDto = service.createPerilType(perilTypeDto);
         Assertions.assertNotNull(savedPerilTypeDto);
-        Assertions.assertEquals(1, savedPerilTypeDto.getId());
-        Assertions.assertEquals(perilTypeDto.getType(), savedPerilTypeDto.getType());
+        Assertions.assertEquals(1, savedPerilTypeDto.id());
+        Assertions.assertEquals(perilTypeDto.type(), savedPerilTypeDto.type());
     }
 }

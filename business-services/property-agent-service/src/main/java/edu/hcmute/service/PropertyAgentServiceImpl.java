@@ -40,8 +40,8 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     public AgentLeadDto updateLeadAction(AgentLeadDto agentLeadDto) {
         log.info("~~> update Lead Action: {}", agentLeadDto);
         AgentLead agentLead;
-        if (agentLeadDto.getId() > 0) {
-            agentLead = agentLeadRepo.findById(agentLeadDto.getId())
+        if (agentLeadDto.id() > 0) {
+            agentLead = agentLeadRepo.findById(agentLeadDto.id())
                     .orElseGet(() -> propertyAgentMapper.toEntity(agentLeadDto));
         } else {
             agentLead = propertyAgentMapper.toEntity(agentLeadDto);
@@ -54,16 +54,16 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
             }
         }
 
-        LeadAction newAction = agentLeadDto.getLeadAction();
+        LeadAction newAction = agentLeadDto.leadAction();
         agentLead.setLeadAction(newAction);
         if (agentLead.getId() == 0) {
-            agentLead.setId(agentLeadDto.getId());
+            agentLead.setId(agentLeadDto.id());
         }
         agentLeadRepo.save(agentLead);
         if (newAction.equals(LeadAction.ACCEPTED)) {
             log.info("~~> agent accepted lead {}.", agentLead.getLeadId());
             try {
-                String updatedLeadAction = propertyLeadFeignClient.updateLeadActionById(agentLeadDto.getLeadId(), String.valueOf(LeadAction.ACCEPTED));
+                String updatedLeadAction = propertyLeadFeignClient.updateLeadActionById(agentLeadDto.leadId(), String.valueOf(LeadAction.ACCEPTED));
                 log.info("~~> lead status updated to ACCEPTED: {}", updatedLeadAction);
             } catch (Exception e) {
                 log.error("~~> failed to update Lead status to ACCEPTED in Lead Service", e);
@@ -76,7 +76,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
             if (allRejected && !allAgentsForLead.isEmpty()) {
                 log.info("~~> all agents rejected lead {}.", agentLead.getLeadId());
                 try {
-                    String updatedLeadAction = propertyLeadFeignClient.updateLeadActionById(agentLeadDto.getLeadId(), String.valueOf(LeadAction.REJECTED));
+                    String updatedLeadAction = propertyLeadFeignClient.updateLeadActionById(agentLeadDto.leadId(), String.valueOf(LeadAction.REJECTED));
                     log.info("~~> lead status updated to REJECTED: {}", updatedLeadAction);
                 } catch (Exception e) {
                     log.error("~~> failed to update Lead status to REJECTED in Lead Service", e);
@@ -129,11 +129,11 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
                         agentLead.setLeadAction(LeadAction.INTERESTED);
                         agentLead.setCreatedAt(LocalDateTime.now());
                         agentLeadRepo.save(agentLead);
-                        NotificationRequestDto notification = NotificationRequestDto.builder()
-                                .recipientId(agentIdStr)
-                                .title("New Lead Available")
-                                .message("A new lead matches your zip code: " + zipCode + ". Lead ID: " + leadId)
-                                .build();
+                        NotificationRequestDto notification = new NotificationRequestDto(
+                                agentIdStr,
+                                "New Lead Available",
+                                "A new lead matches your zip code: " + zipCode + ". Lead ID: " + leadId
+                        );
                         notificationProducer.sendNotification(notification);
                         log.info("~~> notification sent to agent: {}", agentIdStr);
                     } catch (Exception e) {

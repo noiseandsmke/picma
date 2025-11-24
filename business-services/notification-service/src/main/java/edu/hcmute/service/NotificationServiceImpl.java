@@ -21,11 +21,15 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public NotificationDto createNotification(NotificationRequestDto requestDto) {
-        log.info("### Creating notification for recipient: {}", requestDto.getRecipientId());
-        NotificationDto notificationDto = new NotificationDto();
-        notificationDto.setRecipientId(requestDto.getRecipientId());
-        notificationDto.setTitle(requestDto.getTitle());
-        notificationDto.setMessage(requestDto.getMessage());
+        log.info("### Creating notification for recipient: {}", requestDto.recipientId());
+        NotificationDto notificationDto = new NotificationDto(
+                null,
+                requestDto.recipientId(),
+                requestDto.title(),
+                requestDto.message(),
+                false,
+                null
+        );
 
         Notification notification = notificationMapper.toEntity(notificationDto);
         notification = notificationRepo.save(notification);

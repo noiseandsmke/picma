@@ -18,7 +18,7 @@ public class PropertyLeadServiceTest extends PropertyLeadServiceApplicationTests
     public void testCreateLeadByQuoteId() {
         PropertyLeadDto propertyLeadDto = propertyLeadService.createPropertyLeadByQuote(1);
         Assertions.assertNotNull(propertyLeadDto);
-        Assertions.assertTrue(propertyLeadDto.getId() > 0);
+        Assertions.assertTrue(propertyLeadDto.id() > 0);
     }
 
     @Test

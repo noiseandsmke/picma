@@ -77,10 +77,14 @@ public class PropertyLeadServiceUnitTest {
         when(propertyLeadMapper.toDto(any(PropertyLead.class)))
                 .thenAnswer(invocation -> {
                     PropertyLead source = invocation.getArgument(0);
-                    PropertyLeadDto dto = new PropertyLeadDto();
-                    dto.setId(source.getId());
-                    dto.setStatus(source.getStatus());
-                    return dto;
+                    return new PropertyLeadDto(
+                            source.getId(),
+                            null,
+                            null,
+                            source.getStatus(),
+                            null,
+                            null
+                    );
                 });
 
         List<PropertyLeadDto> result = propertyLeadService.findPropertyLeadsOfAgent(agentId);

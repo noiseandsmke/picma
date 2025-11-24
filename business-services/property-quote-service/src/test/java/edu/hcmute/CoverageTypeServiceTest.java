@@ -50,21 +50,14 @@ public class CoverageTypeServiceTest {
 
         perilTypes = List.of(firePeril, typhoonPeril);
 
-        coverageTypeDto = new CoverageTypeDto();
-        coverageTypeDto.setType("Platinum");
-
-        PerilTypeDto firePerilDto = new PerilTypeDto();
-        firePerilDto.setId(firePeril.getId());
-        firePerilDto.setType(firePeril.getType());
-
-        PerilTypeDto typhoonPerilDto = new PerilTypeDto();
-        typhoonPerilDto.setId(typhoonPeril.getId());
-        typhoonPerilDto.setType(typhoonPeril.getType());
+        PerilTypeDto firePerilDto = new PerilTypeDto(firePeril.getId(), firePeril.getType());
+        PerilTypeDto typhoonPerilDto = new PerilTypeDto(typhoonPeril.getId(), typhoonPeril.getType());
 
         List<PerilTypeDto> perilList = new ArrayList<>();
         perilList.add(firePerilDto);
         perilList.add(typhoonPerilDto);
-        coverageTypeDto.setPerilTypeList(perilList);
+
+        coverageTypeDto = new CoverageTypeDto(null, "Platinum", perilList);
 
         coverageType = new CoverageType();
         coverageType.setId(1);
@@ -78,19 +71,16 @@ public class CoverageTypeServiceTest {
         when(coverageTypeRepo.save(any(CoverageType.class))).thenReturn(coverageType);
 
         // Must return a DTO with ID
-        CoverageTypeDto resultDto = new CoverageTypeDto();
-        resultDto.setId(1);
-        resultDto.setType(coverageTypeDto.getType());
-        resultDto.setPerilTypeList(coverageTypeDto.getPerilTypeList());
+        CoverageTypeDto resultDto = new CoverageTypeDto(1, coverageTypeDto.type(), coverageTypeDto.perilTypeList());
 
         when(propertyQuoteMapper.toDto(any(CoverageType.class))).thenReturn(resultDto);
         when(perilTypeRepo.findAllById(any())).thenReturn(perilTypes);
 
         CoverageTypeDto savedCoverageTypeDto = coverageTypeService.createCoverageType(coverageTypeDto);
         Assertions.assertNotNull(savedCoverageTypeDto);
-        Assertions.assertEquals(1, savedCoverageTypeDto.getId());
-        Assertions.assertEquals(coverageTypeDto.getType(), savedCoverageTypeDto.getType());
-        Assertions.assertNotNull(savedCoverageTypeDto.getPerilTypeList());
-        Assertions.assertEquals(2, savedCoverageTypeDto.getPerilTypeList().size());
+        Assertions.assertEquals(1, savedCoverageTypeDto.id());
+        Assertions.assertEquals(coverageTypeDto.type(), savedCoverageTypeDto.type());
+        Assertions.assertNotNull(savedCoverageTypeDto.perilTypeList());
+        Assertions.assertEquals(2, savedCoverageTypeDto.perilTypeList().size());
     }
 }

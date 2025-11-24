@@ -45,13 +45,13 @@ public abstract class PropertyQuoteMapper {
             return null;
         }
 
-        if (dto.getId() != null) {
-            return propertyQuoteRepo.findById(dto.getId())
+        if (dto.id() != null) {
+            return propertyQuoteRepo.findById(dto.id())
                     .orElseThrow(() -> new RuntimeException("PropertyInfo not found"));
         } else {
             PropertyQuote propertyQuote = new PropertyQuote();
-            propertyQuote.setUserInfo(String.valueOf(dto.getUserInfo()));
-            propertyQuote.setPropertyInfo(String.valueOf(dto.getPropertyInfo()));
+            propertyQuote.setUserInfo(String.valueOf(dto.userInfo()));
+            propertyQuote.setPropertyInfo(String.valueOf(dto.propertyInfo()));
             propertyQuote.setCreateDate(LocalDate.now());
             propertyQuote.setExpiryDate(LocalDate.now().plusDays(30));
 
@@ -61,28 +61,28 @@ public abstract class PropertyQuoteMapper {
 
     @Named("resolveQuoteType")
     protected QuoteType resolveQuoteType(QuoteTypeDto dto) {
-        if (dto == null || dto.getId() == null) {
+        if (dto == null || dto.id() == null) {
             return null;
         }
-        return quoteTypeRepo.findById(dto.getId())
+        return quoteTypeRepo.findById(dto.id())
                 .orElseThrow(() -> new RuntimeException("QuoteType not found"));
     }
 
     @Named("resolveCoverageType")
     protected CoverageType resolveCoverageType(CoverageTypeDto dto) {
-        if (dto == null || dto.getId() == null) {
+        if (dto == null || dto.id() == null) {
             return null;
         }
-        return coverageTypeRepo.findById(dto.getId())
+        return coverageTypeRepo.findById(dto.id())
                 .orElseThrow(() -> new RuntimeException("CoverageType not found"));
     }
 
     @Named("resolvePolicyType")
     protected PolicyType resolvePolicyType(PolicyTypeDto dto) {
-        if (dto == null || dto.getId() == null) {
+        if (dto == null || dto.id() == null) {
             return null;
         }
-        return policyTypeRepo.findById(dto.getId())
+        return policyTypeRepo.findById(dto.id())
                 .orElseThrow(() -> new RuntimeException("PolicyType not found"));
     }
 

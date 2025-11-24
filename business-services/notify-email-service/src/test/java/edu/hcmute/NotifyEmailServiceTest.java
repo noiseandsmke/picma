@@ -19,20 +19,19 @@ public class NotifyEmailServiceTest extends NotifyEmailServiceApplicationTests {
 
     @Test
     public void testSendEmail() {
-        EmailRequestDto emailRequestDto01 = new EmailRequestDto();
-        emailRequestDto01.setEmail("lodeh58941@fermiro.com");
-
-        EmailRequestDto emailRequestDto02 = new EmailRequestDto();
-        emailRequestDto02.setEmail("qlgq1415@fermiro.com");
+        EmailRequestDto emailRequestDto01 = new EmailRequestDto("lodeh58941@fermiro.com", null, 0);
+        EmailRequestDto emailRequestDto02 = new EmailRequestDto("qlgq1415@fermiro.com", null, 0);
 
         List<EmailRequestDto> emailRequestDtoList = new ArrayList<>();
         emailRequestDtoList.add(emailRequestDto01);
         emailRequestDtoList.add(emailRequestDto02);
 
-        NotificationDto notificationDto = new NotificationDto();
-        notificationDto.setEmailContentType("text/plain");
-        notificationDto.setEmailSubject("Test PICMA email");
-        notificationDto.setToList(emailRequestDtoList);
+        NotificationDto notificationDto = new NotificationDto(
+                emailRequestDtoList,
+                "Test PICMA email",
+                "text/plain",
+                0
+        );
 
         mailTrapSender.sendNotification(notificationDto);
     }

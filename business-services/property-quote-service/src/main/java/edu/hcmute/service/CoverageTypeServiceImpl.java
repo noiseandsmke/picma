@@ -27,12 +27,12 @@ public class CoverageTypeServiceImpl implements CoverageTypeService {
     @Transactional
     public CoverageTypeDto createCoverageType(CoverageTypeDto coverageTypeDto) {
         log.info("### Create CoverageType ###");
-        log.info("CoverageTypeDto: {}", coverageTypeDto.getType());
+        log.info("CoverageTypeDto: {}", coverageTypeDto.type());
         try {
             CoverageType coverageType = propertyQuoteMapper.toEntity(coverageTypeDto);
-            if (!CollectionUtils.isEmpty(coverageTypeDto.getPerilTypeList())) {
-                List<Integer> perilTypeIds = coverageTypeDto.getPerilTypeList().stream()
-                        .map(PerilTypeDto::getId)
+            if (!CollectionUtils.isEmpty(coverageTypeDto.perilTypeList())) {
+                List<Integer> perilTypeIds = coverageTypeDto.perilTypeList().stream()
+                        .map(PerilTypeDto::id)
                         .toList();
                 List<PerilType> perilTypes = perilTypeRepo.findAllById(perilTypeIds);
                 if (perilTypes.size() != perilTypeIds.size()) {

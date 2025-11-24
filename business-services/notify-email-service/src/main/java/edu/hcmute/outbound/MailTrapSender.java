@@ -45,7 +45,7 @@ public class MailTrapSender {
     private String fromName;
 
     public List<EmailRequestDto> sendNotification(NotificationDto notificationDto) {
-        if (notificationDto == null || notificationDto.getToList() == null || notificationDto.getToList().isEmpty()) {
+        if (notificationDto == null || notificationDto.toList() == null || notificationDto.toList().isEmpty()) {
             log.warn("Notification request is null or has no recipients");
             return Collections.emptyList();
         }
@@ -58,18 +58,18 @@ public class MailTrapSender {
             return Collections.emptyList();
         }
 
-        for (EmailRequestDto emailRequest : notificationDto.getToList()) {
+        for (EmailRequestDto emailRequest : notificationDto.toList()) {
             try {
-                sendSingleEmail(emailRequest, notificationDto.getEmailSubject(), emailTemplate);
+                sendSingleEmail(emailRequest, notificationDto.emailSubject(), emailTemplate);
                 successfulSends.add(emailRequest);
-                log.info("Email successfully sent to: {}", emailRequest.getEmail());
+                log.info("Email successfully sent to: {}", emailRequest.email());
             } catch (Exception e) {
-                log.error("Failed to send email to: {}. Error: {}", emailRequest.getEmail(), e.getMessage(), e);
+                log.error("Failed to send email to: {}. Error: {}", emailRequest.email(), e.getMessage(), e);
             }
         }
 
         log.info("Email notification completed. Sent {}/{} emails successfully",
-                successfulSends.size(), notificationDto.getToList().size());
+                successfulSends.size(), notificationDto.toList().size());
 
         return successfulSends;
     }
@@ -90,7 +90,7 @@ public class MailTrapSender {
         MimeMessageHelper helper = new MimeMessageHelper(message, true, CHARSET_UTF8);
 
         helper.setFrom(new InternetAddress(marketingEmail, fromName));
-        helper.setTo(emailRequest.getEmail());
+        helper.setTo(emailRequest.email());
         helper.setSubject(subject);
 
         Map<String, Object> templateData = prepareTemplateData(emailRequest);
@@ -99,13 +99,13 @@ public class MailTrapSender {
         helper.setText(emailContent, true);
 
         mailSender.send(message);
-        log.debug("Email queued for sending to: {}", emailRequest.getEmail());
+        log.debug("Email queued for sending to: {}", emailRequest.email());
     }
 
     private Map<String, Object> prepareTemplateData(EmailRequestDto emailRequest) {
         Map<String, Object> modelData = new HashMap<>();
-        modelData.put("recipientEmail", emailRequest.getEmail());
-        modelData.put("recipientUserId", emailRequest.getUserId());
+        modelData.put("recipientEmail", emailRequest.email());
+        modelData.put("recipientUserId", emailRequest.userId());
         modelData.put("fromName", fromName);
         modelData.put("fromEmail", marketingEmail);
         modelData.put("viewLeadLink", leadBaseUri);

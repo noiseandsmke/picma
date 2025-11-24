@@ -32,9 +32,7 @@ public class PropertyQuoteServiceTest {
 
     @BeforeEach
     public void init() {
-        propertyQuoteDto = new PropertyQuoteDto();
-        propertyQuoteDto.setUserInfo("Duc Huy");
-        propertyQuoteDto.setPropertyInfo("Honda Blade 110");
+        propertyQuoteDto = new PropertyQuoteDto(null, "Duc Huy", "Honda Blade 110");
 
         propertyQuote = new PropertyQuote();
         propertyQuote.setId(1);
@@ -46,11 +44,12 @@ public class PropertyQuoteServiceTest {
     void createPropertyQuoteTest() {
         when(propertyQuoteMapper.toEntity(any(PropertyQuoteDto.class))).thenReturn(propertyQuote);
         when(propertyQuoteRepo.save(any(PropertyQuote.class))).thenReturn(propertyQuote);
-        when(propertyQuoteMapper.toDto(any(PropertyQuote.class))).thenReturn(propertyQuoteDto);
-        propertyQuoteDto.setId(1);
+
+        PropertyQuoteDto resultDto = new PropertyQuoteDto(1, "Duc Huy", "Honda Blade 110");
+        when(propertyQuoteMapper.toDto(any(PropertyQuote.class))).thenReturn(resultDto);
 
         PropertyQuoteDto savedPropertyQuoteDto = service.createPropertyQuote(propertyQuoteDto);
         Assertions.assertNotNull(savedPropertyQuoteDto);
-        Assertions.assertEquals(1, savedPropertyQuoteDto.getId());
+        Assertions.assertEquals(1, savedPropertyQuoteDto.id());
     }
 }

@@ -29,10 +29,10 @@ public class EmailSender {
     public List<EmailRequestDto> sendNotification(NotificationDto notificationDto) {
         try {
             Email from = new Email(marketingEmail);
-            notificationDto.getToList().forEach(emailRequestDto -> {
-                Email to = new Email(emailRequestDto.getEmail());
-                Content content = new Content(notificationDto.getEmailContentType(), "Welcome to PICMA");
-                Mail mail = new Mail(from, notificationDto.getEmailSubject(), to, content);
+            notificationDto.toList().forEach(emailRequestDto -> {
+                Email to = new Email(emailRequestDto.email());
+                Content content = new Content(notificationDto.emailContentType(), "Welcome to PICMA");
+                Mail mail = new Mail(from, notificationDto.emailSubject(), to, content);
 
 //                SendGrid sendGrid = new SendGrid(System.getenv("SENDGRID_API_KEY"));
                 SendGrid sendGrid = new SendGrid(System.getenv("SENDGRID_API_KEY"));

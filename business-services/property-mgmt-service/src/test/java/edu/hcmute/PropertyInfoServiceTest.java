@@ -18,40 +18,33 @@ public class PropertyInfoServiceTest extends PropertyMgmtServiceApplicationTests
 
     @BeforeEach
     public void setUp() {
-        propertyInfoDto = new PropertyInfoDto();
-        propertyInfoDto.setNoFloors(4);
-        propertyInfoDto.setMarketValue("69m");
-        propertyInfoDto.setSquareMeters("60m2");
-        propertyInfoDto.setYearBuilt(2023);
+        propertyTypeDto = new PropertyTypeDto("Residential");
+        constructionTypeDto = new ConstructionTypeDto("Wood");
+        occupancyTypeDto = new OccupancyTypeDto("Coffee shop");
+        propertyAddressDto = new PropertyAddressDto("648877", "St. Nguyen Chi Thanh", "GiaNghia", "LamDong", "VietNam");
 
-        propertyTypeDto = new PropertyTypeDto();
-        propertyTypeDto.setType("Residential");
-        propertyInfoDto.setPropertyTypeDto(propertyTypeDto);
-
-        constructionTypeDto = new ConstructionTypeDto();
-        constructionTypeDto.setType("Wood");
-        propertyInfoDto.setConstructionTypeDto(constructionTypeDto);
-
-        occupancyTypeDto = new OccupancyTypeDto();
-        occupancyTypeDto.setType("Coffee shop");
-        propertyInfoDto.setOccupancyTypeDto(occupancyTypeDto);
-
-        propertyAddressDto = new PropertyAddressDto();
-        propertyAddressDto.setZipCode("648877");
-        propertyAddressDto.setStreet("St. Nguyen Chi Thanh");
-        propertyAddressDto.setState("GiaNghia");
-        propertyAddressDto.setCity("LamDong");
-        propertyAddressDto.setCountry("VietNam");
-        propertyInfoDto.setPropertyAddressDto(propertyAddressDto);
+        propertyInfoDto = new PropertyInfoDto(
+                null,
+                "60m2",
+                2023,
+                4,
+                null,
+                null,
+                "69m",
+                propertyTypeDto,
+                propertyAddressDto,
+                constructionTypeDto,
+                occupancyTypeDto
+        );
     }
 
     @Test
     public void testCreatePropertyInfo() {
         PropertyInfoDto createdProperty = propertyInfoService.createPropertyInfo(propertyInfoDto);
         Assertions.assertNotNull(createdProperty);
-        Assertions.assertNotNull(createdProperty.getId());
-        Assertions.assertNotNull(createdProperty.getPropertyTypeDto().getType());
-        Assertions.assertNotNull(createdProperty.getConstructionTypeDto().getType());
-        Assertions.assertNotNull(createdProperty.getOccupancyTypeDto().getType());
+        Assertions.assertNotNull(createdProperty.id());
+        Assertions.assertNotNull(createdProperty.propertyTypeDto().type());
+        Assertions.assertNotNull(createdProperty.constructionTypeDto().type());
+        Assertions.assertNotNull(createdProperty.occupancyTypeDto().type());
     }
 }

@@ -7,6 +7,7 @@ import edu.hcmute.config.PropertyAgentFeignClient;
 import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.domain.LeadStatus;
 import edu.hcmute.dto.AgentLeadDto;
+import edu.hcmute.dto.LeadStatsDto;
 import edu.hcmute.dto.PropertyLeadDto;
 import edu.hcmute.entity.PropertyLead;
 import edu.hcmute.entity.PropertyLeadDetail;
@@ -41,10 +42,10 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         log.info("### Create or Update PropertyLead ###");
         try {
             PropertyLead propertyLead;
-            if (propertyLeadDto.getId() != null) {
-                propertyLead = propertyLeadRepo.findById(propertyLeadDto.getId())
-                        .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + propertyLeadDto.getId()));
-                log.info("Updating existing PropertyLead with id: {}", propertyLeadDto.getId());
+            if (propertyLeadDto.id() != null) {
+                propertyLead = propertyLeadRepo.findById(propertyLeadDto.id())
+                        .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + propertyLeadDto.id()));
+                log.info("Updating existing PropertyLead with id: {}", propertyLeadDto.id());
                 propertyLeadMapper.updateEntity(propertyLead, propertyLeadDto);
                 propertyLead.setModifiedBy("noiseandsmke");
                 propertyLead.setModifiedAt(Instant.now());
@@ -321,7 +322,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
             log.info("~~> total {} leads visible to agent {}", allVisibleLeads.size(), agentId);
             return allVisibleLeads.stream()
                     .map(propertyLeadMapper::toDto)
-                    .sorted(Comparator.comparing(PropertyLeadDto::getId))
+                    .sorted(Comparator.comparing(PropertyLeadDto::id))
                     .collect(Collectors.toList());
         } catch (Exception e) {
             log.error("~~> error fetching leads for agent {}: {}", agentId, e.getMessage(), e);
@@ -343,8 +344,8 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
                     }
             );
             return agentLeads.stream()
-                    .filter(al -> "ACCEPTED".equalsIgnoreCase(al.getLeadAction()))
-                    .map(AgentLeadDto::getLeadId)
+                    .filter(al -> "ACCEPTED".equalsIgnoreCase(al.leadAction()))
+                    .map(AgentLeadDto::leadId)
                     .distinct()
                     .collect(Collectors.toList());
         } catch (Exception e) {
@@ -376,5 +377,41 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
             log.error("~~> error deleting PropertyLead: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to delete PropertyLead: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public LeadStatsDto getLeadStats() {
+        log.info("### Get Lead Stats ###");
+        List<PropertyLead> allLeads = propertyLeadRepo.findAll();
+
+        long total = allLeads.size();
+        long accepted = allLeads.stream()
+                .filter(l -> LeadStatus.ACCEPTED.name().equalsIgnoreCase(l.getStatus()))
+                .count();
+        long rejected = allLeads.stream()
+                .filter(l -> LeadStatus.REJECTED.name().equalsIgnoreCase(l.getStatus()))
+                .count();
+        long overdue = allLeads.stream()
+                .filter(l -> LeadStatus.EXPIRED.name().equalsIgnoreCase(l.getStatus()) ||
+                        (l.getExpiryDate() != null && l.getExpiryDate().isBefore(LocalDate.now())))
+                .count();
+
+        return new LeadStatsDto(total, accepted, rejected, overdue);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PropertyLeadDto> getAllLeads() {
+        log.info("### Get All PropertyLeads (Active + Inactive) ###");
+        List<PropertyLead> propertyLeadList = propertyLeadRepo.findAll();
+        if (propertyLeadList.isEmpty()) {
+            log.warn("~~> no PropertyLeads found in database");
+            return List.of();
+        }
+        log.info("~~> found {} PropertyLeads", propertyLeadList.size());
+        return propertyLeadList.stream()
+                .map(propertyLeadMapper::toDto)
+                .toList();
     }
 }

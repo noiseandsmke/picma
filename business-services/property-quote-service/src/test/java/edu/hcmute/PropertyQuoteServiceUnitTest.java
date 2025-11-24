@@ -43,9 +43,7 @@ public class PropertyQuoteServiceUnitTest {
 
     @Test
     public void testCreatePropertyQuote_Success() {
-        PropertyQuoteDto inputDto = new PropertyQuoteDto();
-        inputDto.setPropertyInfo("prop-123");
-        inputDto.setUserInfo("user-1");
+        PropertyQuoteDto inputDto = new PropertyQuoteDto(null, "user-1", "prop-123");
 
         PropertyQuote savedQuote = new PropertyQuote();
         savedQuote.setId(10);
@@ -67,8 +65,7 @@ public class PropertyQuoteServiceUnitTest {
         quote.setId(1);
         quote.setPropertyInfo("prop-123");
 
-        PropertyQuoteDto dto = new PropertyQuoteDto();
-        dto.setId(1);
+        PropertyQuoteDto dto = new PropertyQuoteDto(1, null, null);
 
         when(propertyQuoteRepo.findById(1)).thenReturn(Optional.of(quote));
         when(propertyQuoteMapper.toDto(quote)).thenReturn(dto);
@@ -76,7 +73,7 @@ public class PropertyQuoteServiceUnitTest {
         PropertyQuoteDto result = propertyQuoteService.getPropertyQuoteById(1);
 
         assertNotNull(result);
-        assertEquals(1, result.getId());
+        assertEquals(1, result.id());
         verify(propertyQuoteRepo).findById(1);
     }
 
@@ -98,7 +95,7 @@ public class PropertyQuoteServiceUnitTest {
 
         when(propertyQuoteRepo.findAll()).thenReturn(Arrays.asList(quote1, quote2));
         when(propertyQuoteMapper.toDto(any(PropertyQuote.class)))
-                .thenReturn(new PropertyQuoteDto());
+                .thenReturn(new PropertyQuoteDto(null, null, null));
 
         List<PropertyQuoteDto> results = propertyQuoteService.getAllPropertyQuotes();
 

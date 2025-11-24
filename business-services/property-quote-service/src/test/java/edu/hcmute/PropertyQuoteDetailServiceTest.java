@@ -43,27 +43,12 @@ public class PropertyQuoteDetailServiceTest {
 
     @BeforeEach
     public void init() {
-        propertyQuoteDetailDto = new PropertyQuoteDetailDto();
-        PropertyQuoteDto propertyQuoteDto = new PropertyQuoteDto();
-        propertyQuoteDto.setId(1);
-        propertyQuoteDto.setUserInfo("Duc Huy");
-        propertyQuoteDto.setPropertyInfo("Honda Blade 110");
-        propertyQuoteDetailDto.setPropertyQuoteDto(propertyQuoteDto);
+        PropertyQuoteDto propertyQuoteDto = new PropertyQuoteDto(1, "Duc Huy", "Honda Blade 110");
+        QuoteTypeDto quoteTypeDto = new QuoteTypeDto(2, "Type");
+        CoverageTypeDto coverageTypeDto = new CoverageTypeDto(3, "Coverage", null);
+        PolicyTypeDto policyTypeDto = new PolicyTypeDto(2, "Policy", null);
 
-        QuoteTypeDto quoteTypeDto = new QuoteTypeDto();
-        quoteTypeDto.setId(2);
-        quoteTypeDto.setType("Type");
-        propertyQuoteDetailDto.setQuoteTypeDto(quoteTypeDto);
-
-        CoverageTypeDto coverageTypeDto = new CoverageTypeDto();
-        coverageTypeDto.setId(3);
-        coverageTypeDto.setType("Coverage");
-        propertyQuoteDetailDto.setCoverageTypeDto(coverageTypeDto);
-
-        PolicyTypeDto policyTypeDto = new PolicyTypeDto();
-        policyTypeDto.setId(2);
-        policyTypeDto.setType("Policy");
-        propertyQuoteDetailDto.setPolicyTypeDto(policyTypeDto);
+        propertyQuoteDetailDto = new PropertyQuoteDetailDto(null, propertyQuoteDto, quoteTypeDto, coverageTypeDto, policyTypeDto);
 
         propertyQuoteDetail = new PropertyQuoteDetail();
         propertyQuoteDetail.setId(1);
@@ -80,12 +65,13 @@ public class PropertyQuoteDetailServiceTest {
         when(propertyQuoteMapper.toEntity(any(PropertyQuoteDetailDto.class))).thenReturn(propertyQuoteDetail);
         when(propertyQuoteDetailRepo.save(any(PropertyQuoteDetail.class))).thenReturn(propertyQuoteDetail);
 
-        PropertyQuoteDetailDto resultDto = new PropertyQuoteDetailDto();
-        resultDto.setId(1);
-        resultDto.setPropertyQuoteDto(propertyQuoteDetailDto.getPropertyQuoteDto());
-        resultDto.setQuoteTypeDto(propertyQuoteDetailDto.getQuoteTypeDto());
-        resultDto.setCoverageTypeDto(propertyQuoteDetailDto.getCoverageTypeDto());
-        resultDto.setPolicyTypeDto(propertyQuoteDetailDto.getPolicyTypeDto());
+        PropertyQuoteDetailDto resultDto = new PropertyQuoteDetailDto(
+                1,
+                propertyQuoteDetailDto.propertyQuoteDto(),
+                propertyQuoteDetailDto.quoteTypeDto(),
+                propertyQuoteDetailDto.coverageTypeDto(),
+                propertyQuoteDetailDto.policyTypeDto()
+        );
 
         when(propertyQuoteMapper.toDto(any(PropertyQuoteDetail.class))).thenReturn(resultDto);
 
@@ -102,10 +88,10 @@ public class PropertyQuoteDetailServiceTest {
         PropertyQuoteDetailDto savedPropertyQuoteDetailDto = propertyQuoteDetailService.createPropertyQuoteDetail(propertyQuoteDetailDto);
 
         Assertions.assertNotNull(savedPropertyQuoteDetailDto);
-        Assertions.assertEquals(1, savedPropertyQuoteDetailDto.getId());
-        Assertions.assertNotNull(savedPropertyQuoteDetailDto.getPropertyQuoteDto());
-        Assertions.assertNotNull(savedPropertyQuoteDetailDto.getQuoteTypeDto());
-        Assertions.assertNotNull(savedPropertyQuoteDetailDto.getCoverageTypeDto());
-        Assertions.assertNotNull(savedPropertyQuoteDetailDto.getPolicyTypeDto());
+        Assertions.assertEquals(1, savedPropertyQuoteDetailDto.id());
+        Assertions.assertNotNull(savedPropertyQuoteDetailDto.propertyQuoteDto());
+        Assertions.assertNotNull(savedPropertyQuoteDetailDto.quoteTypeDto());
+        Assertions.assertNotNull(savedPropertyQuoteDetailDto.coverageTypeDto());
+        Assertions.assertNotNull(savedPropertyQuoteDetailDto.policyTypeDto());
     }
 }

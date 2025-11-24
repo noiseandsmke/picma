@@ -32,8 +32,7 @@ public class QuoteTypeServiceTest {
 
     @BeforeEach
     public void init() {
-        quoteTypeDto = new QuoteTypeDto();
-        quoteTypeDto.setType("Full application");
+        quoteTypeDto = new QuoteTypeDto(null, "Full application");
 
         quoteType = new QuoteType();
         quoteType.setId(1);
@@ -44,12 +43,12 @@ public class QuoteTypeServiceTest {
     void createQuoteTypeTest() {
         when(propertyQuoteMapper.toEntity(any(QuoteTypeDto.class))).thenReturn(quoteType);
         when(quoteTypeRepo.save(any(QuoteType.class))).thenReturn(quoteType);
-        when(propertyQuoteMapper.toDto(any(QuoteType.class))).thenReturn(quoteTypeDto);
-        quoteTypeDto.setId(1);
+        QuoteTypeDto resultDto = new QuoteTypeDto(1, "Full application");
+        when(propertyQuoteMapper.toDto(any(QuoteType.class))).thenReturn(resultDto);
 
         QuoteTypeDto savedQuoteTypeDto = service.createQuoteType(quoteTypeDto);
         Assertions.assertNotNull(savedQuoteTypeDto);
-        Assertions.assertEquals(1, savedQuoteTypeDto.getId());
-        Assertions.assertEquals(quoteTypeDto.getType(), savedQuoteTypeDto.getType());
+        Assertions.assertEquals(1, savedQuoteTypeDto.id());
+        Assertions.assertEquals(quoteTypeDto.type(), savedQuoteTypeDto.type());
     }
 }

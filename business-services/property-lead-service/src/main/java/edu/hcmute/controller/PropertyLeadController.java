@@ -1,5 +1,6 @@
 package edu.hcmute.controller;
 
+import edu.hcmute.dto.LeadStatsDto;
 import edu.hcmute.dto.PropertyLeadDto;
 import edu.hcmute.service.PropertyLeadService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,9 +30,23 @@ public class PropertyLeadController {
 
     @GetMapping
     @Operation(description = "get all active property leads", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<PropertyLeadDto>> getAllLeads() {
+    public ResponseEntity<List<PropertyLeadDto>> getAllActiveLeads() {
         log.info("### get all active property leads ###");
         return ResponseEntity.ok(propertyLeadService.findAllPropertyLeads());
+    }
+
+    @GetMapping("/all")
+    @Operation(description = "get all property leads (inclusive)", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<List<PropertyLeadDto>> getAllLeads() {
+        log.info("### get all property leads ###");
+        return ResponseEntity.ok(propertyLeadService.getAllLeads());
+    }
+
+    @GetMapping("/stats")
+    @Operation(description = "get lead statistics", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<LeadStatsDto> getLeadStats() {
+        log.info("### get lead stats ###");
+        return ResponseEntity.ok(propertyLeadService.getLeadStats());
     }
 
     @GetMapping("/{leadId}")

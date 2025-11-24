@@ -3,45 +3,38 @@ package edu.hcmute.dto;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.*;
 
-import java.io.Serial;
-import java.io.Serializable;
+public record UserDto(
+        @NotEmpty(message = "{username.notEmpty.message}")
+        @Size(min = 3, max = 255, message = "{username.size.message}")
+        String username,
 
-@NoArgsConstructor
-@Setter
-@Getter
-@ToString
-@AllArgsConstructor
-public class UserDto implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 8751531877435884363L;
+        @NotEmpty(message = "{firstName.notEmpty.message}")
+        @Size(max = 255, message = "{firstName.size.message}")
+        String firstName,
 
-    @NotEmpty(message = "{username.notEmpty.message}")
-    @Size(min = 3, max = 255, message = "{username.size.message}")
-    private String username;
+        @NotEmpty(message = "{lastName.notEmpty.message}")
+        @Size(max = 255, message = "{lastName.size.message}")
+        String lastName,
 
-    @NotEmpty(message = "{firstName.notEmpty.message}")
-    @Size(max = 255, message = "{firstName.size.message}")
-    private String firstName;
+        @NotEmpty(message = "{email.notEmpty.message}")
+        @Size(max = 255, message = "{email.size.message}")
+        @Pattern(regexp = "^[\\w-\\\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")
+        String email,
 
-    @NotEmpty(message = "{lastName.notEmpty.message}")
-    @Size(max = 255, message = "{lastName.size.message}")
-    private String lastName;
+        @NotEmpty(message = "{mobile.notEmpty.message}")
+        @Pattern(regexp = "^[+]*[(]?[0-9]{1,4}[)]?[-\\s\\\\./0-9]*$")
+        String mobile,
 
-    @NotEmpty(message = "{email.notEmpty.message}")
-    @Size(max = 255, message = "{email.size.message}")
-    @Pattern(regexp = "^[\\w-\\\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "{email.pattern.message}")
-    private String email;
-
-    @NotEmpty(message = "{mobile.notEmpty.message}")
-    @Pattern(regexp = "^[+]*[(]?[0-9]{1,4}[)]?[-\\s\\\\./0-9]*$", message = "{mobile.pattern.message}")
-    private String mobile;
-
-    private String groupId;
-    private String id;
-
-    private boolean emailVerified = true;
-    private boolean enabled = true;
-    private boolean totp = false;
+        String groupId,
+        String id,
+        boolean emailVerified,
+        boolean enabled,
+        boolean totp
+) {
+    public UserDto {
+        emailVerified = true;
+        enabled = true;
+        totp = false;
+    }
 }

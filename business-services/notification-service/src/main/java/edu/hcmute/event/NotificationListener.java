@@ -22,7 +22,7 @@ public class NotificationListener {
         try {
             NotificationRequestDto requestDto = objectMapper.readValue(message, NotificationRequestDto.class);
             notificationService.createNotification(requestDto);
-            log.info("Notification created for recipient: {}", requestDto.getRecipientId());
+            log.info("Notification created for recipient: {}", requestDto.recipientId());
         } catch (JsonProcessingException e) {
             log.error("Error processing notification message: {}", e.getMessage(), e);
         } catch (Exception e) {

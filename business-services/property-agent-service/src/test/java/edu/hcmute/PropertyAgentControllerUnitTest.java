@@ -29,9 +29,7 @@ public class PropertyAgentControllerUnitTest {
     @Test
     public void testGetAgentLeads() {
         String agentId = "agent-001";
-        AgentLeadDto lead = new AgentLeadDto();
-        lead.setAgentId(agentId);
-        lead.setLeadId(100);
+        AgentLeadDto lead = new AgentLeadDto(0, null, agentId, 100);
 
         when(propertyAgentService.getAgentLeads(agentId)).thenReturn(List.of(lead));
 
@@ -40,7 +38,7 @@ public class PropertyAgentControllerUnitTest {
         assertEquals(200, response.getStatusCode().value());
         Assertions.assertNotNull(response.getBody());
         assertEquals(1, response.getBody().size());
-        assertEquals(agentId, response.getBody().get(0).getAgentId());
+        assertEquals(agentId, response.getBody().get(0).agentId());
     }
 
     @Test
