@@ -1,199 +1,215 @@
 import React from 'react';
+import {useQuery} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
-import {Checkbox} from '@/components/ui/checkbox';
-import {ChevronDown, FileCheck, FileClock, FileText, FileX, Filter, Search} from 'lucide-react';
+import {fetchAllLeads, fetchLeadStats} from '../services/leadService';
+import {AlertTriangle, Building2, CheckCircle, Clock, FileText, XCircle} from 'lucide-react';
+import {cn} from '@/lib/utils';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table";
+import {Card, CardContent, CardHeader, CardTitle,} from "@/components/ui/card";
+import {Badge} from '@/components/ui/badge';
+import {Skeleton} from '@/components/ui/skeleton';
 
 const AdminDashboard: React.FC = () => {
+    const {
+        data: stats,
+        isLoading: isStatsLoading
+    } = useQuery({
+        queryKey: ['admin-stats'],
+        queryFn: fetchLeadStats
+    });
+
+    const {
+        data: leads,
+        isLoading: isLeadsLoading,
+        isError: isLeadsError
+    } = useQuery({
+        queryKey: ['admin-leads'],
+        queryFn: fetchAllLeads
+    });
+
+    const formatDate = (dateStr: string) => {
+        try {
+            return new Date(dateStr).toLocaleDateString();
+        } catch {
+            return dateStr;
+        }
+    };
+
+    const getStatusClass = (status: string) => {
+        switch (status?.toUpperCase()) {
+            case 'ACTIVE':
+                return 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border-blue-500/20';
+            case 'ACCEPTED':
+                return 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/20';
+            case 'REJECTED':
+                return 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20';
+            case 'EXPIRED':
+                return 'bg-slate-500/10 text-slate-400 hover:bg-slate-500/20 border-slate-500/20';
+            default:
+                return 'bg-slate-500/10 text-slate-400';
+        }
+    }
+
     return (
         <AdminLayout>
-            <div className="space-y-8 max-w-[1600px] mx-auto">
-
-                {/* Top Stats Cards */}
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                    {/* Card 1: Total Leads */}
-                    <Card
-                        className="bg-gradient-to-br from-indigo-600 to-indigo-700 border-none text-white shadow-lg relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-3 opacity-20">
-                            <FileText className="h-24 w-24 -mr-6 -mt-6"/>
-                        </div>
-                        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 relative z-10">
-                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                <FileText className="h-5 w-5 text-white"/>
-                            </div>
+            <div className="space-y-8">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Card className="bg-slate-900 border-slate-800 text-white">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-400">Total Leads</CardTitle>
+                            <FileText className="h-4 w-4 text-blue-500"/>
                         </CardHeader>
-                        <CardContent className="relative z-10">
-                            <div className="text-3xl font-bold mt-2">86</div>
-                            <CardTitle className="text-sm font-medium text-indigo-100 mt-1">Total Leads</CardTitle>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-white">
+                                {isStatsLoading ?
+                                    <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.totalLeads ?? 0}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                                +12% from last month
+                            </p>
                         </CardContent>
                     </Card>
 
-                    {/* Card 2: Accepted Leads */}
-                    <Card className="bg-teal-600 border-none text-white shadow-lg relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-3 opacity-20">
-                            <FileCheck className="h-24 w-24 -mr-6 -mt-6"/>
-                        </div>
-                        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 relative z-10">
-                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                <FileCheck className="h-5 w-5 text-white"/>
-                            </div>
+                    <Card className="bg-slate-900 border-slate-800 text-white">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-400">Accepted</CardTitle>
+                            <CheckCircle className="h-4 w-4 text-emerald-500"/>
                         </CardHeader>
-                        <CardContent className="relative z-10">
-                            <div className="text-3xl font-bold mt-2">25</div>
-                            <CardTitle className="text-sm font-medium text-teal-100 mt-1">Accepted Leads</CardTitle>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-white">
+                                {isStatsLoading ?
+                                    <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.acceptedLeads ?? 0}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                                Conversion
+                                rate: {stats && stats.totalLeads > 0 ? Math.round((stats.acceptedLeads / stats.totalLeads) * 100) : 0}%
+                            </p>
                         </CardContent>
                     </Card>
 
-                    {/* Card 3: Rejected Leads */}
-                    <Card className="bg-purple-700 border-none text-white shadow-lg relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-3 opacity-20">
-                            <FileX className="h-24 w-24 -mr-6 -mt-6"/>
-                        </div>
-                        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 relative z-10">
-                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                <FileX className="h-5 w-5 text-white"/>
-                            </div>
+                    <Card className="bg-slate-900 border-slate-800 text-white">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-400">Rejected</CardTitle>
+                            <XCircle className="h-4 w-4 text-red-500"/>
                         </CardHeader>
-                        <CardContent className="relative z-10">
-                            <div className="text-3xl font-bold mt-2">40</div>
-                            <CardTitle className="text-sm font-medium text-purple-100 mt-1">Rejected Leads</CardTitle>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-white">
+                                {isStatsLoading ?
+                                    <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.rejectedLeads ?? 0}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                                Requires attention
+                            </p>
                         </CardContent>
                     </Card>
 
-                    {/* Card 4: Overdue Leads */}
-                    <Card className="bg-orange-600 border-none text-white shadow-lg relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-3 opacity-20">
-                            <FileClock className="h-24 w-24 -mr-6 -mt-6"/>
-                        </div>
-                        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 relative z-10">
-                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                <FileClock className="h-5 w-5 text-white"/>
-                            </div>
+                    <Card className="bg-slate-900 border-slate-800 text-white">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-400">Overdue / Alerts</CardTitle>
+                            <AlertTriangle className="h-4 w-4 text-amber-500"/>
                         </CardHeader>
-                        <CardContent className="relative z-10">
-                            <div className="text-3xl font-bold mt-2">22</div>
-                            <CardTitle className="text-sm font-medium text-orange-100 mt-1">Overdue Leads</CardTitle>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-white">
+                                {isStatsLoading ?
+                                    <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.overdueLeads ?? 0}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                                System health check
+                            </p>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Leads List Table Section */}
-                <div className="bg-slate-950 rounded-xl border border-slate-800 shadow-sm overflow-hidden">
-                    {/* Table Header & Filters */}
-                    <div
-                        className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800">
-                        <h2 className="text-lg font-semibold text-white">Leads List</h2>
-                        <div className="flex flex-wrap items-center gap-3">
-                            <div className="relative w-full sm:w-64">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500"/>
-                                <Input
-                                    placeholder="Search..."
-                                    className="pl-9 bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-indigo-600"
-                                />
-                            </div>
-                            <Button variant="outline"
-                                    className="bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
-                                All ZipCode <ChevronDown className="ml-2 h-4 w-4"/>
-                            </Button>
-                            <Button variant="outline" size="icon"
-                                    className="bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
-                                <Filter className="h-4 w-4"/>
-                            </Button>
+                <div className="rounded-xl border border-slate-800 bg-slate-950 text-slate-200 shadow-sm">
+                    <div className="p-6 flex items-center justify-between border-b border-slate-800">
+                        <div className="flex flex-col space-y-1">
+                            <h3 className="font-semibold text-lg text-white">Recent Leads</h3>
+                            <p className="text-sm text-slate-400">Latest insurance leads entering the system.</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                placeholder="Search Property..."
+                                className="bg-slate-900 border border-slate-700 text-sm rounded-md px-3 py-1.5 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <input
+                                type="text"
+                                placeholder="Search Owner..."
+                                className="bg-slate-900 border border-slate-700 text-sm rounded-md px-3 py-1.5 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
                         </div>
                     </div>
-
-                    {/* Table */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left text-slate-400">
-                            <thead className="text-xs uppercase bg-slate-900 text-slate-500 font-semibold">
-                            <tr>
-                                <th className="p-4 w-12">
-                                    <Checkbox
-                                        className="border-slate-600 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"/>
-                                </th>
-                                <th className="px-6 py-4">Lead Name</th>
-                                <th className="px-6 py-4">Started Date</th>
-                                <th className="px-6 py-4">Assigned To</th>
-                                <th className="px-6 py-4">Due Date</th>
-                                <th className="px-6 py-4">Status</th>
-                            </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800">
-                            {[
-                                {
-                                    name: "Robert Fox",
-                                    date: "Dec 12, 2024",
-                                    assigned: ["JD"],
-                                    due: "Dec 15, 2024",
-                                    status: "Active",
-                                    statusColor: "text-emerald-400 bg-emerald-400/10"
-                                },
-                                {
-                                    name: "Cody Fisher",
-                                    date: "Dec 10, 2024",
-                                    assigned: ["MK", "AL"],
-                                    due: "Dec 14, 2024",
-                                    status: "Expired",
-                                    statusColor: "text-slate-400 bg-slate-400/10"
-                                },
-                                {
-                                    name: "Esther Howard",
-                                    date: "Dec 10, 2024",
-                                    assigned: ["JD"],
-                                    due: "Dec 14, 2024",
-                                    status: "Accepted",
-                                    statusColor: "text-blue-400 bg-blue-400/10"
-                                },
-                                {
-                                    name: "Jenny Wilson",
-                                    date: "Dec 08, 2024",
-                                    assigned: [],
-                                    due: "Dec 12, 2024",
-                                    status: "Rejected",
-                                    statusColor: "text-red-400 bg-red-400/10"
-                                },
-                                {
-                                    name: "Guy Hawkins",
-                                    date: "Dec 08, 2024",
-                                    assigned: ["MK"],
-                                    due: "Dec 12, 2024",
-                                    status: "Active",
-                                    statusColor: "text-emerald-400 bg-emerald-400/10"
-                                },
-                            ].map((row, i) => (
-                                <tr key={i} className="hover:bg-slate-900/50 transition-colors">
-                                    <td className="p-4">
-                                        <Checkbox
-                                            className="border-slate-600 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"/>
-                                    </td>
-                                    <td className="px-6 py-4 font-medium text-slate-200">{row.name}</td>
-                                    <td className="px-6 py-4">{row.date}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex -space-x-2 overflow-hidden">
-                                            {row.assigned.length > 0 ? row.assigned.map((initials, idx) => (
-                                                <div key={idx}
-                                                     className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-indigo-900 ring-2 ring-slate-950 text-xs font-medium text-indigo-200">
-                                                    {initials}
+                    <div className="p-0">
+                        <Table>
+                            <TableHeader className="bg-slate-900/50 border-slate-800">
+                                <TableRow className="border-slate-800 hover:bg-slate-900/50">
+                                    <TableHead className="text-slate-400 w-[80px]">ID</TableHead>
+                                    <TableHead className="text-slate-400">User Info</TableHead>
+                                    <TableHead className="text-slate-400">Property Info</TableHead>
+                                    <TableHead className="text-slate-400">Status</TableHead>
+                                    <TableHead className="text-slate-400">Created</TableHead>
+                                    <TableHead className="text-slate-400">Expiry</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {isLeadsLoading ? (
+                                    Array.from({length: 5}).map((_, i) => (
+                                        <TableRow key={i} className="border-slate-800">
+                                            <TableCell><Skeleton className="h-4 w-8 bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-48 bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-6 w-20 bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : isLeadsError ? (
+                                    <TableRow className="border-slate-800">
+                                        <TableCell colSpan={6} className="h-24 text-center text-red-400">
+                                            Failed to load leads data.
+                                        </TableCell>
+                                    </TableRow>
+                                ) : leads && leads.length > 0 ? (
+                                    leads.map((lead) => (
+                                        <TableRow key={lead.id}
+                                                  className="border-slate-800 hover:bg-slate-900/50 transition-colors">
+                                            <TableCell className="font-medium text-slate-300">#{lead.id}</TableCell>
+                                            <TableCell className="text-slate-300">
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium text-indigo-400">{lead.userInfo}</span>
                                                 </div>
-                                            )) : <span className="text-xs italic text-slate-600">Unassigned</span>}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">{row.due}</td>
-                                    <td className="px-6 py-4">
-                                            <span
-                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${row.statusColor}`}>
-                                                {row.status}
-                                            </span>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div className="p-4 border-t border-slate-800 text-xs text-center text-slate-500">
-                        Showing 5 of 86 leads
+                                            </TableCell>
+                                            <TableCell className="text-slate-300">
+                                                <div className="flex items-center gap-2">
+                                                    <Building2 className="h-3 w-3 text-slate-500"/>
+                                                    {lead.propertyInfo}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline"
+                                                       className={cn("border-0 font-medium", getStatusClass(lead.status))}>
+                                                    {lead.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-slate-400 text-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <Clock className="h-3 w-3 text-slate-600"/>
+                                                    {formatDate(lead.startDate)}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell
+                                                className="text-slate-400 text-sm">{formatDate(lead.expiryDate)}</TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow className="border-slate-800">
+                                        <TableCell colSpan={6} className="h-24 text-center text-slate-500">
+                                            No active leads found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
                 </div>
             </div>
