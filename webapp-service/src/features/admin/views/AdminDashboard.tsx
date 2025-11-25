@@ -1,28 +1,22 @@
 import React from 'react';
 import {useQuery} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
-import {fetchLeadStats} from '../services/leadService';
-import {Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip} from 'recharts';
+import {fetchLeadStats, fetchLeadTrend} from '../services/leadService';
+import {CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Skeleton} from '@/components/ui/skeleton';
-import {AlertTriangle, CheckCircle, FileText, TrendingUp, Users, XCircle} from 'lucide-react';
+import {AlertTriangle, CheckCircle, FileText, Users, XCircle} from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
-    const {data: stats, isLoading} = useQuery({
+    const {data: stats, isLoading: isLoadingStats} = useQuery({
         queryKey: ['admin-stats'],
         queryFn: fetchLeadStats
     });
 
-    const statusData = [
-        {name: 'Accepted', value: stats?.acceptedLeads || 0, color: '#10b981'},
-        {name: 'Rejected', value: stats?.rejectedLeads || 0, color: '#ef4444'},
-        {name: 'Overdue', value: stats?.overdueLeads || 0, color: '#f59e0b'},
-        {
-            name: 'Active',
-            value: (stats?.totalLeads || 0) - ((stats?.acceptedLeads || 0) + (stats?.rejectedLeads || 0) + (stats?.overdueLeads || 0)),
-            color: '#3b82f6'
-        },
-    ];
+    const {data: trendData, isLoading: isLoadingTrend} = useQuery({
+        queryKey: ['lead-trend'],
+        queryFn: fetchLeadTrend
+    });
 
     return (
         <AdminLayout>
@@ -35,12 +29,9 @@ const AdminDashboard: React.FC = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-white">
-                                {isLoading ? <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.totalLeads ?? 0}
+                                {isLoadingStats ?
+                                    <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.totalLeads ?? 0}
                             </div>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center">
-                                <TrendingUp className="h-3 w-3 mr-1 text-emerald-500"/>
-                                +12% from last month
-                            </p>
                         </CardContent>
                     </Card>
 
@@ -51,12 +42,9 @@ const AdminDashboard: React.FC = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-white">
-                                {isLoading ? <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.acceptedLeads ?? 0}
+                                {isLoadingStats ?
+                                    <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.acceptedLeads ?? 0}
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">
-                                Conversion
-                                rate: {stats?.totalLeads ? Math.round((stats.acceptedLeads / stats.totalLeads) * 100) : 0}%
-                            </p>
                         </CardContent>
                     </Card>
 
@@ -67,7 +55,8 @@ const AdminDashboard: React.FC = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-white">
-                                {isLoading ? <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.rejectedLeads ?? 0}
+                                {isLoadingStats ?
+                                    <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.rejectedLeads ?? 0}
                             </div>
                         </CardContent>
                     </Card>
@@ -79,9 +68,9 @@ const AdminDashboard: React.FC = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-white">
-                                {isLoading ? <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.overdueLeads ?? 0}
+                                {isLoadingStats ?
+                                    <Skeleton className="h-8 w-16 bg-slate-800"/> : stats?.overdueLeads ?? 0}
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">Action required</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -89,39 +78,31 @@ const AdminDashboard: React.FC = () => {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                     <Card className="col-span-7 bg-slate-900 border-slate-800">
                         <CardHeader>
-                            <CardTitle className="text-white">Lead Status Distribution</CardTitle>
+                            <CardTitle className="text-white">Lead Acquisition Trend</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <ResponsiveContainer width="100%" height={350}>
-                                <PieChart>
-                                    <Pie
-                                        data={statusData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {statusData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color}/>
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: '#0f172a',
-                                            borderColor: '#1e293b',
-                                            color: '#f8fafc'
-                                        }}
-                                        itemStyle={{color: '#f8fafc'}}
-                                    />
-                                    <Legend wrapperStyle={{paddingTop: '20px'}}/>
-                                </PieChart>
-                            </ResponsiveContainer>
+                            {isLoadingTrend ? (
+                                <Skeleton className="h-[350px] w-full bg-slate-800"/>
+                            ) : (
+                                <ResponsiveContainer width="100%" height={350}>
+                                    <LineChart data={trendData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#374151"/>
+                                        <XAxis dataKey="date" stroke="#9ca3af"/>
+                                        <YAxis stroke="#9ca3af"/>
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: '#0f172a',
+                                                borderColor: '#1e293b'
+                                            }}
+                                        />
+                                        <Legend/>
+                                        <Line type="monotone" dataKey="count" stroke="#8b5cf6" name="Leads"/>
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
-
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card className="bg-slate-900 border-slate-800">
                         <CardHeader>
@@ -169,32 +150,6 @@ const AdminDashboard: React.FC = () => {
                                     </div>
                                     <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
                                         <div className="h-full bg-purple-500 w-[60%]"/>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-slate-900 border-slate-800">
-                        <CardHeader>
-                            <CardTitle className="text-white text-base">Recent Alerts</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div className="flex items-start gap-3">
-                                    <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0"/>
-                                    <div>
-                                        <p className="text-sm font-medium text-white">High Error Rate</p>
-                                        <p className="text-xs text-slate-400">Service 'property-quote' experiencing
-                                            timeouts.</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0"/>
-                                    <div>
-                                        <p className="text-sm font-medium text-white">Backup Completed</p>
-                                        <p className="text-xs text-slate-400">Daily database backup finished
-                                            successfully.</p>
                                     </div>
                                 </div>
                             </div>

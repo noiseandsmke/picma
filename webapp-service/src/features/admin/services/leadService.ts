@@ -17,6 +17,11 @@ export interface LeadStatsDto {
     overdueLeads: number;
 }
 
+export interface LeadTrendData {
+    date: string;
+    count: number;
+}
+
 const LEAD_SERVICE_URL = import.meta.env.VITE_LEAD_SERVICE_URL || 'http://localhost:7103/property-lead';
 
 export const fetchAllLeads = async (sort = 'id', order = 'asc'): Promise<PropertyLeadDto[]> => {
@@ -28,5 +33,10 @@ export const fetchAllLeads = async (sort = 'id', order = 'asc'): Promise<Propert
 
 export const fetchLeadStats = async (): Promise<LeadStatsDto> => {
     const response = await axios.get<LeadStatsDto>(`${LEAD_SERVICE_URL}/stats`);
+    return response.data;
+};
+
+export const fetchLeadTrend = async (): Promise<LeadTrendData[]> => {
+    const response = await axios.get<LeadTrendData[]>(`${LEAD_SERVICE_URL}/trend`);
     return response.data;
 };
