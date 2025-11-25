@@ -42,15 +42,23 @@ const LoginView: React.FC = () => {
     } = form;
 
     const onSubmit = (data: LoginFormValues) => {
-        if (data.email === 'admin@admin.com' && data.password === 'admin') {
+        if ((data.email === 'admin@admin.com' || data.email === 'agent@picma.com' || data.email === 'owner@picma.com') && (data.password === 'admin' || data.password === 'password')) {
+            const roles = [];
+            if (data.email.includes('admin')) roles.push('ADMIN');
+            if (data.email.includes('agent')) roles.push('AGENT');
+            if (data.email.includes('owner')) roles.push('OWNER');
+
             const dummyUser = {
                 id: '1',
-                username: 'admin',
+                username: data.email.split('@')[0],
                 email: data.email,
-                roles: ['ADMIN', 'OWNER', 'AGENT'],
+                roles: roles,
             };
             login('dummy-token', dummyUser);
-            navigate('/admin/dashboard');
+
+            if (roles.includes('ADMIN')) navigate('/admin/dashboard');
+            else if (roles.includes('AGENT')) navigate('/agent/dashboard');
+            else if (roles.includes('OWNER')) navigate('/owner/dashboard');
         } else {
             setError('root', {
                 type: 'manual',
