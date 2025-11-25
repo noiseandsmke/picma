@@ -63,14 +63,30 @@ public class PropertyLeadControllerTest {
         PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", "EXPIRED", null, null);
         List<PropertyLeadDto> leadList = Collections.singletonList(leadDto);
 
-        when(propertyLeadService.getAllLeads()).thenReturn(leadList);
+        when(propertyLeadService.getAllLeads("id", "asc")).thenReturn(leadList);
 
-        ResponseEntity<List<PropertyLeadDto>> response = propertyLeadController.getAllLeads();
+        ResponseEntity<List<PropertyLeadDto>> response = propertyLeadController.getAllLeads("id", "asc");
 
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(leadList, response.getBody());
-        verify(propertyLeadService).getAllLeads();
+        verify(propertyLeadService).getAllLeads("id", "asc");
+    }
+
+    @Test
+    void getAllLeads_shouldReturnSortedList() {
+        PropertyLeadDto lead1 = new PropertyLeadDto(1, "B", "P2", "ACTIVE", null, null);
+        PropertyLeadDto lead2 = new PropertyLeadDto(2, "A", "P1", "EXPIRED", null, null);
+        List<PropertyLeadDto> leadList = List.of(lead2, lead1);
+
+        when(propertyLeadService.getAllLeads("userInfo", "asc")).thenReturn(leadList);
+
+        ResponseEntity<List<PropertyLeadDto>> response = propertyLeadController.getAllLeads("userInfo", "asc");
+
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(leadList, response.getBody());
+        verify(propertyLeadService).getAllLeads("userInfo", "asc");
     }
 
     @Test

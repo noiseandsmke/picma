@@ -17,6 +17,7 @@ import edu.hcmute.repo.PropertyLeadDetailRepo;
 import edu.hcmute.repo.PropertyLeadRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -402,9 +403,17 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PropertyLeadDto> getAllLeads() {
+    public List<PropertyLeadDto> getAllLeads(String sort, String order) {
         log.info("### Get All PropertyLeads (Active + Inactive) ###");
-        List<PropertyLead> propertyLeadList = propertyLeadRepo.findAll();
+        Sort.Direction direction;
+        try {
+            direction = Sort.Direction.fromString(order);
+        } catch (IllegalArgumentException e) {
+            log.warn("~~> invalid order parameter: {}. Defaulting to ASC.", order);
+            direction = Sort.Direction.ASC;
+        }
+        Sort sorter = Sort.by(direction, sort);
+        List<PropertyLead> propertyLeadList = propertyLeadRepo.findAll(sorter);
         if (propertyLeadList.isEmpty()) {
             log.warn("~~> no PropertyLeads found in database");
             return List.of();

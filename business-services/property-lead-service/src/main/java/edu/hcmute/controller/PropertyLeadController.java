@@ -37,9 +37,12 @@ public class PropertyLeadController {
 
     @GetMapping("/all")
     @Operation(description = "get all property leads (inclusive)", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<PropertyLeadDto>> getAllLeads() {
+    public ResponseEntity<List<PropertyLeadDto>> getAllLeads(
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(defaultValue = "asc") String order
+    ) {
         log.info("### get all property leads ###");
-        return ResponseEntity.ok(propertyLeadService.getAllLeads());
+        return ResponseEntity.ok(propertyLeadService.getAllLeads(sort, order));
     }
 
     @GetMapping("/stats")

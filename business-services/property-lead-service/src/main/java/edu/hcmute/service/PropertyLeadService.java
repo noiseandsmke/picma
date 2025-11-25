@@ -26,5 +26,5 @@ public interface PropertyLeadService {
 
     LeadStatsDto getLeadStats();
 
-    List<PropertyLeadDto> getAllLeads();
+    List<PropertyLeadDto> getAllLeads(String sort, String order);
 }

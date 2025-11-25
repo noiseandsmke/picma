@@ -5,6 +5,7 @@ import AuthLayout from '@/layouts/AuthLayout';
 import LoginView from '@/features/auth/views/LoginView';
 import AdminDashboard from '@/features/admin/views/AdminDashboard';
 import AdminLeadsView from '@/features/admin/views/AdminLeadsView';
+import AdminQuotesView from '@/features/admin/views/AdminQuotesView';
 import AgentDashboard from '@/features/agent/views/AgentDashboard';
 import OwnerDashboard from '@/features/owner/views/OwnerDashboard';
 import AdminUsersView from '@/features/admin/views/AdminUsersView';
@@ -26,6 +27,7 @@ const App: React.FC = () => {
                         <Route path="properties" element={<AdminPropertiesView/>}/>
                         <Route path="users/owners" element={<AdminOwnersView/>}/>
                         <Route path="leads" element={<AdminLeadsView/>}/>
+                        <Route path="quotes" element={<AdminQuotesView/>}/>
                         <Route index element={<Navigate to="/admin/dashboard" replace/>}/>
                     </Route>
                 </Route>

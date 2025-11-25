@@ -19,8 +19,10 @@ export interface LeadStatsDto {
 
 const LEAD_SERVICE_URL = import.meta.env.VITE_LEAD_SERVICE_URL || 'http://localhost:7103/property-lead';
 
-export const fetchAllLeads = async (): Promise<PropertyLeadDto[]> => {
-    const response = await axios.get<PropertyLeadDto[]>(`${LEAD_SERVICE_URL}/all`);
+export const fetchAllLeads = async (sort = 'id', order = 'asc'): Promise<PropertyLeadDto[]> => {
+    const response = await axios.get<PropertyLeadDto[]>(`${LEAD_SERVICE_URL}/all`, {
+        params: {sort, order},
+    });
     return response.data;
 };
 

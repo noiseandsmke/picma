@@ -2,19 +2,7 @@ import React from 'react';
 import {useQuery} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
 import {fetchLeadStats} from '../services/leadService';
-import {
-    Area,
-    AreaChart,
-    CartesianGrid,
-    Cell,
-    Legend,
-    Pie,
-    PieChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis
-} from 'recharts';
+import {Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip} from 'recharts';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Skeleton} from '@/components/ui/skeleton';
 import {AlertTriangle, CheckCircle, FileText, TrendingUp, Users, XCircle} from 'lucide-react';
@@ -24,16 +12,6 @@ const AdminDashboard: React.FC = () => {
         queryKey: ['admin-stats'],
         queryFn: fetchLeadStats
     });
-
-    const leadTrendData = [
-        {name: 'Mon', newLeads: 4, processed: 3},
-        {name: 'Tue', newLeads: 7, processed: 5},
-        {name: 'Wed', newLeads: 5, processed: 6},
-        {name: 'Thu', newLeads: 9, processed: 7},
-        {name: 'Fri', newLeads: 12, processed: 10},
-        {name: 'Sat', newLeads: 6, processed: 4},
-        {name: 'Sun', newLeads: 3, processed: 2},
-    ];
 
     const statusData = [
         {name: 'Accepted', value: stats?.acceptedLeads || 0, color: '#10b981'},
@@ -109,40 +87,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                    <Card className="col-span-4 bg-slate-900 border-slate-800">
-                        <CardHeader>
-                            <CardTitle className="text-white">Lead Acquisition Trend</CardTitle>
-                        </CardHeader>
-                        <CardContent className="pl-2">
-                            <ResponsiveContainer width="100%" height={350}>
-                                <AreaChart data={leadTrendData}>
-                                    <defs>
-                                        <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false}
-                                           axisLine={false}/>
-                                    <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false}
-                                           tickFormatter={(value) => `${value}`}/>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false}/>
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: '#0f172a',
-                                            borderColor: '#1e293b',
-                                            color: '#f8fafc'
-                                        }}
-                                        itemStyle={{color: '#f8fafc'}}
-                                    />
-                                    <Area type="monotone" dataKey="newLeads" stroke="#6366f1" strokeWidth={2}
-                                          fillOpacity={1} fill="url(#colorLeads)"/>
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="col-span-3 bg-slate-900 border-slate-800">
+                    <Card className="col-span-7 bg-slate-900 border-slate-800">
                         <CardHeader>
                             <CardTitle className="text-white">Lead Status Distribution</CardTitle>
                         </CardHeader>
