@@ -47,14 +47,14 @@ public class PropertyQuoteControllerTest {
         PropertyQuoteDetailDto quoteDto = new PropertyQuoteDetailDto(1, null, null, null, null);
         List<PropertyQuoteDetailDto> quoteList = Collections.singletonList(quoteDto);
 
-        when(propertyQuoteDetailService.getAllPropertyQuoteDetail()).thenReturn(quoteList);
+        when(propertyQuoteDetailService.getAllPropertyQuoteDetail("id", "asc")).thenReturn(quoteList);
 
-        ResponseEntity<List<PropertyQuoteDetailDto>> response = propertyQuoteController.getAllPropertyQuote();
+        ResponseEntity<List<PropertyQuoteDetailDto>> response = propertyQuoteController.getAllPropertyQuote("id", "asc");
 
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(quoteList, response.getBody());
-        verify(propertyQuoteDetailService).getAllPropertyQuoteDetail();
+        verify(propertyQuoteDetailService).getAllPropertyQuoteDetail("id", "asc");
     }
 
     @Test
@@ -70,5 +70,32 @@ public class PropertyQuoteControllerTest {
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(quoteDto, response.getBody());
         verify(propertyQuoteDetailService).getPropertyQuoteDetailById(quoteId);
+    }
+
+    @Test
+    void updatePropertyQuote_shouldReturnUpdatedQuote() {
+        Integer quoteId = 1;
+        PropertyQuoteDetailDto inputDto = new PropertyQuoteDetailDto(quoteId, null, null, null, null);
+        PropertyQuoteDetailDto returnedDto = new PropertyQuoteDetailDto(quoteId, null, null, null, null);
+
+        when(propertyQuoteDetailService.updatePropertyQuoteDetail(quoteId, inputDto)).thenReturn(returnedDto);
+
+        ResponseEntity<PropertyQuoteDetailDto> response = propertyQuoteController.updatePropertyQuote(quoteId, inputDto);
+
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(returnedDto, response.getBody());
+        verify(propertyQuoteDetailService).updatePropertyQuoteDetail(quoteId, inputDto);
+    }
+
+    @Test
+    void deletePropertyQuoteById_shouldReturnNoContent() {
+        Integer quoteId = 1;
+
+        ResponseEntity<Void> response = propertyQuoteController.deletePropertyQuoteById(quoteId);
+
+        assertNotNull(response);
+        assertEquals(204, response.getStatusCodeValue());
+        verify(propertyQuoteDetailService).deletePropertyQuoteDetailById(quoteId);
     }
 }

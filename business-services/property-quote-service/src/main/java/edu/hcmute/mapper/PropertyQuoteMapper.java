@@ -8,9 +8,7 @@ import edu.hcmute.repo.PropertyQuoteRepo;
 import edu.hcmute.repo.QuoteTypeRepo;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+import org.mapstruct.*;
 
 import java.time.LocalDate;
 
@@ -109,4 +107,12 @@ public abstract class PropertyQuoteMapper {
 
     @Mapping(source = "coverageType", target = "coverageTypeDto")
     public abstract PolicyTypeDto toDto(PolicyType policyType);
+
+    @AfterMapping
+    protected void afterToEntity(PropertyQuoteDetailDto dto, @MappingTarget PropertyQuoteDetail entity) {
+        if (dto.propertyQuoteDto() != null && entity.getPropertyQuote() != null) {
+            entity.getPropertyQuote().setUserInfo(dto.propertyQuoteDto().userInfo());
+            entity.getPropertyQuote().setPropertyInfo(dto.propertyQuoteDto().propertyInfo());
+        }
+    }
 }

@@ -11,6 +11,7 @@ import edu.hcmute.repo.PropertyLeadRepo;
 import edu.hcmute.repo.PropertyQuoteDetailRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,9 +92,11 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
 
     @Override
     @Transactional(readOnly = true)
-    public List<PropertyQuoteDetailDto> getAllPropertyQuoteDetail() {
+    public List<PropertyQuoteDetailDto> getAllPropertyQuoteDetail(String sort, String order) {
         log.info("### Get All PropertyQuotes ###");
-        List<PropertyQuoteDetail> propertyQuoteDetailList = propertyQuoteDetailRepo.findAll();
+        Sort.Direction direction = Sort.Direction.fromString(order);
+        Sort sortBy = Sort.by(direction, sort);
+        List<PropertyQuoteDetail> propertyQuoteDetailList = propertyQuoteDetailRepo.findAll(sortBy);
         if (propertyQuoteDetailList.isEmpty()) {
             log.warn("~~> no PropertyQuotes found in database");
             throw new RuntimeException("No PropertyQuotes found in database");
@@ -102,5 +105,34 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
         return propertyQuoteDetailList.stream()
                 .map(propertyQuoteMapper::toDto)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public PropertyQuoteDetailDto updatePropertyQuoteDetail(Integer id, PropertyQuoteDetailDto propertyQuoteDetailDto) {
+        log.info("### Update PropertyQuote by Id ###");
+        log.info("~~> propertyQuoteDetailDto id: {}", id);
+        PropertyQuoteDetail existingQuoteDetail = propertyQuoteDetailRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("No PropertyQuote found with id: " + id));
+
+        PropertyQuoteDetail updatedQuoteDetail = propertyQuoteMapper.toEntity(propertyQuoteDetailDto);
+        updatedQuoteDetail.setId(existingQuoteDetail.getId());
+        updatedQuoteDetail.getPropertyQuote().setId(existingQuoteDetail.getPropertyQuote().getId());
+        updatedQuoteDetail.getPropertyQuote().setModifiedBy("noiseandsmke");
+        updatedQuoteDetail.getPropertyQuote().setModifiedAt(Instant.now());
+
+        updatedQuoteDetail = propertyQuoteDetailRepo.save(updatedQuoteDetail);
+        return propertyQuoteMapper.toDto(updatedQuoteDetail);
+    }
+
+    @Override
+    @Transactional
+    public void deletePropertyQuoteDetailById(Integer id) {
+        log.info("### Delete PropertyQuote by Id ###");
+        log.info("~~> propertyQuoteDetailDto id: {}", id);
+        if (!propertyQuoteDetailRepo.existsById(id)) {
+            throw new RuntimeException("No PropertyQuote found with id: " + id);
+        }
+        propertyQuoteDetailRepo.deleteById(id);
     }
 }

@@ -1,11 +1,18 @@
 import React, {useEffect, useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
-import {createQuote, deleteQuote, fetchAllQuotes, QuoteDto, updateQuote} from '../services/quoteService';
-import {MoreHorizontal, PlusCircle} from 'lucide-react';
-import {cn} from '@/lib/utils';
+import {
+    createQuote,
+    deleteQuote,
+    fetchAllCoverageTypes,
+    fetchAllPolicyTypes,
+    fetchAllQuotes,
+    fetchAllQuoteTypes,
+    PropertyQuoteDetailDto,
+    updateQuote
+} from '../services/quoteService';
+import {ArrowUpDown, MoreHorizontal, PlusCircle} from 'lucide-react';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
-import {Badge} from '@/components/ui/badge';
 import {Skeleton} from '@/components/ui/skeleton';
 import {Button} from '@/components/ui/button';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '@/components/ui/dropdown-menu';
@@ -18,13 +25,11 @@ import {Label} from '@/components/ui/label';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 
 const quoteSchema = z.object({
-    name: z.string().min(1, 'Name is required'),
-    email: z.email('Invalid email address'),
-    phone: z.string().min(1, 'Phone number is required'),
-    address: z.string().min(1, 'Address is required'),
-    service: z.string().min(1, 'Service is required'),
-    message: z.string(),
-    status: z.enum(['PENDING', 'APPROVED', 'REJECTED']),
+    userInfo: z.string().min(1, 'User Info is required'),
+    propertyInfo: z.string().min(1, 'Property Info is required'),
+    quoteTypeId: z.number().min(1, 'Quote Type is required'),
+    coverageTypeId: z.number().min(1, 'Coverage Type is required'),
+    policyTypeId: z.number().min(1, 'Policy Type is required'),
 });
 
 type QuoteFormData = z.infer<typeof quoteSchema>;
@@ -32,47 +37,34 @@ type QuoteFormData = z.infer<typeof quoteSchema>;
 const AdminQuotesView: React.FC = () => {
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedQuote, setSelectedQuote] = useState<QuoteDto | null>(null);
+    const [selectedQuote, setSelectedQuote] = useState<PropertyQuoteDetailDto | null>(null);
+    const [sortConfig, setSortConfig] = useState({key: 'id', direction: 'asc'});
 
     const {
-        register,
         handleSubmit,
         reset,
         control,
         formState: {errors},
     } = useForm<QuoteFormData>({
         resolver: zodResolver(quoteSchema),
-        defaultValues: {
-            name: '',
-            email: '',
-            phone: '',
-            address: '',
-            service: '',
-            message: '',
-            status: 'PENDING',
-        },
     });
 
     useEffect(() => {
         if (selectedQuote) {
             reset({
-                name: selectedQuote.name,
-                email: selectedQuote.email,
-                phone: selectedQuote.phone,
-                address: selectedQuote.address,
-                service: selectedQuote.service,
-                message: selectedQuote.message,
-                status: selectedQuote.status as 'PENDING' | 'APPROVED' | 'REJECTED',
+                userInfo: selectedQuote.propertyQuoteDto.userInfo,
+                propertyInfo: selectedQuote.propertyQuoteDto.propertyInfo,
+                quoteTypeId: selectedQuote.quoteTypeDto.id,
+                coverageTypeId: selectedQuote.coverageTypeDto.id,
+                policyTypeId: selectedQuote.policyTypeDto.id,
             });
         } else {
             reset({
-                name: '',
-                email: '',
-                phone: '',
-                address: '',
-                service: '',
-                message: '',
-                status: 'PENDING',
+                userInfo: '',
+                propertyInfo: '',
+                quoteTypeId: 1,
+                coverageTypeId: 1,
+                policyTypeId: 1,
             });
         }
     }, [selectedQuote, reset]);
@@ -82,43 +74,75 @@ const AdminQuotesView: React.FC = () => {
         isLoading: isQuotesLoading,
         isError: isQuotesError
     } = useQuery({
-        queryKey: ['admin-quotes'],
-        queryFn: fetchAllQuotes,
-        select: (data) => [...data].sort((a, b) => a.id - b.id)
+        queryKey: ['admin-quotes', sortConfig],
+        queryFn: () => fetchAllQuotes(sortConfig.key, sortConfig.direction),
+    });
+
+    const {data: quoteTypes} = useQuery({
+        queryKey: ['quote-types'],
+        queryFn: fetchAllQuoteTypes,
+    });
+
+    const {data: coverageTypes} = useQuery({
+        queryKey: ['coverage-types'],
+        queryFn: fetchAllCoverageTypes,
+    });
+
+    const {data: policyTypes} = useQuery({
+        queryKey: ['policy-types'],
+        queryFn: fetchAllPolicyTypes,
     });
 
     const createMutation = useMutation({
         mutationFn: createQuote,
-        onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: ['admin-quotes']});
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({queryKey: ['admin-quotes']});
             setIsModalOpen(false);
         },
     });
 
     const updateMutation = useMutation({
         mutationFn: updateQuote,
-        onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: ['admin-quotes']});
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({queryKey: ['admin-quotes']});
             setIsModalOpen(false);
         },
     });
 
     const deleteMutation = useMutation({
         mutationFn: deleteQuote,
-        onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: ['admin-quotes']});
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({queryKey: ['admin-quotes']});
         },
     });
 
     const onSubmit = (data: QuoteFormData) => {
+        const quoteData: Omit<PropertyQuoteDetailDto, 'id'> = {
+            propertyQuoteDto: {
+                id: 0,
+                userInfo: data.userInfo,
+                propertyInfo: data.propertyInfo,
+            },
+            quoteTypeDto: {id: data.quoteTypeId, type: ''},
+            coverageTypeDto: {id: data.coverageTypeId, type: ''},
+            policyTypeDto: {id: data.policyTypeId, type: ''},
+        };
+
         if (selectedQuote) {
-            updateMutation.mutate({...selectedQuote, ...data});
+            updateMutation.mutate({
+                ...selectedQuote,
+                ...quoteData,
+                propertyQuoteDto: {
+                    ...selectedQuote.propertyQuoteDto,
+                    ...quoteData.propertyQuoteDto
+                }
+            });
         } else {
-            createMutation.mutate(data);
+            createMutation.mutate(quoteData);
         }
     };
 
-    const handleEdit = (quote: QuoteDto) => {
+    const handleEdit = (quote: PropertyQuoteDetailDto) => {
         setSelectedQuote(quote);
         setIsModalOpen(true);
     };
@@ -127,6 +151,14 @@ const AdminQuotesView: React.FC = () => {
         setSelectedQuote(null);
         reset();
         setIsModalOpen(true);
+    };
+
+    const handleSort = (key: string) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({key, direction});
     };
 
     const getStatusClass = (status: string) => {
@@ -163,13 +195,28 @@ const AdminQuotesView: React.FC = () => {
                         <Table>
                             <TableHeader className="bg-slate-900/50 border-slate-800">
                                 <TableRow className="border-slate-800 hover:bg-slate-900/50">
-                                    <TableHead className="text-slate-400 w-[80px]">ID</TableHead>
-                                    <TableHead className="text-slate-400">Name</TableHead>
-                                    <TableHead className="text-slate-400">Email</TableHead>
-                                    <TableHead className="text-slate-400">Phone</TableHead>
-                                    <TableHead className="text-slate-400">Address</TableHead>
-                                    <TableHead className="text-slate-400">Service</TableHead>
-                                    <TableHead className="text-slate-400">Status</TableHead>
+                                    <TableHead className="text-slate-400 w-[80px] cursor-pointer"
+                                               onClick={() => handleSort('id')}>
+                                        <div className="flex items-center gap-1">
+                                            ID {sortConfig.key === 'id' && <ArrowUpDown size={14}/>}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-slate-400 cursor-pointer"
+                                               onClick={() => handleSort('userInfo')}>
+                                        <div className="flex items-center gap-1">
+                                            User Info {sortConfig.key === 'userInfo' && <ArrowUpDown size={14}/>}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-slate-400 cursor-pointer"
+                                               onClick={() => handleSort('propertyInfo')}>
+                                        <div className="flex items-center gap-1">
+                                            Property Info {sortConfig.key === 'propertyInfo' &&
+                                            <ArrowUpDown size={14}/>}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-slate-400">Quote Type</TableHead>
+                                    <TableHead className="text-slate-400">Coverage Type</TableHead>
+                                    <TableHead className="text-slate-400">Policy Type</TableHead>
                                     <TableHead className="text-slate-400 w-[50px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -183,13 +230,12 @@ const AdminQuotesView: React.FC = () => {
                                             <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
                                             <TableCell><Skeleton className="h-4 w-48 bg-slate-800"/></TableCell>
                                             <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-6 w-20 bg-slate-800"/></TableCell>
                                             <TableCell><Skeleton className="h-6 w-8 bg-slate-800"/></TableCell>
                                         </TableRow>
                                     ))
                                 ) : isQuotesError ? (
                                     <TableRow className="border-slate-800">
-                                        <TableCell colSpan={8} className="h-24 text-center text-red-400">
+                                        <TableCell colSpan={7} className="h-24 text-center text-red-400">
                                             Failed to load quotes data.
                                         </TableCell>
                                     </TableRow>
@@ -199,17 +245,16 @@ const AdminQuotesView: React.FC = () => {
                                                   className="border-slate-800 hover:bg-slate-900/50 transition-colors">
                                             <TableCell
                                                 className="font-medium text-slate-300">{quote.id}</TableCell>
-                                            <TableCell className="text-slate-300">{quote.name}</TableCell>
-                                            <TableCell className="text-slate-300">{quote.email}</TableCell>
-                                            <TableCell className="text-slate-300">{quote.phone}</TableCell>
-                                            <TableCell className="text-slate-300">{quote.address}</TableCell>
-                                            <TableCell className="text-slate-300">{quote.service}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline"
-                                                       className={cn("border-0 font-medium", getStatusClass(quote.status))}>
-                                                    {quote.status}
-                                                </Badge>
-                                            </TableCell>
+                                            <TableCell
+                                                className="text-slate-300">{quote.propertyQuoteDto.userInfo}</TableCell>
+                                            <TableCell
+                                                className="text-slate-300">{quote.propertyQuoteDto.propertyInfo}</TableCell>
+                                            <TableCell
+                                                className="text-slate-300">{quote.quoteTypeDto.type}</TableCell>
+                                            <TableCell
+                                                className="text-slate-300">{quote.coverageTypeDto.type}</TableCell>
+                                            <TableCell
+                                                className="text-slate-300">{quote.policyTypeDto.type}</TableCell>
                                             <TableCell>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -231,7 +276,7 @@ const AdminQuotesView: React.FC = () => {
                                     ))
                                 ) : (
                                     <TableRow className="border-slate-800">
-                                        <TableCell colSpan={8} className="h-24 text-center text-slate-500">
+                                        <TableCell colSpan={7} className="h-24 text-center text-slate-500">
                                             No quotes found.
                                         </TableCell>
                                     </TableRow>
@@ -247,63 +292,92 @@ const AdminQuotesView: React.FC = () => {
                             <DialogTitle>{selectedQuote ? 'Edit Quote' : 'Create Quote'}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label htmlFor="name">Name</Label>
-                                    <Input id="name" {...register('name')} className="bg-slate-900 border-slate-700"/>
-                                    {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
-                                </div>
-                                <div>
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input id="email" {...register('email')}
-                                           className="bg-slate-900 border-slate-700"/>
-                                    {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label htmlFor="phone">Phone</Label>
-                                    <Input id="phone" {...register('phone')}
-                                           className="bg-slate-900 border-slate-700"/>
-                                    {errors.phone && <p className="text-red-500 text-sm">{errors.phone.message}</p>}
-                                </div>
-                                <div>
-                                    <Label htmlFor="address">Address</Label>
-                                    <Input id="address" {...register('address')}
-                                           className="bg-slate-900 border-slate-700"/>
-                                    {errors.address &&
-                                        <p className="text-red-500 text-sm">{errors.address.message}</p>}
-                                </div>
-                            </div>
                             <div>
-                                <Label htmlFor="service">Service</Label>
-                                <Input id="service" {...register('service')}
-                                       className="bg-slate-900 border-slate-700"/>
-                                {errors.service && <p className="text-red-500 text-sm">{errors.service.message}</p>}
-                            </div>
-                            <div>
-                                <Label htmlFor="message">Message</Label>
-                                <Input id="message" {...register('message')}
-                                       className="bg-slate-900 border-slate-700"/>
-                            </div>
-                            <div>
-                                <Label htmlFor="status">Status</Label>
+                                <Label htmlFor="userInfo">User Info</Label>
                                 <Controller
-                                    name="status"
+                                    name="userInfo"
                                     control={control}
-                                    render={({field}) => (
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <SelectTrigger className="bg-slate-900 border-slate-700">
-                                                <SelectValue placeholder="Select status"/>
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                                                <SelectItem value="PENDING">Pending</SelectItem>
-                                                <SelectItem value="APPROVED">Approved</SelectItem>
-                                                <SelectItem value="REJECTED">Rejected</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    )}
+                                    render={({field}) => <Input id="userInfo" {...field}
+                                                                className="bg-slate-900 border-slate-700"/>}
                                 />
+                                {errors.userInfo &&
+                                    <p className="text-red-500 text-sm">{errors.userInfo.message}</p>}
+                            </div>
+                            <div>
+                                <Label htmlFor="propertyInfo">Property Info</Label>
+                                <Controller
+                                    name="propertyInfo"
+                                    control={control}
+                                    render={({field}) => <Input id="propertyInfo" {...field}
+                                                                className="bg-slate-900 border-slate-700"/>}
+                                />
+                                {errors.propertyInfo &&
+                                    <p className="text-red-500 text-sm">{errors.propertyInfo.message}</p>}
+                            </div>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <Label htmlFor="quoteTypeId">Quote Type</Label>
+                                    <Controller
+                                        name="quoteTypeId"
+                                        control={control}
+                                        render={({field}) => (
+                                            <Select onValueChange={(v) => field.onChange(parseInt(v))}
+                                                    defaultValue={String(field.value)}>
+                                                <SelectTrigger className="bg-slate-900 border-slate-700">
+                                                    <SelectValue placeholder="Select type"/>
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                                                    {quoteTypes?.map(type => (
+                                                        <SelectItem key={type.id}
+                                                                    value={String(type.id)}>{type.type}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="coverageTypeId">Coverage Type</Label>
+                                    <Controller
+                                        name="coverageTypeId"
+                                        control={control}
+                                        render={({field}) => (
+                                            <Select onValueChange={(v) => field.onChange(parseInt(v))}
+                                                    defaultValue={String(field.value)}>
+                                                <SelectTrigger className="bg-slate-900 border-slate-700">
+                                                    <SelectValue placeholder="Select type"/>
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                                                    {coverageTypes?.map(type => (
+                                                        <SelectItem key={type.id}
+                                                                    value={String(type.id)}>{type.type}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="policyTypeId">Policy Type</Label>
+                                    <Controller
+                                        name="policyTypeId"
+                                        control={control}
+                                        render={({field}) => (
+                                            <Select onValueChange={(v) => field.onChange(parseInt(v))}
+                                                    defaultValue={String(field.value)}>
+                                                <SelectTrigger className="bg-slate-900 border-slate-700">
+                                                    <SelectValue placeholder="Select type"/>
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                                                    {policyTypes?.map(type => (
+                                                        <SelectItem key={type.id}
+                                                                    value={String(type.id)}>{type.type}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                </div>
                             </div>
                             <DialogFooter>
                                 <DialogClose asChild>

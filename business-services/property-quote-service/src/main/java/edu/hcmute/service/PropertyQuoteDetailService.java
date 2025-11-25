@@ -9,5 +9,9 @@ public interface PropertyQuoteDetailService {
 
     PropertyQuoteDetailDto getPropertyQuoteDetailById(Integer id);
 
-    List<PropertyQuoteDetailDto> getAllPropertyQuoteDetail();
+    List<PropertyQuoteDetailDto> getAllPropertyQuoteDetail(String sort, String order);
+
+    PropertyQuoteDetailDto updatePropertyQuoteDetail(Integer id, PropertyQuoteDetailDto propertyQuoteDetailDto);
+
+    void deletePropertyQuoteDetailById(Integer id);
 }

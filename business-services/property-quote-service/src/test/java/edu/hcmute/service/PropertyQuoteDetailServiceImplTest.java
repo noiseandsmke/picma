@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 
 import java.util.Collections;
 import java.util.List;
@@ -103,10 +104,11 @@ public class PropertyQuoteDetailServiceImplTest {
     @Test
     void getAllPropertyQuoteDetail_success() {
         PropertyQuoteDetail detail = new PropertyQuoteDetail();
-        when(propertyQuoteDetailRepo.findAll()).thenReturn(Collections.singletonList(detail));
+        Sort sort = Sort.by(Sort.Direction.ASC, "id");
+        when(propertyQuoteDetailRepo.findAll(sort)).thenReturn(Collections.singletonList(detail));
         when(propertyQuoteMapper.toDto(detail)).thenReturn(new PropertyQuoteDetailDto(1, null, null, null, null));
 
-        List<PropertyQuoteDetailDto> result = propertyQuoteDetailService.getAllPropertyQuoteDetail();
+        List<PropertyQuoteDetailDto> result = propertyQuoteDetailService.getAllPropertyQuoteDetail("id", "asc");
 
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
@@ -114,7 +116,34 @@ public class PropertyQuoteDetailServiceImplTest {
 
     @Test
     void getAllPropertyQuoteDetail_empty() {
-        when(propertyQuoteDetailRepo.findAll()).thenReturn(Collections.emptyList());
-        assertThrows(RuntimeException.class, () -> propertyQuoteDetailService.getAllPropertyQuoteDetail());
+        Sort sort = Sort.by(Sort.Direction.ASC, "id");
+        when(propertyQuoteDetailRepo.findAll(sort)).thenReturn(Collections.emptyList());
+        assertThrows(RuntimeException.class, () -> propertyQuoteDetailService.getAllPropertyQuoteDetail("id", "asc"));
+    }
+
+    @Test
+    void updatePropertyQuoteDetail_success() {
+        Integer id = 1;
+        PropertyQuoteDetailDto inputDto = new PropertyQuoteDetailDto(id, null, null, null, null);
+        PropertyQuoteDetail existingDetail = new PropertyQuoteDetail();
+        existingDetail.setPropertyQuote(new PropertyQuote());
+
+        when(propertyQuoteDetailRepo.findById(id)).thenReturn(Optional.of(existingDetail));
+        when(propertyQuoteMapper.toEntity(inputDto)).thenReturn(existingDetail);
+        when(propertyQuoteDetailRepo.save(existingDetail)).thenReturn(existingDetail);
+        when(propertyQuoteMapper.toDto(existingDetail)).thenReturn(inputDto);
+
+        PropertyQuoteDetailDto result = propertyQuoteDetailService.updatePropertyQuoteDetail(id, inputDto);
+
+        assertNotNull(result);
+        assertEquals(id, result.id());
+    }
+
+    @Test
+    void deletePropertyQuoteDetailById_success() {
+        Integer id = 1;
+        when(propertyQuoteDetailRepo.existsById(id)).thenReturn(true);
+        propertyQuoteDetailService.deletePropertyQuoteDetailById(id);
+        verify(propertyQuoteDetailRepo).deleteById(id);
     }
 }

@@ -1,8 +1,8 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
 import {fetchAllLeads, fetchLeadStats} from '../services/leadService';
-import {AlertTriangle, Building2, CheckCircle, Clock, FileText, XCircle} from 'lucide-react';
+import {AlertTriangle, ArrowUpDown, Building2, CheckCircle, Clock, FileText, XCircle} from 'lucide-react';
 import {cn} from '@/lib/utils';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table";
 import {Card, CardContent, CardHeader, CardTitle,} from "@/components/ui/card";
@@ -10,6 +10,8 @@ import {Badge} from '@/components/ui/badge';
 import {Skeleton} from '@/components/ui/skeleton';
 
 const AdminLeadsView: React.FC = () => {
+    const [sortConfig, setSortConfig] = useState({key: 'id', direction: 'asc'});
+
     const {
         data: stats,
         isLoading: isStatsLoading
@@ -23,10 +25,17 @@ const AdminLeadsView: React.FC = () => {
         isLoading: isLeadsLoading,
         isError: isLeadsError
     } = useQuery({
-        queryKey: ['admin-leads'],
-        queryFn: fetchAllLeads,
-        select: (data) => [...data].sort((a, b) => a.id - b.id)
+        queryKey: ['admin-leads', sortConfig],
+        queryFn: () => fetchAllLeads(sortConfig.key, sortConfig.direction),
     });
+
+    const handleSort = (key: string) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({key, direction});
+    };
 
     const formatDate = (dateStr: string) => {
         try {
@@ -131,12 +140,45 @@ const AdminLeadsView: React.FC = () => {
                         <Table>
                             <TableHeader className="bg-slate-900/50 border-slate-800">
                                 <TableRow className="border-slate-800 hover:bg-slate-900/50">
-                                    <TableHead className="text-slate-400 w-[80px]">ID</TableHead>
-                                    <TableHead className="text-slate-400">User Info</TableHead>
-                                    <TableHead className="text-slate-400">Property Info</TableHead>
-                                    <TableHead className="text-slate-400">Status</TableHead>
-                                    <TableHead className="text-slate-400">Created</TableHead>
-                                    <TableHead className="text-slate-400">Expiry</TableHead>
+                                    <TableHead className="text-slate-400 w-[80px] cursor-pointer"
+                                               onClick={() => handleSort('id')}>
+                                        <div className="flex items-center gap-1">
+                                            ID {sortConfig.key === 'id' &&
+                                            <ArrowUpDown size={14}/>}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-slate-400 cursor-pointer"
+                                               onClick={() => handleSort('userInfo')}>
+                                        <div className="flex items-center gap-1">
+                                            User Info {sortConfig.key === 'userInfo' && <ArrowUpDown size={14}/>}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-slate-400 cursor-pointer"
+                                               onClick={() => handleSort('propertyInfo')}>
+                                        <div className="flex items-center gap-1">
+                                            Property Info {sortConfig.key === 'propertyInfo' &&
+                                            <ArrowUpDown size={14}/>}
+                                        </div>
+
+                                    </TableHead>
+                                    <TableHead className="text-slate-400 cursor-pointer"
+                                               onClick={() => handleSort('status')}>
+                                        <div className="flex items-center gap-1">
+                                            Status {sortConfig.key === 'status' && <ArrowUpDown size={14}/>}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-slate-400 cursor-pointer"
+                                               onClick={() => handleSort('startDate')}>
+                                        <div className="flex items-center gap-1">
+                                            Created {sortConfig.key === 'startDate' && <ArrowUpDown size={14}/>}
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-slate-400 cursor-pointer"
+                                               onClick={() => handleSort('expiryDate')}>
+                                        <div className="flex items-center gap-1">
+                                            Expiry {sortConfig.key === 'expiryDate' && <ArrowUpDown size={14}/>}
+                                        </div>
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
