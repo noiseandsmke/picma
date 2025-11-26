@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class PropertyLeadServiceImpl implements PropertyLeadService {
+
     private final PropertyLeadRepo propertyLeadRepo;
     private final PropertyMgmtFeignClient propertyMgmtFeignClient;
     private final PropertyAgentFeignClient propertyAgentFeignClient;
@@ -41,6 +42,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         log.info("PropertyLeadDto: {}", propertyLeadDto);
         try {
             PropertyLead propertyLead = propertyLeadMapper.toEntity(propertyLeadDto);
+            // @PrePersist will set status=ACTIVE, createDate=now, expiryDate=createDate+30
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> PropertyLead saved with id: {}", propertyLead.getId());
 
@@ -63,6 +65,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
             PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
                     .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + leadId));
 
+            // Only update userInfo, propertyInfo, and status if provided (null values are ignored by mapper)
             propertyLeadMapper.updateEntity(propertyLead, propertyLeadDto);
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> PropertyLead updated with id: {}", propertyLead.getId());
@@ -103,6 +106,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
 
             PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
                     .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + leadId));
+
             LeadStatus currentStatus = propertyLead.getStatus();
             validateStatusTransition(currentStatus, newStatus);
 
@@ -198,6 +202,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
                 return List.of();
             }
             log.info("~~> found {} property Ids in zipcode {}", propertyIds.size(), zipcode);
+
             List<PropertyLead> matchingLeads = propertyLeadRepo.findByStatus(LeadStatus.ACTIVE).stream()
                     .filter(lead -> propertyIds.contains(lead.getPropertyInfo()))
                     .toList();
@@ -236,14 +241,18 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         try {
             List<PropertyLead> activeLeads = propertyLeadRepo.findByStatus(LeadStatus.ACTIVE);
             log.info("~~> found {} ACTIVE leads visible to all agents", activeLeads.size());
+
             List<Integer> acceptedLeadIds = getAcceptedLeadIdsForAgent(agentId);
             log.info("~~> agent {} has accepted {} leads", agentId, acceptedLeadIds.size());
+
             List<PropertyLead> acceptedLeads = acceptedLeadIds.isEmpty()
                     ? Collections.emptyList()
                     : propertyLeadRepo.findAllById(acceptedLeadIds);
+
             Set<PropertyLead> allVisibleLeads = new HashSet<>();
             allVisibleLeads.addAll(activeLeads);
             allVisibleLeads.addAll(acceptedLeads);
+
             log.info("~~> total {} leads visible to agent {}", allVisibleLeads.size(), agentId);
             return allVisibleLeads.stream()
                     .map(propertyLeadMapper::toDto)

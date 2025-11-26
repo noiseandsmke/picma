@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,17 +22,17 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class PropertyLeadControllerTest {
-
+    private final LocalDate today = LocalDate.now();
+    private final LocalDate expiryDate = today.plusDays(30);
     @Mock
     private PropertyLeadService propertyLeadService;
-
     @InjectMocks
     private PropertyLeadController propertyLeadController;
 
     @Test
-    void createLead_shouldReturnCreatedLead() {
-        PropertyLeadDto inputDto = new PropertyLeadDto(null, "123", "P456", LeadStatus.ACTIVE, null, null);
-        PropertyLeadDto returnedDto = new PropertyLeadDto(1, "123", "P456", LeadStatus.ACTIVE, null, null);
+    void createLead_withMinimalInput_shouldReturnCreatedLead() {
+        PropertyLeadDto inputDto = new PropertyLeadDto(null, "user123", "property456", null, null, null);
+        PropertyLeadDto returnedDto = new PropertyLeadDto(1, "user123", "property456", LeadStatus.ACTIVE, today, expiryDate);
 
         when(propertyLeadService.createPropertyLead(any(PropertyLeadDto.class))).thenReturn(returnedDto);
 
@@ -39,12 +40,35 @@ public class PropertyLeadControllerTest {
 
         assertNotNull(response);
         assertEquals(201, response.getStatusCodeValue());
-        assertEquals(returnedDto, response.getBody());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().id());
+        assertEquals("user123", response.getBody().userInfo());
+        assertEquals("property456", response.getBody().propertyInfo());
+        assertEquals(LeadStatus.ACTIVE, response.getBody().status());
+        assertEquals(today, response.getBody().createDate());
+        assertEquals(expiryDate, response.getBody().expiryDate());
+    }
+
+    @Test
+    void createLead_withFullInput_shouldIgnoreExtraFieldsAndReturnCreatedLead() {
+        PropertyLeadDto inputDto = new PropertyLeadDto(999, "user123", "property456", LeadStatus.REJECTED, LocalDate.of(2020, 1, 1), LocalDate.of(2020, 2, 1));
+        PropertyLeadDto returnedDto = new PropertyLeadDto(1, "user123", "property456", LeadStatus.ACTIVE, today, expiryDate);
+
+        when(propertyLeadService.createPropertyLead(any(PropertyLeadDto.class))).thenReturn(returnedDto);
+
+        ResponseEntity<PropertyLeadDto> response = propertyLeadController.createLead(inputDto);
+
+        assertNotNull(response);
+        assertEquals(201, response.getStatusCodeValue());
+        assertEquals(1, response.getBody().id());
+        assertEquals(LeadStatus.ACTIVE, response.getBody().status());
+        assertEquals(today, response.getBody().createDate());
+        assertEquals(expiryDate, response.getBody().expiryDate());
     }
 
     @Test
     void getAllActiveLeads_shouldReturnListOfLeads() {
-        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", LeadStatus.ACTIVE, null, null);
+        PropertyLeadDto leadDto = new PropertyLeadDto(1, "user", "property", LeadStatus.ACTIVE, today, expiryDate);
         when(propertyLeadService.findAllPropertyLeads()).thenReturn(Collections.singletonList(leadDto));
 
         ResponseEntity<List<PropertyLeadDto>> response = propertyLeadController.getAllActiveLeads();
@@ -52,11 +76,12 @@ public class PropertyLeadControllerTest {
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(1, response.getBody().size());
+        assertEquals(LeadStatus.ACTIVE, response.getBody().get(0).status());
     }
 
     @Test
     void getAllLeads_shouldReturnListOfAllLeads() {
-        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", LeadStatus.EXPIRED, null, null);
+        PropertyLeadDto leadDto = new PropertyLeadDto(1, "user", "property", LeadStatus.EXPIRED, today, expiryDate);
         when(propertyLeadService.getAllLeads("id", "asc")).thenReturn(Collections.singletonList(leadDto));
 
         ResponseEntity<List<PropertyLeadDto>> response = propertyLeadController.getAllLeads("id", "asc");
@@ -79,7 +104,7 @@ public class PropertyLeadControllerTest {
 
     @Test
     void getLeadById_shouldReturnLead() {
-        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", LeadStatus.ACTIVE, null, null);
+        PropertyLeadDto leadDto = new PropertyLeadDto(1, "user", "property", LeadStatus.ACTIVE, today, expiryDate);
         when(propertyLeadService.getPropertyLeadById(1)).thenReturn(leadDto);
 
         ResponseEntity<PropertyLeadDto> response = propertyLeadController.getLeadById(1);
@@ -91,7 +116,7 @@ public class PropertyLeadControllerTest {
 
     @Test
     void updateLeadStatus_shouldReturnUpdatedLead() {
-        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", LeadStatus.ACCEPTED, null, null);
+        PropertyLeadDto leadDto = new PropertyLeadDto(1, "user", "property", LeadStatus.ACCEPTED, today, expiryDate);
         when(propertyLeadService.updateLeadStatus(1, "ACCEPTED")).thenReturn(leadDto);
 
         ResponseEntity<Object> response = propertyLeadController.updateLeadStatus(1, "ACCEPTED");
@@ -115,12 +140,5 @@ public class PropertyLeadControllerTest {
         assertNotNull(response);
         assertEquals(204, response.getStatusCodeValue());
         verify(propertyLeadService).deletePropertyLeadById(1);
-    }
-
-    @Test
-    void handleRuntimeException_shouldReturnBadRequest() {
-        ResponseEntity<String> response = propertyLeadController.handleRuntimeException(new RuntimeException("Error"));
-        assertEquals(400, response.getStatusCodeValue());
-        assertEquals("Error", response.getBody());
     }
 }

@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "property_lead")
 @Data
 @Builder
 @NoArgsConstructor
@@ -27,10 +28,23 @@ public class PropertyLead {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private LeadStatus status = LeadStatus.ACTIVE;
+    private LeadStatus status;
 
     @Column(nullable = false)
-    private LocalDate startDate;
+    private LocalDate createDate;
 
     private LocalDate expiryDate;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createDate == null) {
+            createDate = LocalDate.now();
+        }
+        if (status == null) {
+            status = LeadStatus.ACTIVE;
+        }
+        if (expiryDate == null) {
+            expiryDate = createDate.plusDays(30);
+        }
+    }
 }

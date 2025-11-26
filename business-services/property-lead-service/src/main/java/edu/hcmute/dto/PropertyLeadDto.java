@@ -9,7 +9,7 @@ public record PropertyLeadDto(
         String userInfo,
         String propertyInfo,
         LeadStatus status,
-        LocalDate startDate,
+        LocalDate createDate,
         LocalDate expiryDate
 ) {
 }
