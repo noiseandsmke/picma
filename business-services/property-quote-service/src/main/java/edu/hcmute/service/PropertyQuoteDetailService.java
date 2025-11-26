@@ -14,4 +14,6 @@ public interface PropertyQuoteDetailService {
     PropertyQuoteDetailDto updatePropertyQuoteDetail(Integer id, PropertyQuoteDetailDto propertyQuoteDetailDto);
 
     void deletePropertyQuoteDetailById(Integer id);
+
+    List<PropertyQuoteDetailDto> getQuotesByLeadId(Integer leadId);
 }

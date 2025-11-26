@@ -1,28 +1,39 @@
 package edu.hcmute.entity;
 
-import edu.hcmute.audit.Auditable;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-import java.io.Serial;
 import java.time.LocalDate;
 
-@EqualsAndHashCode(callSuper = true)
 @Entity
+@Table(name = "property_quote")
 @Data
-public class PropertyQuote extends Auditable {
-    @Serial
-    private static final long serialVersionUID = 8190387722804246301L;
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PropertyQuote {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private String userInfo;
-    private String propertyInfo;
 
-    @Temporal(TemporalType.DATE)
+    @Column(nullable = false)
+    private Integer leadId;
+
+    @Column(nullable = false)
     private LocalDate createDate;
 
-    @Temporal(TemporalType.DATE)
     private LocalDate expiryDate;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createDate == null) {
+            createDate = LocalDate.now();
+        }
+        if (expiryDate == null) {
+            expiryDate = LocalDate.now().plusDays(60);
+        }
+    }
 }

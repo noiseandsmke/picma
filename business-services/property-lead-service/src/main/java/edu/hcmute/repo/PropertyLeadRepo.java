@@ -1,12 +1,13 @@
 package edu.hcmute.repo;
 
+import edu.hcmute.domain.LeadStatus;
 import edu.hcmute.entity.PropertyLead;
-import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@JaversSpringDataAuditable
+@Repository
 public interface PropertyLeadRepo extends JpaRepository<PropertyLead, Integer> {
-    List<PropertyLead> findByStatus(String status);
+    List<PropertyLead> findByStatus(LeadStatus status);
 }

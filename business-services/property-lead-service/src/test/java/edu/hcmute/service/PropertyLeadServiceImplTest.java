@@ -1,12 +1,11 @@
 package edu.hcmute.service;
 
+import edu.hcmute.domain.LeadStatus;
 import edu.hcmute.dto.LeadStatsDto;
 import edu.hcmute.dto.PropertyLeadDto;
 import edu.hcmute.entity.PropertyLead;
-import edu.hcmute.entity.PropertyLeadDetail;
-import edu.hcmute.entity.PropertyQuote;
+import edu.hcmute.event.PropertyLeadProducer;
 import edu.hcmute.mapper.PropertyLeadMapper;
-import edu.hcmute.repo.PropertyLeadDetailRepo;
 import edu.hcmute.repo.PropertyLeadRepo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,19 +28,21 @@ public class PropertyLeadServiceImplTest {
     @Mock
     private PropertyLeadRepo propertyLeadRepo;
     @Mock
-    private PropertyLeadDetailRepo propertyLeadDetailRepo;
-    @Mock
     private PropertyLeadMapper propertyLeadMapper;
+    @Mock
+    private PropertyLeadProducer propertyLeadProducer;
 
     @InjectMocks
     private PropertyLeadServiceImpl propertyLeadService;
 
     @Test
-    void createOrUpdatePropertyLead_create_success() {
+    void createPropertyLead_success() {
         PropertyLeadDto inputDto = new PropertyLeadDto(null, "user1", "prop1", null, null, null);
-        PropertyLead entity = new PropertyLead();
-        entity.setUserInfo("user1");
-        entity.setPropertyInfo("prop1");
+        PropertyLead entity = PropertyLead.builder()
+                .userInfo("user1")
+                .propertyInfo("prop1")
+                .status(LeadStatus.ACTIVE)
+                .build();
 
         when(propertyLeadMapper.toEntity(inputDto)).thenReturn(entity);
         when(propertyLeadRepo.save(any(PropertyLead.class))).thenAnswer(invocation -> {
@@ -49,88 +50,55 @@ public class PropertyLeadServiceImplTest {
             saved.setId(1);
             return saved;
         });
-        when(propertyLeadMapper.toDto(any(PropertyLead.class))).thenReturn(new PropertyLeadDto(1, "user1", "prop1", "ACTIVE", LocalDate.now(), LocalDate.now().plusDays(30)));
+        when(propertyLeadProducer.publishLead(any(PropertyLead.class))).thenReturn(true);
+        when(propertyLeadMapper.toDto(any(PropertyLead.class)))
+                .thenReturn(new PropertyLeadDto(1, "user1", "prop1", LeadStatus.ACTIVE, LocalDate.now(), LocalDate.now().plusDays(30)));
 
-        PropertyLeadDto result = propertyLeadService.createOrUpdatePropertyLead(inputDto);
+        PropertyLeadDto result = propertyLeadService.createPropertyLead(inputDto);
 
         assertNotNull(result);
         assertEquals(1, result.id());
         verify(propertyLeadRepo).save(any(PropertyLead.class));
+        verify(propertyLeadProducer).publishLead(any(PropertyLead.class));
     }
 
     @Test
-    void createOrUpdatePropertyLead_update_success() {
-        PropertyLeadDto inputDto = new PropertyLeadDto(1, "user1", "prop1", "ACTIVE", null, null);
-        PropertyLead existingEntity = new PropertyLead();
-        existingEntity.setId(1);
+    void updatePropertyLead_success() {
+        Integer leadId = 1;
+        PropertyLeadDto inputDto = new PropertyLeadDto(1, "user1", "prop1", LeadStatus.ACTIVE, null, null);
+        PropertyLead existingEntity = PropertyLead.builder()
+                .id(1)
+                .userInfo("user1")
+                .propertyInfo("prop1")
+                .status(LeadStatus.ACTIVE)
+                .build();
 
-        when(propertyLeadRepo.findById(1)).thenReturn(Optional.of(existingEntity));
+        when(propertyLeadRepo.findById(leadId)).thenReturn(Optional.of(existingEntity));
         doNothing().when(propertyLeadMapper).updateEntity(existingEntity, inputDto);
         when(propertyLeadRepo.save(existingEntity)).thenReturn(existingEntity);
         when(propertyLeadMapper.toDto(existingEntity)).thenReturn(inputDto);
 
-        PropertyLeadDto result = propertyLeadService.createOrUpdatePropertyLead(inputDto);
+        PropertyLeadDto result = propertyLeadService.updatePropertyLead(leadId, inputDto);
 
         assertNotNull(result);
         assertEquals(1, result.id());
-        verify(propertyLeadRepo).findById(1);
+        verify(propertyLeadRepo).findById(leadId);
         verify(propertyLeadRepo).save(existingEntity);
-    }
-
-    @Test
-    void createPropertyLeadByQuote_success() {
-        Integer quoteId = 100;
-        PropertyQuote quote = new PropertyQuote();
-        quote.setId(quoteId);
-        quote.setUserInfo("user1");
-        quote.setPropertyInfo("prop1");
-
-        PropertyLeadDetail detail = new PropertyLeadDetail();
-        detail.setPropertyQuote(quote);
-        // No existing active lead associated with this detail/quote for this test case
-
-        when(propertyLeadDetailRepo.findByPropertyQuoteId(quoteId)).thenReturn(Collections.singletonList(detail));
-        when(propertyLeadRepo.save(any(PropertyLead.class))).thenAnswer(invocation -> {
-            PropertyLead saved = invocation.getArgument(0);
-            saved.setId(1);
-            return saved;
-        });
-        when(propertyLeadMapper.toDto(any(PropertyLead.class))).thenReturn(new PropertyLeadDto(1, "user1", "prop1", "ACTIVE", null, null));
-
-        PropertyLeadDto result = propertyLeadService.createPropertyLeadByQuote(quoteId);
-
-        assertNotNull(result);
-        verify(propertyLeadRepo).save(any(PropertyLead.class));
-        verify(propertyLeadDetailRepo).save(any(PropertyLeadDetail.class));
-    }
-
-    @Test
-    void createPropertyLeadByQuote_alreadyActive() {
-        Integer quoteId = 100;
-        PropertyQuote quote = new PropertyQuote();
-        quote.setId(quoteId);
-
-        PropertyLead activeLead = new PropertyLead();
-        activeLead.setId(1);
-        activeLead.setStatus("ACTIVE");
-
-        PropertyLeadDetail detail = new PropertyLeadDetail();
-        detail.setPropertyQuote(quote);
-        detail.setPropertyLead(activeLead);
-
-        when(propertyLeadDetailRepo.findByPropertyQuoteId(quoteId)).thenReturn(Collections.singletonList(detail));
-
-        assertThrows(IllegalStateException.class, () -> propertyLeadService.createPropertyLeadByQuote(quoteId));
     }
 
     @Test
     void getPropertyLeadById_success() {
         Integer leadId = 1;
-        PropertyLead lead = new PropertyLead();
-        lead.setId(leadId);
+        PropertyLead lead = PropertyLead.builder()
+                .id(leadId)
+                .userInfo("u")
+                .propertyInfo("p")
+                .status(LeadStatus.ACTIVE)
+                .build();
 
         when(propertyLeadRepo.findById(leadId)).thenReturn(Optional.of(lead));
-        when(propertyLeadMapper.toDto(lead)).thenReturn(new PropertyLeadDto(leadId, "u", "p", "ACTIVE", null, null));
+        when(propertyLeadMapper.toDto(lead))
+                .thenReturn(new PropertyLeadDto(leadId, "u", "p", LeadStatus.ACTIVE, null, null));
 
         PropertyLeadDto result = propertyLeadService.getPropertyLeadById(leadId);
 
@@ -140,49 +108,39 @@ public class PropertyLeadServiceImplTest {
 
     @Test
     void getPropertyLeadById_notFound() {
-        Integer leadId = 1;
-        when(propertyLeadRepo.findById(leadId)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> propertyLeadService.getPropertyLeadById(leadId));
+        when(propertyLeadRepo.findById(1)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> propertyLeadService.getPropertyLeadById(1));
     }
 
     @Test
     void updateLeadStatus_success() {
         Integer leadId = 1;
-        String newStatus = "ACCEPTED";
-        PropertyLead lead = new PropertyLead();
-        lead.setId(leadId);
-        lead.setStatus("ACTIVE");
+        PropertyLead lead = PropertyLead.builder().id(leadId).status(LeadStatus.ACTIVE).build();
 
         when(propertyLeadRepo.findById(leadId)).thenReturn(Optional.of(lead));
         when(propertyLeadRepo.save(lead)).thenReturn(lead);
-        when(propertyLeadMapper.toDto(lead)).thenReturn(new PropertyLeadDto(leadId, "u", "p", newStatus, null, null));
+        when(propertyLeadMapper.toDto(lead))
+                .thenReturn(new PropertyLeadDto(leadId, "u", "p", LeadStatus.ACCEPTED, null, null));
 
-        PropertyLeadDto result = propertyLeadService.updateLeadStatus(leadId, newStatus);
+        PropertyLeadDto result = propertyLeadService.updateLeadStatus(leadId, "ACCEPTED");
 
         assertNotNull(result);
-        assertEquals(newStatus, result.status());
-        verify(propertyLeadRepo).save(lead);
+        assertEquals(LeadStatus.ACCEPTED, result.status());
     }
 
     @Test
     void updateLeadStatus_invalidTransition() {
-        Integer leadId = 1;
-        String newStatus = "ACTIVE";
-        PropertyLead lead = new PropertyLead();
-        lead.setId(leadId);
-        lead.setStatus("ACCEPTED");
-
-        when(propertyLeadRepo.findById(leadId)).thenReturn(Optional.of(lead));
-
-        assertThrows(IllegalStateException.class, () -> propertyLeadService.updateLeadStatus(leadId, newStatus));
+        PropertyLead lead = PropertyLead.builder().id(1).status(LeadStatus.ACCEPTED).build();
+        when(propertyLeadRepo.findById(1)).thenReturn(Optional.of(lead));
+        assertThrows(IllegalStateException.class, () -> propertyLeadService.updateLeadStatus(1, "ACTIVE"));
     }
 
     @Test
     void findAllPropertyLeads_success() {
-        PropertyLead lead = new PropertyLead();
-        lead.setStatus("ACTIVE");
-        when(propertyLeadRepo.findAll()).thenReturn(Collections.singletonList(lead));
-        when(propertyLeadMapper.toDto(lead)).thenReturn(new PropertyLeadDto(1, "u", "p", "ACTIVE", null, null));
+        PropertyLead lead = PropertyLead.builder().id(1).status(LeadStatus.ACTIVE).build();
+        when(propertyLeadRepo.findByStatus(LeadStatus.ACTIVE)).thenReturn(Collections.singletonList(lead));
+        when(propertyLeadMapper.toDto(lead))
+                .thenReturn(new PropertyLeadDto(1, "u", "p", LeadStatus.ACTIVE, null, null));
 
         List<PropertyLeadDto> results = propertyLeadService.findAllPropertyLeads();
 
@@ -191,42 +149,20 @@ public class PropertyLeadServiceImplTest {
     }
 
     @Test
-    void findPropertyLeadsByStatus_success() {
-        String status = "ACTIVE";
-        PropertyLead lead = new PropertyLead();
-        lead.setStatus(status);
-        when(propertyLeadRepo.findByStatus(status)).thenReturn(Collections.singletonList(lead));
-        when(propertyLeadMapper.toDto(lead)).thenReturn(new PropertyLeadDto(1, "u", "p", status, null, null));
-
-        List<PropertyLeadDto> results = propertyLeadService.findPropertyLeadsByStatus(status);
-
-        assertFalse(results.isEmpty());
-        assertEquals(1, results.size());
-    }
-
-    @Test
     void deletePropertyLeadById_success() {
-        Integer leadId = 1;
-        when(propertyLeadRepo.existsById(leadId)).thenReturn(true);
-        when(propertyLeadDetailRepo.findAll()).thenReturn(Collections.emptyList());
-        when(propertyLeadRepo.findAll()).thenReturn(Collections.emptyList()); // For returning remaining list
+        when(propertyLeadRepo.existsById(1)).thenReturn(true);
+        doNothing().when(propertyLeadRepo).deleteById(1);
 
-        List<PropertyLeadDto> result = propertyLeadService.deletePropertyLeadById(leadId);
-
-        verify(propertyLeadRepo).deleteById(leadId);
-        assertNotNull(result);
+        assertDoesNotThrow(() -> propertyLeadService.deletePropertyLeadById(1));
+        verify(propertyLeadRepo).deleteById(1);
     }
 
     @Test
     void getLeadStats_success() {
-        PropertyLead active = new PropertyLead();
-        active.setStatus("ACTIVE");
-        PropertyLead accepted = new PropertyLead();
-        accepted.setStatus("ACCEPTED");
-        PropertyLead rejected = new PropertyLead();
-        rejected.setStatus("REJECTED");
-        PropertyLead expired = new PropertyLead();
-        expired.setStatus("EXPIRED");
+        PropertyLead active = PropertyLead.builder().status(LeadStatus.ACTIVE).build();
+        PropertyLead accepted = PropertyLead.builder().status(LeadStatus.ACCEPTED).build();
+        PropertyLead rejected = PropertyLead.builder().status(LeadStatus.REJECTED).build();
+        PropertyLead expired = PropertyLead.builder().status(LeadStatus.EXPIRED).build();
 
         when(propertyLeadRepo.findAll()).thenReturn(List.of(active, accepted, rejected, expired));
 

@@ -2,7 +2,7 @@ package edu.hcmute.dto;
 
 import java.time.LocalDate;
 
-public record PropertyLeadDto(
+public record LeadInfoDto(
         Integer id,
         String userInfo,
         String propertyInfo,

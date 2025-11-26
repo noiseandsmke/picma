@@ -9,20 +9,21 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    properties:
-      org:
-        hibernate:
-          envers:
-            audit_table_suffix: _LEAD
-            audit_table_prefix: AU_PROPERTY
-            revision_field_name: rev_id
-            revision_type_field_name: rev_type
-            store_data_at_delete: true
+    show-sql: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
 server:
   port: 7103
+
 picma:
   properties:
     management:
       base-uri: http://${PROPERTY_MGMT_HOST:localhost}:${PROPERTY_MGMT_PORT:7101}
     agent:
       base-uri: http://${PROPERTY_AGENT_HOST:localhost}:${PROPERTY_AGENT_PORT:7104}
+    lead:
+      topic: property-lead-topic

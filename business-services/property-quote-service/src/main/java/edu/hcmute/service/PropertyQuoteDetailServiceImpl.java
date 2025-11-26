@@ -1,13 +1,10 @@
 package edu.hcmute.service;
 
+import edu.hcmute.config.PropertyLeadFeignClient;
+import edu.hcmute.dto.LeadInfoDto;
 import edu.hcmute.dto.PropertyQuoteDetailDto;
-import edu.hcmute.entity.PropertyLead;
-import edu.hcmute.entity.PropertyLeadDetail;
 import edu.hcmute.entity.PropertyQuoteDetail;
-import edu.hcmute.event.PropertyLeadProducer;
 import edu.hcmute.mapper.PropertyQuoteMapper;
-import edu.hcmute.repo.PropertyLeadDetailRepo;
-import edu.hcmute.repo.PropertyLeadRepo;
 import edu.hcmute.repo.PropertyQuoteDetailRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +12,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -24,53 +19,36 @@ import java.util.List;
 @Slf4j
 public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailService {
     private final PropertyQuoteDetailRepo propertyQuoteDetailRepo;
-    private final PropertyLeadRepo propertyLeadRepo;
-    private final PropertyLeadDetailRepo propertyLeadDetailRepo;
-    private final PropertyLeadProducer leadProducer;
+    private final PropertyLeadFeignClient propertyLeadFeignClient;
     private final PropertyQuoteMapper propertyQuoteMapper;
 
     @Override
     @Transactional
     public PropertyQuoteDetailDto createPropertyQuoteDetail(PropertyQuoteDetailDto propertyQuoteDetailDto) {
-        log.info("### Create PropertyQuote ###");
-        log.info("`~> propertyQuoteDetailDto: {}", propertyQuoteDetailDto.toString());
+        log.info("### Create PropertyQuote for leadId = {} ###", propertyQuoteDetailDto.leadId());
+
+        Integer leadId = propertyQuoteDetailDto.leadId();
+        if (leadId == null) {
+            throw new IllegalArgumentException("leadId is required to create a quote");
+        }
+
+        LeadInfoDto leadInfo;
+        try {
+            leadInfo = propertyLeadFeignClient.getLeadById(leadId);
+            log.info("~~> validated lead exists: id={}, user={}", leadInfo.id(), leadInfo.userInfo());
+        } catch (Exception e) {
+            log.error("~~> lead not found with id: {}", leadId);
+            throw new RuntimeException("Lead not found with id: " + leadId + ". Create a lead first.");
+        }
+
         try {
             PropertyQuoteDetail propertyQuoteDetail = propertyQuoteMapper.toEntity(propertyQuoteDetailDto);
-            propertyQuoteDetail.getPropertyQuote().setCreateDate(LocalDate.now());
-            propertyQuoteDetail.getPropertyQuote().setExpiryDate(LocalDate.now().plusDays(60));
-            propertyQuoteDetail.getPropertyQuote().setCreatedBy("noiseandsmke");
-            propertyQuoteDetail.getPropertyQuote().setModifiedBy("noiseandsmke");
+            propertyQuoteDetail.getPropertyQuote().setLeadId(leadId);
             propertyQuoteDetail = propertyQuoteDetailRepo.save(propertyQuoteDetail);
             log.info("~~> propertyQuoteDetail saved with id: {}", propertyQuoteDetail.getId());
 
-            LocalDate leadExpiryDate = LocalDate.now().plusDays(30);
-            if (leadExpiryDate.isAfter(propertyQuoteDetail.getPropertyQuote().getExpiryDate())) {
-                leadExpiryDate = propertyQuoteDetail.getPropertyQuote().getExpiryDate();
-            }
-
-            PropertyLead propertyLead = PropertyLead.builder()
-                    .userInfo(propertyQuoteDetail.getPropertyQuote().getUserInfo())
-                    .propertyInfo(propertyQuoteDetail.getPropertyQuote().getPropertyInfo())
-                    .status("ACTIVE")
-                    .startDate(LocalDate.now())
-                    .expiryDate(leadExpiryDate)
-                    .build();
-            propertyLead.setCreatedBy("noiseandsmke");
-            propertyLead.setCreatedAt(Instant.now());
-            propertyLead.setModifiedBy("noiseandsmke");
-            propertyLead.setModifiedAt(Instant.now());
-            propertyLead = propertyLeadRepo.save(propertyLead);
-
-            PropertyLeadDetail propertyLeadDetail = new PropertyLeadDetail();
-            propertyLeadDetail.setPropertyLead(propertyLead);
-            propertyLeadDetail.setPropertyQuote(propertyQuoteDetail.getPropertyQuote());
-            propertyLeadDetail = propertyLeadDetailRepo.save(propertyLeadDetail);
-
-            if (propertyLead.getId() > 0 && propertyLeadDetail.getId() > 0) {
-                boolean isLeadSent = leadProducer.produceLead(propertyLead);
-                log.info("~~> lead sent {}", isLeadSent ? "successful" : "failed");
-            }
-            return propertyQuoteMapper.toDto(propertyQuoteDetail);
+            PropertyQuoteDetailDto resultDto = propertyQuoteMapper.toDto(propertyQuoteDetail);
+            return enrichWithLeadInfo(resultDto, leadInfo);
         } catch (Exception e) {
             log.error("~~> error creating PropertyQuote: {}", e.getMessage(), e);
             throw new RuntimeException(e.getMessage());
@@ -80,14 +58,15 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
     @Override
     @Transactional(readOnly = true)
     public PropertyQuoteDetailDto getPropertyQuoteDetailById(Integer id) {
-        log.info("### Get PropertyQuote by Id ###");
-        log.info("~~> propertyQuoteDetailDto id: {}", id);
+        log.info("### Get PropertyQuote by Id = {} ###", id);
         PropertyQuoteDetail propertyQuoteDetail = propertyQuoteDetailRepo.findById(id)
                 .orElseThrow(() -> {
                     log.warn("~~> no PropertyQuote found with id: {}", id);
                     return new RuntimeException("No PropertyQuote found with id: " + id);
                 });
-        return propertyQuoteMapper.toDto(propertyQuoteDetail);
+
+        PropertyQuoteDetailDto dto = propertyQuoteMapper.toDto(propertyQuoteDetail);
+        return enrichWithLeadInfo(dto);
     }
 
     @Override
@@ -99,40 +78,73 @@ public class PropertyQuoteDetailServiceImpl implements PropertyQuoteDetailServic
         List<PropertyQuoteDetail> propertyQuoteDetailList = propertyQuoteDetailRepo.findAll(sortBy);
         if (propertyQuoteDetailList.isEmpty()) {
             log.warn("~~> no PropertyQuotes found in database");
-            throw new RuntimeException("No PropertyQuotes found in database");
+            return List.of();
         }
         log.info("~~> found {} PropertyQuotes", propertyQuoteDetailList.size());
         return propertyQuoteDetailList.stream()
                 .map(propertyQuoteMapper::toDto)
+                .map(this::enrichWithLeadInfo)
                 .toList();
     }
 
     @Override
     @Transactional
     public PropertyQuoteDetailDto updatePropertyQuoteDetail(Integer id, PropertyQuoteDetailDto propertyQuoteDetailDto) {
-        log.info("### Update PropertyQuote by Id ###");
-        log.info("~~> propertyQuoteDetailDto id: {}", id);
+        log.info("### Update PropertyQuote by Id = {} ###", id);
         PropertyQuoteDetail existingQuoteDetail = propertyQuoteDetailRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("No PropertyQuote found with id: " + id));
 
         PropertyQuoteDetail updatedQuoteDetail = propertyQuoteMapper.toEntity(propertyQuoteDetailDto);
         updatedQuoteDetail.setId(existingQuoteDetail.getId());
         updatedQuoteDetail.getPropertyQuote().setId(existingQuoteDetail.getPropertyQuote().getId());
-        updatedQuoteDetail.getPropertyQuote().setModifiedBy("noiseandsmke");
-        updatedQuoteDetail.getPropertyQuote().setModifiedAt(Instant.now());
+        updatedQuoteDetail.getPropertyQuote().setLeadId(existingQuoteDetail.getPropertyQuote().getLeadId());
 
         updatedQuoteDetail = propertyQuoteDetailRepo.save(updatedQuoteDetail);
-        return propertyQuoteMapper.toDto(updatedQuoteDetail);
+        PropertyQuoteDetailDto dto = propertyQuoteMapper.toDto(updatedQuoteDetail);
+        return enrichWithLeadInfo(dto);
     }
 
     @Override
     @Transactional
     public void deletePropertyQuoteDetailById(Integer id) {
-        log.info("### Delete PropertyQuote by Id ###");
-        log.info("~~> propertyQuoteDetailDto id: {}", id);
+        log.info("### Delete PropertyQuote by Id = {} ###", id);
         if (!propertyQuoteDetailRepo.existsById(id)) {
             throw new RuntimeException("No PropertyQuote found with id: " + id);
         }
         propertyQuoteDetailRepo.deleteById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PropertyQuoteDetailDto> getQuotesByLeadId(Integer leadId) {
+        log.info("### Get PropertyQuotes by leadId = {} ###", leadId);
+        List<PropertyQuoteDetail> quotes = propertyQuoteDetailRepo.findByPropertyQuoteLeadId(leadId);
+        return quotes.stream()
+                .map(propertyQuoteMapper::toDto)
+                .map(this::enrichWithLeadInfo)
+                .toList();
+    }
+
+    private PropertyQuoteDetailDto enrichWithLeadInfo(PropertyQuoteDetailDto dto) {
+        if (dto.leadId() == null) return dto;
+        try {
+            LeadInfoDto leadInfo = propertyLeadFeignClient.getLeadById(dto.leadId());
+            return enrichWithLeadInfo(dto, leadInfo);
+        } catch (Exception e) {
+            log.warn("~~> could not fetch lead info for leadId: {}", dto.leadId());
+            return dto;
+        }
+    }
+
+    private PropertyQuoteDetailDto enrichWithLeadInfo(PropertyQuoteDetailDto dto, LeadInfoDto leadInfo) {
+        return new PropertyQuoteDetailDto(
+                dto.id(),
+                dto.leadId(),
+                dto.propertyQuoteDto(),
+                dto.quoteTypeDto(),
+                dto.coverageTypeDto(),
+                dto.policyTypeDto(),
+                leadInfo
+        );
     }
 }

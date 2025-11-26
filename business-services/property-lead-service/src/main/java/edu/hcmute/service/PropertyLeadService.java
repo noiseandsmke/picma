@@ -6,9 +6,9 @@ import edu.hcmute.dto.PropertyLeadDto;
 import java.util.List;
 
 public interface PropertyLeadService {
-    PropertyLeadDto createOrUpdatePropertyLead(PropertyLeadDto propertyLeadDto);
+    PropertyLeadDto createPropertyLead(PropertyLeadDto propertyLeadDto);
 
-    PropertyLeadDto createPropertyLeadByQuote(Integer quoteId);
+    PropertyLeadDto updatePropertyLead(Integer leadId, PropertyLeadDto propertyLeadDto);
 
     PropertyLeadDto getPropertyLeadById(Integer leadId);
 
@@ -22,7 +22,7 @@ public interface PropertyLeadService {
 
     List<PropertyLeadDto> findPropertyLeadsOfAgent(String agentId);
 
-    List<PropertyLeadDto> deletePropertyLeadById(Integer leadId);
+    void deletePropertyLeadById(Integer leadId);
 
     LeadStatsDto getLeadStats();
 

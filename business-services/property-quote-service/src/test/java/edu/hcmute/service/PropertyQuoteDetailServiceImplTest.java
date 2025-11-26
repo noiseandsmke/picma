@@ -7,8 +7,6 @@ import edu.hcmute.entity.PropertyQuote;
 import edu.hcmute.entity.PropertyQuoteDetail;
 import edu.hcmute.event.PropertyLeadProducer;
 import edu.hcmute.mapper.PropertyQuoteMapper;
-import edu.hcmute.repo.PropertyLeadDetailRepo;
-import edu.hcmute.repo.PropertyLeadRepo;
 import edu.hcmute.repo.PropertyQuoteDetailRepo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

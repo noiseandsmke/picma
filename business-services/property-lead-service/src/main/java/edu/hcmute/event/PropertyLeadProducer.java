@@ -17,26 +17,22 @@ import java.util.concurrent.CompletableFuture;
 public class PropertyLeadProducer {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
+
     @Value("${picma.properties.lead.topic}")
     private String topicName;
-    @Value("${picma.properties.lead.partitions}")
-    private Integer partitions;
 
-    public boolean produceLead(PropertyLead propertyLead) {
+    public boolean publishLead(PropertyLead propertyLead) {
         boolean isLeadSent = false;
         log.info("Sending property lead to kafka topic: {}", topicName);
-        log.info("NO. partitions = {}", partitions);
         try {
             String key = propertyLead.getPropertyInfo();
-            log.info("Producing lead key = {}", key);
             String value = objectMapper.writeValueAsString(propertyLead);
             CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(topicName, key, value);
             SendResult<String, String> result = future.get();
             isLeadSent = result != null && result.getRecordMetadata() != null;
-            log.info("Current status = {} : {} : {}", future.isDone(), future.isCancelled(), future.isCompletedExceptionally());
             log.info("Lead sent {}", isLeadSent ? "successful" : "failed");
         } catch (Exception e) {
-            log.error(e.getLocalizedMessage());
+            log.error("Error publishing lead to Kafka: {}", e.getLocalizedMessage());
         }
         return isLeadSent;
     }

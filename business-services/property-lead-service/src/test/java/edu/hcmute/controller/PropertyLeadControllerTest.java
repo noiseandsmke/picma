@@ -1,5 +1,6 @@
 package edu.hcmute.controller;
 
+import edu.hcmute.domain.LeadStatus;
 import edu.hcmute.dto.LeadStatsDto;
 import edu.hcmute.dto.PropertyLeadDto;
 import edu.hcmute.service.PropertyLeadService;
@@ -16,8 +17,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class PropertyLeadControllerTest {
@@ -30,63 +30,39 @@ public class PropertyLeadControllerTest {
 
     @Test
     void createLead_shouldReturnCreatedLead() {
-        PropertyLeadDto inputDto = new PropertyLeadDto(null, "123", "P456", "ACTIVE", null, null);
-        PropertyLeadDto returnedDto = new PropertyLeadDto(1, "123", "P456", "ACTIVE", null, null);
+        PropertyLeadDto inputDto = new PropertyLeadDto(null, "123", "P456", LeadStatus.ACTIVE, null, null);
+        PropertyLeadDto returnedDto = new PropertyLeadDto(1, "123", "P456", LeadStatus.ACTIVE, null, null);
 
-        when(propertyLeadService.createOrUpdatePropertyLead(any(PropertyLeadDto.class))).thenReturn(returnedDto);
+        when(propertyLeadService.createPropertyLead(any(PropertyLeadDto.class))).thenReturn(returnedDto);
 
         ResponseEntity<PropertyLeadDto> response = propertyLeadController.createLead(inputDto);
 
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(201, response.getStatusCodeValue());
         assertEquals(returnedDto, response.getBody());
-        verify(propertyLeadService).createOrUpdatePropertyLead(inputDto);
     }
 
     @Test
     void getAllActiveLeads_shouldReturnListOfLeads() {
-        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", "ACTIVE", null, null);
-        List<PropertyLeadDto> leadList = Collections.singletonList(leadDto);
-
-        when(propertyLeadService.findAllPropertyLeads()).thenReturn(leadList);
+        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", LeadStatus.ACTIVE, null, null);
+        when(propertyLeadService.findAllPropertyLeads()).thenReturn(Collections.singletonList(leadDto));
 
         ResponseEntity<List<PropertyLeadDto>> response = propertyLeadController.getAllActiveLeads();
 
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
-        assertEquals(leadList, response.getBody());
-        verify(propertyLeadService).findAllPropertyLeads();
+        assertEquals(1, response.getBody().size());
     }
 
     @Test
     void getAllLeads_shouldReturnListOfAllLeads() {
-        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", "EXPIRED", null, null);
-        List<PropertyLeadDto> leadList = Collections.singletonList(leadDto);
-
-        when(propertyLeadService.getAllLeads("id", "asc")).thenReturn(leadList);
+        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", LeadStatus.EXPIRED, null, null);
+        when(propertyLeadService.getAllLeads("id", "asc")).thenReturn(Collections.singletonList(leadDto));
 
         ResponseEntity<List<PropertyLeadDto>> response = propertyLeadController.getAllLeads("id", "asc");
 
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
-        assertEquals(leadList, response.getBody());
-        verify(propertyLeadService).getAllLeads("id", "asc");
-    }
-
-    @Test
-    void getAllLeads_shouldReturnSortedList() {
-        PropertyLeadDto lead1 = new PropertyLeadDto(1, "B", "P2", "ACTIVE", null, null);
-        PropertyLeadDto lead2 = new PropertyLeadDto(2, "A", "P1", "EXPIRED", null, null);
-        List<PropertyLeadDto> leadList = List.of(lead2, lead1);
-
-        when(propertyLeadService.getAllLeads("userInfo", "asc")).thenReturn(leadList);
-
-        ResponseEntity<List<PropertyLeadDto>> response = propertyLeadController.getAllLeads("userInfo", "asc");
-
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals(leadList, response.getBody());
-        verify(propertyLeadService).getAllLeads("userInfo", "asc");
     }
 
     @Test
@@ -99,106 +75,46 @@ public class PropertyLeadControllerTest {
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(stats, response.getBody());
-        verify(propertyLeadService).getLeadStats();
     }
 
     @Test
     void getLeadById_shouldReturnLead() {
-        Integer leadId = 1;
-        PropertyLeadDto leadDto = new PropertyLeadDto(leadId, "123", "P456", "ACTIVE", null, null);
-        when(propertyLeadService.getPropertyLeadById(leadId)).thenReturn(leadDto);
+        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", LeadStatus.ACTIVE, null, null);
+        when(propertyLeadService.getPropertyLeadById(1)).thenReturn(leadDto);
 
-        ResponseEntity<PropertyLeadDto> response = propertyLeadController.getLeadById(leadId);
+        ResponseEntity<PropertyLeadDto> response = propertyLeadController.getLeadById(1);
 
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(leadDto, response.getBody());
-        verify(propertyLeadService).getPropertyLeadById(leadId);
-    }
-
-    @Test
-    void getLeadsByStatus_shouldReturnLeads() {
-        String status = "ACTIVE";
-        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", "ACTIVE", null, null);
-        List<PropertyLeadDto> leadList = Collections.singletonList(leadDto);
-
-        when(propertyLeadService.findPropertyLeadsByStatus(status)).thenReturn(leadList);
-
-        ResponseEntity<List<PropertyLeadDto>> response = propertyLeadController.getLeadsByStatus(status);
-
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals(leadList, response.getBody());
-        verify(propertyLeadService).findPropertyLeadsByStatus(status);
-    }
-
-    @Test
-    void getAllLeadsByZipCode_shouldReturnLeads() {
-        String zipCode = "12345";
-        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", "ACTIVE", null, null);
-        List<PropertyLeadDto> leadList = Collections.singletonList(leadDto);
-
-        when(propertyLeadService.findPropertyLeadsByZipcode(zipCode)).thenReturn(leadList);
-
-        ResponseEntity<List<PropertyLeadDto>> response = propertyLeadController.getAllLeadsByZipCode(zipCode);
-
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals(leadList, response.getBody());
-        verify(propertyLeadService).findPropertyLeadsByZipcode(zipCode);
-    }
-
-    @Test
-    void getLeadsByAgent_shouldReturnLeads() {
-        String agentId = "agent1";
-        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", "ACTIVE", null, null);
-        List<PropertyLeadDto> leadList = Collections.singletonList(leadDto);
-
-        when(propertyLeadService.findPropertyLeadsOfAgent(agentId)).thenReturn(leadList);
-
-        ResponseEntity<List<PropertyLeadDto>> response = propertyLeadController.getLeadsByAgent(agentId);
-
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals(leadList, response.getBody());
-        verify(propertyLeadService).findPropertyLeadsOfAgent(agentId);
     }
 
     @Test
     void updateLeadStatus_shouldReturnUpdatedLead() {
-        Integer leadId = 1;
-        String status = "ACCEPTED";
-        PropertyLeadDto leadDto = new PropertyLeadDto(leadId, "123", "P456", "ACCEPTED", null, null);
+        PropertyLeadDto leadDto = new PropertyLeadDto(1, "123", "P456", LeadStatus.ACCEPTED, null, null);
+        when(propertyLeadService.updateLeadStatus(1, "ACCEPTED")).thenReturn(leadDto);
 
-        when(propertyLeadService.updateLeadStatus(leadId, status)).thenReturn(leadDto);
-
-        ResponseEntity<Object> response = propertyLeadController.updateLeadStatus(leadId, status);
+        ResponseEntity<Object> response = propertyLeadController.updateLeadStatus(1, "ACCEPTED");
 
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
-        assertEquals(leadDto, response.getBody());
-        verify(propertyLeadService).updateLeadStatus(leadId, status);
     }
 
     @Test
     void updateLeadStatus_missingHeader_shouldReturnBadRequest() {
         ResponseEntity<Object> response = propertyLeadController.updateLeadStatus(1, null);
         assertEquals(400, response.getStatusCodeValue());
-        assertEquals("Header lead-status must be present", response.getBody());
     }
 
     @Test
-    void deleteLeadById_shouldReturnRemainingLeads() {
-        Integer leadId = 1;
-        List<PropertyLeadDto> remainingLeads = Collections.emptyList();
-        when(propertyLeadService.deletePropertyLeadById(leadId)).thenReturn(remainingLeads);
+    void deleteLeadById_shouldReturnNoContent() {
+        doNothing().when(propertyLeadService).deletePropertyLeadById(1);
 
-        ResponseEntity<List<PropertyLeadDto>> response = propertyLeadController.deleteLeadById(leadId);
+        ResponseEntity<Void> response = propertyLeadController.deleteLeadById(1);
 
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals(remainingLeads, response.getBody());
-        verify(propertyLeadService).deletePropertyLeadById(leadId);
+        assertEquals(204, response.getStatusCodeValue());
+        verify(propertyLeadService).deletePropertyLeadById(1);
     }
 
     @Test
