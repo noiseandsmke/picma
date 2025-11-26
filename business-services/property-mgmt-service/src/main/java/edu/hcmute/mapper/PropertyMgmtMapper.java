@@ -1,29 +1,33 @@
 package edu.hcmute.mapper;
 
-import edu.hcmute.dto.*;
-import edu.hcmute.entity.*;
+import edu.hcmute.dto.PropertyAttributesDto;
+import edu.hcmute.dto.PropertyInfoDto;
+import edu.hcmute.dto.PropertyLocationDto;
+import edu.hcmute.dto.PropertyValuationDto;
+import edu.hcmute.entity.PropertyAttributes;
+import edu.hcmute.entity.PropertyInfo;
+import edu.hcmute.entity.PropertyLocation;
+import edu.hcmute.entity.PropertyValuation;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface PropertyMgmtMapper {
-    @Mapping(source = "propertyType", target = "propertyTypeDto")
-    @Mapping(source = "propertyAddress", target = "propertyAddressDto")
-    @Mapping(source = "constructionType", target = "constructionTypeDto")
-    @Mapping(source = "occupancyType", target = "occupancyTypeDto")
     PropertyInfoDto toDto(PropertyInfo propertyInfo);
 
-    @Mapping(source = "propertyTypeDto", target = "propertyType")
-    @Mapping(source = "propertyAddressDto", target = "propertyAddress")
-    @Mapping(source = "constructionTypeDto", target = "constructionType")
-    @Mapping(source = "occupancyTypeDto", target = "occupancyType")
+    @Mapping(target = "id", ignore = true)
     PropertyInfo toEntity(PropertyInfoDto propertyInfoDto);
 
-    PropertyTypeDto toDto(PropertyType propertyType);
+    PropertyLocationDto toDto(PropertyLocation location);
 
-    PropertyAddressDto toDto(PropertyAddress propertyAddress);
+    PropertyLocation toEntity(PropertyLocationDto locationDto);
 
-    ConstructionTypeDto toDto(ConstructionType constructionType);
+    PropertyAttributesDto toDto(PropertyAttributes attributes);
 
-    OccupancyTypeDto toDto(OccupancyType occupancyType);
+    PropertyAttributes toEntity(PropertyAttributesDto attributesDto);
+
+    PropertyValuationDto toDto(PropertyValuation valuation);
+
+    PropertyValuation toEntity(PropertyValuationDto valuationDto);
 }

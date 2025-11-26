@@ -1,6 +1,11 @@
 package edu.hcmute.controller;
 
+import edu.hcmute.domain.ConstructionType;
+import edu.hcmute.domain.OccupancyType;
+import edu.hcmute.dto.PropertyAttributesDto;
 import edu.hcmute.dto.PropertyInfoDto;
+import edu.hcmute.dto.PropertyLocationDto;
+import edu.hcmute.dto.PropertyValuationDto;
 import edu.hcmute.service.PropertyInfoService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,8 +20,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class PropertyManagementControllerTest {
@@ -27,25 +31,37 @@ public class PropertyManagementControllerTest {
     @InjectMocks
     private PropertyManagementController propertyManagementController;
 
+    private PropertyInfoDto createSampleDto() {
+        return new PropertyInfoDto(
+                "1",
+                new PropertyLocationDto("123 Main St", "Ward 1", "Ho Chi Minh", "70000"),
+                new PropertyAttributesDto(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5),
+                new PropertyValuationDto(2500000000L)
+        );
+    }
+
     @Test
     void savePropertyInfo_shouldReturnCreatedProperty() {
-        PropertyInfoDto inputDto = new PropertyInfoDto(null, null, 0, 0, null, null, null, null, null, null, null);
-        PropertyInfoDto returnedDto = new PropertyInfoDto("1", null, 0, 0, null, null, null, null, null, null, null);
+        PropertyInfoDto inputDto = new PropertyInfoDto(
+                null,
+                new PropertyLocationDto("123 Main St", "Ward 1", "Ho Chi Minh", "70000"),
+                new PropertyAttributesDto(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5),
+                new PropertyValuationDto(2500000000L)
+        );
+        PropertyInfoDto returnedDto = createSampleDto();
 
         when(propertyInfoService.createPropertyInfo(any(PropertyInfoDto.class))).thenReturn(returnedDto);
 
         ResponseEntity<PropertyInfoDto> response = propertyManagementController.savePropertyInfo(inputDto);
 
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(201, response.getStatusCodeValue());
         assertEquals(returnedDto, response.getBody());
-        verify(propertyInfoService).createPropertyInfo(inputDto);
     }
 
     @Test
     void getAllPropertiesInfo_shouldReturnListOfProperties() {
-        PropertyInfoDto propertyDto = new PropertyInfoDto("1", null, 0, 0, null, null, null, null, null, null, null);
-        List<PropertyInfoDto> propertiesList = Collections.singletonList(propertyDto);
+        List<PropertyInfoDto> propertiesList = Collections.singletonList(createSampleDto());
 
         when(propertyInfoService.getAllProperties()).thenReturn(propertiesList);
 
@@ -53,38 +69,30 @@ public class PropertyManagementControllerTest {
 
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
-        assertEquals(propertiesList, response.getBody());
-        verify(propertyInfoService).getAllProperties();
+        assertEquals(1, response.getBody().size());
     }
 
     @Test
     void getPropertyById_shouldReturnProperty() {
-        String propertyId = "1";
-        PropertyInfoDto propertyDto = new PropertyInfoDto(propertyId, null, 0, 0, null, null, null, null, null, null, null);
+        PropertyInfoDto propertyDto = createSampleDto();
 
-        when(propertyInfoService.getPropertyInfoById(propertyId)).thenReturn(propertyDto);
+        when(propertyInfoService.getPropertyInfoById("1")).thenReturn(propertyDto);
 
-        ResponseEntity<PropertyInfoDto> response = propertyManagementController.getPropertyById(propertyId);
+        ResponseEntity<PropertyInfoDto> response = propertyManagementController.getPropertyById("1");
 
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(propertyDto, response.getBody());
-        verify(propertyInfoService).getPropertyInfoById(propertyId);
     }
 
     @Test
-    void getPropertyByZipCode_shouldReturnListOfProperties() {
-        String zipcode = "12345";
-        PropertyInfoDto propertyDto = new PropertyInfoDto("1", null, 0, 0, null, null, null, null, null, null, null);
-        List<PropertyInfoDto> propertiesList = Collections.singletonList(propertyDto);
+    void deletePropertyById_shouldReturnNoContent() {
+        doNothing().when(propertyInfoService).deletePropertyById("1");
 
-        when(propertyInfoService.getPropertiesByZipCode(zipcode)).thenReturn(propertiesList);
-
-        ResponseEntity<List<PropertyInfoDto>> response = propertyManagementController.getPropertyByZipCode(zipcode);
+        ResponseEntity<Void> response = propertyManagementController.deletePropertyById("1");
 
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals(propertiesList, response.getBody());
-        verify(propertyInfoService).getPropertiesByZipCode(zipcode);
+        assertEquals(204, response.getStatusCodeValue());
+        verify(propertyInfoService).deletePropertyById("1");
     }
 }

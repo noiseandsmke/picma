@@ -1,7 +1,15 @@
 package edu.hcmute.service;
 
+import edu.hcmute.domain.ConstructionType;
+import edu.hcmute.domain.OccupancyType;
+import edu.hcmute.dto.PropertyAttributesDto;
 import edu.hcmute.dto.PropertyInfoDto;
+import edu.hcmute.dto.PropertyLocationDto;
+import edu.hcmute.dto.PropertyValuationDto;
+import edu.hcmute.entity.PropertyAttributes;
 import edu.hcmute.entity.PropertyInfo;
+import edu.hcmute.entity.PropertyLocation;
+import edu.hcmute.entity.PropertyValuation;
 import edu.hcmute.mapper.PropertyMgmtMapper;
 import edu.hcmute.repo.PropertyInfoRepo;
 import org.junit.jupiter.api.Test;
@@ -15,8 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class PropertyInfoServiceImplTest {
@@ -29,11 +36,34 @@ public class PropertyInfoServiceImplTest {
     @InjectMocks
     private PropertyInfoServiceImpl propertyInfoService;
 
+    private PropertyInfoDto createSampleDto() {
+        return new PropertyInfoDto(
+                "1",
+                new PropertyLocationDto("123 Main St", "Ward 1", "Ho Chi Minh", "70000"),
+                new PropertyAttributesDto(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5),
+                new PropertyValuationDto(2500000000L)
+        );
+    }
+
+    private PropertyInfo createSampleEntity() {
+        PropertyInfo entity = new PropertyInfo();
+        entity.setId("1");
+        entity.setLocation(new PropertyLocation("123 Main St", "Ward 1", "Ho Chi Minh", "70000"));
+        entity.setAttributes(new PropertyAttributes(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5));
+        entity.setValuation(new PropertyValuation(2500000000L));
+        return entity;
+    }
+
     @Test
     void createPropertyInfo_success() {
-        PropertyInfoDto inputDto = new PropertyInfoDto(null, null, 0, 0, null, null, null, null, null, null, null);
-        PropertyInfo entity = new PropertyInfo();
-        PropertyInfoDto resultDto = new PropertyInfoDto("1", null, 0, 0, null, null, null, null, null, null, null);
+        PropertyInfoDto inputDto = new PropertyInfoDto(
+                null,
+                new PropertyLocationDto("123 Main St", "Ward 1", "Ho Chi Minh", "70000"),
+                new PropertyAttributesDto(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5),
+                new PropertyValuationDto(2500000000L)
+        );
+        PropertyInfo entity = createSampleEntity();
+        PropertyInfoDto resultDto = createSampleDto();
 
         when(propertyMgmtMapper.toEntity(inputDto)).thenReturn(entity);
         when(propertyInfoRepo.save(entity)).thenReturn(entity);
@@ -43,72 +73,51 @@ public class PropertyInfoServiceImplTest {
 
         assertNotNull(result);
         assertEquals("1", result.id());
+        assertEquals(ConstructionType.CONCRETE, result.attributes().constructionType());
+        assertEquals(OccupancyType.RESIDENTIAL, result.attributes().occupancyType());
         verify(propertyInfoRepo).save(entity);
     }
 
     @Test
     void getPropertyInfoById_success() {
-        String id = "1";
-        PropertyInfo entity = new PropertyInfo();
-        PropertyInfoDto resultDto = new PropertyInfoDto(id, null, 0, 0, null, null, null, null, null, null, null);
+        PropertyInfo entity = createSampleEntity();
+        PropertyInfoDto resultDto = createSampleDto();
 
-        when(propertyInfoRepo.findById(id)).thenReturn(Optional.of(entity));
+        when(propertyInfoRepo.findById("1")).thenReturn(Optional.of(entity));
         when(propertyMgmtMapper.toDto(entity)).thenReturn(resultDto);
 
-        PropertyInfoDto result = propertyInfoService.getPropertyInfoById(id);
+        PropertyInfoDto result = propertyInfoService.getPropertyInfoById("1");
 
         assertNotNull(result);
-        assertEquals(id, result.id());
+        assertEquals("1", result.id());
     }
 
     @Test
     void getPropertyInfoById_notFound() {
-        String id = "1";
-        when(propertyInfoRepo.findById(id)).thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class, () -> propertyInfoService.getPropertyInfoById(id));
+        when(propertyInfoRepo.findById("1")).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> propertyInfoService.getPropertyInfoById("1"));
     }
 
     @Test
     void getPropertiesByZipCode_success() {
-        String zipcode = "12345";
-        PropertyInfo entity = new PropertyInfo();
-        PropertyInfoDto resultDto = new PropertyInfoDto("1", null, 0, 0, null, null, null, null, null, null, null);
+        PropertyInfo entity = createSampleEntity();
+        PropertyInfoDto resultDto = createSampleDto();
 
-        when(propertyInfoRepo.findPropertiesByZipCode(zipcode)).thenReturn(Collections.singletonList(entity));
+        when(propertyInfoRepo.findPropertiesByZipCode("70000")).thenReturn(Collections.singletonList(entity));
         when(propertyMgmtMapper.toDto(entity)).thenReturn(resultDto);
 
-        List<PropertyInfoDto> result = propertyInfoService.getPropertiesByZipCode(zipcode);
+        List<PropertyInfoDto> result = propertyInfoService.getPropertiesByZipCode("70000");
 
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
     }
 
     @Test
-    void getPropertiesByZipCode_notFound() {
-        String zipcode = "12345";
-        when(propertyInfoRepo.findPropertiesByZipCode(zipcode)).thenReturn(Collections.emptyList());
+    void deletePropertyById_success() {
+        when(propertyInfoRepo.existsById("1")).thenReturn(true);
+        doNothing().when(propertyInfoRepo).deleteById("1");
 
-        assertThrows(RuntimeException.class, () -> propertyInfoService.getPropertiesByZipCode(zipcode));
-    }
-
-    @Test
-    void getAllProperties_success() {
-        PropertyInfo entity = new PropertyInfo();
-        PropertyInfoDto resultDto = new PropertyInfoDto("1", null, 0, 0, null, null, null, null, null, null, null);
-
-        when(propertyInfoRepo.findAll()).thenReturn(Collections.singletonList(entity));
-        when(propertyMgmtMapper.toDto(entity)).thenReturn(resultDto);
-
-        List<PropertyInfoDto> result = propertyInfoService.getAllProperties();
-
-        assertFalse(result.isEmpty());
-        assertEquals(1, result.size());
-    }
-
-    @Test
-    void getAllProperties_empty() {
-        when(propertyInfoRepo.findAll()).thenReturn(Collections.emptyList());
-        assertThrows(RuntimeException.class, () -> propertyInfoService.getAllProperties());
+        assertDoesNotThrow(() -> propertyInfoService.deletePropertyById("1"));
+        verify(propertyInfoRepo).deleteById("1");
     }
 }

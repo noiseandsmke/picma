@@ -7,6 +7,6 @@ import org.springframework.data.mongodb.repository.Query;
 import java.util.List;
 
 public interface PropertyInfoRepo extends MongoRepository<PropertyInfo, String> {
-    @Query("{'propertyAddress.zipCode': ?0}")
+    @Query("{'location.zipCode': ?0}")
     List<PropertyInfo> findPropertiesByZipCode(String zipcode);
 }

@@ -12,4 +12,6 @@ public interface PropertyInfoService {
     List<PropertyInfoDto> getPropertiesByZipCode(String zipcode);
 
     List<PropertyInfoDto> getAllProperties();
+
+    void deletePropertyById(String id);
 }
