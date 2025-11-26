@@ -1,5 +1,6 @@
 package edu.hcmute.entity;
 
+import edu.hcmute.domain.PlanType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,9 +8,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "property_quote")
 @Data
 @Builder
 @NoArgsConstructor
@@ -19,21 +21,22 @@ public class PropertyQuote {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false)
     private Integer leadId;
+    private String agentId;
+    private String agentName;
+    private LocalDate validUntil;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private String propertyAddress;
+    private Long sumInsured;
 
-    @Column(nullable = false)
-    private LocalDate createDate;
+    @Enumerated(EnumType.STRING)
+    private PlanType plan;
 
-    private LocalDate expiryDate;
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "propertyQuoteId")
+    private List<Coverage> coverages = new ArrayList<>();
 
-    @PrePersist
-    protected void onCreate() {
-        if (createDate == null) {
-            createDate = LocalDate.now();
-        }
-        if (expiryDate == null) {
-            expiryDate = LocalDate.now().plusDays(60);
-        }
-    }
+    @Embedded
+    private Premium premium;
 }

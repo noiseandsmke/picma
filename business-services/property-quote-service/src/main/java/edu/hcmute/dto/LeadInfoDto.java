@@ -7,7 +7,7 @@ public record LeadInfoDto(
         String userInfo,
         String propertyInfo,
         String status,
-        LocalDate startDate,
+        LocalDate createDate,
         LocalDate expiryDate
 ) {
 }
