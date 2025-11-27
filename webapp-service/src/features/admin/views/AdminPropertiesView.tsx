@@ -11,8 +11,7 @@ import {
     createProperty,
     deleteProperty,
     fetchAllProperties,
-    OccupancyType,
-    PropertyInfoDto
+    OccupancyType
 } from '../services/propertyService';
 import {Skeleton} from '@/components/ui/skeleton';
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
@@ -35,7 +34,7 @@ const propertySchema = z.object({
     attributes: z.object({
         constructionType: z.nativeEnum(ConstructionType),
         occupancyType: z.nativeEnum(OccupancyType),
-        yearBuilt: z.coerce.number().min(1800, "Year Built must be valid").optional().or(z.literal(0)),
+        yearBuilt: z.preprocess((val) => (val === '' ? undefined : Number(val)), z.number().min(1800, "Year Built must be valid").optional()),
         noFloors: z.coerce.number().min(1, "Number of floors must be at least 1"),
         squareMeters: z.coerce.number().min(1, "Square Meters must be positive"),
     }),
@@ -93,8 +92,8 @@ const AdminPropertiesView: React.FC = () => {
         }
     });
 
-    const {register, handleSubmit, reset, control, setValue, formState: {errors}} = useForm<PropertyFormValues>({
-        resolver: zodResolver(propertySchema) as any,
+    const {register, handleSubmit, reset, control, setValue, formState: {errors}, watch} = useForm<PropertyFormValues>({
+        resolver: zodResolver(propertySchema),
         defaultValues: {
             attributes: {
                 yearBuilt: new Date().getFullYear(),
@@ -117,16 +116,8 @@ const AdminPropertiesView: React.FC = () => {
 
 
     const onSubmit = (data: PropertyFormValues) => {
-        // Prepare payload that matches API type
-        const payload: Omit<PropertyInfoDto, 'id'> = {
-            location: data.location,
-            attributes: {
-                ...data.attributes,
-                yearBuilt: (data.attributes.yearBuilt === 0 || !data.attributes.yearBuilt) ? new Date().getFullYear() : data.attributes.yearBuilt
-            },
-            valuation: data.valuation
-        };
-        createMutation.mutate(payload);
+        // Ensure numbers are correct
+        createMutation.mutate(data);
     };
 
     const handleDelete = (id: string) => {
@@ -181,8 +172,9 @@ const AdminPropertiesView: React.FC = () => {
 
     const filteredProperties = sortedProperties.filter(prop => {
         const term = searchTerm.toLowerCase();
+        const fullAddress = `${prop.location.street}, ${prop.location.ward}, ${prop.location.city}`;
         return (
-            prop.location.street.toLowerCase().includes(term) ||
+            fullAddress.toLowerCase().includes(term) ||
             prop.location.city.toLowerCase().includes(term) ||
             prop.location.zipCode.toLowerCase().includes(term) ||
             prop.attributes.occupancyType.toLowerCase().includes(term)
@@ -318,13 +310,12 @@ const AdminPropertiesView: React.FC = () => {
                                         <Label>Street / House Number</Label>
                                         <Input
                                             placeholder="e.g. Số 10, Ngõ 5"
-                                            className="bg-slate-950 border-slate-800"
                                             {...register('location.street')}
+                                            className="bg-slate-950 border-slate-800"
                                         />
                                         {errors.location?.street &&
                                             <p className="text-red-500 text-sm">{errors.location.street.message}</p>}
                                     </div>
-
 
                                     <div className="col-span-2 space-y-2 pt-4">
                                         <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Property
@@ -506,7 +497,7 @@ const AdminPropertiesView: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <div
-                                                        className="font-medium text-slate-200">{prop.location.street}</div>
+                                                        className="font-medium text-slate-200">{prop.location.street}, {prop.location.ward}, {prop.location.city}</div>
                                                     <div className="text-xs text-slate-500 flex items-center gap-1">
                                                         <MapPin className="h-3 w-3"/>
                                                         {prop.location.city}
