@@ -3,7 +3,18 @@ import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
 import {createLead, deleteLead, fetchAllLeads} from '../services/leadService';
 import {fetchAllProperties} from '../services/propertyService';
-import {ArrowUpDown, Building2, Clock, Eye, MoreHorizontal, PlusCircle, Search, Trash2, User} from 'lucide-react';
+import {
+    ArrowUpDown,
+    Building2,
+    Clock,
+    Eye,
+    Filter,
+    MoreHorizontal,
+    PlusCircle,
+    Search,
+    Trash2,
+    User
+} from 'lucide-react';
 import {cn} from '@/lib/utils';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table";
 import {Badge} from '@/components/ui/badge';
@@ -18,12 +29,14 @@ import {Label} from '@/components/ui/label';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {
     DropdownMenu,
+    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import {LEAD_STATUS_CONFIG} from '../utils/statusMapping';
 
 // Detailed form schema for UI
 const createLeadSchema = z.object({
@@ -139,23 +152,6 @@ const AdminLeadsView: React.FC = () => {
         }
     };
 
-    const getStatusClass = (status: string) => {
-        switch (status?.toUpperCase()) {
-            case 'ACTIVE':
-                return 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border-blue-500/20';
-            case 'IN_REVIEWING':
-                return 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border-orange-500/20';
-            case 'ACCEPTED':
-                return 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border-purple-500/20';
-            case 'REJECTED':
-                return 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20'; // Or grey as requested, but red is clearer for rejected
-            case 'EXPIRED':
-                return 'bg-slate-500/10 text-slate-400 hover:bg-slate-500/20 border-slate-500/20';
-            default:
-                return 'bg-slate-500/10 text-slate-400';
-        }
-    };
-
     // Helper to parse User Info
     const parseUserInfo = (userInfo: string) => {
         if (!userInfo) return {name: 'Unknown', details: ''};
@@ -181,7 +177,7 @@ const AdminLeadsView: React.FC = () => {
             if (obj && obj.address) {
                 return `${obj.address}, ${obj.city}`;
             }
-        } catch (e) {
+        } catch {
             // Not JSON, continue
         }
 
@@ -237,19 +233,6 @@ const AdminLeadsView: React.FC = () => {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="w-[180px] bg-slate-900 border-slate-700">
-                                    <SelectValue placeholder="Filter by status"/>
-                                </SelectTrigger>
-                                <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                                    <SelectItem value="ALL">All Statuses</SelectItem>
-                                    <SelectItem value="ACTIVE">Active</SelectItem>
-                                    <SelectItem value="IN_REVIEWING">In Reviewing</SelectItem>
-                                    <SelectItem value="ACCEPTED">Accepted</SelectItem>
-                                    <SelectItem value="REJECTED">Rejected</SelectItem>
-                                    <SelectItem value="EXPIRED">Expired</SelectItem>
-                                </SelectContent>
-                            </Select>
                         </div>
                     </div>
 
@@ -278,10 +261,44 @@ const AdminLeadsView: React.FC = () => {
                                         </div>
 
                                     </TableHead>
-                                    <TableHead className="text-slate-400 cursor-pointer"
-                                               onClick={() => handleSort('status')}>
-                                        <div className="flex items-center gap-1">
-                                            Status {sortConfig.key === 'status' && <ArrowUpDown size={14}/>}
+                                    <TableHead className="text-slate-400">
+                                        <div className="flex items-center gap-2">
+                                            <span className="cursor-pointer" onClick={() => handleSort('status')}>
+                                                Status {sortConfig.key === 'status' && <ArrowUpDown size={14}/>}
+                                            </span>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost"
+                                                            className="h-6 w-6 p-0 hover:bg-slate-800 rounded-full">
+                                                        <Filter
+                                                            className={cn("h-3 w-3", statusFilter !== 'ALL' ? "text-indigo-400" : "text-slate-500")}/>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="start"
+                                                                     className="bg-slate-900 border-slate-800 text-slate-200">
+                                                    <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                                                    <DropdownMenuSeparator className="bg-slate-800"/>
+                                                    <DropdownMenuCheckboxItem
+                                                        checked={statusFilter === 'ALL'}
+                                                        onCheckedChange={() => setStatusFilter('ALL')}
+                                                        className="focus:bg-slate-800 focus:text-white cursor-pointer"
+                                                    >
+                                                        All Statuses
+                                                    </DropdownMenuCheckboxItem>
+                                                    {Object.values(LEAD_STATUS_CONFIG).map((config) => (
+                                                        <DropdownMenuCheckboxItem
+                                                            key={config.value}
+                                                            checked={statusFilter === config.value}
+                                                            onCheckedChange={() => setStatusFilter(config.value)}
+                                                            className="focus:bg-slate-800 focus:text-white cursor-pointer"
+                                                        >
+                                                            <span
+                                                                className={cn("h-2 w-2 rounded-full mr-2", config.dotClass)}/>
+                                                            {config.label}
+                                                        </DropdownMenuCheckboxItem>
+                                                    ))}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
                                     </TableHead>
                                     <TableHead className="text-slate-400 cursor-pointer"
@@ -342,10 +359,15 @@ const AdminLeadsView: React.FC = () => {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge variant="outline"
-                                                           className={cn("border-0 font-medium", getStatusClass(lead.status))}>
-                                                        {lead.status}
-                                                    </Badge>
+                                                    {(() => {
+                                                        const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
+                                                        return (
+                                                            <Badge variant="outline"
+                                                                   className={cn("border-0 font-medium", statusConfig.className)}>
+                                                                {statusConfig.label}
+                                                            </Badge>
+                                                        );
+                                                    })()}
                                                 </TableCell>
                                                 <TableCell className="text-slate-400 text-sm">
                                                     <div className="flex items-center gap-2">
