@@ -65,6 +65,22 @@ public class PropertyQuoteController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{quoteId}/accept")
+    @Operation(description = "Accept a property quote", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Void> acceptQuote(@PathVariable Integer quoteId) {
+        log.info("### Accept Property Quote by id = {} ###", quoteId);
+        propertyQuoteService.acceptQuote(quoteId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{quoteId}/reject")
+    @Operation(description = "Reject a property quote", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Void> rejectQuote(@PathVariable Integer quoteId) {
+        log.info("### Reject Property Quote by id = {} ###", quoteId);
+        propertyQuoteService.rejectQuote(quoteId);
+        return ResponseEntity.ok().build();
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
         return ResponseEntity.badRequest().body(ex.getMessage());

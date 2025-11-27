@@ -16,4 +16,8 @@ public interface PropertyQuoteService {
     PropertyQuoteDto updatePropertyQuote(Integer id, PropertyQuoteDto propertyQuoteDto);
 
     void deletePropertyQuoteById(Integer id);
+
+    void acceptQuote(Integer quoteId);
+
+    void rejectQuote(Integer quoteId);
 }

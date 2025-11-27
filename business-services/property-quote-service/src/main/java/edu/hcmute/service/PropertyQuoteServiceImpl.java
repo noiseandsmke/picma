@@ -49,6 +49,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
             }
             propertyQuote = propertyQuoteRepo.save(propertyQuote);
             log.info("~~> PropertyQuote saved with id: {}", propertyQuote.getId());
+            // Mark Agent Action as ACCEPTED (meaning Quoted)
             AgentLeadDto agentLeadDto = new AgentLeadDto(0, "ACCEPTED", propertyQuote.getAgentId(), leadId);
             propertyAgentFeignClient.updateLeadAction(agentLeadDto);
             log.info("~~> Agent lead action updated to ACCEPTED for agentId = {} and leadId = {}", propertyQuote.getAgentId(), leadId);
@@ -111,5 +112,40 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
         }
         propertyQuoteRepo.deleteById(id);
         log.info("~~> PropertyQuote deleted with id: {}", id);
+    }
+
+    @Override
+    @Transactional
+    public void acceptQuote(Integer quoteId) {
+        log.info("### Accept Quote id = {} ###", quoteId);
+        PropertyQuote quote = propertyQuoteRepo.findById(quoteId)
+                .orElseThrow(() -> new RuntimeException("PropertyQuote not found with id: " + quoteId));
+        // Update Lead Status to ACCEPTED
+        log.info("~~> updating lead status to ACCEPTED for leadId: {}", quote.getLeadId());
+        try {
+            propertyLeadFeignClient.updateLeadStatusById(quote.getLeadId(), "ACCEPTED");
+            log.info("~~> lead status updated successfully");
+        } catch (Exception e) {
+            log.error("~~> failed to update lead status: {}", e.getMessage());
+            throw new RuntimeException("Failed to update lead status: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void rejectQuote(Integer quoteId) {
+        log.info("### Reject Quote id = {} ###", quoteId);
+        PropertyQuote quote = propertyQuoteRepo.findById(quoteId)
+                .orElseThrow(() -> new RuntimeException("PropertyQuote not found with id: " + quoteId));
+        // Update Agent Lead Action to REJECTED
+        log.info("~~> updating agent lead action to REJECTED for agent: {} lead: {}", quote.getAgentId(), quote.getLeadId());
+        try {
+            AgentLeadDto agentLeadDto = new AgentLeadDto(0, "REJECTED", quote.getAgentId(), quote.getLeadId());
+            propertyAgentFeignClient.updateLeadAction(agentLeadDto);
+            log.info("~~> agent lead action updated successfully");
+        } catch (Exception e) {
+            log.error("~~> failed to update agent lead action: {}", e.getMessage());
+            throw new RuntimeException("Failed to update agent lead action: " + e.getMessage());
+        }
     }
 }
