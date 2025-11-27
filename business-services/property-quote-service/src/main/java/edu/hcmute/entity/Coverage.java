@@ -18,6 +18,6 @@ public class Coverage {
     @Enumerated(EnumType.STRING)
     private CoverageCode code;
 
-    private Long limit;
+    private Long coverageLimit;
     private Long deductible;
 }

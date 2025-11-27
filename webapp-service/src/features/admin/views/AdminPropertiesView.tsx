@@ -6,13 +6,8 @@ import {Button} from "@/components/ui/button";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {Badge} from "@/components/ui/badge";
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {
-    ConstructionType,
-    createProperty,
-    deleteProperty,
-    fetchAllProperties,
-    OccupancyType
-} from '../services/propertyService';
+import {createProperty, deleteProperty, fetchAllProperties,} from '../services/propertyService';
+import {CONSTRUCTION_TYPES, ConstructionType, OCCUPANCY_TYPES, OccupancyType} from '@/types/enums';
 import {Skeleton} from '@/components/ui/skeleton';
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
 import {z} from 'zod';
@@ -213,7 +208,7 @@ const AdminPropertiesView: React.FC = () => {
                                                         <SelectValue placeholder="Select Type"/>
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {Object.values(ConstructionType).map((type) => (
+                                                        {CONSTRUCTION_TYPES.map((type) => (
                                                             <SelectItem key={type} value={type}>{type}</SelectItem>
                                                         ))}
                                                     </SelectContent>
@@ -234,7 +229,7 @@ const AdminPropertiesView: React.FC = () => {
                                                         <SelectValue placeholder="Select Type"/>
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {Object.values(OccupancyType).map((type) => (
+                                                        {OCCUPANCY_TYPES.map((type) => (
                                                             <SelectItem key={type} value={type}>{type}</SelectItem>
                                                         ))}
                                                     </SelectContent>

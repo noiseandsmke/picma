@@ -14,11 +14,12 @@ import * as z from 'zod';
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {PLAN_TYPES, PlanType} from '@/types/enums';
 
 const quoteSchema = z.object({
     leadId: z.coerce.number().positive(),
     agentId: z.string().min(1, 'Agent ID is required'),
-    plan: z.enum(['BRONZE', 'SILVER', 'GOLD']),
+    plan: z.nativeEnum(PlanType),
     sumInsured: z.coerce.number().positive(),
 });
 
@@ -276,9 +277,9 @@ const AdminQuotesView: React.FC = () => {
                                                 <SelectValue placeholder="Select plan"/>
                                             </SelectTrigger>
                                             <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                                                <SelectItem value="BRONZE">Bronze</SelectItem>
-                                                <SelectItem value="SILVER">Silver</SelectItem>
-                                                <SelectItem value="GOLD">Gold</SelectItem>
+                                                {PLAN_TYPES.map((plan) => (
+                                                    <SelectItem key={plan} value={plan}>{plan}</SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     )}

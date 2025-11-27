@@ -34,7 +34,7 @@ public class PropertyQuoteMapper {
             for (CoverageDto coverageDto : dto.coverages()) {
                 Coverage coverage = new Coverage();
                 coverage.setCode(coverageDto.code());
-                coverage.setLimit(coverageDto.limit());
+                coverage.setCoverageLimit(coverageDto.limit());
                 coverage.setDeductible(coverageDto.deductible());
                 coverages.add(coverage);
             }
@@ -60,7 +60,7 @@ public class PropertyQuoteMapper {
                 coverageDtos.add(new CoverageDto(
                         coverage.getId(),
                         coverage.getCode(),
-                        coverage.getLimit(),
+                        coverage.getCoverageLimit(),
                         coverage.getDeductible()
                 ));
             }

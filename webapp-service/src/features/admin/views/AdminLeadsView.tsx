@@ -15,11 +15,12 @@ import * as z from 'zod';
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {LEAD_STATUSES, LeadStatus} from '@/types/enums';
 
 const leadSchema = z.object({
     userInfo: z.string().min(1, 'User Info is required'),
     propertyInfo: z.string().min(1, 'Property Info is required'),
-    status: z.enum(['ACTIVE', 'IN_REVIEWING', 'ACCEPTED', 'REJECTED', 'EXPIRED']),
+    status: z.nativeEnum(LeadStatus),
 });
 
 type LeadFormData = z.infer<typeof leadSchema>;
@@ -265,11 +266,9 @@ const AdminLeadsView: React.FC = () => {
                                                 <SelectValue placeholder="Select status"/>
                                             </SelectTrigger>
                                             <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                                                <SelectItem value="ACTIVE">Active</SelectItem>
-                                                <SelectItem value="IN_REVIEWING">In Reviewing</SelectItem>
-                                                <SelectItem value="ACCEPTED">Accepted</SelectItem>
-                                                <SelectItem value="REJECTED">Rejected</SelectItem>
-                                                <SelectItem value="EXPIRED">Expired</SelectItem>
+                                                {LEAD_STATUSES.map((status) => (
+                                                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     )}

@@ -1,18 +1,5 @@
 import axios from 'axios';
-
-export enum ConstructionType {
-    CONCRETE = 'CONCRETE',
-    STEEL_FRAME = 'STEEL_FRAME',
-    MASONRY = 'MASONRY',
-    WOOD_FRAME = 'WOOD_FRAME'
-}
-
-export enum OccupancyType {
-    RESIDENTIAL = 'RESIDENTIAL',
-    COMMERCIAL = 'COMMERCIAL',
-    INDUSTRIAL = 'INDUSTRIAL',
-    MIXED_USE = 'MIXED_USE'
-}
+import {ConstructionType, OccupancyType} from '@/types/enums';
 
 export interface PropertyLocationDto {
     fullAddress: string;
