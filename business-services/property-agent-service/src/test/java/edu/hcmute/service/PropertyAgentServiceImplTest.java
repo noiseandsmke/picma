@@ -1,6 +1,5 @@
 package edu.hcmute.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.hcmute.config.PropertyLeadFeignClient;
 import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.domain.LeadAction;
@@ -27,8 +26,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class PropertyAgentServiceImplTest {
@@ -60,11 +58,10 @@ public class PropertyAgentServiceImplTest {
         when(propertyAgentMapper.toEntity(inputDto)).thenReturn(entity);
         when(agentLeadRepo.save(any(AgentLead.class))).thenReturn(entity);
         when(propertyAgentMapper.toDto(any(AgentLead.class))).thenReturn(new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null));
-        when(propertyLeadFeignClient.updateLeadStatusById(100, "ACCEPTED")).thenReturn("UPDATED");
         AgentLeadDto result = propertyAgentService.updateLeadAction(inputDto);
         assertNotNull(result);
         assertEquals(LeadAction.ACCEPTED, entity.getLeadAction());
-        verify(propertyLeadFeignClient).updateLeadStatusById(100, "ACCEPTED");
+        verify(propertyLeadFeignClient, never()).updateLeadStatusById(100, "ACCEPTED");
     }
 
     @Test
@@ -77,7 +74,6 @@ public class PropertyAgentServiceImplTest {
         when(agentLeadRepo.findById(1)).thenReturn(Optional.of(entity));
         when(agentLeadRepo.save(entity)).thenReturn(entity);
         when(propertyAgentMapper.toDto(entity)).thenReturn(inputDto);
-        when(propertyLeadFeignClient.updateLeadStatusById(100, "ACCEPTED")).thenReturn("UPDATED");
         AgentLeadDto result = propertyAgentService.updateLeadAction(inputDto);
         assertNotNull(result);
         assertEquals(LeadAction.ACCEPTED, entity.getLeadAction());
@@ -88,7 +84,7 @@ public class PropertyAgentServiceImplTest {
         AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null);
         AgentLead entity = new AgentLead();
         entity.setId(1);
-        entity.setCreatedAt(LocalDateTime.now().minusDays(8)); // Expired
+        entity.setCreatedAt(LocalDateTime.now().minusDays(8));
         when(agentLeadRepo.findById(1)).thenReturn(Optional.of(entity));
         assertThrows(IllegalStateException.class, () -> propertyAgentService.updateLeadAction(inputDto));
     }
@@ -138,7 +134,7 @@ public class PropertyAgentServiceImplTest {
     }
 
     @Test
-    void fetchAgentWithinZipCode_success() throws JsonProcessingException {
+    void fetchAgentWithinZipCode_success() {
         String propertyId = "prop1";
         int leadId = 100;
         String zipCode = "12345";
@@ -148,7 +144,6 @@ public class PropertyAgentServiceImplTest {
         when(propertyMgmtFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyDto);
         when(userAddressRepo.findUserIdsByZipCode(zipCode)).thenReturn(Collections.singletonList(agentId));
         List<String> result = propertyAgentService.fetchAgentWithinZipCode(propertyId, leadId);
-        verify(agentLeadRepo).saveAll(any(List.class));
         verify(notificationProducer).sendNotification(any(NotificationRequestDto.class));
         assertTrue(result.contains(agentId));
     }

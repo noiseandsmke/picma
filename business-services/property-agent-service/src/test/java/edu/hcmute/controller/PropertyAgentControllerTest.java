@@ -35,7 +35,7 @@ public class PropertyAgentControllerTest {
         when(propertyAgentService.updateLeadAction(any(AgentLeadDto.class))).thenReturn(returnedDto);
         ResponseEntity<AgentLeadDto> response = propertyAgentController.updateLeadAction(inputDto);
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(returnedDto, response.getBody());
         verify(propertyAgentService).updateLeadAction(inputDto);
     }
@@ -47,7 +47,7 @@ public class PropertyAgentControllerTest {
         when(propertyAgentService.getAgentsByZipCode(zipCode)).thenReturn(agentIds);
         ResponseEntity<List<String>> response = propertyAgentController.getAgentsByZipCode(zipCode);
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(agentIds, response.getBody());
         verify(propertyAgentService).getAgentsByZipCode(zipCode);
     }
@@ -60,7 +60,7 @@ public class PropertyAgentControllerTest {
         when(propertyAgentService.getAgentLeads(agentId)).thenReturn(leads);
         ResponseEntity<List<AgentLeadDto>> response = propertyAgentController.getAgentLeads(agentId);
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(leads, response.getBody());
         verify(propertyAgentService).getAgentLeads(agentId);
     }
