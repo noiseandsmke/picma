@@ -2,61 +2,21 @@ import React, {useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
 import {createQuote, deleteQuote, fetchAllQuotes, PropertyQuoteDto, updateQuote} from '../services/quoteService';
-import {ArrowUpDown, MoreHorizontal, PlusCircle} from 'lucide-react';
+import {ArrowUpDown, CheckCircle, MoreHorizontal, PlusCircle, XCircle} from 'lucide-react';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {Skeleton} from '@/components/ui/skeleton';
 import {Button} from '@/components/ui/button';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '@/components/ui/dropdown-menu';
-import {Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
-import {Controller, useForm} from 'react-hook-form';
-import {zodResolver} from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import {Input} from '@/components/ui/input';
-import {Label} from '@/components/ui/label';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {PLAN_TYPES, PlanType} from '@/types/enums';
-
-const quoteSchema = z.object({
-    leadId: z.coerce.number().positive(),
-    agentId: z.string().min(1, 'Agent ID is required'),
-    plan: z.nativeEnum(PlanType),
-    sumInsured: z.coerce.number().positive(),
-});
-
-type QuoteFormData = z.infer<typeof quoteSchema>;
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Badge} from '@/components/ui/badge';
+import {AgentInfoCell, LeadInfoCell, PropertyInfoCell} from '../components/QuoteCells';
+import {QuoteForm} from '../components/QuoteForm';
 
 const AdminQuotesView: React.FC = () => {
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedQuote, setSelectedQuote] = useState<PropertyQuoteDto | null>(null);
     const [sortConfig, setSortConfig] = useState({key: 'id', direction: 'asc'});
-
-    const {
-        handleSubmit,
-        reset,
-        control,
-        formState: {errors},
-    } = useForm<QuoteFormData>({
-        resolver: zodResolver(quoteSchema) as any,
-    });
-
-    React.useEffect(() => {
-        if (selectedQuote) {
-            reset({
-                leadId: selectedQuote.leadId,
-                agentId: selectedQuote.agentId,
-                plan: selectedQuote.plan as 'BRONZE' | 'SILVER' | 'GOLD',
-                sumInsured: selectedQuote.sumInsured,
-            });
-        } else {
-            reset({
-                leadId: undefined,
-                agentId: '',
-                plan: 'BRONZE',
-                sumInsured: 0,
-            });
-        }
-    }, [selectedQuote, reset]);
 
     const {
         data: quotes,
@@ -90,23 +50,16 @@ const AdminQuotesView: React.FC = () => {
         },
     });
 
-    const onSubmit = (data: QuoteFormData) => {
+    const handleFormSubmit = (data: any) => {
         if (selectedQuote) {
             updateMutation.mutate({
                 ...selectedQuote,
-                leadId: data.leadId,
-                agentId: data.agentId,
-                plan: data.plan,
-                sumInsured: data.sumInsured,
+                ...data,
             });
         } else {
             createMutation.mutate({
-                leadId: data.leadId,
-                agentId: data.agentId,
-                plan: data.plan,
-                sumInsured: data.sumInsured,
-                coverages: [],
-                premium: {net: 0, tax: 0, total: 0}
+                ...data,
+                coverages: [], // Default empty or calculated logic could go here
             });
         }
     };
@@ -118,7 +71,6 @@ const AdminQuotesView: React.FC = () => {
 
     const handleCreate = () => {
         setSelectedQuote(null);
-        reset();
         setIsModalOpen(true);
     };
 
@@ -130,6 +82,38 @@ const AdminQuotesView: React.FC = () => {
         setSortConfig({key, direction});
     };
 
+    const getPlanBadge = (plan: string) => {
+        switch (plan) {
+            case 'BRONZE':
+                return <Badge
+                    className="bg-amber-700/20 text-amber-500 border-amber-700/50 hover:bg-amber-700/30">Bronze</Badge>;
+            case 'SILVER':
+                return <Badge
+                    className="bg-slate-500/20 text-slate-400 border-slate-500/50 hover:bg-slate-500/30">Silver</Badge>;
+            case 'GOLD':
+                return <Badge
+                    className="bg-yellow-500/20 text-yellow-500 border-yellow-500/50 hover:bg-yellow-500/30">Gold</Badge>;
+            default:
+                return <Badge variant="secondary">{plan}</Badge>;
+        }
+    };
+
+    const getValidityStatus = (dateStr: string) => {
+        if (!dateStr) return <span className="text-slate-500 text-xs">-</span>;
+
+        // Handle date string which might be YYYY-MM-DD
+        const validUntil = new Date(dateStr);
+        const now = new Date();
+        const isValid = validUntil >= now;
+
+        return (
+            <div className={`flex items-center gap-1.5 text-xs ${isValid ? 'text-emerald-400' : 'text-red-400'}`}>
+                {isValid ? <CheckCircle size={12}/> : <XCircle size={12}/>}
+                <span>{isValid ? dateStr : 'Expired'}</span>
+            </div>
+        );
+    };
+
     return (
         <AdminLayout>
             <div className="space-y-8">
@@ -137,7 +121,8 @@ const AdminQuotesView: React.FC = () => {
                     <div className="p-6 flex items-center justify-between border-b border-slate-800">
                         <div className="flex flex-col space-y-1">
                             <h3 className="font-semibold text-lg text-white">All Quotes</h3>
-                            <p className="text-sm text-slate-400">Manage and track all customer quotes.</p>
+                            <p className="text-sm text-slate-400">Manage and track all customer quotes with enriched
+                                context.</p>
                         </div>
                         <div className="flex gap-2">
                             <Button onClick={handleCreate} variant="outline"
@@ -151,7 +136,7 @@ const AdminQuotesView: React.FC = () => {
                         <Table>
                             <TableHeader className="bg-slate-900/50 border-slate-800">
                                 <TableRow className="border-slate-800 hover:bg-slate-900/50">
-                                    <TableHead className="text-slate-400 w-[80px] cursor-pointer"
+                                    <TableHead className="text-slate-400 w-[60px] cursor-pointer"
                                                onClick={() => handleSort('id')}>
                                         <div className="flex items-center gap-1">
                                             ID {sortConfig.key === 'id' && <ArrowUpDown size={14}/>}
@@ -160,7 +145,7 @@ const AdminQuotesView: React.FC = () => {
                                     <TableHead className="text-slate-400 cursor-pointer"
                                                onClick={() => handleSort('leadId')}>
                                         <div className="flex items-center gap-1">
-                                            Lead ID {sortConfig.key === 'leadId' && <ArrowUpDown size={14}/>}
+                                            Lead Info {sortConfig.key === 'leadId' && <ArrowUpDown size={14}/>}
                                         </div>
                                     </TableHead>
                                     <TableHead className="text-slate-400 cursor-pointer"
@@ -172,6 +157,7 @@ const AdminQuotesView: React.FC = () => {
                                     <TableHead className="text-slate-400">Property Address</TableHead>
                                     <TableHead className="text-slate-400">Plan</TableHead>
                                     <TableHead className="text-slate-400">Premium</TableHead>
+                                    <TableHead className="text-slate-400">Validity</TableHead>
                                     <TableHead className="text-slate-400 w-[50px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -180,9 +166,10 @@ const AdminQuotesView: React.FC = () => {
                                     Array.from({length: 5}).map((_, i) => (
                                         <TableRow key={i} className="border-slate-800">
                                             <TableCell><Skeleton className="h-4 w-8 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-16 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-10 w-32 bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-10 w-32 bg-slate-800"/></TableCell>
                                             <TableCell><Skeleton className="h-4 w-48 bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-6 w-16 bg-slate-800"/></TableCell>
                                             <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
                                             <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
                                             <TableCell><Skeleton className="h-6 w-8 bg-slate-800"/></TableCell>
@@ -190,7 +177,7 @@ const AdminQuotesView: React.FC = () => {
                                     ))
                                 ) : isQuotesError ? (
                                     <TableRow className="border-slate-800">
-                                        <TableCell colSpan={7} className="h-24 text-center text-red-400">
+                                        <TableCell colSpan={8} className="h-24 text-center text-red-400">
                                             Failed to load quotes data.
                                         </TableCell>
                                     </TableRow>
@@ -198,15 +185,39 @@ const AdminQuotesView: React.FC = () => {
                                     quotes.map((quote) => (
                                         <TableRow key={quote.id}
                                                   className="border-slate-800 hover:bg-slate-900/50 transition-colors">
-                                            <TableCell className="font-medium text-slate-300">{quote.id}</TableCell>
-                                            <TableCell className="text-slate-300">{quote.leadId}</TableCell>
-                                            <TableCell
-                                                className="text-slate-300">{quote.agentName || quote.agentId}</TableCell>
-                                            <TableCell className="text-slate-300">{quote.propertyAddress}</TableCell>
-                                            <TableCell className="text-slate-300">{quote.plan}</TableCell>
-                                            <TableCell className="text-slate-300">
-                                                {quote.premium ? `$${quote.premium.total}` : '-'}
+                                            <TableCell className="font-medium text-slate-500">#{quote.id}</TableCell>
+
+                                            {/* Enhanced Lead Info */}
+                                            <TableCell>
+                                                <LeadInfoCell leadId={quote.leadId}/>
                                             </TableCell>
+
+                                            {/* Enhanced Agent Info */}
+                                            <TableCell>
+                                                <AgentInfoCell agentId={quote.agentId}/>
+                                            </TableCell>
+
+                                            {/* Enhanced Property Info (Fetched from Lead -> Property) */}
+                                            <TableCell>
+                                                <PropertyInfoCell leadId={quote.leadId}/>
+                                            </TableCell>
+
+                                            {/* Plan Badge */}
+                                            <TableCell>{getPlanBadge(quote.plan)}</TableCell>
+
+                                            {/* Formatted Premium */}
+                                            <TableCell className="text-slate-300 font-medium font-mono">
+                                                {quote.premium ? new Intl.NumberFormat('vi-VN', {
+                                                    style: 'currency',
+                                                    currency: 'VND'
+                                                }).format(quote.premium.total) : '-'}
+                                            </TableCell>
+
+                                            {/* Validity Date */}
+                                            <TableCell>
+                                                {getValidityStatus(quote.validUntil)}
+                                            </TableCell>
+
                                             <TableCell>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -228,7 +239,7 @@ const AdminQuotesView: React.FC = () => {
                                     ))
                                 ) : (
                                     <TableRow className="border-slate-800">
-                                        <TableCell colSpan={7} className="h-24 text-center text-slate-500">
+                                        <TableCell colSpan={8} className="h-24 text-center text-slate-500">
                                             No quotes found.
                                         </TableCell>
                                     </TableRow>
@@ -239,74 +250,16 @@ const AdminQuotesView: React.FC = () => {
                 </div>
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="bg-slate-950 border-slate-800 text-white">
+                    <DialogContent className="bg-slate-950 border-slate-800 text-white max-w-2xl">
                         <DialogHeader>
-                            <DialogTitle>{selectedQuote ? 'Edit Quote' : 'Create Quote'}</DialogTitle>
+                            <DialogTitle>{selectedQuote ? 'Edit Quote' : 'Create New Quote'}</DialogTitle>
                         </DialogHeader>
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                            <div>
-                                <Label htmlFor="leadId">Lead ID</Label>
-                                <Controller
-                                    name="leadId"
-                                    control={control}
-                                    render={({field}) => <Input id="leadId" {...field} type="number"
-                                                                className="bg-slate-900 border-slate-700"/>}
-                                />
-                                {errors.leadId &&
-                                    <p className="text-red-500 text-sm">{errors.leadId.message}</p>}
-                            </div>
-                            <div>
-                                <Label htmlFor="agentId">Agent ID</Label>
-                                <Controller
-                                    name="agentId"
-                                    control={control}
-                                    render={({field}) => <Input id="agentId" {...field}
-                                                                className="bg-slate-900 border-slate-700"/>}
-                                />
-                                {errors.agentId &&
-                                    <p className="text-red-500 text-sm">{errors.agentId.message}</p>}
-                            </div>
-                            <div>
-                                <Label htmlFor="plan">Plan</Label>
-                                <Controller
-                                    name="plan"
-                                    control={control}
-                                    render={({field}) => (
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <SelectTrigger className="bg-slate-900 border-slate-700">
-                                                <SelectValue placeholder="Select plan"/>
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                                                {PLAN_TYPES.map((plan) => (
-                                                    <SelectItem key={plan} value={plan}>{plan}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    )}
-                                />
-                                {errors.plan && <p className="text-red-500 text-sm">{errors.plan.message}</p>}
-                            </div>
-                            <div>
-                                <Label htmlFor="sumInsured">Sum Insured</Label>
-                                <Controller
-                                    name="sumInsured"
-                                    control={control}
-                                    render={({field}) => <Input id="sumInsured" {...field} type="number"
-                                                                className="bg-slate-900 border-slate-700"/>}
-                                />
-                                {errors.sumInsured &&
-                                    <p className="text-red-500 text-sm">{errors.sumInsured.message}</p>}
-                            </div>
-                            <DialogFooter>
-                                <DialogClose asChild>
-                                    <Button type="button" variant="ghost">Cancel</Button>
-                                </DialogClose>
-                                <Button type="submit"
-                                        disabled={createMutation.isPending || updateMutation.isPending}>
-                                    {selectedQuote ? 'Save Changes' : 'Create Quote'}
-                                </Button>
-                            </DialogFooter>
-                        </form>
+                        <QuoteForm
+                            initialData={selectedQuote}
+                            onSubmit={handleFormSubmit}
+                            onCancel={() => setIsModalOpen(false)}
+                            isLoading={createMutation.isPending || updateMutation.isPending}
+                        />
                     </DialogContent>
                 </Dialog>
             </div>

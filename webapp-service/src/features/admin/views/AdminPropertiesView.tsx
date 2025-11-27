@@ -6,8 +6,13 @@ import {Button} from "@/components/ui/button";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {Badge} from "@/components/ui/badge";
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {createProperty, deleteProperty, fetchAllProperties,} from '../services/propertyService';
-import {CONSTRUCTION_TYPES, ConstructionType, OCCUPANCY_TYPES, OccupancyType} from '@/types/enums';
+import {
+    ConstructionType,
+    createProperty,
+    deleteProperty,
+    fetchAllProperties,
+    OccupancyType
+} from '../services/propertyService';
 import {Skeleton} from '@/components/ui/skeleton';
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
 import {z} from 'zod';
@@ -68,7 +73,7 @@ const AdminPropertiesView: React.FC = () => {
     });
 
     const {register, handleSubmit, reset, control, formState: {errors}} = useForm<PropertyFormValues>({
-        resolver: zodResolver(propertySchema),
+        resolver: zodResolver(propertySchema) as any,
         defaultValues: {
             attributes: {
                 yearBuilt: new Date().getFullYear(),
@@ -208,7 +213,7 @@ const AdminPropertiesView: React.FC = () => {
                                                         <SelectValue placeholder="Select Type"/>
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {CONSTRUCTION_TYPES.map((type) => (
+                                                        {Object.values(ConstructionType).map((type) => (
                                                             <SelectItem key={type} value={type}>{type}</SelectItem>
                                                         ))}
                                                     </SelectContent>
@@ -229,7 +234,7 @@ const AdminPropertiesView: React.FC = () => {
                                                         <SelectValue placeholder="Select Type"/>
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {OCCUPANCY_TYPES.map((type) => (
+                                                        {Object.values(OccupancyType).map((type) => (
                                                             <SelectItem key={type} value={type}>{type}</SelectItem>
                                                         ))}
                                                     </SelectContent>

@@ -8,6 +8,7 @@ export interface PropertyLeadDto {
     createDate: string;
     expiryDate: string;
     assignedAgents?: string[];
+    valuation?: number; // Added based on requirement for "Use Lead Valuation"
 }
 
 export interface CreateLeadDto {
@@ -34,6 +35,11 @@ export const fetchAllLeads = async (sort = 'id', order = 'asc'): Promise<Propert
     const response = await axios.get<PropertyLeadDto[]>(`${LEAD_SERVICE_URL}/all`, {
         params: {sort, order},
     });
+    return response.data;
+};
+
+export const fetchLeadById = async (id: number): Promise<PropertyLeadDto> => {
+    const response = await axios.get<PropertyLeadDto>(`${LEAD_SERVICE_URL}/${id}`);
     return response.data;
 };
 

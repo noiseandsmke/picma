@@ -1,5 +1,18 @@
 import axios from 'axios';
-import {ConstructionType, OccupancyType} from '@/types/enums';
+
+export enum ConstructionType {
+    CONCRETE = 'CONCRETE',
+    STEEL_FRAME = 'STEEL_FRAME',
+    MASONRY = 'MASONRY',
+    WOOD_FRAME = 'WOOD_FRAME'
+}
+
+export enum OccupancyType {
+    RESIDENTIAL = 'RESIDENTIAL',
+    COMMERCIAL = 'COMMERCIAL',
+    INDUSTRIAL = 'INDUSTRIAL',
+    MIXED_USE = 'MIXED_USE'
+}
 
 export interface PropertyLocationDto {
     fullAddress: string;
@@ -38,6 +51,11 @@ export const fetchAllProperties = async (): Promise<PropertyInfoDto[]> => {
         console.error("Failed to fetch all properties", error);
         return [];
     }
+};
+
+export const fetchPropertyById = async (id: string): Promise<PropertyInfoDto> => {
+    const response = await propertyClient.get<PropertyInfoDto>(`/propertyInfo/${id}`);
+    return response.data;
 };
 
 export const createProperty = async (property: Omit<PropertyInfoDto, 'id'>): Promise<PropertyInfoDto> => {
