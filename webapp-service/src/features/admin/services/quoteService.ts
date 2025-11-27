@@ -1,68 +1,60 @@
 import axios from 'axios';
 
+export interface PremiumDto {
+    net: number;
+    tax: number;
+    total: number;
+}
+
+export interface CoverageDto {
+    id: number;
+    code: string;
+    limit: number;
+    deductible: number;
+}
+
 export interface PropertyQuoteDto {
     id: number;
-    userInfo: string;
-    propertyInfo: string;
+    leadId: number;
+    agentId: string;
+    agentName: string;
+    validUntil: string;
+    startDate: string;
+    endDate: string;
+    propertyAddress: string;
+    sumInsured: number;
+    plan: string;
+    coverages: CoverageDto[];
+    premium: PremiumDto;
 }
 
-export interface QuoteTypeDto {
-    id: number;
-    type: string;
-}
-
-export interface CoverageTypeDto {
-    id: number;
-    type: string;
-}
-
-export interface PolicyTypeDto {
-    id: number;
-    type: string;
-}
-
-export interface PropertyQuoteDetailDto {
-    id: number;
-    propertyQuoteDto: PropertyQuoteDto;
-    quoteTypeDto: QuoteTypeDto;
-    coverageTypeDto: CoverageTypeDto;
-    policyTypeDto: PolicyTypeDto;
-}
+export type CreateQuoteDto =
+    Omit<PropertyQuoteDto, 'id' | 'agentName' | 'validUntil' | 'startDate' | 'endDate' | 'propertyAddress'>
+    & {
+    // Optional or computed fields for creation
+    coverages: CoverageDto[];
+    premium: PremiumDto;
+};
 
 const QUOTE_SERVICE_URL = import.meta.env.VITE_QUOTE_SERVICE_URL || 'http://localhost:7102/property-quote';
 
-export const fetchAllQuotes = async (sort = 'id', order = 'asc'): Promise<PropertyQuoteDetailDto[]> => {
-    const response = await axios.get<PropertyQuoteDetailDto[]>(`${QUOTE_SERVICE_URL}`, {
+export const fetchAllQuotes = async (sort = 'id', order = 'asc'): Promise<PropertyQuoteDto[]> => {
+    const response = await axios.get<PropertyQuoteDto[]>(`${QUOTE_SERVICE_URL}`, {
         params: {sort, order},
     });
     return response.data;
 };
 
-export const createQuote = async (quote: Omit<PropertyQuoteDetailDto, 'id'>): Promise<PropertyQuoteDetailDto> => {
-    const response = await axios.post<PropertyQuoteDetailDto>(`${QUOTE_SERVICE_URL}`, quote);
+export const createQuote = async (quote: CreateQuoteDto): Promise<PropertyQuoteDto> => {
+    const response = await axios.post<PropertyQuoteDto>(`${QUOTE_SERVICE_URL}`, quote);
     return response.data;
 };
 
-export const updateQuote = async (quote: PropertyQuoteDetailDto): Promise<PropertyQuoteDetailDto> => {
-    const response = await axios.put<PropertyQuoteDetailDto>(`${QUOTE_SERVICE_URL}/${quote.id}`, quote);
+export const updateQuote = async (quote: PropertyQuoteDto): Promise<PropertyQuoteDto> => {
+    const response = await axios.put<PropertyQuoteDto>(`${QUOTE_SERVICE_URL}/${quote.id}`, quote);
     return response.data;
 };
 
 export const deleteQuote = async (id: number): Promise<void> => {
     await axios.delete(`${QUOTE_SERVICE_URL}/${id}`);
-};
-
-export const fetchAllQuoteTypes = async (): Promise<QuoteTypeDto[]> => {
-    const response = await axios.get<QuoteTypeDto[]>(`${QUOTE_SERVICE_URL}/types/quote`);
-    return response.data;
-};
-
-export const fetchAllCoverageTypes = async (): Promise<CoverageTypeDto[]> => {
-    const response = await axios.get<CoverageTypeDto[]>(`${QUOTE_SERVICE_URL}/types/coverage`);
-    return response.data;
-};
-
-export const fetchAllPolicyTypes = async (): Promise<PolicyTypeDto[]> => {
-    const response = await axios.get<PolicyTypeDto[]>(`${QUOTE_SERVICE_URL}/types/policy`);
-    return response.data;
 };
