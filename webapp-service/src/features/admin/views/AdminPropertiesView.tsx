@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {ArrowUpDown, Building2, Map, MapPin, MoreHorizontal, Plus, Search, Trash2} from 'lucide-react';
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Input} from "@/components/ui/input";
@@ -22,7 +22,7 @@ import {Label} from "@/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import AdminLayout from '../layouts/AdminLayout';
-import {City, District, VN_LOCATIONS} from '@/lib/vn-locations';
+import {City, VN_LOCATIONS} from '@/lib/vn-locations';
 
 const propertySchema = z.object({
     location: z.object({
@@ -34,23 +34,21 @@ const propertySchema = z.object({
     attributes: z.object({
         constructionType: z.nativeEnum(ConstructionType),
         occupancyType: z.nativeEnum(OccupancyType),
-        yearBuilt: z.preprocess((val) => (val === '' ? undefined : Number(val)), z.number().min(1800, "Year Built must be valid").optional()),
-        noFloors: z.coerce.number().min(1, "Number of floors must be at least 1"),
-        squareMeters: z.coerce.number().min(1, "Square Meters must be positive"),
+        yearBuilt: z.number().min(1800, "Year Built must be valid"),
+        noFloors: z.number().min(1, "Number of floors must be at least 1"),
+        squareMeters: z.number().min(1, "Square Meters must be positive"),
     }),
     valuation: z.object({
-        estimatedConstructionCost: z.coerce.number().min(0, "Cost must be positive"),
+        estimatedConstructionCost: z.number().min(0, "Cost must be positive"),
     }),
 });
 
 type PropertyFormValues = z.infer<typeof propertySchema>;
 
-// Helper to format currency
 const formatCurrency = (amount: number) => {
     return amount.toLocaleString() + ' ₫';
 };
 
-// Helper to format Enum
 const formatEnum = (val: string) => {
     return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase().replace(/_/g, ' ');
 };
@@ -60,9 +58,7 @@ const AdminPropertiesView: React.FC = () => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
-    // Form Local State for cascading dropdowns
     const [selectedCity, setSelectedCity] = useState<City | null>(null);
-    const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null);
     const [costDisplay, setCostDisplay] = useState('');
 
     const queryClient = useQueryClient();
@@ -78,9 +74,7 @@ const AdminPropertiesView: React.FC = () => {
             await queryClient.invalidateQueries({queryKey: ['admin-properties']});
             setIsDialogOpen(false);
             reset();
-            // Reset local state
             setSelectedCity(null);
-            setSelectedDistrict(null);
             setCostDisplay('');
         }
     });
@@ -92,7 +86,7 @@ const AdminPropertiesView: React.FC = () => {
         }
     });
 
-    const {register, handleSubmit, reset, control, setValue, formState: {errors}, watch} = useForm<PropertyFormValues>({
+    const {register, handleSubmit, reset, control, setValue, formState: {errors}} = useForm<PropertyFormValues>({
         resolver: zodResolver(propertySchema),
         defaultValues: {
             attributes: {
@@ -106,17 +100,7 @@ const AdminPropertiesView: React.FC = () => {
         }
     });
 
-    // Effect to update ZipCode when City changes
-    useEffect(() => {
-        if (selectedCity) {
-            setValue('location.zipCode', selectedCity.zipCode);
-            setValue('location.city', selectedCity.name);
-        }
-    }, [selectedCity, setValue]);
-
-
     const onSubmit = (data: PropertyFormValues) => {
-        // Ensure numbers are correct
         createMutation.mutate(data);
     };
 
@@ -201,7 +185,6 @@ const AdminPropertiesView: React.FC = () => {
                             <Button onClick={() => {
                                 reset();
                                 setSelectedCity(null);
-                                setSelectedDistrict(null);
                                 setCostDisplay('');
                             }} className="bg-indigo-600 hover:bg-indigo-700 text-white">
                                 <Plus className="h-4 w-4 mr-2"/>
@@ -215,19 +198,18 @@ const AdminPropertiesView: React.FC = () => {
                             </DialogHeader>
                             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
-                                    {/* Location Section */}
                                     <div className="col-span-2 space-y-2">
                                         <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Address</h3>
                                     </div>
 
-                                    {/* City */}
                                     <div className="space-y-2">
                                         <Label>City</Label>
                                         <Select onValueChange={(val) => {
                                             const city = VN_LOCATIONS.find(c => c.name === val) || null;
                                             setSelectedCity(city);
-                                            setSelectedDistrict(null);
-                                            setValue('location.ward', ''); // Reset ward
+                                            setValue('location.city', val);
+                                            setValue('location.ward', '');
+                                            setValue('location.zipCode', '');
                                         }}>
                                             <SelectTrigger className="bg-slate-950 border-slate-800">
                                                 <SelectValue placeholder="Select City"/>
@@ -244,29 +226,6 @@ const AdminPropertiesView: React.FC = () => {
                                             <p className="text-red-500 text-sm">{errors.location.city.message}</p>}
                                     </div>
 
-                                    {/* District */}
-                                    <div className="space-y-2">
-                                        <Label>District</Label>
-                                        <Select
-                                            disabled={!selectedCity}
-                                            onValueChange={(val) => {
-                                                const dist = selectedCity?.districts.find(d => d.name === val) || null;
-                                                setSelectedDistrict(dist);
-                                                setValue('location.ward', ''); // Reset ward
-                                            }}>
-                                            <SelectTrigger className="bg-slate-950 border-slate-800">
-                                                <SelectValue
-                                                    placeholder={selectedCity ? "Select District" : "Select City first"}/>
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {selectedCity?.districts.map(d => (
-                                                    <SelectItem key={d.name} value={d.name}>{d.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    {/* Ward */}
                                     <div className="space-y-2">
                                         <Label>Ward</Label>
                                         <Controller
@@ -274,17 +233,24 @@ const AdminPropertiesView: React.FC = () => {
                                             name="location.ward"
                                             render={({field}) => (
                                                 <Select
-                                                    disabled={!selectedDistrict}
-                                                    onValueChange={field.onChange}
+                                                    disabled={!selectedCity}
+                                                    onValueChange={(val) => {
+                                                        field.onChange(val);
+                                                        const ward = selectedCity?.wards.find(w => w.name === val);
+                                                        if (ward) {
+                                                            setValue('location.zipCode', ward.zipCode);
+                                                        }
+                                                    }}
                                                     value={field.value}
                                                 >
                                                     <SelectTrigger className="bg-slate-950 border-slate-800">
                                                         <SelectValue
-                                                            placeholder={selectedDistrict ? "Select Ward" : "Select District first"}/>
+                                                            placeholder={selectedCity ? "Select Ward" : "Select City first"}/>
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {selectedDistrict?.wards.map(w => (
-                                                            <SelectItem key={w} value={w}>{w}</SelectItem>
+                                                        {selectedCity?.wards.map(w => (
+                                                            <SelectItem key={w.name}
+                                                                        value={w.name}>{w.name}</SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
@@ -294,7 +260,6 @@ const AdminPropertiesView: React.FC = () => {
                                             <p className="text-red-500 text-sm">{errors.location.ward.message}</p>}
                                     </div>
 
-                                    {/* Zip Code (Read only) */}
                                     <div className="space-y-2">
                                         <Label htmlFor="zipCode">Zip Code</Label>
                                         <Input
@@ -303,13 +268,14 @@ const AdminPropertiesView: React.FC = () => {
                                             className="bg-slate-900 border-slate-800 text-slate-400 cursor-not-allowed"
                                             {...register('location.zipCode')}
                                         />
+                                        {errors.location?.zipCode &&
+                                            <p className="text-red-500 text-sm">{errors.location.zipCode.message}</p>}
                                     </div>
 
-                                    {/* Street / Number */}
                                     <div className="space-y-2 col-span-2">
                                         <Label>Street / House Number</Label>
                                         <Input
-                                            placeholder="e.g. Số 10, Ngõ 5"
+                                            placeholder="e.g. 123 Main St"
                                             {...register('location.street')}
                                             className="bg-slate-950 border-slate-800"
                                         />
@@ -372,7 +338,7 @@ const AdminPropertiesView: React.FC = () => {
                                             id="yearBuilt"
                                             type="number"
                                             placeholder={new Date().getFullYear().toString()}
-                                            {...register('attributes.yearBuilt')}
+                                            {...register('attributes.yearBuilt', {valueAsNumber: true})}
                                             className="bg-slate-950 border-slate-800"
                                         />
                                         {errors.attributes?.yearBuilt &&
@@ -383,7 +349,7 @@ const AdminPropertiesView: React.FC = () => {
                                         <Input
                                             id="noFloors"
                                             type="number"
-                                            {...register('attributes.noFloors')}
+                                            {...register('attributes.noFloors', {valueAsNumber: true})}
                                             className="bg-slate-950 border-slate-800"
                                         />
                                         {errors.attributes?.noFloors &&
@@ -396,7 +362,7 @@ const AdminPropertiesView: React.FC = () => {
                                             type="number"
                                             step="0.01"
                                             placeholder="Enter area..."
-                                            {...register('attributes.squareMeters')}
+                                            {...register('attributes.squareMeters', {valueAsNumber: true})}
                                             className="bg-slate-950 border-slate-800"
                                         />
                                         {errors.attributes?.squareMeters &&

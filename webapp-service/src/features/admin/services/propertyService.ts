@@ -66,3 +66,8 @@ export const getPropertyByZipCode = async (zipCode: string): Promise<PropertyInf
     const response = await propertyClient.get<PropertyInfoDto[]>(`/propertyInfo/zipcode/${zipCode}`);
     return response.data;
 };
+
+export const fetchPropertyById = async (id: string): Promise<PropertyInfoDto> => {
+    const response = await propertyClient.get<PropertyInfoDto>(`/propertyInfo/${id}`);
+    return response.data;
+};
