@@ -8,7 +8,14 @@ import {Skeleton} from '@/components/ui/skeleton';
 import {Button} from '@/components/ui/button';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '@/components/ui/dropdown-menu';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
-import {AgentCell, CustomerCell, PlanPremiumCell, PropertyCell, QuoteIdCell} from '../components/QuoteCells';
+import {
+    AgentCell,
+    CustomerCell,
+    PlanPremiumCell,
+    PropertyCell,
+    QuoteIdCell,
+    ValidityCell
+} from '../components/QuoteCells';
 import {QuoteForm} from '../components/QuoteForm';
 
 const AdminQuotesView: React.FC = () => {
@@ -58,7 +65,6 @@ const AdminQuotesView: React.FC = () => {
         } else {
             createMutation.mutate({
                 ...data,
-                coverages: [],
             });
         }
     };
@@ -79,43 +85,6 @@ const AdminQuotesView: React.FC = () => {
             direction = 'desc';
         }
         setSortConfig({key, direction});
-    };
-
-    const getValidityStatus = (dateStr: string) => {
-        if (!dateStr) return <span className="text-slate-500 text-xs">-</span>;
-
-        const validUntil = new Date(dateStr);
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        const checkDate = new Date(validUntil);
-        checkDate.setHours(0, 0, 0, 0);
-
-        const diffTime = checkDate.getTime() - now.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        let statusColor = "text-emerald-400";
-        let isExpired = false;
-
-        if (diffDays < 0) {
-            statusColor = "text-red-400 line-through decoration-red-400/50";
-            isExpired = true;
-        } else if (diffDays <= 3) {
-            statusColor = "text-orange-400";
-        }
-
-        return (
-            <div className="flex flex-col gap-0.5">
-                <div className={`flex items-center gap-1.5 text-xs font-medium ${statusColor}`}>
-                    <span>{dateStr}</span>
-                </div>
-                {!isExpired && (
-                    <span className="text-[10px] text-slate-500">
-                         {diffDays === 0 ? 'Expiring today' : `${diffDays} days left`}
-                     </span>
-                )}
-                {isExpired && <span className="text-[10px] text-slate-500">Expired</span>}
-            </div>
-        );
     };
 
     return (
@@ -211,7 +180,8 @@ const AdminQuotesView: React.FC = () => {
                                             </TableCell>
 
                                             <TableCell>
-                                                <PropertyCell leadId={quote.leadId} sumInsured={quote.sumInsured}/>
+                                                <PropertyCell address={quote.propertyAddress}
+                                                              sumInsured={quote.sumInsured}/>
                                             </TableCell>
 
                                             <TableCell>
@@ -224,7 +194,7 @@ const AdminQuotesView: React.FC = () => {
                                             </TableCell>
 
                                             <TableCell>
-                                                {getValidityStatus(quote.validUntil)}
+                                                <ValidityCell validUntil={quote.validUntil}/>
                                             </TableCell>
 
                                             <TableCell>
@@ -264,7 +234,8 @@ const AdminQuotesView: React.FC = () => {
                 </div>
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="bg-slate-950 border-slate-800 text-white max-w-2xl">
+                    <DialogContent
+                        className="bg-slate-950 border-slate-800 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>{selectedQuote ? 'Edit Quote' : 'Create New Quote'}</DialogTitle>
                         </DialogHeader>

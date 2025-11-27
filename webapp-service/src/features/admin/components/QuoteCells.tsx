@@ -2,7 +2,6 @@ import React from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {fetchLeadById} from '../services/leadService';
 import {fetchUserById} from '../services/userService';
-import {fetchPropertyById} from '../services/propertyService';
 import {Skeleton} from '@/components/ui/skeleton';
 import {Badge} from '@/components/ui/badge';
 import {Building, Copy} from 'lucide-react';
@@ -69,30 +68,22 @@ export const CustomerCell: React.FC<CustomerCellProps> = ({leadId}) => {
 };
 
 interface PropertyCellProps {
-    leadId: number;
+    address: string;
     sumInsured: number;
 }
 
-export const PropertyCell: React.FC<PropertyCellProps> = ({leadId, sumInsured}) => {
-    const {data: lead} = useQuery({
-        queryKey: ['lead', leadId],
-        queryFn: () => fetchLeadById(leadId),
-        staleTime: 1000 * 60 * 5,
-    });
+export const PropertyCell: React.FC<PropertyCellProps> = ({address, sumInsured}) => {
+    // Expected format: "123 Street, Ward, City" or similar
+    // We try to split to display in 2 lines if possible
+    let line1 = address;
+    let line2 = "";
 
-    const propertyId = lead?.propertyInfo;
+    if (address && address.includes(',')) {
+        const parts = address.split(',');
+        line1 = parts[0].trim();
+        line2 = parts.slice(1).join(',').trim();
+    }
 
-    const {data: property, isLoading} = useQuery({
-        queryKey: ['property', propertyId],
-        queryFn: () => fetchPropertyById(propertyId!),
-        enabled: !!propertyId,
-        staleTime: 1000 * 60 * 5,
-    });
-
-    if (isLoading && propertyId) return <Skeleton className="h-10 w-40"/>;
-
-    const location = property?.location;
-    const address = location ? `${location.street}, ${location.city}` : 'No property info';
     const formattedSum = new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: 'VND',
@@ -101,11 +92,14 @@ export const PropertyCell: React.FC<PropertyCellProps> = ({leadId, sumInsured}) 
 
     return (
         <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1.5 max-w-[200px]" title={address}>
-                <Building className="h-3 w-3 text-slate-600 shrink-0"/>
-                <span className="text-sm text-slate-300 truncate">{address}</span>
+            <div className="flex items-start gap-2 max-w-[200px]" title={address}>
+                <Building className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5"/>
+                <div className="flex flex-col leading-tight">
+                    <span className="text-sm text-slate-200 font-medium truncate">{line1}</span>
+                    {line2 && <span className="text-xs text-slate-500 truncate">{line2}</span>}
+                </div>
             </div>
-            <span className="text-xs font-medium text-emerald-500/90 pl-4.5">{formattedSum}</span>
+            <span className="text-xs font-medium text-emerald-500/90 pl-5.5">{formattedSum}</span>
         </div>
     );
 };
@@ -186,6 +180,42 @@ export const AgentCell: React.FC<AgentCellProps> = ({agentId, agentName}) => {
                 </span>
                 {!isSystem && <span className="text-[10px] text-slate-500">@{username}</span>}
             </div>
+        </div>
+    );
+};
+
+interface ValidityCellProps {
+    validUntil: string;
+}
+
+export const ValidityCell: React.FC<ValidityCellProps> = ({validUntil}) => {
+    if (!validUntil) return <span className="text-slate-500 text-xs">-</span>;
+
+    const endDate = new Date(validUntil);
+    const now = new Date();
+    // Normalize to start of day for accurate day diff
+    now.setHours(0, 0, 0, 0);
+    const checkDate = new Date(endDate);
+    checkDate.setHours(0, 0, 0, 0);
+
+    const isExpired = checkDate < now;
+
+    return (
+        <div className="flex flex-col items-start gap-1">
+            <Badge
+                variant="outline"
+                className={cn(
+                    "text-[10px] h-5 px-1.5 uppercase border",
+                    isExpired
+                        ? "bg-red-900/20 text-red-400 border-red-800/50"
+                        : "bg-emerald-900/20 text-emerald-400 border-emerald-800/50"
+                )}
+            >
+                {isExpired ? "Expired" : "Active"}
+            </Badge>
+            <span className="text-[10px] text-slate-500 font-medium">
+                Until: {new Date(validUntil).toLocaleDateString('vi-VN')}
+            </span>
         </div>
     );
 };
