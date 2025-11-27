@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -57,6 +56,9 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
         if (agentLead.getId() == 0) {
             agentLead.setId(agentLeadDto.id());
         }
+        if (agentLead.getCreatedAt() == null) {
+            agentLead.setCreatedAt(LocalDateTime.now());
+        }
         agentLeadRepo.save(agentLead);
         switch (newAction) {
             case INTERESTED:
@@ -69,13 +71,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
                 }
                 break;
             case ACCEPTED:
-                log.info("~~> agent accepted lead {}.", agentLead.getLeadId());
-                try {
-                    String updatedLeadAction = propertyLeadFeignClient.updateLeadStatusById(agentLeadDto.leadId(), String.valueOf(LeadAction.ACCEPTED));
-                    log.info("~~> lead status updated to ACCEPTED: {}", updatedLeadAction);
-                } catch (Exception e) {
-                    log.error("~~> failed to update Lead status to ACCEPTED in Lead Service", e);
-                }
+                log.info("~~> agent accepted (quoted) lead {}.", agentLead.getLeadId());
                 break;
             case REJECTED:
                 List<AgentLead> allAgentsForLead = agentLeadRepo.findByLeadId(agentLead.getLeadId());
@@ -127,14 +123,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
                 List<String> agentIds = userAddressRepo.findUserIdsByZipCode(zipCode);
                 log.info("~~> ZipCode = {}", zipCode);
                 log.info("~~> agentIds = {}", agentIds);
-                List<AgentLead> agentLeads = new ArrayList<>();
                 for (String agentIdStr : agentIds) {
-                    AgentLead agentLead = new AgentLead();
-                    agentLead.setAgentId(agentIdStr);
-                    agentLead.setLeadId(leadId);
-                    agentLead.setLeadAction(LeadAction.INTERESTED);
-                    agentLead.setCreatedAt(LocalDateTime.now());
-                    agentLeads.add(agentLead);
                     NotificationRequestDto notification = new NotificationRequestDto(
                             agentIdStr,
                             "New Lead Available",
@@ -143,7 +132,6 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
                     notificationProducer.sendNotification(notification);
                     log.info("~~> notification sent to agent: {}", agentIdStr);
                 }
-                agentLeadRepo.saveAll(agentLeads);
                 return agentIds;
             } else {
                 log.warn("~~> zipCode is null or empty, cannot fetch agents");
