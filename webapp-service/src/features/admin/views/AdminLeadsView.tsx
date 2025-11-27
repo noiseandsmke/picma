@@ -103,9 +103,9 @@ const AdminLeadsView: React.FC = () => {
                                         </div>
                                     </TableHead>
                                     <TableHead className="text-slate-400 cursor-pointer"
-                                               onClick={() => handleSort('startDate')}>
+                                               onClick={() => handleSort('createDate')}>
                                         <div className="flex items-center gap-1">
-                                            Created {sortConfig.key === 'startDate' && <ArrowUpDown size={14}/>}
+                                            Created {sortConfig.key === 'createDate' && <ArrowUpDown size={14}/>}
                                         </div>
                                     </TableHead>
                                     <TableHead className="text-slate-400 cursor-pointer"
@@ -159,7 +159,7 @@ const AdminLeadsView: React.FC = () => {
                                             <TableCell className="text-slate-400 text-sm">
                                                 <div className="flex items-center gap-2">
                                                     <Clock className="h-3 w-3 text-slate-600"/>
-                                                    {formatDate(lead.startDate)}
+                                                    {formatDate(lead.createDate)}
                                                 </div>
                                             </TableCell>
                                             <TableCell

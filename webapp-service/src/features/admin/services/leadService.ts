@@ -5,7 +5,7 @@ export interface PropertyLeadDto {
     userInfo: string;
     propertyInfo: string;
     status: string;
-    startDate: string;
+    createDate: string;
     expiryDate: string;
     assignedAgents?: string[];
 }
