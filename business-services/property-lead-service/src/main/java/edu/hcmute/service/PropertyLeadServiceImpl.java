@@ -1,14 +1,11 @@
 package edu.hcmute.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.hcmute.config.PropertyAgentFeignClient;
 import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.domain.LeadStatus;
-import edu.hcmute.dto.AgentLeadDto;
-import edu.hcmute.dto.LeadStatsDto;
-import edu.hcmute.dto.PropertyLeadDto;
+import edu.hcmute.dto.*;
 import edu.hcmute.entity.PropertyLead;
 import edu.hcmute.event.PropertyLeadProducer;
 import edu.hcmute.mapper.PropertyLeadMapper;
@@ -41,10 +38,8 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         log.info("PropertyLeadDto: {}", propertyLeadDto);
         try {
             PropertyLead propertyLead = propertyLeadMapper.toEntity(propertyLeadDto);
-            // @PrePersist will set status=ACTIVE, createDate=now, expiryDate=createDate+30
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> PropertyLead saved with id: {}", propertyLead.getId());
-            // Publish lead event to Kafka for agent assignment
             boolean isPublished = propertyLeadProducer.publishLead(propertyLead);
             log.info("~~> Lead published to Kafka: {}", isPublished);
             return propertyLeadMapper.toDto(propertyLead);
@@ -61,7 +56,6 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         try {
             PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
                     .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + leadId));
-            // Only update userInfo, propertyInfo, and status if provided (null values are ignored by mapper)
             propertyLeadMapper.updateEntity(propertyLead, propertyLeadDto);
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> PropertyLead updated with id: {}", propertyLead.getId());
@@ -190,12 +184,14 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
     public List<PropertyLeadDto> findPropertyLeadsByZipcode(String zipcode) {
         log.info("### Get PropertyLeads by zipcode = {} ###", zipcode);
         try {
-            String propertiesJson = propertyMgmtFeignClient.fetchAllPropertiesByZipCode(zipcode);
-            if (propertiesJson == null || propertiesJson.trim().isEmpty()) {
+            List<PropertyInfoDto> propertiesList = propertyMgmtFeignClient.fetchAllPropertiesByZipCode(zipcode);
+            if (propertiesList == null || propertiesList.isEmpty()) {
                 log.warn("~~> no properties found for zipcode: {}", zipcode);
                 return List.of();
             }
-            List<String> propertyIds = extractPropertyIdsFromJson(propertiesJson);
+            List<String> propertyIds = propertiesList.stream()
+                    .map(PropertyInfoDto::id)
+                    .toList();
             if (propertyIds.isEmpty()) {
                 log.warn("~~> no property IDs extracted for zipcode: {}", zipcode);
                 return List.of();
@@ -212,43 +208,46 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         }
     }
 
-    private List<String> extractPropertyIdsFromJson(String propertiesJson) {
-        try {
-            JsonNode rootNode = objectMapper.readTree(propertiesJson);
-            List<String> propertyIds = new ArrayList<>();
-            if (rootNode.isArray()) {
-                for (JsonNode node : rootNode) {
-                    if (node.has("id")) {
-                        propertyIds.add(node.get("id").asText());
-                    }
-                }
-            } else if (rootNode.has("id")) {
-                propertyIds.add(rootNode.get("id").asText());
-            }
-            return propertyIds;
-        } catch (Exception e) {
-            log.error("~~> error parsing properties JSON: {}", e.getMessage());
-            return List.of();
-        }
-    }
-
     @Override
     @Transactional(readOnly = true)
     public List<PropertyLeadDto> findPropertyLeadsOfAgent(String agentId) {
         log.info("### Get property leads visible to agent {} ###", agentId);
         try {
-            List<PropertyLead> activeLeads = propertyLeadRepo.findByStatusIn(Arrays.asList(LeadStatus.ACTIVE, LeadStatus.IN_REVIEWING));
-            log.info("~~> found {} ACTIVE or IN_REVIEWING leads visible to all agents", activeLeads.size());
-            List<Integer> acceptedLeadIds = getAcceptedLeadIdsForAgent(agentId);
-            log.info("~~> agent {} has accepted {} leads", agentId, acceptedLeadIds.size());
-            List<PropertyLead> acceptedLeads = acceptedLeadIds.isEmpty()
-                    ? Collections.emptyList()
-                    : propertyLeadRepo.findAllById(acceptedLeadIds);
-            Set<PropertyLead> allVisibleLeads = new HashSet<>();
-            allVisibleLeads.addAll(activeLeads);
-            allVisibleLeads.addAll(acceptedLeads);
-            log.info("~~> total {} leads visible to agent {}", allVisibleLeads.size(), agentId);
-            return allVisibleLeads.stream()
+            AgentDto agent = propertyAgentFeignClient.getAgentById(agentId);
+            String agentZipCode = agent.zipCode();
+            log.info("~~> agent {} has zipCode: {}", agentId, agentZipCode);
+            List<PropertyLeadDto> availableLeadsDtos = findPropertyLeadsByZipcode(agentZipCode);
+            List<PropertyLead> availableLeads = availableLeadsDtos.stream()
+                    .map(propertyLeadMapper::toEntity)
+                    .toList();
+            log.info("~~> found {} available leads by zipcode {}", availableLeads.size(), agentZipCode);
+            List<AgentLeadDto> interactedAgentLeads = getAgentLeadsForAgent(agentId);
+            Set<Integer> interactedLeadIds = interactedAgentLeads.stream()
+                    .map(AgentLeadDto::leadId)
+                    .collect(Collectors.toSet());
+            List<PropertyLead> interactedLeads = propertyLeadRepo.findAllById(interactedLeadIds);
+            Set<Integer> rejectedLeadIds = interactedAgentLeads.stream()
+                    .filter(al -> "REJECTED".equalsIgnoreCase(al.leadAction()))
+                    .map(AgentLeadDto::leadId)
+                    .collect(Collectors.toSet());
+            List<PropertyLead> visibleLeads = new ArrayList<>();
+            for (PropertyLead lead : availableLeads) {
+                if (!rejectedLeadIds.contains(lead.getId())) {
+                    visibleLeads.add(lead);
+                }
+            }
+            for (PropertyLead lead : interactedLeads) {
+                if (visibleLeads.stream().anyMatch(l -> l.getId().equals(lead.getId()))) {
+                    continue;
+                }
+                if (rejectedLeadIds.contains(lead.getId())) {
+                    continue;
+                }
+                visibleLeads.add(lead);
+            }
+            Set<PropertyLead> uniqueLeads = new HashSet<>(visibleLeads);
+            log.info("~~> total {} leads visible to agent {}", uniqueLeads.size(), agentId);
+            return uniqueLeads.stream()
                     .map(propertyLeadMapper::toDto)
                     .sorted(Comparator.comparing(PropertyLeadDto::id))
                     .collect(Collectors.toList());
@@ -258,19 +257,14 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         }
     }
 
-    private List<Integer> getAcceptedLeadIdsForAgent(String agentId) {
+    private List<AgentLeadDto> getAgentLeadsForAgent(String agentId) {
         try {
             String agentLeadsJson = propertyAgentFeignClient.getAgentLeadsByAgentId(agentId);
             if (agentLeadsJson == null || agentLeadsJson.trim().isEmpty()) {
                 return Collections.emptyList();
             }
-            List<AgentLeadDto> agentLeads = objectMapper.readValue(agentLeadsJson, new TypeReference<>() {
+            return objectMapper.readValue(agentLeadsJson, new TypeReference<>() {
             });
-            return agentLeads.stream()
-                    .filter(al -> "ACCEPTED".equalsIgnoreCase(al.leadAction()))
-                    .map(AgentLeadDto::leadId)
-                    .distinct()
-                    .collect(Collectors.toList());
         } catch (Exception e) {
             log.error("~~> error fetching agent leads: {}", e.getMessage());
             return Collections.emptyList();
