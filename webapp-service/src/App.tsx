@@ -1,5 +1,6 @@
 import React from 'react';
 import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom';
+import {Toaster} from 'sonner';
 import ProtectedRoute from '@/layouts/ProtectedRoute';
 import AuthLayout from '@/layouts/AuthLayout';
 import LoginView from '@/features/auth/views/LoginView';
@@ -40,6 +41,7 @@ const App: React.FC = () => {
 
                 <Route path="/" element={<Navigate to="/admin/dashboard" replace/>}/>
             </Routes>
+            <Toaster position="top-right" theme="dark"/>
         </Router>
     );
 };

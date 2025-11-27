@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {ArrowUpDown, Building2, Map, MapPin, MoreHorizontal, Plus, Search, Trash2} from 'lucide-react';
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Input} from "@/components/ui/input";
@@ -34,12 +34,12 @@ const propertySchema = z.object({
     attributes: z.object({
         constructionType: z.nativeEnum(ConstructionType),
         occupancyType: z.nativeEnum(OccupancyType),
-        yearBuilt: z.number().min(1800, "Year Built must be valid"),
-        noFloors: z.number().min(1, "Number of floors must be at least 1"),
-        squareMeters: z.number().min(1, "Square Meters must be positive"),
+        yearBuilt: z.coerce.number().min(1800, "Year Built must be valid"),
+        noFloors: z.coerce.number().min(1, "Number of floors must be at least 1"),
+        squareMeters: z.coerce.number().min(1, "Square Meters must be positive"),
     }),
     valuation: z.object({
-        estimatedConstructionCost: z.number().min(0, "Cost must be positive"),
+        estimatedConstructionCost: z.coerce.number().min(0, "Cost must be positive"),
     }),
 });
 
@@ -87,7 +87,7 @@ const AdminPropertiesView: React.FC = () => {
     });
 
     const {register, handleSubmit, reset, control, setValue, formState: {errors}} = useForm<PropertyFormValues>({
-        resolver: zodResolver(propertySchema),
+        resolver: zodResolver(propertySchema) as any,
         defaultValues: {
             attributes: {
                 yearBuilt: new Date().getFullYear(),
@@ -99,6 +99,13 @@ const AdminPropertiesView: React.FC = () => {
             }
         }
     });
+
+    useEffect(() => {
+        if (selectedCity) {
+            setValue('location.city', selectedCity.name);
+        }
+    }, [selectedCity, setValue]);
+
 
     const onSubmit = (data: PropertyFormValues) => {
         createMutation.mutate(data);
@@ -207,7 +214,6 @@ const AdminPropertiesView: React.FC = () => {
                                         <Select onValueChange={(val) => {
                                             const city = VN_LOCATIONS.find(c => c.name === val) || null;
                                             setSelectedCity(city);
-                                            setValue('location.city', val);
                                             setValue('location.ward', '');
                                             setValue('location.zipCode', '');
                                         }}>
@@ -236,6 +242,7 @@ const AdminPropertiesView: React.FC = () => {
                                                     disabled={!selectedCity}
                                                     onValueChange={(val) => {
                                                         field.onChange(val);
+                                                        // Auto fill zip code
                                                         const ward = selectedCity?.wards.find(w => w.name === val);
                                                         if (ward) {
                                                             setValue('location.zipCode', ward.zipCode);
@@ -268,14 +275,12 @@ const AdminPropertiesView: React.FC = () => {
                                             className="bg-slate-900 border-slate-800 text-slate-400 cursor-not-allowed"
                                             {...register('location.zipCode')}
                                         />
-                                        {errors.location?.zipCode &&
-                                            <p className="text-red-500 text-sm">{errors.location.zipCode.message}</p>}
                                     </div>
 
                                     <div className="space-y-2 col-span-2">
                                         <Label>Street / House Number</Label>
                                         <Input
-                                            placeholder="e.g. 123 Main St"
+                                            placeholder="e.g. Số 10, Ngõ 5"
                                             {...register('location.street')}
                                             className="bg-slate-950 border-slate-800"
                                         />
@@ -338,7 +343,7 @@ const AdminPropertiesView: React.FC = () => {
                                             id="yearBuilt"
                                             type="number"
                                             placeholder={new Date().getFullYear().toString()}
-                                            {...register('attributes.yearBuilt', {valueAsNumber: true})}
+                                            {...register('attributes.yearBuilt')}
                                             className="bg-slate-950 border-slate-800"
                                         />
                                         {errors.attributes?.yearBuilt &&
@@ -349,7 +354,7 @@ const AdminPropertiesView: React.FC = () => {
                                         <Input
                                             id="noFloors"
                                             type="number"
-                                            {...register('attributes.noFloors', {valueAsNumber: true})}
+                                            {...register('attributes.noFloors')}
                                             className="bg-slate-950 border-slate-800"
                                         />
                                         {errors.attributes?.noFloors &&
@@ -362,7 +367,7 @@ const AdminPropertiesView: React.FC = () => {
                                             type="number"
                                             step="0.01"
                                             placeholder="Enter area..."
-                                            {...register('attributes.squareMeters', {valueAsNumber: true})}
+                                            {...register('attributes.squareMeters')}
                                             className="bg-slate-950 border-slate-800"
                                         />
                                         {errors.attributes?.squareMeters &&

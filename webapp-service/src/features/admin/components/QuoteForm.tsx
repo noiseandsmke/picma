@@ -14,14 +14,15 @@ import {fetchUsers} from '../services/userService';
 import {fetchPropertyById} from '../services/propertyService';
 import {PropertyQuoteDto} from '../services/quoteService';
 import {Skeleton} from '@/components/ui/skeleton';
-import {Home, User, Wallet} from 'lucide-react';
+import {CalendarClock, Home, User, Wallet} from 'lucide-react';
 
 const quoteSchema = z.object({
     leadId: z.coerce.number().min(1, 'Lead is required'),
     agentId: z.string().min(1, 'Agent is required'),
     plan: z.enum(['BRONZE', 'SILVER', 'GOLD']),
     sumInsured: z.coerce.number().positive('Sum Insured must be positive'),
-    // Premium is calculated, not input, but we might want to store it in state for submission
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
 });
 
 type QuoteFormData = z.infer<typeof quoteSchema>;
@@ -46,10 +47,11 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
             agentId: initialData?.agentId || '',
             plan: (initialData?.plan as any) || 'BRONZE',
             sumInsured: initialData?.sumInsured || 0,
+            startDate: initialData?.startDate || '',
+            endDate: initialData?.endDate || '',
         },
     });
 
-    // 1. Fetch Options
     const {data: leads} = useQuery({
         queryKey: ['all-leads-for-select'],
         queryFn: () => fetchAllLeads(),
@@ -60,24 +62,20 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         queryFn: () => fetchUsers('agent'),
     });
 
-    // 2. Watch Values
     const selectedLeadId = useWatch({control, name: 'leadId'});
     const selectedPlan = useWatch({control, name: 'plan'});
     const sumInsured = useWatch({control, name: 'sumInsured'});
 
-    // 3. Fetch Selected Lead Details
     const selectedLead = leads?.find(l => l.id === selectedLeadId);
 
-    // 4. Fetch Property Details if Lead is selected
     const {data: selectedProperty, isLoading: isPropertyLoading} = useQuery({
         queryKey: ['property', selectedLead?.propertyInfo],
         queryFn: () => fetchPropertyById(selectedLead!.propertyInfo),
         enabled: !!selectedLead?.propertyInfo,
     });
 
-    // 5. Live Calculation Logic
     const calculatePremium = (plan: string, sum: number) => {
-        let rate = 0.001; // Base rate
+        let rate = 0.001;
         if (plan === 'SILVER') rate = 0.0012;
         if (plan === 'GOLD') rate = 0.0015;
 
@@ -90,12 +88,10 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
 
     const calculatedPremium = calculatePremium(selectedPlan, sumInsured);
 
-    // 6. Handle "Use Lead Valuation"
     const handleUseValuation = () => {
         if (selectedProperty?.valuation?.estimatedConstructionCost) {
             setValue('sumInsured', selectedProperty.valuation.estimatedConstructionCost);
         } else if (selectedLead?.valuation) {
-            // Fallback if valuation is on lead (though interface says property)
             setValue('sumInsured', selectedLead.valuation);
         }
     };
@@ -122,7 +118,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
     return (
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Lead Selection */}
                 <div className="space-y-2">
                     <Label>Select Lead</Label>
                     <Controller
@@ -140,7 +135,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                     />
                     {errors.leadId && <p className="text-red-500 text-sm">{errors.leadId.message}</p>}
 
-                    {/* Lead Summary Card */}
                     {selectedLead && (
                         <div
                             className="mt-2 rounded-lg border border-slate-800 bg-slate-900 p-3 text-sm animate-in fade-in slide-in-from-top-2">
@@ -165,7 +159,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                     )}
                 </div>
 
-                {/* Agent Selection */}
                 <div className="space-y-2">
                     <Label>Select Agent</Label>
                     <Controller
@@ -186,7 +179,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Plan Selection */}
                 <div className="space-y-2">
                     <Label htmlFor="plan">Insurance Plan</Label>
                     <Controller
@@ -223,7 +215,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                     {errors.plan && <p className="text-red-500 text-sm">{errors.plan.message}</p>}
                 </div>
 
-                {/* Sum Insured */}
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
                         <Label htmlFor="sumInsured">Sum Insured</Label>
@@ -255,7 +246,44 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                 </div>
             </div>
 
-            {/* Live Calculation Result */}
+            <div className="space-y-4 pt-2 border-t border-slate-800/50">
+                <div className="flex items-center gap-2 text-slate-300 font-medium">
+                    <CalendarClock size={16} className="text-indigo-400"/> Validity Period
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="startDate">Start Date</Label>
+                        <Controller
+                            name="startDate"
+                            control={control}
+                            render={({field}) => (
+                                <Input
+                                    id="startDate"
+                                    {...field}
+                                    type="date"
+                                    className="bg-slate-900 border-slate-700"
+                                />
+                            )}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="endDate">End Date</Label>
+                        <Controller
+                            name="endDate"
+                            control={control}
+                            render={({field}) => (
+                                <Input
+                                    id="endDate"
+                                    {...field}
+                                    type="date"
+                                    className="bg-slate-900 border-slate-700"
+                                />
+                            )}
+                        />
+                    </div>
+                </div>
+            </div>
+
             <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4 mt-4">
                 <div className="flex items-center gap-2 text-indigo-400 font-semibold mb-3">
                     <Wallet size={18}/> Estimated Premium

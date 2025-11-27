@@ -2,14 +2,13 @@ import React, {useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
 import {createQuote, deleteQuote, fetchAllQuotes, PropertyQuoteDto, updateQuote} from '../services/quoteService';
-import {ArrowUpDown, CheckCircle, MoreHorizontal, PlusCircle, XCircle} from 'lucide-react';
+import {ArrowUpDown, CalendarClock, MoreHorizontal, PlusCircle} from 'lucide-react';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {Skeleton} from '@/components/ui/skeleton';
 import {Button} from '@/components/ui/button';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '@/components/ui/dropdown-menu';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
-import {Badge} from '@/components/ui/badge';
-import {AgentInfoCell, LeadInfoCell, PropertyInfoCell} from '../components/QuoteCells';
+import {AgentCell, CustomerCell, PlanPremiumCell, PropertyCell, QuoteIdCell} from '../components/QuoteCells';
 import {QuoteForm} from '../components/QuoteForm';
 
 const AdminQuotesView: React.FC = () => {
@@ -59,7 +58,7 @@ const AdminQuotesView: React.FC = () => {
         } else {
             createMutation.mutate({
                 ...data,
-                coverages: [], // Default empty or calculated logic could go here
+                coverages: [],
             });
         }
     };
@@ -82,34 +81,39 @@ const AdminQuotesView: React.FC = () => {
         setSortConfig({key, direction});
     };
 
-    const getPlanBadge = (plan: string) => {
-        switch (plan) {
-            case 'BRONZE':
-                return <Badge
-                    className="bg-amber-700/20 text-amber-500 border-amber-700/50 hover:bg-amber-700/30">Bronze</Badge>;
-            case 'SILVER':
-                return <Badge
-                    className="bg-slate-500/20 text-slate-400 border-slate-500/50 hover:bg-slate-500/30">Silver</Badge>;
-            case 'GOLD':
-                return <Badge
-                    className="bg-yellow-500/20 text-yellow-500 border-yellow-500/50 hover:bg-yellow-500/30">Gold</Badge>;
-            default:
-                return <Badge variant="secondary">{plan}</Badge>;
-        }
-    };
-
     const getValidityStatus = (dateStr: string) => {
         if (!dateStr) return <span className="text-slate-500 text-xs">-</span>;
 
-        // Handle date string which might be YYYY-MM-DD
         const validUntil = new Date(dateStr);
         const now = new Date();
-        const isValid = validUntil >= now;
+        now.setHours(0, 0, 0, 0);
+        const checkDate = new Date(validUntil);
+        checkDate.setHours(0, 0, 0, 0);
+
+        const diffTime = checkDate.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        let statusColor = "text-emerald-400";
+        let isExpired = false;
+
+        if (diffDays < 0) {
+            statusColor = "text-red-400 line-through decoration-red-400/50";
+            isExpired = true;
+        } else if (diffDays <= 3) {
+            statusColor = "text-orange-400";
+        }
 
         return (
-            <div className={`flex items-center gap-1.5 text-xs ${isValid ? 'text-emerald-400' : 'text-red-400'}`}>
-                {isValid ? <CheckCircle size={12}/> : <XCircle size={12}/>}
-                <span>{isValid ? dateStr : 'Expired'}</span>
+            <div className="flex flex-col gap-0.5">
+                <div className={`flex items-center gap-1.5 text-xs font-medium ${statusColor}`}>
+                    <span>{dateStr}</span>
+                </div>
+                {!isExpired && (
+                    <span className="text-[10px] text-slate-500">
+                         {diffDays === 0 ? 'Expiring today' : `${diffDays} days left`}
+                     </span>
+                )}
+                {isExpired && <span className="text-[10px] text-slate-500">Expired</span>}
             </div>
         );
     };
@@ -136,28 +140,36 @@ const AdminQuotesView: React.FC = () => {
                         <Table>
                             <TableHeader className="bg-slate-900/50 border-slate-800">
                                 <TableRow className="border-slate-800 hover:bg-slate-900/50">
-                                    <TableHead className="text-slate-400 w-[60px] cursor-pointer"
-                                               onClick={() => handleSort('id')}>
-                                        <div className="flex items-center gap-1">
-                                            ID {sortConfig.key === 'id' && <ArrowUpDown size={14}/>}
+                                    <TableHead className="text-slate-400 w-[120px]" onClick={() => handleSort('id')}>
+                                        <div className="flex items-center gap-1 cursor-pointer hover:text-white">
+                                            Quote ID {sortConfig.key === 'id' && <ArrowUpDown size={12}/>}
                                         </div>
                                     </TableHead>
-                                    <TableHead className="text-slate-400 cursor-pointer"
+
+                                    <TableHead className="text-slate-400 w-[200px]"
                                                onClick={() => handleSort('leadId')}>
-                                        <div className="flex items-center gap-1">
-                                            Lead Info {sortConfig.key === 'leadId' && <ArrowUpDown size={14}/>}
+                                        <div className="flex items-center gap-1 cursor-pointer hover:text-white">
+                                            Customer {sortConfig.key === 'leadId' && <ArrowUpDown size={12}/>}
                                         </div>
                                     </TableHead>
-                                    <TableHead className="text-slate-400 cursor-pointer"
+
+                                    <TableHead className="text-slate-400 min-w-[200px]">Property</TableHead>
+
+                                    <TableHead className="text-slate-400 w-[150px]">Plan & Premium</TableHead>
+
+                                    <TableHead className="text-slate-400 min-w-[180px]"
                                                onClick={() => handleSort('agentName')}>
-                                        <div className="flex items-center gap-1">
-                                            Agent {sortConfig.key === 'agentName' && <ArrowUpDown size={14}/>}
+                                        <div className="flex items-center gap-1 cursor-pointer hover:text-white">
+                                            Agent {sortConfig.key === 'agentName' && <ArrowUpDown size={12}/>}
                                         </div>
                                     </TableHead>
-                                    <TableHead className="text-slate-400">Property Address</TableHead>
-                                    <TableHead className="text-slate-400">Plan</TableHead>
-                                    <TableHead className="text-slate-400">Premium</TableHead>
-                                    <TableHead className="text-slate-400">Validity</TableHead>
+
+                                    <TableHead className="text-slate-400 w-[140px]">
+                                        <div className="flex items-center gap-1">
+                                            <CalendarClock size={14}/> Validity
+                                        </div>
+                                    </TableHead>
+
                                     <TableHead className="text-slate-400 w-[50px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -165,55 +177,52 @@ const AdminQuotesView: React.FC = () => {
                                 {isQuotesLoading ? (
                                     Array.from({length: 5}).map((_, i) => (
                                         <TableRow key={i} className="border-slate-800">
-                                            <TableCell><Skeleton className="h-4 w-8 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-10 w-32 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-10 w-32 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-48 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-6 w-16 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-6 w-8 bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-6 w-24 bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-10 w-full bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-10 w-full bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-10 w-20 bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-10 w-full bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-6 w-24 bg-slate-800"/></TableCell>
+                                            <TableCell><Skeleton className="h-8 w-8 bg-slate-800"/></TableCell>
                                         </TableRow>
                                     ))
                                 ) : isQuotesError ? (
                                     <TableRow className="border-slate-800">
-                                        <TableCell colSpan={8} className="h-24 text-center text-red-400">
-                                            Failed to load quotes data.
+                                        <TableCell colSpan={7} className="h-32 text-center text-red-400">
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <p>Failed to load quotes data.</p>
+                                                <Button variant="outline" size="sm"
+                                                        onClick={() => queryClient.invalidateQueries({queryKey: ['admin-quotes']})}>
+                                                    Retry
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ) : quotes && quotes.length > 0 ? (
                                     quotes.map((quote) => (
                                         <TableRow key={quote.id}
                                                   className="border-slate-800 hover:bg-slate-900/50 transition-colors">
-                                            <TableCell className="font-medium text-slate-500">#{quote.id}</TableCell>
-
-                                            {/* Enhanced Lead Info */}
                                             <TableCell>
-                                                <LeadInfoCell leadId={quote.leadId}/>
+                                                <QuoteIdCell id={quote.id} dateStr={quote.startDate}/>
                                             </TableCell>
 
-                                            {/* Enhanced Agent Info */}
                                             <TableCell>
-                                                <AgentInfoCell agentId={quote.agentId}/>
+                                                <CustomerCell leadId={quote.leadId}/>
                                             </TableCell>
 
-                                            {/* Enhanced Property Info (Fetched from Lead -> Property) */}
                                             <TableCell>
-                                                <PropertyInfoCell leadId={quote.leadId}/>
+                                                <PropertyCell leadId={quote.leadId} sumInsured={quote.sumInsured}/>
                                             </TableCell>
 
-                                            {/* Plan Badge */}
-                                            <TableCell>{getPlanBadge(quote.plan)}</TableCell>
-
-                                            {/* Formatted Premium */}
-                                            <TableCell className="text-slate-300 font-medium font-mono">
-                                                {quote.premium ? new Intl.NumberFormat('vi-VN', {
-                                                    style: 'currency',
-                                                    currency: 'VND'
-                                                }).format(quote.premium.total) : '-'}
+                                            <TableCell>
+                                                <PlanPremiumCell plan={quote.plan}
+                                                                 totalPremium={quote.premium?.total || 0}/>
                                             </TableCell>
 
-                                            {/* Validity Date */}
+                                            <TableCell>
+                                                <AgentCell agentId={quote.agentId} agentName={quote.agentName}/>
+                                            </TableCell>
+
                                             <TableCell>
                                                 {getValidityStatus(quote.validUntil)}
                                             </TableCell>
@@ -221,17 +230,22 @@ const AdminQuotesView: React.FC = () => {
                                             <TableCell>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                                        <Button variant="ghost"
+                                                                className="h-8 w-8 p-0 hover:bg-slate-800 text-slate-400">
                                                             <MoreHorizontal className="h-4 w-4"/>
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end"
                                                                          className="bg-slate-900 border-slate-800 text-slate-200">
-                                                        <DropdownMenuItem
-                                                            onClick={() => handleEdit(quote)}>Edit</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleEdit(quote)}
+                                                                          className="hover:bg-slate-800 cursor-pointer">
+                                                            Edit Quote
+                                                        </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             onClick={() => deleteMutation.mutate(quote.id)}
-                                                            className="text-red-400">Delete</DropdownMenuItem>
+                                                            className="text-red-400 hover:bg-red-950/20 hover:text-red-300 cursor-pointer">
+                                                            Delete
+                                                        </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </TableCell>
@@ -239,7 +253,7 @@ const AdminQuotesView: React.FC = () => {
                                     ))
                                 ) : (
                                     <TableRow className="border-slate-800">
-                                        <TableCell colSpan={8} className="h-24 text-center text-slate-500">
+                                        <TableCell colSpan={7} className="h-32 text-center text-slate-500">
                                             No quotes found.
                                         </TableCell>
                                     </TableRow>

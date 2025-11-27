@@ -53,6 +53,11 @@ export const fetchAllProperties = async (): Promise<PropertyInfoDto[]> => {
     }
 };
 
+export const fetchPropertyById = async (id: string): Promise<PropertyInfoDto> => {
+    const response = await propertyClient.get<PropertyInfoDto>(`/propertyInfo/${id}`);
+    return response.data;
+};
+
 export const createProperty = async (property: Omit<PropertyInfoDto, 'id'>): Promise<PropertyInfoDto> => {
     const response = await propertyClient.post<PropertyInfoDto>('/propertyInfo', property);
     return response.data;
@@ -64,10 +69,5 @@ export const deleteProperty = async (id: string): Promise<void> => {
 
 export const getPropertyByZipCode = async (zipCode: string): Promise<PropertyInfoDto[]> => {
     const response = await propertyClient.get<PropertyInfoDto[]>(`/propertyInfo/zipcode/${zipCode}`);
-    return response.data;
-};
-
-export const fetchPropertyById = async (id: string): Promise<PropertyInfoDto> => {
-    const response = await propertyClient.get<PropertyInfoDto>(`/propertyInfo/${id}`);
     return response.data;
 };
