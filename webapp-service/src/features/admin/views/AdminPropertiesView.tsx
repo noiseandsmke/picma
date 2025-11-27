@@ -1,5 +1,5 @@
-import React, {useState} from 'react';
-import {ArrowUpDown, Building2, MapPin, MoreHorizontal, Plus, Search, Trash2} from 'lucide-react';
+import React, {useEffect, useState} from 'react';
+import {ArrowUpDown, Building2, Map, MapPin, MoreHorizontal, Plus, Search, Trash2} from 'lucide-react';
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {Label} from "@/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import AdminLayout from '../layouts/AdminLayout';
+import {City, District, VN_LOCATIONS} from '@/lib/vn-locations';
 
 const propertySchema = z.object({
     location: z.object({
@@ -33,7 +34,7 @@ const propertySchema = z.object({
     attributes: z.object({
         constructionType: z.nativeEnum(ConstructionType),
         occupancyType: z.nativeEnum(OccupancyType),
-        yearBuilt: z.coerce.number().min(1800, "Year Built must be valid"),
+        yearBuilt: z.coerce.number().min(1800, "Year Built must be valid").optional().or(z.literal('')),
         noFloors: z.coerce.number().min(1, "Number of floors must be at least 1"),
         squareMeters: z.coerce.number().min(1, "Square Meters must be positive"),
     }),
@@ -44,10 +45,26 @@ const propertySchema = z.object({
 
 type PropertyFormValues = z.infer<typeof propertySchema>;
 
+// Helper to format currency
+const formatCurrency = (amount: number) => {
+    return amount.toLocaleString() + ' ₫';
+};
+
+// Helper to format Enum
+const formatEnum = (val: string) => {
+    return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase().replace(/_/g, ' ');
+};
+
 const AdminPropertiesView: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
+    // Form Local State for cascading dropdowns
+    const [selectedCity, setSelectedCity] = useState<City | null>(null);
+    const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null);
+    const [streetAddress, setStreetAddress] = useState('');
+    const [costDisplay, setCostDisplay] = useState('');
 
     const queryClient = useQueryClient();
 
@@ -62,6 +79,11 @@ const AdminPropertiesView: React.FC = () => {
             await queryClient.invalidateQueries({queryKey: ['admin-properties']});
             setIsDialogOpen(false);
             reset();
+            // Reset local state
+            setSelectedCity(null);
+            setSelectedDistrict(null);
+            setStreetAddress('');
+            setCostDisplay('');
         }
     });
 
@@ -72,8 +94,8 @@ const AdminPropertiesView: React.FC = () => {
         }
     });
 
-    const {register, handleSubmit, reset, control, formState: {errors}} = useForm<PropertyFormValues>({
-        resolver: zodResolver(propertySchema) as any,
+    const {register, handleSubmit, reset, control, setValue, formState: {errors}, watch} = useForm<PropertyFormValues>({
+        resolver: zodResolver(propertySchema),
         defaultValues: {
             attributes: {
                 yearBuilt: new Date().getFullYear(),
@@ -86,7 +108,29 @@ const AdminPropertiesView: React.FC = () => {
         }
     });
 
+    // Watchers for auto-updates
+    const watchedWard = watch('location.ward');
+    const watchedCity = watch('location.city');
+
+    // Effect to update ZipCode when City changes
+    useEffect(() => {
+        if (selectedCity) {
+            setValue('location.zipCode', selectedCity.zipCode);
+            setValue('location.city', selectedCity.name);
+        }
+    }, [selectedCity, setValue]);
+
+    // Effect to update Full Address
+    useEffect(() => {
+        if (selectedCity && selectedDistrict && watchedWard && streetAddress) {
+            const full = `${streetAddress}, ${watchedWard}, ${selectedDistrict.name}, ${selectedCity.name}`;
+            setValue('location.fullAddress', full);
+        }
+    }, [selectedCity, selectedDistrict, watchedWard, streetAddress, setValue]);
+
+
     const onSubmit = (data: PropertyFormValues) => {
+        // Ensure numbers are correct
         createMutation.mutate(data);
     };
 
@@ -112,7 +156,6 @@ const AdminPropertiesView: React.FC = () => {
                 let aValue: unknown = a;
                 let bValue: unknown = b;
 
-                // Helper to access nested properties
                 const keys = sortConfig.key.split('.') as (keyof typeof a)[];
                 for (const k of keys) {
                     if (aValue && typeof aValue === 'object') {
@@ -151,6 +194,13 @@ const AdminPropertiesView: React.FC = () => {
         );
     });
 
+    const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value.replace(/[^0-9]/g, '');
+        const val = parseInt(raw || '0', 10);
+        setValue('valuation.estimatedConstructionCost', val);
+        setCostDisplay(val === 0 ? '' : raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' ₫');
+    };
+
     return (
         <AdminLayout>
             <div className="space-y-6">
@@ -163,45 +213,134 @@ const AdminPropertiesView: React.FC = () => {
                         <DialogTrigger asChild>
                             <Button onClick={() => {
                                 reset();
+                                setSelectedCity(null);
+                                setSelectedDistrict(null);
+                                setStreetAddress('');
+                                setCostDisplay('');
                             }} className="bg-indigo-600 hover:bg-indigo-700 text-white">
                                 <Plus className="h-4 w-4 mr-2"/>
                                 Create Property
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl">
+                        <DialogContent
+                            className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
                                 <DialogTitle>Create Property</DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2 col-span-2">
-                                        <Label htmlFor="fullAddress">Full Address</Label>
-                                        <Input id="fullAddress" {...register('location.fullAddress')}
-                                               className="bg-slate-950 border-slate-800"/>
-                                        {errors.location?.fullAddress &&
-                                            <p className="text-red-500 text-sm">{errors.location.fullAddress.message}</p>}
+                                    {/* Location Section */}
+                                    <div className="col-span-2 space-y-2">
+                                        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Address</h3>
                                     </div>
+
+                                    {/* City */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="ward">Ward</Label>
-                                        <Input id="ward" {...register('location.ward')}
-                                               className="bg-slate-950 border-slate-800"/>
-                                        {errors.location?.ward &&
-                                            <p className="text-red-500 text-sm">{errors.location.ward.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="city">City</Label>
-                                        <Input id="city" {...register('location.city')}
-                                               className="bg-slate-950 border-slate-800"/>
+                                        <Label>City</Label>
+                                        <Select onValueChange={(val) => {
+                                            const city = VN_LOCATIONS.find(c => c.name === val) || null;
+                                            setSelectedCity(city);
+                                            setSelectedDistrict(null);
+                                            setValue('location.ward', ''); // Reset ward
+                                        }}>
+                                            <SelectTrigger className="bg-slate-950 border-slate-800">
+                                                <SelectValue placeholder="Select City"/>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {VN_LOCATIONS.map(city => (
+                                                    <SelectItem key={city.name}
+                                                                value={city.name}>{city.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <input type="hidden" {...register('location.city')} />
                                         {errors.location?.city &&
                                             <p className="text-red-500 text-sm">{errors.location.city.message}</p>}
                                     </div>
+
+                                    {/* District */}
+                                    <div className="space-y-2">
+                                        <Label>District</Label>
+                                        <Select
+                                            disabled={!selectedCity}
+                                            onValueChange={(val) => {
+                                                const dist = selectedCity?.districts.find(d => d.name === val) || null;
+                                                setSelectedDistrict(dist);
+                                                setValue('location.ward', ''); // Reset ward
+                                            }}>
+                                            <SelectTrigger className="bg-slate-950 border-slate-800">
+                                                <SelectValue
+                                                    placeholder={selectedCity ? "Select District" : "Select City first"}/>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {selectedCity?.districts.map(d => (
+                                                    <SelectItem key={d.name} value={d.name}>{d.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {/* Ward */}
+                                    <div className="space-y-2">
+                                        <Label>Ward</Label>
+                                        <Controller
+                                            control={control}
+                                            name="location.ward"
+                                            render={({field}) => (
+                                                <Select
+                                                    disabled={!selectedDistrict}
+                                                    onValueChange={field.onChange}
+                                                    value={field.value}
+                                                >
+                                                    <SelectTrigger className="bg-slate-950 border-slate-800">
+                                                        <SelectValue
+                                                            placeholder={selectedDistrict ? "Select Ward" : "Select District first"}/>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {selectedDistrict?.wards.map(w => (
+                                                            <SelectItem key={w} value={w}>{w}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        />
+                                        {errors.location?.ward &&
+                                            <p className="text-red-500 text-sm">{errors.location.ward.message}</p>}
+                                    </div>
+
+                                    {/* Zip Code (Read only) */}
                                     <div className="space-y-2">
                                         <Label htmlFor="zipCode">Zip Code</Label>
-                                        <Input id="zipCode" {...register('location.zipCode')}
-                                               className="bg-slate-950 border-slate-800"/>
-                                        {errors.location?.zipCode &&
-                                            <p className="text-red-500 text-sm">{errors.location.zipCode.message}</p>}
+                                        <Input
+                                            id="zipCode"
+                                            readOnly
+                                            className="bg-slate-900 border-slate-800 text-slate-400 cursor-not-allowed"
+                                            {...register('location.zipCode')}
+                                        />
                                     </div>
+
+                                    {/* Street / Number */}
+                                    <div className="space-y-2 col-span-2">
+                                        <Label>Street / House Number</Label>
+                                        <Input
+                                            placeholder="e.g. Số 10, Ngõ 5"
+                                            value={streetAddress}
+                                            onChange={(e) => setStreetAddress(e.target.value)}
+                                            className="bg-slate-950 border-slate-800"
+                                        />
+                                    </div>
+
+                                    {/* Hidden Full Address Field to ensure validation passes */}
+                                    <input type="hidden" {...register('location.fullAddress')} />
+                                    {errors.location?.fullAddress &&
+                                        <p className="text-red-500 text-sm">{errors.location.fullAddress.message}</p>}
+
+
+                                    <div className="col-span-2 space-y-2 pt-4">
+                                        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Property
+                                            Details</h3>
+                                    </div>
+
                                     <div className="space-y-2">
                                         <Label htmlFor="constructionType">Construction Type</Label>
                                         <Controller
@@ -214,7 +353,8 @@ const AdminPropertiesView: React.FC = () => {
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {Object.values(ConstructionType).map((type) => (
-                                                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                            <SelectItem key={type}
+                                                                        value={type}>{formatEnum(type)}</SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
@@ -235,7 +375,8 @@ const AdminPropertiesView: React.FC = () => {
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {Object.values(OccupancyType).map((type) => (
-                                                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                            <SelectItem key={type}
+                                                                        value={type}>{formatEnum(type)}</SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
@@ -246,31 +387,50 @@ const AdminPropertiesView: React.FC = () => {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="yearBuilt">Year Built</Label>
-                                        <Input id="yearBuilt" type="number" {...register('attributes.yearBuilt')}
-                                               className="bg-slate-950 border-slate-800"/>
+                                        <Input
+                                            id="yearBuilt"
+                                            type="number"
+                                            placeholder={new Date().getFullYear().toString()}
+                                            {...register('attributes.yearBuilt')}
+                                            className="bg-slate-950 border-slate-800"
+                                        />
                                         {errors.attributes?.yearBuilt &&
                                             <p className="text-red-500 text-sm">{errors.attributes.yearBuilt.message}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="noFloors">No. Floors</Label>
-                                        <Input id="noFloors" type="number" {...register('attributes.noFloors')}
-                                               className="bg-slate-950 border-slate-800"/>
+                                        <Input
+                                            id="noFloors"
+                                            type="number"
+                                            {...register('attributes.noFloors')}
+                                            className="bg-slate-950 border-slate-800"
+                                        />
                                         {errors.attributes?.noFloors &&
                                             <p className="text-red-500 text-sm">{errors.attributes.noFloors.message}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="squareMeters">Square Meters</Label>
-                                        <Input id="squareMeters" type="number"
-                                               step="0.01" {...register('attributes.squareMeters')}
-                                               className="bg-slate-950 border-slate-800"/>
+                                        <Input
+                                            id="squareMeters"
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="Enter area..."
+                                            {...register('attributes.squareMeters')}
+                                            className="bg-slate-950 border-slate-800"
+                                        />
                                         {errors.attributes?.squareMeters &&
                                             <p className="text-red-500 text-sm">{errors.attributes.squareMeters.message}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="estimatedConstructionCost">Est. Cost</Label>
-                                        <Input id="estimatedConstructionCost" type="number"
-                                               step="0.01" {...register('valuation.estimatedConstructionCost')}
-                                               className="bg-slate-950 border-slate-800"/>
+                                        <Input
+                                            id="estimatedConstructionCost"
+                                            type="text"
+                                            value={costDisplay}
+                                            onChange={handleCostChange}
+                                            placeholder="0 ₫"
+                                            className="bg-slate-950 border-slate-800"
+                                        />
                                         {errors.valuation?.estimatedConstructionCost &&
                                             <p className="text-red-500 text-sm">{errors.valuation.estimatedConstructionCost.message}</p>}
                                     </div>
@@ -308,8 +468,9 @@ const AdminPropertiesView: React.FC = () => {
                                     </TableHead>
                                     <TableHead onClick={() => handleSort('location.zipCode')}
                                                className="text-slate-400 cursor-pointer hover:text-indigo-400 transition-colors">
-                                        <div className="flex items-center gap-2">Zip Code <ArrowUpDown
-                                            className="h-3 w-3"/></div>
+                                        <div className="flex items-center gap-2"><Map className="h-3 w-3"/> Zip
+                                            Code <ArrowUpDown
+                                                className="h-3 w-3"/></div>
                                     </TableHead>
                                     <TableHead onClick={() => handleSort('attributes.occupancyType')}
                                                className="text-slate-400 cursor-pointer hover:text-indigo-400 transition-colors">
@@ -369,17 +530,17 @@ const AdminPropertiesView: React.FC = () => {
                                         <TableCell>
                                             <Badge variant="secondary"
                                                    className="bg-slate-800 text-slate-300 hover:bg-slate-700">
-                                                {prop.attributes.occupancyType}
+                                                {formatEnum(prop.attributes.occupancyType)}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-slate-300">
-                                            {prop.attributes.constructionType}
+                                            {formatEnum(prop.attributes.constructionType)}
                                         </TableCell>
                                         <TableCell className="text-slate-300">
                                             {prop.attributes.squareMeters} m²
                                         </TableCell>
                                         <TableCell className="text-emerald-400 font-mono">
-                                            ${prop.valuation.estimatedConstructionCost.toLocaleString()}
+                                            {formatCurrency(prop.valuation.estimatedConstructionCost)}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>
