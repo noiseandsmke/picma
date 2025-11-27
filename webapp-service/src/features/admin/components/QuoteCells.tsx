@@ -96,7 +96,7 @@ export const PropertyInfoCell: React.FC<PropertyInfoCellProps> = ({leadId}) => {
     }
 
     const location = property.location;
-    const address = location ? `${location.fullAddress}, ${location.city}` : 'Unknown Address';
+    const address = location ? `${location.street}, ${location.city}` : 'Unknown Address';
 
     return (
         <div className="flex items-start gap-2 max-w-[250px]" title={address}>

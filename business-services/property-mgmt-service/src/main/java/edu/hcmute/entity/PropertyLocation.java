@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PropertyLocation {
-    private String fullAddress;
+    private String street;
     private String ward;
     private String city;
     private String zipCode;

@@ -1,7 +1,7 @@
 package edu.hcmute.dto;
 
 public record PropertyLocationDto(
-        String fullAddress,
+        String street,
         String ward,
         String city,
         String zipCode

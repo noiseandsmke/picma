@@ -152,7 +152,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                             {isPropertyLoading ? <Skeleton className="h-4 w-full mt-1"/> : selectedProperty && (
                                 <>
                                     <p className="text-slate-300 truncate"><span
-                                        className="text-slate-500">Address:</span> {selectedProperty.location.fullAddress}
+                                        className="text-slate-500">Address:</span> {selectedProperty.location.street}
                                     </p>
                                     <p className="text-slate-300"><span
                                         className="text-slate-500">Valuation:</span> {new Intl.NumberFormat('vi-VN', {

@@ -185,7 +185,7 @@ const AdminLeadsView: React.FC = () => {
         if (properties && properties.length > 0) {
             const matchedProp = properties.find(p => String(p.id) === String(propertyInfoStr));
             if (matchedProp) {
-                return `${matchedProp.location.fullAddress} (${matchedProp.attributes.occupancyType})`;
+                return `${matchedProp.location.street} (${matchedProp.attributes.occupancyType})`;
             }
         }
 

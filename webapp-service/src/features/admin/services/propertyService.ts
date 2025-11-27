@@ -15,7 +15,7 @@ export enum OccupancyType {
 }
 
 export interface PropertyLocationDto {
-    fullAddress: string;
+    street: string;
     ward: string;
     city: string;
     zipCode: string;
