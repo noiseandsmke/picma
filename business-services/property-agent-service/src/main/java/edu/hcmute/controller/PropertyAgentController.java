@@ -1,5 +1,6 @@
 package edu.hcmute.controller;
 
+import edu.hcmute.dto.AgentDto;
 import edu.hcmute.dto.AgentLeadDto;
 import edu.hcmute.service.PropertyAgentService;
 import lombok.RequiredArgsConstructor;
@@ -31,5 +32,11 @@ public class PropertyAgentController {
     public ResponseEntity<List<AgentLeadDto>> getAgentLeads(@RequestParam String agentId) {
         log.info("~~> getting leads for agentId: {}", agentId);
         return ResponseEntity.ok(propertyAgentService.getAgentLeads(agentId));
+    }
+
+    @GetMapping("/agent/{agentId}")
+    public ResponseEntity<AgentDto> getAgentById(@PathVariable String agentId) {
+        log.info("~~> getting agent by id: {}", agentId);
+        return ResponseEntity.ok(propertyAgentService.getAgentById(agentId));
     }
 }

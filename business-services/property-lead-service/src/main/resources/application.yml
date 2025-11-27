@@ -20,10 +20,11 @@ server:
   port: 7103
 
 picma:
+  services:
+    property-mgmt-service:
+      url: http://${PROPERTY_MGMT_HOST:localhost}:${PROPERTY_MGMT_PORT:7101}
+    property-agent-service:
+      url: http://${PROPERTY_AGENT_HOST:localhost}:${PROPERTY_AGENT_PORT:7104}
   properties:
-    management:
-      base-uri: http://${PROPERTY_MGMT_HOST:localhost}:${PROPERTY_MGMT_PORT:7101}
-    agent:
-      base-uri: http://${PROPERTY_AGENT_HOST:localhost}:${PROPERTY_AGENT_PORT:7104}
     lead:
       topic: property-lead-topic

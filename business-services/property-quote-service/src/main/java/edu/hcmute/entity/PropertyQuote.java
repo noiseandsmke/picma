@@ -34,7 +34,8 @@ public class PropertyQuote {
     private PlanType plan;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "propertyQuoteId")
+    @JoinColumn
+    @Builder.Default
     private List<Coverage> coverages = new ArrayList<>();
 
     @Embedded

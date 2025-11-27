@@ -1,12 +1,10 @@
 package edu.hcmute.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.hcmute.config.PropertyLeadFeignClient;
 import edu.hcmute.config.PropertyMgmtFeignClient;
+import edu.hcmute.config.UserMgmtFeignClient;
 import edu.hcmute.domain.LeadAction;
-import edu.hcmute.dto.AgentLeadDto;
-import edu.hcmute.dto.NotificationRequestDto;
+import edu.hcmute.dto.*;
 import edu.hcmute.entity.AgentLead;
 import edu.hcmute.event.NotificationProducer;
 import edu.hcmute.mapper.PropertyAgentMapper;
@@ -20,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,12 +26,12 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class PropertyAgentServiceImpl implements PropertyAgentService {
+    private final UserMgmtFeignClient userMgmtFeignClient;
     private final PropertyMgmtFeignClient propertyMgmtFeignClient;
     private final PropertyLeadFeignClient propertyLeadFeignClient;
     private final NotificationProducer notificationProducer;
     private final UserAddressRepo userAddressRepo;
     private final AgentLeadRepo agentLeadRepo;
-    private final ObjectMapper objectMapper;
     private final PropertyAgentMapper propertyAgentMapper;
 
     @Override
@@ -53,35 +52,45 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
                 throw new IllegalStateException("Lead interaction period has expired (7 days).");
             }
         }
-
         LeadAction newAction = agentLeadDto.leadAction();
         agentLead.setLeadAction(newAction);
         if (agentLead.getId() == 0) {
             agentLead.setId(agentLeadDto.id());
         }
         agentLeadRepo.save(agentLead);
-        if (newAction.equals(LeadAction.ACCEPTED)) {
-            log.info("~~> agent accepted lead {}.", agentLead.getLeadId());
-            try {
-                String updatedLeadAction = propertyLeadFeignClient.updateLeadActionById(agentLeadDto.leadId(), String.valueOf(LeadAction.ACCEPTED));
-                log.info("~~> lead status updated to ACCEPTED: {}", updatedLeadAction);
-            } catch (Exception e) {
-                log.error("~~> failed to update Lead status to ACCEPTED in Lead Service", e);
-            }
-        } else if (newAction.equals(LeadAction.REJECTED)) {
-            List<AgentLead> allAgentsForLead = agentLeadRepo.findByLeadId(agentLead.getLeadId());
-            boolean allRejected = allAgentsForLead.stream()
-                    .allMatch(al -> al.getLeadAction() == LeadAction.REJECTED);
-
-            if (allRejected && !allAgentsForLead.isEmpty()) {
-                log.info("~~> all agents rejected lead {}.", agentLead.getLeadId());
+        switch (newAction) {
+            case INTERESTED:
+                log.info("~~> agent is interested in lead {}.", agentLead.getLeadId());
                 try {
-                    String updatedLeadAction = propertyLeadFeignClient.updateLeadActionById(agentLeadDto.leadId(), String.valueOf(LeadAction.REJECTED));
-                    log.info("~~> lead status updated to REJECTED: {}", updatedLeadAction);
+                    propertyLeadFeignClient.updateLeadStatusById(agentLeadDto.leadId(), "IN_REVIEWING");
+                    log.info("~~> lead status updated to IN_REVIEWING");
                 } catch (Exception e) {
-                    log.error("~~> failed to update Lead status to REJECTED in Lead Service", e);
+                    log.error("~~> failed to update Lead status to IN_REVIEWING in Lead Service", e);
                 }
-            }
+                break;
+            case ACCEPTED:
+                log.info("~~> agent accepted lead {}.", agentLead.getLeadId());
+                try {
+                    String updatedLeadAction = propertyLeadFeignClient.updateLeadStatusById(agentLeadDto.leadId(), String.valueOf(LeadAction.ACCEPTED));
+                    log.info("~~> lead status updated to ACCEPTED: {}", updatedLeadAction);
+                } catch (Exception e) {
+                    log.error("~~> failed to update Lead status to ACCEPTED in Lead Service", e);
+                }
+                break;
+            case REJECTED:
+                List<AgentLead> allAgentsForLead = agentLeadRepo.findByLeadId(agentLead.getLeadId());
+                boolean allRejected = allAgentsForLead.stream()
+                        .allMatch(al -> al.getLeadAction() == LeadAction.REJECTED);
+                if (allRejected && !allAgentsForLead.isEmpty()) {
+                    log.info("~~> all agents rejected lead {}.", agentLead.getLeadId());
+                    try {
+                        String updatedLeadAction = propertyLeadFeignClient.updateLeadStatusById(agentLeadDto.leadId(), String.valueOf(LeadAction.REJECTED));
+                        log.info("~~> lead status updated to REJECTED: {}", updatedLeadAction);
+                    } catch (Exception e) {
+                        log.error("~~> failed to update Lead status to REJECTED in Lead Service", e);
+                    }
+                }
+                break;
         }
         return propertyAgentMapper.toDto(agentLead);
     }
@@ -111,35 +120,30 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     public List<String> fetchAgentWithinZipCode(String propertyId, int leadId) {
         try {
             log.info("### Fetching agent within zip code: {} ###", propertyId);
-            String propertyInfo = propertyMgmtFeignClient.getPropertyInfoById(propertyId);
-            JsonNode jsonObj = objectMapper.readTree(propertyInfo);
+            PropertyMgmtDto propertyInfo = propertyMgmtFeignClient.getPropertyInfoById(propertyId);
             log.info("~~> calling property-info-api to get address-info");
-
-            String zipCode = extractZipCode(jsonObj);
-
+            String zipCode = propertyInfo.propertyAddressDto().zipCode();
             if (StringUtils.hasText(zipCode)) {
                 List<String> agentIds = userAddressRepo.findUserIdsByZipCode(zipCode);
                 log.info("~~> ZipCode = {}", zipCode);
                 log.info("~~> agentIds = {}", agentIds);
+                List<AgentLead> agentLeads = new ArrayList<>();
                 for (String agentIdStr : agentIds) {
-                    try {
-                        AgentLead agentLead = new AgentLead();
-                        agentLead.setAgentId(agentIdStr);
-                        agentLead.setLeadId(leadId);
-                        agentLead.setLeadAction(LeadAction.INTERESTED);
-                        agentLead.setCreatedAt(LocalDateTime.now());
-                        agentLeadRepo.save(agentLead);
-                        NotificationRequestDto notification = new NotificationRequestDto(
-                                agentIdStr,
-                                "New Lead Available",
-                                "A new lead matches your zip code: " + zipCode + ". Lead ID: " + leadId
-                        );
-                        notificationProducer.sendNotification(notification);
-                        log.info("~~> notification sent to agent: {}", agentIdStr);
-                    } catch (Exception e) {
-                        log.error("~~> failed to send notification to agent: {}", agentIdStr, e);
-                    }
+                    AgentLead agentLead = new AgentLead();
+                    agentLead.setAgentId(agentIdStr);
+                    agentLead.setLeadId(leadId);
+                    agentLead.setLeadAction(LeadAction.INTERESTED);
+                    agentLead.setCreatedAt(LocalDateTime.now());
+                    agentLeads.add(agentLead);
+                    NotificationRequestDto notification = new NotificationRequestDto(
+                            agentIdStr,
+                            "New Lead Available",
+                            "A new lead matches your zip code: " + zipCode + ". Lead ID: " + leadId
+                    );
+                    notificationProducer.sendNotification(notification);
+                    log.info("~~> notification sent to agent: {}", agentIdStr);
                 }
+                agentLeadRepo.saveAll(agentLeads);
                 return agentIds;
             } else {
                 log.warn("~~> zipCode is null or empty, cannot fetch agents");
@@ -171,21 +175,17 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
                 .allMatch(al -> al.getLeadAction() == LeadAction.REJECTED);
         if (allRejected && !allAgentsForLead.isEmpty()) {
             try {
-                propertyLeadFeignClient.updateLeadActionById(leadId, String.valueOf(LeadAction.REJECTED));
+                propertyLeadFeignClient.updateLeadStatusById(leadId, String.valueOf(LeadAction.REJECTED));
             } catch (Exception e) {
                 log.error("~~> failed to update Lead status to REJECTED", e);
             }
         }
     }
 
-    private String extractZipCode(JsonNode jsonObj) {
-        if (jsonObj.has("propertyAddressDto")) {
-            JsonNode addressObj = jsonObj.get("propertyAddressDto");
-            if (addressObj.has("zipCode")) {
-                return addressObj.get("zipCode").asText();
-            }
-        }
-        log.warn("~~> propertyAddressDto or zipCode field not found in property info response");
-        return null;
+    @Override
+    public AgentDto getAgentById(String agentId) {
+        log.info("### Fetching agent by id: {} ###", agentId);
+        UserDto userDto = userMgmtFeignClient.getUserById(agentId);
+        return propertyAgentMapper.toAgentDto(userDto);
     }
 }

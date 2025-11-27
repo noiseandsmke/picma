@@ -1,6 +1,8 @@
 package edu.hcmute.service;
 
+import edu.hcmute.config.PropertyAgentFeignClient;
 import edu.hcmute.config.PropertyLeadFeignClient;
+import edu.hcmute.dto.AgentLeadDto;
 import edu.hcmute.dto.LeadInfoDto;
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.PropertyQuote;
@@ -22,17 +24,16 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     private final PropertyQuoteRepo propertyQuoteRepo;
     private final PropertyQuoteMapper propertyQuoteMapper;
     private final PropertyLeadFeignClient propertyLeadFeignClient;
+    private final PropertyAgentFeignClient propertyAgentFeignClient;
 
     @Override
     @Transactional
     public PropertyQuoteDto createPropertyQuote(PropertyQuoteDto propertyQuoteDto) {
         log.info("### Create PropertyQuote for leadId = {} ###", propertyQuoteDto.leadId());
-
         Integer leadId = propertyQuoteDto.leadId();
         if (leadId == null) {
             throw new IllegalArgumentException("leadId is required to create a quote");
         }
-
         try {
             LeadInfoDto leadInfo = propertyLeadFeignClient.getLeadById(leadId);
             log.info("~~> validated lead exists: id={}, user={}", leadInfo.id(), leadInfo.userInfo());
@@ -40,18 +41,17 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
             log.error("~~> lead not found with id: {}", leadId);
             throw new RuntimeException("Lead not found with id: " + leadId);
         }
-
         try {
             PropertyQuote propertyQuote = propertyQuoteMapper.toEntity(propertyQuoteDto);
             propertyQuote.setLeadId(leadId);
-
             if (propertyQuote.getValidUntil() == null) {
                 propertyQuote.setValidUntil(LocalDate.now().plusDays(30));
             }
-
             propertyQuote = propertyQuoteRepo.save(propertyQuote);
             log.info("~~> PropertyQuote saved with id: {}", propertyQuote.getId());
-
+            AgentLeadDto agentLeadDto = new AgentLeadDto(0, "ACCEPTED", propertyQuote.getAgentId(), leadId);
+            propertyAgentFeignClient.updateLeadAction(agentLeadDto);
+            log.info("~~> Agent lead action updated to ACCEPTED for agentId = {} and leadId = {}", propertyQuote.getAgentId(), leadId);
             return propertyQuoteMapper.toDto(propertyQuote);
         } catch (Exception e) {
             log.error("~~> error creating PropertyQuote: {}", e.getMessage(), e);
@@ -94,14 +94,11 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
         log.info("### Update PropertyQuote by id = {} ###", id);
         PropertyQuote existingQuote = propertyQuoteRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("PropertyQuote not found with id: " + id));
-
         PropertyQuote updatedQuote = propertyQuoteMapper.toEntity(propertyQuoteDto);
         updatedQuote.setId(existingQuote.getId());
         updatedQuote.setLeadId(existingQuote.getLeadId());
-
         updatedQuote = propertyQuoteRepo.save(updatedQuote);
         log.info("~~> PropertyQuote updated with id: {}", updatedQuote.getId());
-
         return propertyQuoteMapper.toDto(updatedQuote);
     }
 

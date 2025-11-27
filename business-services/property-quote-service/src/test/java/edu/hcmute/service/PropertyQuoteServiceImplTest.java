@@ -1,5 +1,6 @@
 package edu.hcmute.service;
 
+import edu.hcmute.config.PropertyAgentFeignClient;
 import edu.hcmute.config.PropertyLeadFeignClient;
 import edu.hcmute.domain.CoverageCode;
 import edu.hcmute.domain.PlanType;
@@ -35,6 +36,8 @@ public class PropertyQuoteServiceImplTest {
     private PropertyQuoteMapper propertyQuoteMapper;
     @Mock
     private PropertyLeadFeignClient propertyLeadFeignClient;
+    @Mock
+    private PropertyAgentFeignClient propertyAgentFeignClient;
 
     @InjectMocks
     private PropertyQuoteServiceImpl propertyQuoteService;
@@ -77,14 +80,11 @@ public class PropertyQuoteServiceImplTest {
         LeadInfoDto leadInfo = new LeadInfoDto(1, "user1", "prop1", "ACTIVE", LocalDate.now(), LocalDate.now().plusDays(30));
         PropertyQuote entity = createSampleEntity();
         PropertyQuoteDto resultDto = createSampleDto();
-
         when(propertyLeadFeignClient.getLeadById(1)).thenReturn(leadInfo);
         when(propertyQuoteMapper.toEntity(inputDto)).thenReturn(entity);
         when(propertyQuoteRepo.save(any(PropertyQuote.class))).thenReturn(entity);
         when(propertyQuoteMapper.toDto(entity)).thenReturn(resultDto);
-
         PropertyQuoteDto result = propertyQuoteService.createPropertyQuote(inputDto);
-
         assertNotNull(result);
         assertEquals(1, result.id());
         assertEquals(PlanType.SILVER, result.plan());
@@ -95,12 +95,9 @@ public class PropertyQuoteServiceImplTest {
     void getPropertyQuoteById_success() {
         PropertyQuote entity = createSampleEntity();
         PropertyQuoteDto resultDto = createSampleDto();
-
         when(propertyQuoteRepo.findById(1)).thenReturn(Optional.of(entity));
         when(propertyQuoteMapper.toDto(entity)).thenReturn(resultDto);
-
         PropertyQuoteDto result = propertyQuoteService.getPropertyQuoteById(1);
-
         assertNotNull(result);
         assertEquals(1, result.id());
     }
@@ -109,7 +106,6 @@ public class PropertyQuoteServiceImplTest {
     void deletePropertyQuoteById_success() {
         when(propertyQuoteRepo.existsById(1)).thenReturn(true);
         doNothing().when(propertyQuoteRepo).deleteById(1);
-
         assertDoesNotThrow(() -> propertyQuoteService.deletePropertyQuoteById(1));
         verify(propertyQuoteRepo).deleteById(1);
     }

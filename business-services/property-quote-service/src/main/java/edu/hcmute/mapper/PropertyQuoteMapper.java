@@ -18,7 +18,6 @@ public class PropertyQuoteMapper {
         if (dto == null) {
             return null;
         }
-
         PropertyQuote entity = PropertyQuote.builder()
                 .leadId(dto.leadId())
                 .agentId(dto.agentId())
@@ -30,19 +29,17 @@ public class PropertyQuoteMapper {
                 .sumInsured(dto.sumInsured())
                 .plan(dto.plan())
                 .build();
-
         if (dto.coverages() != null) {
             List<Coverage> coverages = new ArrayList<>();
             for (CoverageDto coverageDto : dto.coverages()) {
                 Coverage coverage = new Coverage();
                 coverage.setCode(coverageDto.code());
-                coverage.setLimitAmount(coverageDto.limit());
+                coverage.setLimit(coverageDto.limit());
                 coverage.setDeductible(coverageDto.deductible());
                 coverages.add(coverage);
             }
             entity.setCoverages(coverages);
         }
-
         if (dto.premium() != null) {
             entity.setPremium(new Premium(
                     dto.premium().net(),
@@ -50,7 +47,6 @@ public class PropertyQuoteMapper {
                     dto.premium().total()
             ));
         }
-
         return entity;
     }
 
@@ -58,23 +54,20 @@ public class PropertyQuoteMapper {
         if (entity == null) {
             return null;
         }
-
         List<CoverageDto> coverageDtos = new ArrayList<>();
         if (entity.getCoverages() != null) {
             for (Coverage coverage : entity.getCoverages()) {
                 coverageDtos.add(new CoverageDto(
                         coverage.getId(),
                         coverage.getCode(),
-                        coverage.getLimitAmount(),
+                        coverage.getLimit(),
                         coverage.getDeductible()
                 ));
             }
         }
-
         PremiumDto premiumDto = entity.getPremium() != null
                 ? new PremiumDto(entity.getPremium().getNet(), entity.getPremium().getTax(), entity.getPremium().getTotal())
                 : null;
-
         return new PropertyQuoteDto(
                 entity.getId(),
                 entity.getLeadId(),

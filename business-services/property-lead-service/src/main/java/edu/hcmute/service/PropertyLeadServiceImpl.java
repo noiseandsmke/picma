@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class PropertyLeadServiceImpl implements PropertyLeadService {
-
     private final PropertyLeadRepo propertyLeadRepo;
     private final PropertyMgmtFeignClient propertyMgmtFeignClient;
     private final PropertyAgentFeignClient propertyAgentFeignClient;
@@ -45,11 +44,9 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
             // @PrePersist will set status=ACTIVE, createDate=now, expiryDate=createDate+30
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> PropertyLead saved with id: {}", propertyLead.getId());
-
             // Publish lead event to Kafka for agent assignment
             boolean isPublished = propertyLeadProducer.publishLead(propertyLead);
             log.info("~~> Lead published to Kafka: {}", isPublished);
-
             return propertyLeadMapper.toDto(propertyLead);
         } catch (Exception e) {
             log.error("~~> error creating PropertyLead: {}", e.getMessage(), e);
@@ -64,12 +61,10 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         try {
             PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
                     .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + leadId));
-
             // Only update userInfo, propertyInfo, and status if provided (null values are ignored by mapper)
             propertyLeadMapper.updateEntity(propertyLead, propertyLeadDto);
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> PropertyLead updated with id: {}", propertyLead.getId());
-
             return propertyLeadMapper.toDto(propertyLead);
         } catch (Exception e) {
             log.error("~~> error updating PropertyLead: {}", e.getMessage(), e);
@@ -103,13 +98,10 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
                         String.join(", ", Arrays.stream(LeadStatus.values())
                                 .map(Enum::name).toArray(String[]::new)));
             }
-
             PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
                     .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + leadId));
-
             LeadStatus currentStatus = propertyLead.getStatus();
             validateStatusTransition(currentStatus, newStatus);
-
             propertyLead.setStatus(newStatus);
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> successfully updated PropertyLead status from {} to {}", currentStatus.name(), newStatus.name());
@@ -130,9 +122,16 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         }
         switch (currentStatus) {
             case ACTIVE:
-                if (newStatus != LeadStatus.ACCEPTED && newStatus != LeadStatus.REJECTED && newStatus != LeadStatus.EXPIRED) {
+                if (newStatus != LeadStatus.IN_REVIEWING && newStatus != LeadStatus.ACCEPTED && newStatus != LeadStatus.REJECTED && newStatus != LeadStatus.EXPIRED) {
                     throw new IllegalStateException(
-                            String.format("Invalid status transition from %s to %s. ACTIVE leads can only be changed to ACCEPTED, REJECTED, or EXPIRED.",
+                            String.format("Invalid status transition from %s to %s. ACTIVE leads can only be changed to IN_REVIEWING, ACCEPTED, REJECTED, or EXPIRED.",
+                                    currentStatus, newStatus));
+                }
+                break;
+            case IN_REVIEWING:
+                if (newStatus != LeadStatus.ACTIVE && newStatus != LeadStatus.ACCEPTED && newStatus != LeadStatus.REJECTED && newStatus != LeadStatus.EXPIRED) {
+                    throw new IllegalStateException(
+                            String.format("Invalid status transition from %s to %s. IN_REVIEWING leads can be changed to ACTIVE, ACCEPTED, REJECTED, or EXPIRED.",
                                     currentStatus, newStatus));
                 }
                 break;
@@ -202,11 +201,10 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
                 return List.of();
             }
             log.info("~~> found {} property Ids in zipcode {}", propertyIds.size(), zipcode);
-
-            List<PropertyLead> matchingLeads = propertyLeadRepo.findByStatus(LeadStatus.ACTIVE).stream()
+            List<PropertyLead> matchingLeads = propertyLeadRepo.findByStatusIn(Arrays.asList(LeadStatus.ACTIVE, LeadStatus.IN_REVIEWING)).stream()
                     .filter(lead -> propertyIds.contains(lead.getPropertyInfo()))
                     .toList();
-            log.info("~~> found {} ACTIVE leads for zipcode {}", matchingLeads.size(), zipcode);
+            log.info("~~> found {} ACTIVE or IN_REVIEWING leads for zipcode {}", matchingLeads.size(), zipcode);
             return matchingLeads.stream().map(propertyLeadMapper::toDto).toList();
         } catch (Exception e) {
             log.error("~~> error fetching leads by zipcode {}: {}", zipcode, e.getMessage(), e);
@@ -239,20 +237,16 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
     public List<PropertyLeadDto> findPropertyLeadsOfAgent(String agentId) {
         log.info("### Get property leads visible to agent {} ###", agentId);
         try {
-            List<PropertyLead> activeLeads = propertyLeadRepo.findByStatus(LeadStatus.ACTIVE);
-            log.info("~~> found {} ACTIVE leads visible to all agents", activeLeads.size());
-
+            List<PropertyLead> activeLeads = propertyLeadRepo.findByStatusIn(Arrays.asList(LeadStatus.ACTIVE, LeadStatus.IN_REVIEWING));
+            log.info("~~> found {} ACTIVE or IN_REVIEWING leads visible to all agents", activeLeads.size());
             List<Integer> acceptedLeadIds = getAcceptedLeadIdsForAgent(agentId);
             log.info("~~> agent {} has accepted {} leads", agentId, acceptedLeadIds.size());
-
             List<PropertyLead> acceptedLeads = acceptedLeadIds.isEmpty()
                     ? Collections.emptyList()
                     : propertyLeadRepo.findAllById(acceptedLeadIds);
-
             Set<PropertyLead> allVisibleLeads = new HashSet<>();
             allVisibleLeads.addAll(activeLeads);
             allVisibleLeads.addAll(acceptedLeads);
-
             log.info("~~> total {} leads visible to agent {}", allVisibleLeads.size(), agentId);
             return allVisibleLeads.stream()
                     .map(propertyLeadMapper::toDto)

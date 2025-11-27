@@ -23,11 +23,15 @@ spring:
 server:
   port: 7104
 picma:
+  services:
+    property-lead-service:
+      url: http://${PROPERTY_LEAD_HOST:localhost}:${PROPERTY_LEAD_PORT:7103}
+    property-mgmt-service:
+      url: http://${PROPERTY_MGMT_HOST:localhost}:${PROPERTY_MGMT_PORT:7101}
+    user-mgmt-service:
+      url: http://${USER_MGMT_HOST:localhost}:${USER_MGMT_PORT:5051}
   properties:
     lead:
       topic: ${LEADS_TOPIC_NAME:property-lead}
-      base-uri: http://${PROPERTY_LEAD_HOST:localhost}:${PROPERTY_LEAD_PORT:7103}
-    management:
-      base-uri: http://${PROPERTY_MGMT_HOST:localhost}:${PROPERTY_MGMT_PORT:7101}
   notifications:
     topic: notification-topic
