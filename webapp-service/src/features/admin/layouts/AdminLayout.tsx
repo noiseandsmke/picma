@@ -2,7 +2,6 @@ import React, {ReactNode, useState} from 'react';
 import {cn} from '@/lib/utils';
 import {
     Activity,
-    Briefcase,
     Building2,
     ChevronDown,
     ChevronRight,
@@ -10,8 +9,6 @@ import {
     HelpCircle,
     LayoutDashboard,
     Settings,
-    UserCheck,
-    UserCog,
     Users
 } from 'lucide-react';
 import {Link, useLocation} from 'react-router-dom';
@@ -32,11 +29,7 @@ const navItems: NavItem[] = [
     {
         label: 'User Management',
         icon: Users,
-        children: [
-            {label: 'Agents', icon: UserCheck, href: '/admin/users/agents'},
-            {label: 'Property Owners', icon: UserCog, href: '/admin/users/owners'},
-            {label: 'Internal Staff', icon: Briefcase, href: '/admin/users/staff'},
-        ]
+        href: '/admin/users',
     },
     {
         label: 'Document Management',

@@ -10,7 +10,6 @@ import AgentDashboard from '@/features/agent/views/AgentDashboard';
 import OwnerDashboard from '@/features/owner/views/OwnerDashboard';
 import AdminUsersView from '@/features/admin/views/AdminUsersView';
 import AdminPropertiesView from '@/features/admin/views/AdminPropertiesView';
-import AdminOwnersView from '@/features/admin/views/AdminOwnersView';
 
 const App: React.FC = () => {
     return (
@@ -25,7 +24,6 @@ const App: React.FC = () => {
                         <Route path="dashboard" element={<AdminDashboard/>}/>
                         <Route path="users/*" element={<AdminUsersView/>}/>
                         <Route path="properties" element={<AdminPropertiesView/>}/>
-                        <Route path="users/owners" element={<AdminOwnersView/>}/>
                         <Route path="leads" element={<AdminLeadsView/>}/>
                         <Route path="quotes" element={<AdminQuotesView/>}/>
                         <Route index element={<Navigate to="/admin/dashboard" replace/>}/>

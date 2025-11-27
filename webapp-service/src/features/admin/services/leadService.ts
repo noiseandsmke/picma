@@ -10,6 +10,12 @@ export interface PropertyLeadDto {
     assignedAgents?: string[];
 }
 
+export interface CreateLeadDto {
+    userInfo: string;
+    propertyInfo: string;
+    status: string;
+}
+
 export interface LeadStatsDto {
     totalLeads: number;
     acceptedLeads: number;
@@ -40,3 +46,17 @@ export const fetchLeadTrend = async (): Promise<LeadTrendData[]> => {
     const response = await axios.get<LeadTrendData[]>(`${LEAD_SERVICE_URL}/trend`);
     return response.data;
 };
+
+export const createLead = async (leadData: CreateLeadDto): Promise<PropertyLeadDto> => {
+    const response = await axios.post<PropertyLeadDto>(`${LEAD_SERVICE_URL}`, leadData);
+    return response.data;
+}
+
+export const updateLead = async (leadData: PropertyLeadDto): Promise<PropertyLeadDto> => {
+    const response = await axios.put<PropertyLeadDto>(`${LEAD_SERVICE_URL}/${leadData.id}`, leadData);
+    return response.data;
+}
+
+export const deleteLead = async (leadId: number): Promise<void> => {
+    await axios.delete(`${LEAD_SERVICE_URL}/${leadId}`);
+}
