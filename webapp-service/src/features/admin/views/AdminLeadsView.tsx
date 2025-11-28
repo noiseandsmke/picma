@@ -45,7 +45,7 @@ const createLeadSchema = z.object({
     email: z.email('Invalid email address'),
     address: z.string().min(1, 'Address is required'),
     city: z.string().min(1, 'City is required'),
-    cost: z.coerce.number().min(0, 'Cost is required'),
+    cost: z.number().min(0, 'Cost is required'),
 });
 
 type CreateLeadFormData = z.infer<typeof createLeadSchema>;
@@ -71,7 +71,7 @@ const AdminLeadsView: React.FC = () => {
             email: '',
             address: '',
             city: '',
-            cost: '',
+            cost: 0,
         },
     });
 
