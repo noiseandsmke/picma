@@ -23,6 +23,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import AdminLayout from '../layouts/AdminLayout';
 import {City, VN_LOCATIONS} from '@/lib/vn-locations';
+import {SearchableSelect} from "@/components/ui/searchable-select";
 
 const propertySchema = z.object({
     location: z.object({
@@ -179,6 +180,12 @@ const AdminPropertiesView: React.FC = () => {
         setCostDisplay(val === 0 ? '' : raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' ₫');
     };
 
+    const wardOptions = selectedCity?.wards.map(w => ({
+        value: w.name,
+        label: w.name,
+        sublabel: w.zipCode
+    })) || [];
+
     return (
         <AdminLayout>
             <div className="space-y-6">
@@ -238,9 +245,10 @@ const AdminPropertiesView: React.FC = () => {
                                             control={control}
                                             name="location.ward"
                                             render={({field}) => (
-                                                <Select
-                                                    disabled={!selectedCity}
-                                                    onValueChange={(val) => {
+                                                <SearchableSelect
+                                                    options={wardOptions}
+                                                    value={field.value}
+                                                    onChange={(val) => {
                                                         field.onChange(val);
                                                         // Auto fill zip code
                                                         const ward = selectedCity?.wards.find(w => w.name === val);
@@ -248,19 +256,9 @@ const AdminPropertiesView: React.FC = () => {
                                                             setValue('location.zipCode', ward.zipCode);
                                                         }
                                                     }}
-                                                    value={field.value}
-                                                >
-                                                    <SelectTrigger className="bg-slate-950 border-slate-800">
-                                                        <SelectValue
-                                                            placeholder={selectedCity ? "Select Ward" : "Select City first"}/>
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {selectedCity?.wards.map(w => (
-                                                            <SelectItem key={w.name}
-                                                                        value={w.name}>{w.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                    placeholder={selectedCity ? "Select Ward" : "Select City first"}
+                                                    disabled={!selectedCity}
+                                                />
                                             )}
                                         />
                                         {errors.location?.ward &&

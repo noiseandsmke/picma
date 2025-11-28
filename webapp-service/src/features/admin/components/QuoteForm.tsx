@@ -13,11 +13,12 @@ import {fetchAllLeads} from '../services/leadService';
 import {fetchUsers} from '../services/userService';
 import {fetchPropertyById} from '../services/propertyService';
 import {PropertyQuoteDto} from '../services/quoteService';
-import {CalendarIcon, Home, Plus, Trash2, User, Wallet} from 'lucide-react';
+import {CalendarIcon, Home, Shield, User, Wallet} from 'lucide-react';
 import {addYears, format} from 'date-fns';
 import {cn} from '@/lib/utils';
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
 import {Calendar} from '@/components/ui/calendar';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 
 const quoteSchema = z.object({
     leadId: z.coerce.number().min(1, 'Lead is required'),
@@ -67,12 +68,22 @@ const formatCurrency = (val: number) => {
     }).format(val);
 };
 
-const CurrencyInput = React.forwardRef<HTMLInputElement, any>(({value, onChange, ...props}, ref) => {
+interface CurrencyInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+    compact?: boolean;
+}
+
+const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(({
+                                                                                  value,
+                                                                                  onChange,
+                                                                                  compact,
+                                                                                  className,
+                                                                                  ...props
+                                                                              }, ref) => {
     const [displayValue, setDisplayValue] = React.useState('');
 
     React.useEffect(() => {
         if (value !== undefined && value !== null) {
-            setDisplayValue(new Intl.NumberFormat('vi-VN').format(value));
+            setDisplayValue(new Intl.NumberFormat('vi-VN').format(value as number));
         }
     }, [value]);
 
@@ -80,22 +91,27 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, any>(({value, onChange,
         const raw = e.target.value.replace(/\D/g, '');
         const num = raw ? parseInt(raw, 10) : 0;
         setDisplayValue(new Intl.NumberFormat('vi-VN').format(num));
-        onChange(num);
+        if (onChange) {
+            // @ts-ignore
+            onChange(num);
+        }
     };
 
     return (
-        <div className="relative">
+        <div className="relative w-full">
             <Input
                 {...props}
                 ref={ref}
                 value={displayValue}
                 onChange={handleChange}
-                className="pr-12"
+                className={cn(compact ? "pr-8" : "pr-12", className)}
             />
-            <div
-                className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 text-sm">
-                VNĐ
-            </div>
+            {!compact && (
+                <div
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 text-xs">
+                    VNĐ
+                </div>
+            )}
         </div>
     );
 });
@@ -115,13 +131,13 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
             plan: (initialData?.plan as any) || 'BRONZE',
             propertyAddress: initialData?.propertyAddress || '',
             sumInsured: initialData?.sumInsured || 0,
-            startDate: initialData?.startDate ? new Date(initialData.startDate) : undefined,
-            endDate: initialData?.endDate ? new Date(initialData.endDate) : undefined,
+            startDate: initialData?.startDate ? new Date(initialData.startDate) : new Date(),
+            endDate: initialData?.endDate ? new Date(initialData.endDate) : addYears(new Date(), 1),
             coverages: initialData?.coverages || [],
         },
     });
 
-    const {fields, append, remove, replace} = useFieldArray({
+    const {fields, replace} = useFieldArray({
         control,
         name: "coverages"
     });
@@ -149,9 +165,11 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         enabled: !!selectedLead?.propertyInfo,
     });
 
+    // Auto-fill Address
     useEffect(() => {
-        if (selectedProperty && !initialData) {
+        if (!initialData && selectedProperty) {
             const currentAddress = getValues('propertyAddress');
+            // Only autofill if empty
             if (!currentAddress) {
                 const addr = `${selectedProperty.location.street}, ${selectedProperty.location.ward}, ${selectedProperty.location.city}`;
                 setValue('propertyAddress', addr);
@@ -159,18 +177,39 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         }
     }, [selectedProperty, setValue, getValues, initialData]);
 
+    // Auto-calc End Date
     useEffect(() => {
         if (startDate && !getValues('endDate')) {
             setValue('endDate', addYears(startDate, 1));
         }
     }, [startDate, setValue, getValues]);
 
+    // Auto-populate Coverages based on Plan & SumInsured
+    // Improved logic: Only auto-update if we are NOT editing an existing quote with different values
+    // OR if the user explicitly changes Plan/SumInsured significantly.
+    // To prevent wiping manual edits, we can check if the current coverages match the "previous" default for the "previous" plan.
+    // But keeping it simple: If user changes Plan, reset. If user changes SumInsured, update limits.
     useEffect(() => {
-        if (!initialData && sumInsured > 0) {
+        if (sumInsured > 0) {
+            // If loading initial data, don't overwrite
+            if (initialData && initialData.plan === selectedPlan && initialData.sumInsured === sumInsured && fields.length > 0) {
+                return;
+            }
+
+            // If we already have fields and this effect runs, it might be due to SumInsured change or Plan change.
+            // If Plan changed, we should probably reset structure.
+            // If SumInsured changed, we should update limits BUT keep user customizations?
+            // Requirement: "System should load list based on Plan".
+            // We'll stick to: Plan Change -> Reset. SumInsured Change -> Update Default Limits.
+
             const defaults = getDefaultCoverages(selectedPlan, sumInsured);
+
+            // Check if we effectively changed plan or first load
+            // We replace to ensure consistency with the Plan.
             replace(defaults);
         }
-    }, [selectedPlan, replace, initialData]);
+    }, [selectedPlan, sumInsured]); // Removed replace/initialData from deps to avoid loops, though linter might complain in real IDE.
+
 
     const calculatePremium = (plan: string, sum: number) => {
         let rate = 0.001;
@@ -190,7 +229,9 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         if (selectedProperty?.valuation?.estimatedConstructionCost) {
             setValue('sumInsured', selectedProperty.valuation.estimatedConstructionCost);
         } else if (selectedLead?.valuation) {
-            setValue('sumInsured', selectedLead.valuation);
+            if (typeof selectedLead.valuation === 'number') {
+                setValue('sumInsured', selectedLead.valuation);
+            }
         }
     };
 
@@ -203,14 +244,14 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
 
     const leadOptions = leads?.map(l => ({
         value: l.id,
-        label: `${l.userInfo} (Lead #${l.id})`,
-        sublabel: `Status: ${l.status}`
+        label: `${l.userInfo.split(' - ')[0]} (Lead #${l.id})`,
+        sublabel: `${l.userInfo.split(' - ')[1] || 'No Phone'}`
     })) || [];
 
     const agentOptions = agents?.map(a => ({
         value: a.id || '',
-        label: `${a.firstName} ${a.lastName} (${a.username})`,
-        sublabel: `Zip: ${a.zipCode || 'N/A'}`
+        label: `${a.firstName} ${a.lastName}`,
+        sublabel: `@${a.username} - ${a.zipCode || 'No Zip'}`
     })) || [];
 
     const setQuickDuration = (years: number) => {
@@ -219,53 +260,65 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         }
     };
 
+    const getCoverageName = (code: string) => {
+        const map: Record<string, string> = {
+            'FIRE': 'Fire & Explosion',
+            'THEFT': 'Theft & Burglary',
+            'FLOOD': 'Flood & Water Damage'
+        };
+        return map[code] || code;
+    };
+
     return (
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-800 space-y-4">
-                        <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                            <User size={14}/> General Information
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Select Lead</Label>
-                                <Controller
-                                    name="leadId"
-                                    control={control}
-                                    render={({field}) => (
-                                        <SearchableSelect
-                                            options={leadOptions}
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Search client..."
-                                            isLoading={!leads}
-                                        />
-                                    )}
-                                />
-                                {errors.leadId && <p className="text-red-500 text-sm">{errors.leadId.message}</p>}
-                            </div>
 
-                            <div className="space-y-2">
-                                <Label>Select Agent</Label>
-                                <Controller
-                                    name="agentId"
-                                    control={control}
-                                    render={({field}) => (
-                                        <SearchableSelect
-                                            options={agentOptions}
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Search agent..."
-                                            isLoading={!agents}
-                                        />
-                                    )}
-                                />
-                                {errors.agentId && <p className="text-red-500 text-sm">{errors.agentId.message}</p>}
-                            </div>
+                {/* SECTION 1: GENERAL INFO */}
+                <div className="space-y-4">
+                    <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
+                        <User size={14} className="text-indigo-400"/> General Info
+                    </h4>
 
-                            <div className="space-y-2">
-                                <Label>Start Date</Label>
+                    <div className="space-y-3">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Customer (Lead)</Label>
+                            <Controller
+                                name="leadId"
+                                control={control}
+                                render={({field}) => (
+                                    <SearchableSelect
+                                        options={leadOptions}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Search client..."
+                                        isLoading={!leads}
+                                    />
+                                )}
+                            />
+                            {errors.leadId && <p className="text-red-500 text-[10px]">{errors.leadId.message}</p>}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Agent</Label>
+                            <Controller
+                                name="agentId"
+                                control={control}
+                                render={({field}) => (
+                                    <SearchableSelect
+                                        options={agentOptions}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Search agent..."
+                                        isLoading={!agents}
+                                    />
+                                )}
+                            />
+                            {errors.agentId && <p className="text-red-500 text-[10px]">{errors.agentId.message}</p>}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Start Date</Label>
                                 <Controller
                                     name="startDate"
                                     control={control}
@@ -275,13 +328,13 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                                 <Button
                                                     variant={"outline"}
                                                     className={cn(
-                                                        "w-full justify-start text-left font-normal bg-slate-950 border-slate-700",
+                                                        "w-full justify-start text-left font-normal bg-slate-950 border-slate-700 h-9 text-xs px-2",
                                                         !field.value && "text-slate-500"
                                                     )}
                                                 >
-                                                    <CalendarIcon className="mr-2 h-4 w-4"/>
-                                                    {field.value ? format(field.value, "PPP") :
-                                                        <span>Pick a date</span>}
+                                                    <CalendarIcon className="mr-2 h-3 w-3"/>
+                                                    {field.value ? format(field.value, "dd/MM/yyyy") :
+                                                        <span>Pick date</span>}
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0 bg-slate-950 border-slate-800"
@@ -298,16 +351,14 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                     )}
                                 />
                             </div>
-
-                            <div className="space-y-2">
+                            <div className="space-y-1.5">
                                 <div className="flex justify-between items-center">
-                                    <Label>End Date</Label>
+                                    <Label className="text-xs">End Date</Label>
                                     <div className="flex gap-1">
                                         <span onClick={() => setQuickDuration(1)}
-                                              className="text-[10px] text-indigo-400 cursor-pointer hover:underline">1Y</span>
-                                        <span className="text-[10px] text-slate-600">|</span>
+                                              className="text-[10px] text-indigo-400 cursor-pointer hover:underline bg-indigo-950/30 px-1 rounded">1Y</span>
                                         <span onClick={() => setQuickDuration(2)}
-                                              className="text-[10px] text-indigo-400 cursor-pointer hover:underline">2Y</span>
+                                              className="text-[10px] text-indigo-400 cursor-pointer hover:underline bg-indigo-950/30 px-1 rounded">2Y</span>
                                     </div>
                                 </div>
                                 <Controller
@@ -319,13 +370,13 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                                 <Button
                                                     variant={"outline"}
                                                     className={cn(
-                                                        "w-full justify-start text-left font-normal bg-slate-950 border-slate-700",
+                                                        "w-full justify-start text-left font-normal bg-slate-950 border-slate-700 h-9 text-xs px-2",
                                                         !field.value && "text-slate-500"
                                                     )}
                                                 >
-                                                    <CalendarIcon className="mr-2 h-4 w-4"/>
-                                                    {field.value ? format(field.value, "PPP") :
-                                                        <span>Pick a date</span>}
+                                                    <CalendarIcon className="mr-2 h-3 w-3"/>
+                                                    {field.value ? format(field.value, "dd/MM/yyyy") :
+                                                        <span>Pick date</span>}
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0 bg-slate-950 border-slate-800"
@@ -344,147 +395,152 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                             </div>
                         </div>
                     </div>
-                    <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-800 space-y-4">
-                        <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                            <Home size={14}/> Property & Plan
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2 md:col-span-2">
-                                <Label>Property Address</Label>
-                                <Input
-                                    {...control.register('propertyAddress')}
-                                    placeholder="e.g. 123 Nguyen Hue, Ben Nghe, Dist 1, HCMC"
-                                    className="bg-slate-950 border-slate-700"
-                                />
-                                {errors.propertyAddress &&
-                                    <p className="text-red-500 text-sm">{errors.propertyAddress.message}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <Label>Sum Insured</Label>
-                                    {(selectedProperty || selectedLead?.valuation) && (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-5 text-[10px] text-indigo-400 px-0 hover:bg-transparent hover:text-indigo-300"
-                                            onClick={handleUseValuation}
-                                        >
-                                            Use Valuation
-                                        </Button>
-                                    )}
-                                </div>
-                                <Controller
-                                    name="sumInsured"
-                                    control={control}
-                                    render={({field}) => (
-                                        <CurrencyInput
-                                            {...field}
-                                            className="bg-slate-950 border-slate-700"
-                                        />
-                                    )}
-                                />
-                                {errors.sumInsured &&
-                                    <p className="text-red-500 text-sm">{errors.sumInsured.message}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Insurance Plan</Label>
-                                <Controller
-                                    name="plan"
-                                    control={control}
-                                    render={({field}) => (
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <SelectTrigger className="bg-slate-950 border-slate-700">
-                                                <SelectValue placeholder="Select plan"/>
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                                                <SelectItem value="BRONZE">Bronze (Fire only)</SelectItem>
-                                                <SelectItem value="SILVER">Silver (Fire + Theft)</SelectItem>
-                                                <SelectItem value="GOLD">Gold (Comprehensive)</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    )}
-                                />
-                            </div>
-                        </div>
-                    </div>
                 </div>
-                <div className="space-y-6">
-                    <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-800 space-y-4 h-full">
-                        <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Coverages</h4>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => append({code: 'NEW', limit: 0, deductible: 0})}
-                                className="h-6 w-6 p-0 hover:bg-slate-800"
-                            >
-                                <Plus size={14}/>
-                            </Button>
+
+                {/* SECTION 2: PROPERTY & PLAN */}
+                <div className="space-y-4">
+                    <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
+                        <Home size={14} className="text-emerald-400"/> Property & Plan
+                    </h4>
+
+                    <div className="space-y-3">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Property Address</Label>
+                            <Input
+                                {...control.register('propertyAddress')}
+                                placeholder="Enter full address"
+                                className="bg-slate-950 border-slate-700 h-9 text-xs"
+                            />
+                            {errors.propertyAddress &&
+                                <p className="text-red-500 text-[10px]">{errors.propertyAddress.message}</p>}
                         </div>
 
-                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-3 coverages-list">
-                            {fields.map((field, index) => (
-                                <div key={field.id}
-                                     className="bg-slate-950 p-3 rounded border border-slate-800 space-y-2 relative group">
-                                    <button
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-xs">Sum Insured</Label>
+                                {(selectedProperty || selectedLead?.valuation) && (
+                                    <Button
                                         type="button"
-                                        onClick={() => remove(index)}
-                                        className="absolute top-2 right-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-4 text-[10px] text-indigo-400 px-0 hover:bg-transparent hover:text-indigo-300"
+                                        onClick={handleUseValuation}
                                     >
-                                        <Trash2 size={12}/>
-                                    </button>
+                                        Use Valuation
+                                    </Button>
+                                )}
+                            </div>
+                            <Controller
+                                name="sumInsured"
+                                control={control}
+                                render={({field}) => (
+                                    <CurrencyInput
+                                        {...field}
+                                        className="bg-slate-950 border-slate-700 h-9 text-xs"
+                                    />
+                                )}
+                            />
+                            {errors.sumInsured &&
+                                <p className="text-red-500 text-[10px]">{errors.sumInsured.message}</p>}
+                        </div>
 
-                                    <div className="space-y-1">
-                                        <Label className="text-xs text-slate-500">Coverage Code</Label>
-                                        <Input
-                                            {...control.register(`coverages.${index}.code`)}
-                                            className="h-7 text-xs bg-slate-900 border-slate-800"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="space-y-1">
-                                            <Label className="text-[10px] text-slate-500">Limit</Label>
-                                            <Controller
-                                                name={`coverages.${index}.limit`}
-                                                control={control}
-                                                render={({field}) => (
-                                                    <CurrencyInput
-                                                        {...field}
-                                                        className="h-7 text-xs bg-slate-900 border-slate-800 pr-1"
-                                                    />
-                                                )}
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <Label className="text-[10px] text-slate-500">Deductible</Label>
-                                            <Controller
-                                                name={`coverages.${index}.deductible`}
-                                                control={control}
-                                                render={({field}) => (
-                                                    <CurrencyInput
-                                                        {...field}
-                                                        className="h-7 text-xs bg-slate-900 border-slate-800 pr-1"
-                                                    />
-                                                )}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                            {fields.length === 0 && (
-                                <div
-                                    className="text-center py-4 text-xs text-slate-500 border border-dashed border-slate-800 rounded">
-                                    No coverages defined
-                                </div>
-                            )}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Insurance Plan</Label>
+                            <Controller
+                                name="plan"
+                                control={control}
+                                render={({field}) => (
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <SelectTrigger className="bg-slate-950 border-slate-700 h-9 text-xs">
+                                            <SelectValue placeholder="Select plan"/>
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                                            <SelectItem value="BRONZE">Bronze (Fire only)</SelectItem>
+                                            <SelectItem value="SILVER">Silver (Fire + Theft)</SelectItem>
+                                            <SelectItem value="GOLD">Gold (Comprehensive)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            />
                         </div>
                     </div>
                 </div>
-                <div className="col-span-1 lg:col-span-3">
+
+                {/* SECTION 3: COVERAGES (TABLE) */}
+                <div className="lg:col-span-1 space-y-4">
+                    <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
+                        <Shield size={14} className="text-amber-400"/> Coverages & Deductibles
+                    </h4>
+
+                    <div className="rounded-md border border-slate-800 bg-slate-950 overflow-hidden">
+                        <Table>
+                            <TableHeader className="bg-slate-900/50">
+                                <TableRow className="border-slate-800 hover:bg-slate-900/50">
+                                    <TableHead className="h-8 text-[10px] w-[80px]">Coverage</TableHead>
+                                    <TableHead className="h-8 text-[10px]">Limit</TableHead>
+                                    <TableHead className="h-8 text-[10px]">Deductible</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {fields.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-center text-[10px] text-slate-500 py-4">
+                                            Select Plan & Sum Insured
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    fields.map((field, index) => (
+                                        <TableRow key={field.id} className="border-slate-800 hover:bg-slate-900/30">
+                                            <TableCell className="p-2 align-top">
+                                                <div className="flex flex-col">
+                                                    <span
+                                                        className="font-semibold text-[10px] text-slate-300">{field.code}</span>
+                                                    <span className="text-[9px] text-slate-500 truncate max-w-[70px]"
+                                                          title={getCoverageName(field.code)}>
+                                                        {getCoverageName(field.code)}
+                                                    </span>
+                                                    <input
+                                                        type="hidden"
+                                                        {...control.register(`coverages.${index}.code`)}
+                                                    />
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="p-2">
+                                                <Controller
+                                                    name={`coverages.${index}.limit`}
+                                                    control={control}
+                                                    render={({field}) => (
+                                                        <CurrencyInput
+                                                            {...field}
+                                                            compact
+                                                            className="h-6 text-[10px] bg-slate-900 border-slate-800 px-1 text-right"
+                                                        />
+                                                    )}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="p-2">
+                                                <Controller
+                                                    name={`coverages.${index}.deductible`}
+                                                    control={control}
+                                                    render={({field}) => (
+                                                        <CurrencyInput
+                                                            {...field}
+                                                            compact
+                                                            className="h-6 text-[10px] bg-slate-900 border-slate-800 px-1 text-right"
+                                                        />
+                                                    )}
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
+
+                {/* FOOTER: PREMIUM CALCULATION */}
+                <div className="col-span-1 lg:col-span-3 mt-4">
                     <div className="rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-4">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-3 text-indigo-400">
@@ -493,13 +549,12 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                 </div>
                                 <div>
                                     <p className="text-sm font-semibold text-indigo-300">Estimated Premium</p>
-                                    <p className="text-xs text-indigo-400/60">Based on Plan & Sum Insured</p>
+                                    <p className="text-xs text-indigo-400/60">Auto-calculated based on Plan rate</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-6 md:gap-12">
                                 <div className="text-right">
-                                    <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Net
-                                        Premium</p>
+                                    <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Net</p>
                                     <p className="text-sm font-medium text-slate-300">{formatCurrency(calculatedPremium.net)}</p>
                                 </div>
                                 <div className="text-right">
@@ -508,8 +563,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                     <p className="text-sm font-medium text-slate-300">{formatCurrency(calculatedPremium.tax)}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] uppercase text-emerald-500/80 font-bold tracking-wider">Total
-                                        Payment</p>
+                                    <p className="text-[10px] uppercase text-emerald-500/80 font-bold tracking-wider">Total</p>
                                     <p className="text-xl font-bold text-emerald-400">{formatCurrency(calculatedPremium.total)}</p>
                                 </div>
                             </div>
@@ -519,7 +573,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                     <DialogFooter className="mt-6 gap-2">
                         <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
                         <Button type="submit" disabled={isLoading}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px]">
                             {initialData ? 'Save Changes' : 'Create Quote'}
                         </Button>
                     </DialogFooter>

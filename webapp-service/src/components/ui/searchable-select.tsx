@@ -16,6 +16,7 @@ interface SearchableSelectProps {
     placeholder?: string;
     className?: string;
     isLoading?: boolean;
+    disabled?: boolean;
 }
 
 export const SearchableSelect: React.FC<SearchableSelectProps> = ({
@@ -24,7 +25,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                                                                       onChange,
                                                                       placeholder = "Select...",
                                                                       className,
-                                                                      isLoading = false
+                                                                      isLoading = false,
+                                                                      disabled = false
                                                                   }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState("");
@@ -50,19 +52,26 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     }, []);
 
     const handleSelect = (val: string | number) => {
+        if (disabled) return;
         onChange(val);
         setIsOpen(false);
         setSearch("");
+    };
+
+    const toggleOpen = () => {
+        if (disabled) return;
+        setIsOpen(!isOpen);
     };
 
     return (
         <div className={cn("relative", className)} ref={containerRef}>
             <div
                 className={cn(
-                    "flex h-10 w-full items-center justify-between rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm ring-offset-slate-950 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-slate-200",
-                    isOpen && "ring-2 ring-slate-400 ring-offset-2 border-slate-600"
+                    "flex h-10 w-full items-center justify-between rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm ring-offset-slate-950 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 cursor-pointer text-slate-200",
+                    isOpen && "ring-2 ring-slate-400 ring-offset-2 border-slate-600",
+                    disabled && "cursor-not-allowed opacity-50"
                 )}
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={toggleOpen}
             >
                 <span className={cn(!selectedOption && "text-slate-500")}>
                     {selectedOption ? selectedOption.label : placeholder}
@@ -70,7 +79,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 <ChevronDown className="h-4 w-4 opacity-50"/>
             </div>
 
-            {isOpen && (
+            {isOpen && !disabled && (
                 <div
                     className="absolute z-50 mt-1 max-h-[300px] w-full min-w-[300px] overflow-hidden rounded-md border border-slate-700 bg-slate-950 text-slate-50 shadow-md animate-in fade-in-0 zoom-in-95">
                     <div className="flex items-center border-b border-slate-800 px-3">
