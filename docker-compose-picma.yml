@@ -1,0 +1,82 @@
+services:
+  property-quote-postgres-db:
+    image: postgres:17
+    container_name: property-quote-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=property_quote_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - ./picma-business-data/property-quote:/var/lib/postgresql/data
+  property-mgmt-mongo-db:
+    image: mongo:8.0
+    container_name: property-mgmt-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./picma-business-data/property-mgmt:/data/db
+  picma-iam-keycloak-service:
+    container_name: iam-keycloak
+    image: quay.io/keycloak/keycloak:26.3.5
+    command: start-dev
+    restart: always
+    ports:
+      - "8081:8080"
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://picma-iam-customers-server-service/customers-db
+      - KC_DB_USERNAME=postgres
+      - KC_DB_PASSWORD=admin
+      - KC_HEALTH_ENABLED=true
+    depends_on:
+      - picma-iam-customers-server-service
+      - picma-iam-directory-server-service
+    networks:
+      - picma-network
+  picma-iam-customers-server-service:
+    container_name: iam-customers-server
+    image: postgres:17
+    restart: on-failure
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=customers-db
+    volumes:
+      - ./picma-iam-customers-db:/var/lib/postgresql/data
+    networks:
+      - picma-network
+  picma-iam-directory-server-service:
+    container_name: iam-directory-server
+    image: openidentityplatform/opendj:4.10.2
+    restart: on-failure
+    ports:
+      - "1389:1389"
+      - "1636:1636"
+      - "4444:4444"
+    environment:
+      - BASE_DN=dc=picma,dc=com
+      - ROOT_USER_DN=uid=picmaAdmin
+      - ROOT_PASSWORD=648877
+    volumes:
+      - ./picma-iam-directory-db:/opt/opendj/data
+    networks:
+      - picma-network
+  picma-cache-server-service:
+    container_name: cache-server
+    image: redis/redis-stack-server:7.4.0-v7
+    restart: on-failure
+    environment:
+      REDIS_ARGS: "--requirepass password --user username on >password ~* allcommands --user default off nopass nocommands"
+    ports:
+      - "6379:6379"
+    networks:
+      - picma-network
+networks:
+  picma-network:
+    name: picma-network
+    driver: bridge
