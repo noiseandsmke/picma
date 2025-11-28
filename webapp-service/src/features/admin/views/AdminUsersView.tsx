@@ -74,13 +74,13 @@ const AdminUsersView: React.FC = () => {
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-100">User Management</h1>
+                        <h1 className="text-2xl font-bold text-slate-100">User management</h1>
                     </div>
                     <Button
                         className="bg-indigo-600 hover:bg-indigo-700"
                         onClick={() => setIsCreateOpen(true)}
                     >
-                        Add New User
+                        Add new user
                     </Button>
                 </div>
 
@@ -91,7 +91,7 @@ const AdminUsersView: React.FC = () => {
                                 <TabsList className="bg-[#181624] border border-[#2e2c3a]">
                                     <TabsTrigger value="all"
                                                  className="data-[state=active]:bg-[#593bf2] data-[state=active]:text-white text-slate-400">All
-                                        Users</TabsTrigger>
+                                        users</TabsTrigger>
                                     <TabsTrigger value="agent"
                                                  className="data-[state=active]:bg-[#593bf2] data-[state=active]:text-white text-slate-400">Agents</TabsTrigger>
                                     <TabsTrigger value="owner"
@@ -116,7 +116,7 @@ const AdminUsersView: React.FC = () => {
                                     <TableHead className="text-slate-400">User</TableHead>
                                     <TableHead className="text-slate-400">Role</TableHead>
                                     <TableHead className="text-slate-400">Status</TableHead>
-                                    <TableHead className="text-slate-400">Last Active</TableHead>
+                                    <TableHead className="text-slate-400">Last active</TableHead>
                                     <TableHead className="text-right text-slate-400">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -176,14 +176,14 @@ const AdminUsersView: React.FC = () => {
                                                     <DropdownMenuItem
                                                         className="focus:bg-slate-800 focus:text-white cursor-pointer">
                                                         <Pencil className="mr-2 h-4 w-4"/>
-                                                        Edit Profile
+                                                        Edit profile
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
                                                         className="focus:bg-red-900/20 focus:text-red-400 text-red-400 cursor-pointer"
                                                         onClick={() => user.id && deleteMutation.mutate(user.id)}
                                                     >
                                                         <Trash className="mr-2 h-4 w-4"/>
-                                                        Delete User
+                                                        Delete user
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>

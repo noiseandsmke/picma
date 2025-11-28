@@ -197,13 +197,13 @@ const AdminLeadsView: React.FC = () => {
                     <div className="p-6 flex flex-col space-y-4 border-b border-slate-800">
                         <div className="flex items-center justify-between">
                             <div className="flex flex-col space-y-1">
-                                <h3 className="font-semibold text-lg text-white">All Leads</h3>
+                                <h3 className="font-semibold text-lg text-white">All leads</h3>
                                 <p className="text-sm text-slate-400">Manage and track all insurance leads.</p>
                             </div>
                             <Button onClick={handleCreate} variant="outline"
                                     className="text-white border-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-white">
                                 <PlusCircle className="h-4 w-4 mr-2"/>
-                                Create Lead
+                                Create lead
                             </Button>
                         </div>
                         <div className="flex gap-4">
@@ -234,13 +234,13 @@ const AdminLeadsView: React.FC = () => {
                                     <TableHead className="text-slate-400 cursor-pointer"
                                                onClick={() => handleSort('userInfo')}>
                                         <div className="flex items-center gap-1">
-                                            User Info {sortConfig.key === 'userInfo' && <ArrowUpDown size={14}/>}
+                                            User info {sortConfig.key === 'userInfo' && <ArrowUpDown size={14}/>}
                                         </div>
                                     </TableHead>
                                     <TableHead className="text-slate-400 cursor-pointer"
                                                onClick={() => handleSort('propertyInfo')}>
                                         <div className="flex items-center gap-1">
-                                            Property Info {sortConfig.key === 'propertyInfo' &&
+                                            Property info {sortConfig.key === 'propertyInfo' &&
                                             <ArrowUpDown size={14}/>}
                                         </div>
 
@@ -260,14 +260,14 @@ const AdminLeadsView: React.FC = () => {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="start"
                                                                      className="bg-slate-900 border-slate-800 text-slate-200">
-                                                    <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                                                    <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
                                                     <DropdownMenuSeparator className="bg-slate-800"/>
                                                     <DropdownMenuCheckboxItem
                                                         checked={statusFilter === 'ALL'}
                                                         onCheckedChange={() => setStatusFilter('ALL')}
                                                         className="focus:bg-slate-800 focus:text-white cursor-pointer"
                                                     >
-                                                        All Statuses
+                                                        All statuses
                                                     </DropdownMenuCheckboxItem>
                                                     {Object.values(LEAD_STATUS_CONFIG).map((config) => (
                                                         <DropdownMenuCheckboxItem
@@ -374,7 +374,7 @@ const AdminLeadsView: React.FC = () => {
                                                             <DropdownMenuItem
                                                                 className="focus:bg-slate-800 focus:text-white cursor-pointer">
                                                                 <Eye className="mr-2 h-4 w-4"/>
-                                                                View Details
+                                                                View details
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator className="bg-slate-800"/>
                                                             <DropdownMenuItem
@@ -382,7 +382,7 @@ const AdminLeadsView: React.FC = () => {
                                                                 onClick={() => handleDelete(lead.id)}
                                                             >
                                                                 <Trash2 className="mr-2 h-4 w-4"/>
-                                                                Delete Lead
+                                                                Delete lead
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
@@ -405,15 +405,15 @@ const AdminLeadsView: React.FC = () => {
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogContent className="bg-slate-950 border-slate-800 text-white sm:max-w-[600px]">
                         <DialogHeader>
-                            <DialogTitle>Create New Lead</DialogTitle>
+                            <DialogTitle>Create new lead</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
                             <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">User
-                                    Information</h4>
+                                    information</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="col-span-2 md:col-span-1">
-                                        <Label htmlFor="fullName" className="text-slate-300">Full Name</Label>
+                                        <Label htmlFor="fullName" className="text-slate-300">Full name</Label>
                                         <Controller
                                             name="fullName"
                                             control={control}
@@ -425,7 +425,7 @@ const AdminLeadsView: React.FC = () => {
                                             <p className="text-red-500 text-xs mt-1">{errors.fullName.message}</p>}
                                     </div>
                                     <div className="col-span-2 md:col-span-1">
-                                        <Label htmlFor="phoneNumber" className="text-slate-300">Phone Number</Label>
+                                        <Label htmlFor="phoneNumber" className="text-slate-300">Phone number</Label>
                                         <Controller
                                             name="phoneNumber"
                                             control={control}
@@ -437,7 +437,7 @@ const AdminLeadsView: React.FC = () => {
                                             <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>}
                                     </div>
                                     <div className="col-span-2">
-                                        <Label htmlFor="email" className="text-slate-300">Email Address</Label>
+                                        <Label htmlFor="email" className="text-slate-300">Email address</Label>
                                         <Controller
                                             name="email"
                                             control={control}
@@ -454,10 +454,10 @@ const AdminLeadsView: React.FC = () => {
                             <div className="border-t border-slate-800"/>
                             <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Property
-                                    Details</h4>
+                                    details</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="col-span-2">
-                                        <Label htmlFor="address" className="text-slate-300">Property Address</Label>
+                                        <Label htmlFor="address" className="text-slate-300">Property address</Label>
                                         <Controller
                                             name="address"
                                             control={control}
@@ -491,7 +491,7 @@ const AdminLeadsView: React.FC = () => {
                                             <p className="text-red-500 text-xs mt-1">{errors.city.message}</p>}
                                     </div>
                                     <div>
-                                        <Label htmlFor="cost" className="text-slate-300">Estimated Cost ($)</Label>
+                                        <Label htmlFor="cost" className="text-slate-300">Estimated cost ($)</Label>
                                         <Controller
                                             name="cost"
                                             control={control}
@@ -517,7 +517,7 @@ const AdminLeadsView: React.FC = () => {
                                 </DialogClose>
                                 <Button type="submit" disabled={createMutation.isPending}
                                         className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                    {createMutation.isPending ? 'Creating...' : 'Create Lead'}
+                                    {createMutation.isPending ? 'Creating...' : 'Create lead'}
                                 </Button>
                             </DialogFooter>
                         </form>

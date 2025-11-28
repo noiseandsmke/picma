@@ -22,29 +22,29 @@ interface NavItem {
 
 const navItems: NavItem[] = [
     {
-        label: 'Dashboard Home',
+        label: 'Dashboard home',
         icon: LayoutDashboard,
         href: '/admin/dashboard',
     },
     {
-        label: 'User Management',
+        label: 'User management',
         icon: Users,
         href: '/admin/users',
     },
     {
-        label: 'Document Management',
+        label: 'Document management',
         icon: Building2,
         children: [
             {label: 'Leads', icon: FileText, href: '/admin/leads'},
             {label: 'Quotes', icon: FileText, href: '/admin/quotes'},
-            {label: 'Properties Info', icon: Building2, href: '/admin/properties'},
+            {label: 'Properties info', icon: Building2, href: '/admin/properties'},
         ]
     },
     {
-        label: 'System Configuration',
+        label: 'System configuration',
         icon: Settings,
         children: [
-            {label: 'Service Status', icon: Activity, href: '/admin/config/status'},
+            {label: 'Service status', icon: Activity, href: '/admin/config/status'},
         ]
     },
 ];
@@ -55,7 +55,7 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
     const location = useLocation();
-    const [openMenus, setOpenMenus] = useState<string[]>(['User Management', 'Document Management', 'System Configuration']);
+    const [openMenus, setOpenMenus] = useState<string[]>(['User management', 'Document management', 'System configuration']);
 
     const toggleMenu = (label: string) => {
         setOpenMenus(prev =>

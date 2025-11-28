@@ -11,7 +11,7 @@ export const LEAD_STATUS_CONFIG: Record<string, {
         dotClass: "text-emerald-500"
     },
     IN_REVIEWING: {
-        label: "In Review",
+        label: "In review",
         value: "IN_REVIEWING",
         className: "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20",
         dotClass: "text-amber-500"

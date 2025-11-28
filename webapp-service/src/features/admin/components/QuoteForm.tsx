@@ -276,7 +276,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                 {/* SECTION 1: GENERAL INFO */}
                 <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
-                        <User size={14} className="text-indigo-400"/> General Info
+                        <User size={14} className="text-indigo-400"/> General info
                     </h4>
 
                     <div className="space-y-3">
@@ -318,7 +318,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
 
                         <div className="grid grid-cols-2 gap-2">
                             <div className="space-y-1.5">
-                                <Label className="text-xs">Start Date</Label>
+                                <Label className="text-xs">Start date</Label>
                                 <Controller
                                     name="startDate"
                                     control={control}
@@ -353,7 +353,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                             </div>
                             <div className="space-y-1.5">
                                 <div className="flex justify-between items-center">
-                                    <Label className="text-xs">End Date</Label>
+                                    <Label className="text-xs">End date</Label>
                                     <div className="flex gap-1">
                                         <span onClick={() => setQuickDuration(1)}
                                               className="text-[10px] text-indigo-400 cursor-pointer hover:underline bg-indigo-950/30 px-1 rounded">1Y</span>
@@ -400,12 +400,12 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                 {/* SECTION 2: PROPERTY & PLAN */}
                 <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
-                        <Home size={14} className="text-emerald-400"/> Property & Plan
+                        <Home size={14} className="text-emerald-400"/> Property & plan
                     </h4>
 
                     <div className="space-y-3">
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Property Address</Label>
+                            <Label className="text-xs">Property address</Label>
                             <Input
                                 {...control.register('propertyAddress')}
                                 placeholder="Enter full address"
@@ -417,7 +417,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
 
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
-                                <Label className="text-xs">Sum Insured</Label>
+                                <Label className="text-xs">Sum insured</Label>
                                 {(selectedProperty || selectedLead?.valuation) && (
                                     <Button
                                         type="button"
@@ -426,7 +426,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                         className="h-4 text-[10px] text-indigo-400 px-0 hover:bg-transparent hover:text-indigo-300"
                                         onClick={handleUseValuation}
                                     >
-                                        Use Valuation
+                                        Use valuation
                                     </Button>
                                 )}
                             </div>
@@ -445,7 +445,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Insurance Plan</Label>
+                            <Label className="text-xs">Insurance plan</Label>
                             <Controller
                                 name="plan"
                                 control={control}
@@ -469,7 +469,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                 {/* SECTION 3: COVERAGES (TABLE) */}
                 <div className="lg:col-span-1 space-y-4">
                     <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
-                        <Shield size={14} className="text-amber-400"/> Coverages & Deductibles
+                        <Shield size={14} className="text-amber-400"/> Coverages & deductibles
                     </h4>
 
                     <div className="rounded-md border border-slate-800 bg-slate-950 overflow-hidden">
@@ -485,7 +485,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                 {fields.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={3} className="text-center text-[10px] text-slate-500 py-4">
-                                            Select Plan & Sum Insured
+                                            Select plan & sum insured
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -548,7 +548,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                     <Wallet size={20}/>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-indigo-300">Estimated Premium</p>
+                                    <p className="text-sm font-semibold text-indigo-300">Estimated premium</p>
                                     <p className="text-xs text-indigo-400/60">Auto-calculated based on Plan rate</p>
                                 </div>
                             </div>
@@ -574,7 +574,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                         <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
                         <Button type="submit" disabled={isLoading}
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px]">
-                            {initialData ? 'Save Changes' : 'Create Quote'}
+                            {initialData ? 'Save changes' : 'Create quote'}
                         </Button>
                     </DialogFooter>
                 </div>

@@ -60,7 +60,7 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: C
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px] bg-[#1e1c2e] border-slate-800 text-slate-200">
                 <DialogHeader>
-                    <DialogTitle>Add New User</DialogTitle>
+                    <DialogTitle>Add new user</DialogTitle>
                     <DialogDescription className="text-slate-400">
                         Create a new user account. They will receive an email to verify their account.
                     </DialogDescription>
@@ -87,7 +87,7 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: C
                                 name="firstName"
                                 render={({field}) => (
                                     <FormItem>
-                                        <FormLabel>First Name</FormLabel>
+                                        <FormLabel>First name</FormLabel>
                                         <FormControl>
                                             <Input placeholder="John" {...field}
                                                    className="bg-[#141124] border-slate-700 text-slate-200"/>
@@ -101,7 +101,7 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: C
                                 name="lastName"
                                 render={({field}) => (
                                     <FormItem>
-                                        <FormLabel>Last Name</FormLabel>
+                                        <FormLabel>Last name</FormLabel>
                                         <FormControl>
                                             <Input placeholder="Doe" {...field}
                                                    className="bg-[#141124] border-slate-700 text-slate-200"/>
@@ -162,7 +162,7 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: C
                         />
                         <DialogFooter>
                             <Button type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-700">
-                                {isSubmitting ? "Creating..." : "Create User"}
+                                {isSubmitting ? "Creating..." : "Create user"}
                             </Button>
                         </DialogFooter>
                     </form>

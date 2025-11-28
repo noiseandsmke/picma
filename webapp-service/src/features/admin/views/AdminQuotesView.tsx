@@ -93,7 +93,7 @@ const AdminQuotesView: React.FC = () => {
                 <div className="rounded-xl border border-slate-800 bg-slate-950 text-slate-200 shadow-sm">
                     <div className="p-6 flex items-center justify-between border-b border-slate-800">
                         <div className="flex flex-col space-y-1">
-                            <h3 className="font-semibold text-lg text-white">All Quotes</h3>
+                            <h3 className="font-semibold text-lg text-white">All quotes</h3>
                             <p className="text-sm text-slate-400">Manage and track all customer quotes with enriched
                                 context.</p>
                         </div>
@@ -101,7 +101,7 @@ const AdminQuotesView: React.FC = () => {
                             <Button onClick={handleCreate} variant="outline"
                                     className="text-white border-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-white">
                                 <PlusCircle className="h-4 w-4 mr-2"/>
-                                Create Quote
+                                Create quote
                             </Button>
                         </div>
                     </div>
@@ -124,7 +124,7 @@ const AdminQuotesView: React.FC = () => {
 
                                     <TableHead className="text-slate-400 min-w-[200px]">Property</TableHead>
 
-                                    <TableHead className="text-slate-400 w-[150px]">Plan & Premium</TableHead>
+                                    <TableHead className="text-slate-400 w-[150px]">Plan & premium</TableHead>
 
                                     <TableHead className="text-slate-400 min-w-[180px]"
                                                onClick={() => handleSort('agentName')}>
@@ -209,7 +209,7 @@ const AdminQuotesView: React.FC = () => {
                                                                          className="bg-slate-900 border-slate-800 text-slate-200">
                                                         <DropdownMenuItem onClick={() => handleEdit(quote)}
                                                                           className="hover:bg-slate-800 cursor-pointer">
-                                                            Edit Quote
+                                                            Edit quote
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             onClick={() => deleteMutation.mutate(quote.id)}
@@ -237,7 +237,7 @@ const AdminQuotesView: React.FC = () => {
                     <DialogContent
                         className="bg-slate-950 border-slate-800 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>{selectedQuote ? 'Edit Quote' : 'Create New Quote'}</DialogTitle>
+                            <DialogTitle>{selectedQuote ? 'Edit quote' : 'Create new quote'}</DialogTitle>
                         </DialogHeader>
                         <QuoteForm
                             initialData={selectedQuote}

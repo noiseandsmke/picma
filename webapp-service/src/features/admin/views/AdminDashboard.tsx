@@ -35,7 +35,7 @@ const AdminDashboard: React.FC = () => {
 
     const statusData = [
         {name: 'Accepted', value: stats?.acceptedLeads || 0, color: '#32abb9'}, // Teal
-        {name: 'In Review', value: inReviewCount, color: '#45b1fe'}, // Blue
+        {name: 'In review', value: inReviewCount, color: '#45b1fe'}, // Blue
         {name: 'Rejected', value: stats?.rejectedLeads || 0, color: '#ff692e'}, // Orange
         {name: 'Overdue', value: stats?.overdueLeads || 0, color: '#ac3cff'}, // Purple
     ].filter(item => item.value > 0);
@@ -93,7 +93,7 @@ const AdminDashboard: React.FC = () => {
                                     <div className="p-2 bg-[#593bf2]/20 rounded-lg">
                                         <FileText className="h-5 w-5 text-[#593bf2]"/>
                                     </div>
-                                    <span className="font-medium text-slate-300">Total Leads</span>
+                                    <span className="font-medium text-slate-300">Total leads</span>
                                 </div>
                             </div>
                             <div className="z-10 mt-4">
@@ -256,7 +256,7 @@ const AdminDashboard: React.FC = () => {
                                 <div className="h-7 w-7 bg-[#ac3cff]/20 rounded-md flex items-center justify-center">
                                     <CheckCircle className="h-4 w-4 text-[#ac3cff]"/>
                                 </div>
-                                <h3 className="font-semibold text-white">Leads by Status</h3>
+                                <h3 className="font-semibold text-white">Leads by status</h3>
                             </div>
                         </div>
                         <div className="flex items-center justify-center h-[284px] w-full">

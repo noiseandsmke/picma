@@ -204,7 +204,7 @@ const AdminPropertiesView: React.FC = () => {
                     <div className="p-6 flex flex-col space-y-4 border-b border-slate-800">
                         <div className="flex items-center justify-between">
                             <div className="flex flex-col space-y-1">
-                                <h3 className="font-semibold text-lg text-white">All Properties</h3>
+                                <h3 className="font-semibold text-lg text-white">All properties</h3>
                                 <p className="text-sm text-slate-400">Search and manage physical assets by address or
                                     location.</p>
                             </div>
@@ -216,7 +216,7 @@ const AdminPropertiesView: React.FC = () => {
                             }} variant="outline"
                                     className="text-white border-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-white">
                                 <PlusCircle className="h-4 w-4 mr-2"/>
-                                Create Property
+                                Create property
                             </Button>
                         </div>
                         <div className="flex gap-4">
@@ -237,13 +237,13 @@ const AdminPropertiesView: React.FC = () => {
                                 <TableRow className="border-slate-800 hover:bg-slate-900/50">
                                     <TableHead onClick={() => handleSort('location.street')}
                                                className="text-slate-400 cursor-pointer hover:text-indigo-400 transition-colors">
-                                        <div className="flex items-center gap-2">Property Address <ArrowUpDown
+                                        <div className="flex items-center gap-2">Property address <ArrowUpDown
                                             className="h-3 w-3"/></div>
                                     </TableHead>
                                     <TableHead onClick={() => handleSort('location.zipCode')}
                                                className="text-slate-400 cursor-pointer hover:text-indigo-400 transition-colors">
                                         <div className="flex items-center gap-2"><Map className="h-3 w-3"/> Zip
-                                            Code <ArrowUpDown
+                                            code <ArrowUpDown
                                                 className="h-3 w-3"/></div>
                                     </TableHead>
                                     <TableHead onClick={() => handleSort('attributes.occupancyType')}
@@ -254,10 +254,10 @@ const AdminPropertiesView: React.FC = () => {
                                     <TableHead className="text-slate-400">Construction</TableHead>
                                     <TableHead onClick={() => handleSort('attributes.squareMeters')}
                                                className="text-slate-400 cursor-pointer hover:text-indigo-400 transition-colors">
-                                        <div className="flex items-center gap-2">Sq. Meters <ArrowUpDown
+                                        <div className="flex items-center gap-2">Sq. meters <ArrowUpDown
                                             className="h-3 w-3"/></div>
                                     </TableHead>
-                                    <TableHead className="text-slate-400">Est. Cost</TableHead>
+                                    <TableHead className="text-slate-400">Est. cost</TableHead>
                                     <TableHead className="text-right text-slate-400">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -344,7 +344,7 @@ const AdminPropertiesView: React.FC = () => {
                     <DialogContent
                         className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Create Property</DialogTitle>
+                            <DialogTitle>Create property</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
@@ -361,7 +361,7 @@ const AdminPropertiesView: React.FC = () => {
                                         setValue('location.zipCode', '');
                                     }}>
                                         <SelectTrigger className="bg-slate-950 border-slate-800">
-                                            <SelectValue placeholder="Select City"/>
+                                            <SelectValue placeholder="Select city"/>
                                         </SelectTrigger>
                                         <SelectContent>
                                             {VN_LOCATIONS.map(city => (
@@ -391,7 +391,7 @@ const AdminPropertiesView: React.FC = () => {
                                                         setValue('location.zipCode', ward.zipCode);
                                                     }
                                                 }}
-                                                placeholder={selectedCity ? "Select Ward" : "Select City first"}
+                                                placeholder={selectedCity ? "Select ward" : "Select city first"}
                                                 disabled={!selectedCity}
                                             />
                                         )}
@@ -401,7 +401,7 @@ const AdminPropertiesView: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="zipCode">Zip Code</Label>
+                                    <Label htmlFor="zipCode">Zip code</Label>
                                     <Input
                                         id="zipCode"
                                         readOnly
@@ -411,7 +411,7 @@ const AdminPropertiesView: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-2 col-span-2">
-                                    <Label>Street / House Number</Label>
+                                    <Label>Street / House number</Label>
                                     <Input
                                         placeholder="e.g. Số 10, Ngõ 5"
                                         {...register('location.street')}
@@ -423,18 +423,18 @@ const AdminPropertiesView: React.FC = () => {
 
                                 <div className="col-span-2 space-y-2 pt-4">
                                     <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Property
-                                        Details</h3>
+                                        details</h3>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="constructionType">Construction Type</Label>
+                                    <Label htmlFor="constructionType">Construction type</Label>
                                     <Controller
                                         control={control}
                                         name="attributes.constructionType"
                                         render={({field}) => (
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <SelectTrigger className="bg-slate-950 border-slate-800">
-                                                    <SelectValue placeholder="Select Type"/>
+                                                    <SelectValue placeholder="Select type"/>
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {Object.values(ConstructionType).map((type) => (
@@ -449,14 +449,14 @@ const AdminPropertiesView: React.FC = () => {
                                         <p className="text-red-500 text-sm">{errors.attributes.constructionType.message}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="occupancyType">Occupancy Type</Label>
+                                    <Label htmlFor="occupancyType">Occupancy type</Label>
                                     <Controller
                                         control={control}
                                         name="attributes.occupancyType"
                                         render={({field}) => (
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <SelectTrigger className="bg-slate-950 border-slate-800">
-                                                    <SelectValue placeholder="Select Type"/>
+                                                    <SelectValue placeholder="Select type"/>
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {Object.values(OccupancyType).map((type) => (
@@ -471,7 +471,7 @@ const AdminPropertiesView: React.FC = () => {
                                         <p className="text-red-500 text-sm">{errors.attributes.occupancyType.message}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="yearBuilt">Year Built</Label>
+                                    <Label htmlFor="yearBuilt">Year built</Label>
                                     <Controller
                                         control={control}
                                         name="attributes.yearBuilt"
@@ -489,7 +489,7 @@ const AdminPropertiesView: React.FC = () => {
                                         <p className="text-red-500 text-sm">{errors.attributes.yearBuilt.message}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="noFloors">No. Floors</Label>
+                                    <Label htmlFor="noFloors">No. floors</Label>
                                     <Controller
                                         control={control}
                                         name="attributes.noFloors"
@@ -506,7 +506,7 @@ const AdminPropertiesView: React.FC = () => {
                                         <p className="text-red-500 text-sm">{errors.attributes.noFloors.message}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="squareMeters">Square Meters</Label>
+                                    <Label htmlFor="squareMeters">Square meters</Label>
                                     <Controller
                                         control={control}
                                         name="attributes.squareMeters"
@@ -525,7 +525,7 @@ const AdminPropertiesView: React.FC = () => {
                                         <p className="text-red-500 text-sm">{errors.attributes.squareMeters.message}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="estimatedConstructionCost">Est. Cost</Label>
+                                    <Label htmlFor="estimatedConstructionCost">Est. cost</Label>
                                     <Input
                                         id="estimatedConstructionCost"
                                         type="text"
@@ -539,7 +539,7 @@ const AdminPropertiesView: React.FC = () => {
                                 </div>
                             </div>
                             <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700">
-                                Create Property
+                                Create property
                             </Button>
                         </form>
                     </DialogContent>
