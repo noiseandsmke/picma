@@ -6,7 +6,7 @@ import {Input} from '@/components/ui/input';
 interface Option {
     value: string | number;
     label: string;
-    subLabel?: string;
+    sublabel?: string;
 }
 
 interface SearchableSelectProps {
@@ -33,7 +33,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     // Filter options based on search
     const filteredOptions = options.filter(opt =>
         opt.label.toLowerCase().includes(search.toLowerCase()) ||
-        (opt.subLabel && opt.subLabel.toLowerCase().includes(search.toLowerCase()))
+        (opt.sublabel && opt.sublabel.toLowerCase().includes(search.toLowerCase()))
     );
 
     const selectedOption = options.find(opt => opt.value === value);
@@ -110,8 +110,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                                     />
                                     <div className="flex flex-col">
                                         <span>{option.label}</span>
-                                        {option.subLabel && (
-                                            <span className="text-xs text-slate-500">{option.subLabel}</span>
+                                        {option.sublabel && (
+                                            <span className="text-xs text-slate-500">{option.sublabel}</span>
                                         )}
                                     </div>
                                 </div>

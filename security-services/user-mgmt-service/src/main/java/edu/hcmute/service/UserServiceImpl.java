@@ -11,12 +11,13 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
-    private UserOutboundApi userOutboundApi;
-    private UserMapper userMapper;
+    private final UserOutboundApi userOutboundApi;
+    private final UserMapper userMapper;
 
     public UserServiceImpl(UserOutboundApi userOutboundApi, UserMapper userMapper) {
         this.userOutboundApi = userOutboundApi;
@@ -30,6 +31,13 @@ public class UserServiceImpl implements UserService {
         log.info("User :: {}", user.toString());
         user = userOutboundApi.createUser(user, accessToken);
         userDto = userMapper.toDto(user);
+        return userDto;
+    }
+
+    @Override
+    public UserDto registerUser(UserDto userDto) {
+        log.info("Register User :: {}", userDto);
+        // TODO: Implement Client Credentials flow to get admin token to create user
         return userDto;
     }
 
@@ -52,13 +60,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDto updateUser(UserDto userDto, String accessToken) {
+        User user = userMapper.toEntity(userDto);
+        userOutboundApi.updateProfile(user, accessToken);
+        return userDto;
+    }
+
+    @Override
     public List<UserDto> getAllUsers(String accessToken) throws UserException {
         log.info("UserServiceImpl :: getAllUsers");
         List<User> userList = userOutboundApi.getAllUsers(accessToken);
         List<UserDto> uiUserList = new ArrayList<>();
-        userList.stream().forEach((user) -> {
-            uiUserList.add(userMapper.toDto(user));
-        });
+        if (userList != null) {
+            userList.stream().forEach((user) -> {
+                uiUserList.add(userMapper.toDto(user));
+            });
+        }
         log.info("UserServiceImpl :: uiUserList size = {}", uiUserList.size());
         return uiUserList;
     }
@@ -73,7 +90,49 @@ public class UserServiceImpl implements UserService {
             });
             return uiUserList;
         } else {
-            throw new RuntimeException("No users found");
+            return new ArrayList<>();
         }
+    }
+
+    @Override
+    public List<UserDto> getAllAgents(String accessToken) {
+        List<User> users = userOutboundApi.getAllAgents(accessToken);
+        return mapToDtoList(users);
+    }
+
+    @Override
+    public List<UserDto> getAllBrokers(String accessToken) {
+        List<User> users = userOutboundApi.getAllBrokers(accessToken);
+        return mapToDtoList(users);
+    }
+
+    @Override
+    public List<UserDto> getAllPropertyOwners(String accessToken) {
+        List<User> users = userOutboundApi.getAllPropertyOwners(accessToken);
+        return mapToDtoList(users);
+    }
+
+    @Override
+    public List<UserDto> getAllStaff(String accessToken) {
+        List<User> users = userOutboundApi.getAllStaff(accessToken);
+        return mapToDtoList(users);
+    }
+
+    @Override
+    public void forgotPassword(String email) {
+        // TODO: Call Keycloak execute-actions-email
+        log.info("Forgot password for {}", email);
+    }
+
+    @Override
+    public void resetPassword(String token, String password) {
+        log.info("Reset password with token");
+    }
+
+    private List<UserDto> mapToDtoList(List<User> users) {
+        if (CollectionUtils.isEmpty(users)) {
+            return new ArrayList<>();
+        }
+        return users.stream().map(userMapper::toDto).collect(Collectors.toList());
     }
 }

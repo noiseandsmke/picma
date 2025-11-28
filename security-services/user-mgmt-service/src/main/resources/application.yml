@@ -9,6 +9,9 @@ picma:
     groupsApi: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/admin/realms/${IDP_REALMS:picma}/groups
     groups:
       property-owners: ${PROPERTY_OWNERS_GROUP_ID:163e8a2c-8788-4bfc-bff8-e0d349bc9ac2}
+      agents: ${AGENTS_GROUP_ID:agents-group-id-placeholder}
+      brokers: ${BROKERS_GROUP_ID:brokers-group-id-placeholder}
+      staff: ${STAFF_GROUP_ID:staff-group-id-placeholder}
 eureka:
   client:
     service-url:

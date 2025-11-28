@@ -3,6 +3,7 @@ package edu.hcmute.outbound;
 import edu.hcmute.entity.User;
 import edu.hcmute.exception.UserException;
 import edu.hcmute.util.OutboundUtils;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -19,13 +20,23 @@ import java.util.Optional;
 @Component
 @Slf4j
 public class UserOutboundApi {
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
     @Value("${picma.iam.usersApi}")
     private String picma_users_api;
     @Value("${picma.iam.groupsApi}")
     private String picma_groups_api;
+    @Getter
     @Value("${picma.iam.groups.property-owners}")
     private String picma_group_prop_owners;
+    @Getter
+    @Value("${picma.iam.groups.agents}")
+    private String picma_group_agents;
+    @Getter
+    @Value("${picma.iam.groups.brokers}")
+    private String picma_group_brokers;
+    @Getter
+    @Value("${picma.iam.groups.staff}")
+    private String picma_group_staff;
 
     public UserOutboundApi(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -194,11 +205,34 @@ public class UserOutboundApi {
         }
     }
 
-    public List<User> getAllAgents() {
-        return null;
+    public List<User> getAllAgents(String accessToken) {
+        return getAllMembersOfGroup(picma_group_agents, accessToken);
     }
 
-    public List<User> getAllBrokers() {
-        return null;
+    public List<User> getAllBrokers(String accessToken) {
+        return getAllMembersOfGroup(picma_group_brokers, accessToken);
+    }
+
+    public List<User> getAllPropertyOwners(String accessToken) {
+        return getAllMembersOfGroup(picma_group_prop_owners, accessToken);
+    }
+
+    public List<User> getAllStaff(String accessToken) {
+        return getAllMembersOfGroup(picma_group_staff, accessToken);
+    }
+
+    public void updateProfile(User user, String accessToken) {
+        log.info("Update User Profile :: User ID = {}", user.getId());
+        String userApi = picma_users_api + "/" + user.getId();
+        HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(user, accessToken);
+        try {
+            ResponseEntity<?> resEntity = restTemplate.exchange(userApi, HttpMethod.PUT, reqEntity, Object.class);
+            log.info("Update User :: Status code = {}", resEntity.getStatusCode().value());
+            if (!resEntity.getStatusCode().is2xxSuccessful()) {
+                throw new RuntimeException("Something went wrong while updating user");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

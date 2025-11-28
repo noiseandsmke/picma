@@ -32,7 +32,6 @@ const quoteSchema = z.object({
         limit: z.coerce.number().min(0),
         deductible: z.coerce.number().min(0),
     })),
-    // Premium is calculated, not input
 });
 
 type QuoteFormData = z.infer<typeof quoteSchema>;
@@ -44,7 +43,6 @@ interface QuoteFormProps {
     isLoading?: boolean;
 }
 
-// Helper for default coverages based on plan
 const getDefaultCoverages = (plan: string, sumInsured: number) => {
     const baseFire = {code: 'FIRE', limit: sumInsured, deductible: 2000000};
     const baseTheft = {code: 'THEFT', limit: Math.min(sumInsured * 0.1, 50000000), deductible: 500000};
@@ -69,7 +67,6 @@ const formatCurrency = (val: number) => {
     }).format(val);
 };
 
-// Simple Currency Input Component
 const CurrencyInput = React.forwardRef<HTMLInputElement, any>(({value, onChange, ...props}, ref) => {
     const [displayValue, setDisplayValue] = React.useState('');
 
@@ -93,7 +90,7 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, any>(({value, onChange,
                 ref={ref}
                 value={displayValue}
                 onChange={handleChange}
-                className="pr-12" // Space for suffix
+                className="pr-12"
             />
             <div
                 className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 text-sm">
@@ -129,7 +126,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         name: "coverages"
     });
 
-    // 1. Fetch Options
     const {data: leads} = useQuery({
         queryKey: ['all-leads-for-select'],
         queryFn: () => fetchAllLeads(),
@@ -140,23 +136,19 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         queryFn: () => fetchUsers('agent'),
     });
 
-    // 2. Watch Values
     const selectedLeadId = useWatch({control, name: 'leadId'});
     const selectedPlan = useWatch({control, name: 'plan'});
     const sumInsured = useWatch({control, name: 'sumInsured'});
     const startDate = useWatch({control, name: 'startDate'});
 
-    // 3. Fetch Selected Lead Details to autofill
     const selectedLead = leads?.find(l => l.id === selectedLeadId);
 
-    // 4. Fetch Property Details if Lead is selected
     const {data: selectedProperty} = useQuery({
         queryKey: ['property', selectedLead?.propertyInfo],
         queryFn: () => fetchPropertyById(selectedLead!.propertyInfo),
         enabled: !!selectedLead?.propertyInfo,
     });
 
-    // Autofill Address when Property is loaded and Address is empty
     useEffect(() => {
         if (selectedProperty && !initialData) {
             const currentAddress = getValues('propertyAddress');
@@ -167,28 +159,21 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         }
     }, [selectedProperty, setValue, getValues, initialData]);
 
-    // Auto-calculate End Date
     useEffect(() => {
         if (startDate && !getValues('endDate')) {
             setValue('endDate', addYears(startDate, 1));
         }
     }, [startDate, setValue, getValues]);
 
-    // Auto-populate Coverages when Plan changes (only if creating new or user agrees? For now, we update if empty or simple change)
-    // We only update if this is not the initial load of an edit form, or if we want to force update.
-    // To avoid overwriting custom edits, we could check if coverages is empty.
     useEffect(() => {
         if (!initialData && sumInsured > 0) {
-            // Logic: If creating new, auto-fill coverages based on Plan + SumInsured
-            // Or if user changes plan, we might want to refresh coverages
             const defaults = getDefaultCoverages(selectedPlan, sumInsured);
             replace(defaults);
         }
-    }, [selectedPlan, replace, initialData]); // removed sumInsured to prevent overwrite loop if sum changes, only plan
+    }, [selectedPlan, replace, initialData]);
 
-    // 5. Live Premium Calculation
     const calculatePremium = (plan: string, sum: number) => {
-        let rate = 0.001; // Base rate
+        let rate = 0.001;
         if (plan === 'SILVER') rate = 0.0012;
         if (plan === 'GOLD') rate = 0.0015;
 
@@ -201,7 +186,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
 
     const calculatedPremium = calculatePremium(selectedPlan, sumInsured);
 
-    // 6. Handle "Use Lead Valuation"
     const handleUseValuation = () => {
         if (selectedProperty?.valuation?.estimatedConstructionCost) {
             setValue('sumInsured', selectedProperty.valuation.estimatedConstructionCost);
@@ -220,13 +204,13 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
     const leadOptions = leads?.map(l => ({
         value: l.id,
         label: `${l.userInfo} (Lead #${l.id})`,
-        subLabel: `Status: ${l.status}`
+        sublabel: `Status: ${l.status}`
     })) || [];
 
     const agentOptions = agents?.map(a => ({
-        value: a.id,
+        value: a.id || '',
         label: `${a.firstName} ${a.lastName} (${a.username})`,
-        subLabel: `Zip: ${a.zipCode || 'N/A'}`
+        sublabel: `Zip: ${a.zipCode || 'N/A'}`
     })) || [];
 
     const setQuickDuration = (years: number) => {
@@ -238,11 +222,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
     return (
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                {/* Left Column: General Info & Property (Span 2) */}
                 <div className="lg:col-span-2 space-y-6">
-
-                    {/* SECTION 1: General Info */}
                     <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-800 space-y-4">
                         <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
                             <User size={14}/> General Information
@@ -310,7 +290,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                                     mode="single"
                                                     selected={field.value}
                                                     onSelect={field.onChange}
-                                                    initialFocus
+                                                    autoFocus
                                                     className="bg-slate-950 text-white"
                                                 />
                                             </PopoverContent>
@@ -354,7 +334,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                                     mode="single"
                                                     selected={field.value}
                                                     onSelect={field.onChange}
-                                                    initialFocus
+                                                    autoFocus
                                                     className="bg-slate-950 text-white"
                                                 />
                                             </PopoverContent>
@@ -364,8 +344,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                             </div>
                         </div>
                     </div>
-
-                    {/* SECTION 2: Property & Plan */}
                     <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-800 space-y-4">
                         <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
                             <Home size={14}/> Property & Plan
@@ -433,11 +411,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                         </div>
                     </div>
                 </div>
-
-                {/* Right Column: Coverages & Premium (Span 1) */}
                 <div className="space-y-6">
-
-                    {/* SECTION 3: Coverages */}
                     <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-800 space-y-4 h-full">
                         <div className="flex items-center justify-between">
                             <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Coverages</h4>
@@ -452,7 +426,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                             </Button>
                         </div>
 
-                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-3 coverages-list">
                             {fields.map((field, index) => (
                                 <div key={field.id}
                                      className="bg-slate-950 p-3 rounded border border-slate-800 space-y-2 relative group">
@@ -510,8 +484,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                         </div>
                     </div>
                 </div>
-
-                {/* Footer: Premium (Full Width) */}
                 <div className="col-span-1 lg:col-span-3">
                     <div className="rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-4">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-4">

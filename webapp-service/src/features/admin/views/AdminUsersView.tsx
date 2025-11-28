@@ -1,24 +1,55 @@
 import React, {useState} from 'react';
-import {MoreVertical, Search} from 'lucide-react';
+import {MoreVertical, Pencil, Search, Trash} from 'lucide-react';
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {Badge} from "@/components/ui/badge";
 import {Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from "@/components/ui/dropdown-menu";
 import {cn} from "@/lib/utils";
-import {useQuery} from '@tanstack/react-query';
-import {fetchUsers} from '../services/userService';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import {createUser, deleteUser, fetchUsers, UserDto} from '../services/userService';
 import {Skeleton} from '@/components/ui/skeleton';
 import AdminLayout from '../layouts/AdminLayout';
+import {CreateUserDialog} from '../components/CreateUserDialog';
+import {toast} from 'sonner';
 
 const AdminUsersView: React.FC = () => {
     const [activeTab, setActiveTab] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+    const queryClient = useQueryClient();
 
     const {data: users, isLoading} = useQuery({
         queryKey: ['admin-users', activeTab],
         queryFn: () => fetchUsers(activeTab)
+    });
+
+    const createMutation = useMutation({
+        mutationFn: createUser,
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({queryKey: ['admin-users']});
+            setIsCreateOpen(false);
+            toast.success("User created successfully");
+        },
+        onError: (error) => {
+            console.error(error);
+            toast.error("Failed to create user");
+        }
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: deleteUser,
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({queryKey: ['admin-users']});
+            toast.success("User deleted successfully");
+        },
+        onError: (error) => {
+            console.error(error);
+            toast.error("Failed to delete user");
+        }
     });
 
     const filteredUsers = users?.filter(user => {
@@ -31,14 +62,28 @@ const AdminUsersView: React.FC = () => {
         );
     });
 
+    const getDisplayRole = (user: UserDto) => {
+        if (user.role) return user.role;
+        if (user.groupId === 'agent-group-id-placeholder') return 'Agent';
+        if (user.groupId === '163e8a2c-8788-4bfc-bff8-e0d349bc9ac2') return 'Owner';
+        if (user.groupId === 'broker-group-id-placeholder') return 'Broker';
+        if (user.groupId === 'staff-group-id-placeholder') return 'Staff';
+        return 'User';
+    };
+
     return (
         <AdminLayout>
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        {/* Header text removed as requested */}
+                        <h1 className="text-2xl font-bold text-slate-100">User Management</h1>
                     </div>
-                    <Button className="bg-indigo-600 hover:bg-indigo-700">Add New User</Button>
+                    <Button
+                        className="bg-indigo-600 hover:bg-indigo-700"
+                        onClick={() => setIsCreateOpen(true)}
+                    >
+                        Add New User
+                    </Button>
                 </div>
 
                 <Card className="bg-[#141124] border-[#2e2c3a]">
@@ -98,7 +143,7 @@ const AdminUsersView: React.FC = () => {
                                             <div className="flex items-center gap-3">
                                                 <div
                                                     className="h-9 w-9 rounded-full bg-[#593bf2]/10 flex items-center justify-center text-[#593bf2] font-medium border border-[#593bf2]/20">
-                                                    {user.username.substring(0, 2).toUpperCase()}
+                                                    {user.username?.substring(0, 2).toUpperCase() || 'NA'}
                                                 </div>
                                                 <div>
                                                     <div className="font-medium text-slate-200">{user.username}</div>
@@ -109,7 +154,7 @@ const AdminUsersView: React.FC = () => {
                                         <TableCell>
                                             <Badge variant="outline"
                                                    className="border-[#2e2c3a] text-slate-400 bg-[#181624]">
-                                                {user.role}
+                                                {getDisplayRole(user)}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
@@ -118,15 +163,34 @@ const AdminUsersView: React.FC = () => {
                                                     user.status === 'Active' ? "bg-emerald-500" :
                                                         user.status === 'Away' ? "bg-amber-500" : "bg-slate-500"
                                                 )}/>
-                                                <span className="text-slate-300">{user.status}</span>
+                                                <span className="text-slate-300">{user.status || 'Offline'}</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-slate-400">{user.lastActive}</TableCell>
+                                        <TableCell className="text-slate-400">{user.lastActive || '-'}</TableCell>
                                         <TableCell className="text-right">
-                                            <Button size="icon" variant="ghost"
-                                                    className="text-slate-500 hover:text-white hover:bg-[#593bf2]/20">
-                                                <MoreVertical className="h-4 w-4"/>
-                                            </Button>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button size="icon" variant="ghost"
+                                                            className="text-slate-500 hover:text-white hover:bg-[#593bf2]/20">
+                                                        <MoreVertical className="h-4 w-4"/>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end"
+                                                                     className="bg-[#1e1c2e] border-slate-800 text-slate-200">
+                                                    <DropdownMenuItem
+                                                        className="focus:bg-slate-800 focus:text-white cursor-pointer">
+                                                        <Pencil className="mr-2 h-4 w-4"/>
+                                                        Edit Profile
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="focus:bg-red-900/20 focus:text-red-400 text-red-400 cursor-pointer"
+                                                        onClick={() => user.id && deleteMutation.mutate(user.id)}
+                                                    >
+                                                        <Trash className="mr-2 h-4 w-4"/>
+                                                        Delete User
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -135,6 +199,13 @@ const AdminUsersView: React.FC = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            <CreateUserDialog
+                open={isCreateOpen}
+                onOpenChange={setIsCreateOpen}
+                onSubmit={(data) => createMutation.mutate(data)}
+                isSubmitting={createMutation.isPending}
+            />
         </AdminLayout>
     );
 };

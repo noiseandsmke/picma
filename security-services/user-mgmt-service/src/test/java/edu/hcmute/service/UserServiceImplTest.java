@@ -34,13 +34,10 @@ public class UserServiceImplTest {
         UserDto inputDto = new UserDto("u", "f", "l", "e", "123", "g1", null, true, true, false);
         User entity = new User();
         UserDto resultDto = new UserDto("u", "f", "l", "e", "123", "g1", "1", true, true, false);
-
         when(userMapper.toEntity(inputDto)).thenReturn(entity);
         when(userOutboundApi.createUser(entity, "token")).thenReturn(entity);
         when(userMapper.toDto(entity)).thenReturn(resultDto);
-
         UserDto result = userService.createUser(inputDto, "token");
-
         assertNotNull(result);
         assertEquals("1", result.id());
         verify(userOutboundApi).createUser(entity, "token");
@@ -51,12 +48,9 @@ public class UserServiceImplTest {
         String id = "1";
         User entity = new User();
         UserDto resultDto = new UserDto("u", "f", "l", "e", "123", "g1", id, true, true, false);
-
         when(userOutboundApi.getUserById(id, "token")).thenReturn(entity);
         when(userMapper.toDto(entity)).thenReturn(resultDto);
-
         UserDto result = userService.getUserById(id, "token");
-
         assertNotNull(result);
         assertEquals(id, result.id());
     }
@@ -87,12 +81,9 @@ public class UserServiceImplTest {
     void getAllUsers_success() throws UserException {
         User entity = new User();
         UserDto resultDto = new UserDto("u", "f", "l", "e", "123", "g1", "1", true, true, false);
-
         when(userOutboundApi.getAllUsers("token")).thenReturn(Collections.singletonList(entity));
         when(userMapper.toDto(entity)).thenReturn(resultDto);
-
         List<UserDto> result = userService.getAllUsers("token");
-
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
     }
@@ -102,12 +93,9 @@ public class UserServiceImplTest {
         String groupId = "g1";
         User entity = new User();
         UserDto resultDto = new UserDto("u", "f", "l", "e", "123", "g1", "1", true, true, false);
-
         when(userOutboundApi.getAllMembersOfGroup(groupId, "token")).thenReturn(Collections.singletonList(entity));
         when(userMapper.toDto(entity)).thenReturn(resultDto);
-
         List<UserDto> result = userService.getAllMembersOfGroup(groupId, "token");
-
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
     }
@@ -116,6 +104,8 @@ public class UserServiceImplTest {
     void getAllMembersOfGroup_empty() {
         String groupId = "g1";
         when(userOutboundApi.getAllMembersOfGroup(groupId, "token")).thenReturn(Collections.emptyList());
-        assertThrows(RuntimeException.class, () -> userService.getAllMembersOfGroup(groupId, "token"));
+        List<UserDto> result = userService.getAllMembersOfGroup(groupId, "token");
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 }

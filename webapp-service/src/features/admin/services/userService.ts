@@ -1,15 +1,20 @@
 import axios from 'axios';
 
 export interface UserDto {
-    id: string;
+    id?: string;
     username: string;
     email: string;
-    role: string;
-    status: string;
+    firstName: string;
+    lastName: string;
+    mobile: string;
+    role?: string;
+    status?: string;
     lastActive?: string;
-    firstName?: string;
-    lastName?: string;
     zipCode?: string;
+    groupId?: string;
+    emailVerified?: boolean;
+    enabled?: boolean;
+    totp?: boolean;
 }
 
 const USER_SERVICE_URL = import.meta.env.VITE_USER_SERVICE_URL || 'http://localhost:5051';
@@ -33,6 +38,7 @@ export const fetchUsers = async (role?: string): Promise<UserDto[]> => {
             if (role.toLowerCase() === 'agent') endpoint = '/users/agents';
             else if (role.toLowerCase() === 'owner') endpoint = '/users/owners';
             else if (role.toLowerCase() === 'broker') endpoint = '/users/brokers';
+            else if (role.toLowerCase() === 'staff') endpoint = '/users/staff';
         }
 
         const response = await userClient.get<UserDto[]>(endpoint);
@@ -51,4 +57,18 @@ export const fetchUserById = async (userId: string): Promise<UserDto | null> => 
         console.error(`Failed to fetch user ${userId}`, error);
         return null;
     }
-}
+};
+
+export const createUser = async (user: UserDto): Promise<UserDto> => {
+    const response = await userClient.post<UserDto>('/users', user);
+    return response.data;
+};
+
+export const deleteUser = async (userId: string): Promise<void> => {
+    await userClient.delete(`/users/${userId}`);
+};
+
+export const updateUser = async (user: UserDto): Promise<UserDto> => {
+    const response = await userClient.put<UserDto>('/users/profile', user);
+    return response.data;
+};
