@@ -25,6 +25,7 @@ import {Controller, useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {Input} from '@/components/ui/input';
+import {NumberInput} from '@/components/ui/number-input';
 import {Label} from '@/components/ui/label';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {
@@ -38,14 +39,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {LEAD_STATUS_CONFIG} from '../utils/statusMapping';
 
-// Detailed form schema for UI
 const createLeadSchema = z.object({
     fullName: z.string().min(1, 'Full Name is required'),
     phoneNumber: z.string().min(1, 'Phone Number is required'),
-    email: z.string().email('Invalid email address'),
+    email: z.email('Invalid email address'),
     address: z.string().min(1, 'Address is required'),
     city: z.string().min(1, 'City is required'),
-    cost: z.string().min(1, 'Cost is required'),
+    cost: z.coerce.number().min(0, 'Cost is required'),
 });
 
 type CreateLeadFormData = z.infer<typeof createLeadSchema>;
@@ -106,10 +106,8 @@ const AdminLeadsView: React.FC = () => {
     });
 
     const onSubmit = (data: CreateLeadFormData) => {
-        // Concatenate User Info
         const userInfo = `${data.fullName} - ${data.phoneNumber} - ${data.email}`;
 
-        // Package Property Info as JSON
         const propertyInfo = JSON.stringify({
             address: data.address,
             city: data.city,
@@ -152,11 +150,9 @@ const AdminLeadsView: React.FC = () => {
         }
     };
 
-    // Helper to parse User Info
     const parseUserInfo = (userInfo: string) => {
         if (!userInfo) return {name: 'Unknown', details: ''};
 
-        // Try splitting by hyphen if it follows the format "Name - Phone - Email"
         const parts = userInfo.split(' - ');
         if (parts.length >= 2) {
             return {
@@ -164,32 +160,23 @@ const AdminLeadsView: React.FC = () => {
                 details: parts.slice(1).join(' • ')
             };
         }
-
-        // Fallback
         return {name: userInfo, details: ''};
     };
-
-    // Helper to resolve Property Info
     const resolvePropertyInfo = (propertyInfoStr: string) => {
-        // 1. Try to see if it's a JSON string (from new Create Lead)
         try {
             const obj = JSON.parse(propertyInfoStr);
             if (obj && obj.address) {
                 return `${obj.address}, ${obj.city}`;
             }
         } catch {
-            // Not JSON, continue
         }
 
-        // 2. Try to match with fetched properties (if it's an ID)
         if (properties && properties.length > 0) {
             const matchedProp = properties.find(p => String(p.id) === String(propertyInfoStr));
             if (matchedProp) {
                 return `${matchedProp.location.street} (${matchedProp.attributes.occupancyType})`;
             }
         }
-
-        // 3. Fallback to raw string
         return propertyInfoStr;
     };
 
@@ -206,7 +193,6 @@ const AdminLeadsView: React.FC = () => {
     return (
         <AdminLayout>
             <div className="space-y-6">
-                {/* Table Section */}
                 <div className="rounded-xl border border-slate-800 bg-slate-950 text-slate-200 shadow-sm">
                     <div className="p-6 flex flex-col space-y-4 border-b border-slate-800">
                         <div className="flex items-center justify-between">
@@ -220,8 +206,6 @@ const AdminLeadsView: React.FC = () => {
                                 Create Lead
                             </Button>
                         </div>
-
-                        {/* Filters */}
                         <div className="flex gap-4">
                             <div className="relative flex-1 max-w-sm">
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500"/>
@@ -424,8 +408,6 @@ const AdminLeadsView: React.FC = () => {
                             <DialogTitle>Create New Lead</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
-
-                            {/* User Info Section */}
                             <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">User
                                     Information</h4>
@@ -470,8 +452,6 @@ const AdminLeadsView: React.FC = () => {
                             </div>
 
                             <div className="border-t border-slate-800"/>
-
-                            {/* Property Info Section */}
                             <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Property
                                     Details</h4>
@@ -515,9 +495,15 @@ const AdminLeadsView: React.FC = () => {
                                         <Controller
                                             name="cost"
                                             control={control}
-                                            render={({field}) => <Input id="cost" type="number"
-                                                                        placeholder="500000" {...field}
-                                                                        className="bg-slate-900 border-slate-700 mt-1.5"/>}
+                                            render={({field}) => (
+                                                <NumberInput
+                                                    id="cost"
+                                                    placeholder="500000"
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    className="bg-slate-900 border-slate-700 mt-1.5"
+                                                />
+                                            )}
                                         />
                                         {errors.cost &&
                                             <p className="text-red-500 text-xs mt-1">{errors.cost.message}</p>}

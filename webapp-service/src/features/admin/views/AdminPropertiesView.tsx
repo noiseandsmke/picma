@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {ArrowUpDown, Building2, Map, MapPin, MoreHorizontal, Plus, Search, Trash2} from 'lucide-react';
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Input} from "@/components/ui/input";
+import {NumberInput} from "@/components/ui/number-input";
 import {Button} from "@/components/ui/button";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {Badge} from "@/components/ui/badge";
@@ -23,7 +24,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import AdminLayout from '../layouts/AdminLayout';
 import {City, VN_LOCATIONS} from '@/lib/vn-locations';
-import {SearchableSelect} from "@/components/ui/searchable-select";
+import {SearchableSelect} from "@/components/ui/searchable-select.tsx";
 
 const propertySchema = z.object({
     location: z.object({
@@ -250,7 +251,6 @@ const AdminPropertiesView: React.FC = () => {
                                                     value={field.value}
                                                     onChange={(val) => {
                                                         field.onChange(val);
-                                                        // Auto fill zip code
                                                         const ward = selectedCity?.wards.find(w => w.name === val);
                                                         if (ward) {
                                                             setValue('location.zipCode', ward.zipCode);
@@ -337,36 +337,54 @@ const AdminPropertiesView: React.FC = () => {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="yearBuilt">Year Built</Label>
-                                        <Input
-                                            id="yearBuilt"
-                                            type="number"
-                                            placeholder={new Date().getFullYear().toString()}
-                                            {...register('attributes.yearBuilt')}
-                                            className="bg-slate-950 border-slate-800"
+                                        <Controller
+                                            control={control}
+                                            name="attributes.yearBuilt"
+                                            render={({field}) => (
+                                                <NumberInput
+                                                    id="yearBuilt"
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder={new Date().getFullYear().toString()}
+                                                    className="bg-slate-950 border-slate-800"
+                                                />
+                                            )}
                                         />
                                         {errors.attributes?.yearBuilt &&
                                             <p className="text-red-500 text-sm">{errors.attributes.yearBuilt.message}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="noFloors">No. Floors</Label>
-                                        <Input
-                                            id="noFloors"
-                                            type="number"
-                                            {...register('attributes.noFloors')}
-                                            className="bg-slate-950 border-slate-800"
+                                        <Controller
+                                            control={control}
+                                            name="attributes.noFloors"
+                                            render={({field}) => (
+                                                <NumberInput
+                                                    id="noFloors"
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    className="bg-slate-950 border-slate-800"
+                                                />
+                                            )}
                                         />
                                         {errors.attributes?.noFloors &&
                                             <p className="text-red-500 text-sm">{errors.attributes.noFloors.message}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="squareMeters">Square Meters</Label>
-                                        <Input
-                                            id="squareMeters"
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="Enter area..."
-                                            {...register('attributes.squareMeters')}
-                                            className="bg-slate-950 border-slate-800"
+                                        <Controller
+                                            control={control}
+                                            name="attributes.squareMeters"
+                                            render={({field}) => (
+                                                <NumberInput
+                                                    id="squareMeters"
+                                                    step="0.01"
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Enter area..."
+                                                    className="bg-slate-950 border-slate-800"
+                                                />
+                                            )}
                                         />
                                         {errors.attributes?.squareMeters &&
                                             <p className="text-red-500 text-sm">{errors.attributes.squareMeters.message}</p>}
