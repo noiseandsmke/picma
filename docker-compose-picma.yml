@@ -9,14 +9,14 @@ services:
     ports:
       - "5435:5432"
     volumes:
-      - ./picma-business-data/property-quote:/var/lib/postgresql/data
+      - ./.picma-storage/picma-business-data/property-quote:/var/lib/postgresql/data
   property-mgmt-mongo-db:
     image: mongo:8.0
     container_name: property-mgmt-db
     ports:
       - "27017:27017"
     volumes:
-      - ./picma-business-data/property-mgmt:/data/db
+      - ./.picma-storage/picma-business-data/property-mgmt:/data/db
   picma-iam-keycloak-service:
     container_name: iam-keycloak
     image: quay.io/keycloak/keycloak:26.3.5
@@ -47,7 +47,7 @@ services:
       - POSTGRES_PASSWORD=admin
       - POSTGRES_DB=customers-db
     volumes:
-      - ./picma-iam-customers-db:/var/lib/postgresql/data
+      - ./.picma-storage/picma-iam-customers-db:/var/lib/postgresql/data
     networks:
       - picma-network
   picma-iam-directory-server-service:
@@ -63,7 +63,7 @@ services:
       - ROOT_USER_DN=uid=picmaAdmin
       - ROOT_PASSWORD=648877
     volumes:
-      - ./picma-iam-directory-db:/opt/opendj/data
+      - ./.picma-storage/picma-iam-directory-db:/opt/opendj/data
     networks:
       - picma-network
   picma-cache-server-service:
