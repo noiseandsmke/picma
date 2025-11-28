@@ -17,8 +17,6 @@ const AgentDashboard: React.FC = () => {
         queryFn: () => fetchAgentLeads(agentId)
     });
 
-    const isBroker = true;
-
     return (
         <AgentLayout>
             <div className="space-y-8">
@@ -160,21 +158,6 @@ const AgentDashboard: React.FC = () => {
                     </Card>
 
                     <div className="space-y-6">
-                        {isBroker && (
-                            <Card
-                                className="border-none shadow-sm bg-gradient-to-r from-slate-900 to-slate-800 text-white">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-lg font-semibold text-white">Commission
-                                        Wallet</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-3xl font-bold mb-1">$12,450.00</div>
-                                    <p className="text-xs text-slate-400 mb-4">Available for withdrawal</p>
-                                    <Button size="sm" variant="secondary" className="w-full">View History</Button>
-                                </CardContent>
-                            </Card>
-                        )}
-
                         <Card className="border-none shadow-sm bg-white">
                             <CardHeader className="pb-2 border-b border-slate-100">
                                 <CardTitle className="text-lg font-semibold text-slate-800">Tasks</CardTitle>
@@ -194,7 +177,7 @@ const AgentDashboard: React.FC = () => {
                                     <User className="h-5 w-5 text-slate-500 mt-0.5"/>
                                     <div>
                                         <p className="text-sm font-medium text-slate-900">Update Profile Info</p>
-                                        <p className="text-xs text-slate-500 mt-1">Broker license expires in 30
+                                        <p className="text-xs text-slate-500 mt-1">License expires in 30
                                             days.</p>
                                     </div>
                                 </div>

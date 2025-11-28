@@ -31,12 +31,6 @@ public class UserOutboundApi {
     @Getter
     @Value("${picma.iam.groups.agents}")
     private String picma_group_agents;
-    @Getter
-    @Value("${picma.iam.groups.brokers}")
-    private String picma_group_brokers;
-    @Getter
-    @Value("${picma.iam.groups.staff}")
-    private String picma_group_staff;
 
     public UserOutboundApi(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -209,16 +203,8 @@ public class UserOutboundApi {
         return getAllMembersOfGroup(picma_group_agents, accessToken);
     }
 
-    public List<User> getAllBrokers(String accessToken) {
-        return getAllMembersOfGroup(picma_group_brokers, accessToken);
-    }
-
     public List<User> getAllPropertyOwners(String accessToken) {
         return getAllMembersOfGroup(picma_group_prop_owners, accessToken);
-    }
-
-    public List<User> getAllStaff(String accessToken) {
-        return getAllMembersOfGroup(picma_group_staff, accessToken);
     }
 
     public void updateProfile(User user, String accessToken) {

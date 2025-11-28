@@ -56,24 +56,6 @@ public class UserController {
         return ResponseEntity.ok(agentsList);
     }
 
-    @GetMapping("/users/brokers")
-    @Operation(description = "getAllBrokers", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<UserDto>> getAllBrokers() {
-        log.info("UserController :: getAllBrokers");
-        String accessToken = getAccessToken();
-        List<UserDto> brokersList = userService.getAllBrokers(accessToken);
-        return ResponseEntity.ok(brokersList);
-    }
-
-    @GetMapping("/users/staff")
-    @Operation(description = "getAllStaff", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<UserDto>> getAllStaff() {
-        log.info("UserController :: getAllStaff");
-        String accessToken = getAccessToken();
-        List<UserDto> staffList = userService.getAllStaff(accessToken);
-        return ResponseEntity.ok(staffList);
-    }
-
     @PostMapping({"/users", "/users/"})
     @Operation(description = "createUser", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {

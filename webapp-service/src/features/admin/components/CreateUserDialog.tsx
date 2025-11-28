@@ -47,8 +47,6 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: C
     const handleSubmit = (values: z.infer<typeof userSchema>) => {
         let groupId = "";
         if (values.role === 'agent') groupId = "agent-group-id-placeholder";
-        else if (values.role === 'broker') groupId = "broker-group-id-placeholder";
-        else if (values.role === 'staff') groupId = "staff-group-id-placeholder";
         else if (values.role === 'owner') groupId = "163e8a2c-8788-4bfc-bff8-e0d349bc9ac2";
 
         onSubmit({
@@ -156,8 +154,6 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: C
                                         <SelectContent className="bg-[#141124] border-slate-700 text-slate-200">
                                             <SelectItem value="agent">Agent</SelectItem>
                                             <SelectItem value="owner">Owner</SelectItem>
-                                            <SelectItem value="broker">Broker</SelectItem>
-                                            <SelectItem value="staff">Staff</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage/>

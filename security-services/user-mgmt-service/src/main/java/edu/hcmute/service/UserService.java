@@ -22,11 +22,7 @@ public interface UserService {
 
     List<UserDto> getAllAgents(String accessToken);
 
-    List<UserDto> getAllBrokers(String accessToken);
-
     List<UserDto> getAllPropertyOwners(String accessToken);
-
-    List<UserDto> getAllStaff(String accessToken);
 
     void forgotPassword(String email);
 

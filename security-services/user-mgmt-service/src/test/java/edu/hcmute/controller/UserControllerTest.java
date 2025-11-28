@@ -75,18 +75,6 @@ public class UserControllerTest {
     }
 
     @Test
-    void getAllBrokers_shouldReturnListOfUsers() {
-        String accessToken = "Bearer token";
-        List<UserDto> userList = Collections.singletonList(new UserDto("u", "f", "l", "e", "123", "g1", "1", true, true, false));
-        when(request.getHeader("Authorization")).thenReturn(accessToken);
-        when(userService.getAllBrokers("token")).thenReturn(userList);
-        ResponseEntity<List<UserDto>> response = userController.getAllBrokers();
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(userList, response.getBody());
-    }
-
-    @Test
     void createUser_shouldReturnCreatedUser() {
         String accessToken = "Bearer token";
         UserDto inputDto = new UserDto("u", "f", "l", "e", "123", "g1", null, true, true, false);

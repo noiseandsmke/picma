@@ -52,12 +52,6 @@ const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
     const location = useLocation();
     const [openMenus, setOpenMenus] = useState<string[]>(['Workflows', 'CRM']);
 
-    // Mock distinction for Broker vs Agent based on some logic or data.
-    // Since we don't have it in User type yet, we'll assume everyone is an "Agent" unless specified.
-    // For now, we'll just display "Insurance Agent" or "Broker" based on a mock check.
-    const isBroker = user?.roles.includes('BROKER');
-    const roleLabel = isBroker ? 'Independent Broker' : 'Insurance Agent';
-
     const toggleMenu = (label: string) => {
         setOpenMenus(prev =>
             prev.includes(label) ? prev.filter(item => item !== label) : [...prev, label]
@@ -167,26 +161,15 @@ const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
                         <h1 className="text-xl font-semibold text-slate-800">Agent Dashboard</h1>
                         <div className="flex items-center gap-2">
                              <span
-                                 className={cn("text-xs font-medium px-2 py-0.5 rounded-full", isBroker ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700")}>
-                                {roleLabel}
+                                 className={cn("text-xs font-medium px-2 py-0.5 rounded-full", "bg-blue-100 text-blue-700")}>
+                                Insurance Agent
                             </span>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        {/* Commission Wallet for Brokers */}
-                        {isBroker && (
-                            <div
-                                className="flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100">
-                                <Briefcase className="h-4 w-4 text-amber-600"/>
-                                <span className="text-sm font-medium text-amber-800">$12,450.00</span>
-                            </div>
-                        )}
-
-                        {!isBroker && (
-                            <div className="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                                Internal Announcement: Q3 Goals Meeting tomorrow at 10 AM
-                            </div>
-                        )}
+                        <div className="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                            Internal Announcement: Q3 Goals Meeting tomorrow at 10 AM
+                        </div>
 
                         <div
                             className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors">

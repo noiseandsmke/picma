@@ -101,20 +101,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDto> getAllBrokers(String accessToken) {
-        List<User> users = userOutboundApi.getAllBrokers(accessToken);
-        return mapToDtoList(users);
-    }
-
-    @Override
     public List<UserDto> getAllPropertyOwners(String accessToken) {
         List<User> users = userOutboundApi.getAllPropertyOwners(accessToken);
-        return mapToDtoList(users);
-    }
-
-    @Override
-    public List<UserDto> getAllStaff(String accessToken) {
-        List<User> users = userOutboundApi.getAllStaff(accessToken);
         return mapToDtoList(users);
     }
 

@@ -66,8 +66,6 @@ const AdminUsersView: React.FC = () => {
         if (user.role) return user.role;
         if (user.groupId === 'agent-group-id-placeholder') return 'Agent';
         if (user.groupId === '163e8a2c-8788-4bfc-bff8-e0d349bc9ac2') return 'Owner';
-        if (user.groupId === 'broker-group-id-placeholder') return 'Broker';
-        if (user.groupId === 'staff-group-id-placeholder') return 'Staff';
         return 'User';
     };
 
@@ -98,8 +96,6 @@ const AdminUsersView: React.FC = () => {
                                                  className="data-[state=active]:bg-[#593bf2] data-[state=active]:text-white text-slate-400">Agents</TabsTrigger>
                                     <TabsTrigger value="owner"
                                                  className="data-[state=active]:bg-[#593bf2] data-[state=active]:text-white text-slate-400">Owners</TabsTrigger>
-                                    <TabsTrigger value="staff"
-                                                 className="data-[state=active]:bg-[#593bf2] data-[state=active]:text-white text-slate-400">Staff</TabsTrigger>
                                 </TabsList>
                             </Tabs>
                             <div className="relative w-64">
