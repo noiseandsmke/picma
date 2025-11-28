@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ArrowUpDown, Building2, Map, MapPin, MoreHorizontal, Plus, Search, Trash2} from 'lucide-react';
-import {Card, CardContent, CardHeader} from "@/components/ui/card";
+import {ArrowUpDown, Building2, Map, MapPin, MoreHorizontal, PlusCircle, Search, Trash2} from 'lucide-react';
 import {Input} from "@/components/ui/input";
 import {NumberInput} from "@/components/ui/number-input";
 import {Button} from "@/components/ui/button";
@@ -15,7 +14,7 @@ import {
     OccupancyType
 } from '../services/propertyService';
 import {Skeleton} from '@/components/ui/skeleton';
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 import {z} from 'zod';
 import {Controller, useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -26,6 +25,9 @@ import AdminLayout from '../layouts/AdminLayout';
 import {City, VN_LOCATIONS} from '@/lib/vn-locations';
 import {SearchableSelect} from "@/components/ui/searchable-select.tsx";
 
+const constructionTypeValues = Object.values(ConstructionType) as [string, ...string[]];
+const occupancyTypeValues = Object.values(OccupancyType) as [string, ...string[]];
+
 const propertySchema = z.object({
     location: z.object({
         street: z.string().min(1, "Street is required"),
@@ -34,8 +36,8 @@ const propertySchema = z.object({
         zipCode: z.string().min(1, "Zip Code is required"),
     }),
     attributes: z.object({
-        constructionType: z.nativeEnum(ConstructionType),
-        occupancyType: z.nativeEnum(OccupancyType),
+        constructionType: z.enum(constructionTypeValues),
+        occupancyType: z.enum(occupancyTypeValues),
         yearBuilt: z.coerce.number().min(1800, "Year Built must be valid"),
         noFloors: z.coerce.number().min(1, "Number of floors must be at least 1"),
         squareMeters: z.coerce.number().min(1, "Square Meters must be positive"),
@@ -110,7 +112,15 @@ const AdminPropertiesView: React.FC = () => {
 
 
     const onSubmit = (data: PropertyFormValues) => {
-        createMutation.mutate(data);
+        // Safe cast as we know the strings from z.enum are valid enum values
+        createMutation.mutate({
+            ...data,
+            attributes: {
+                ...data.attributes,
+                constructionType: data.attributes.constructionType as unknown as ConstructionType,
+                occupancyType: data.attributes.occupancyType as unknown as OccupancyType,
+            }
+        });
     };
 
     const handleDelete = (id: string) => {
@@ -190,244 +200,40 @@ const AdminPropertiesView: React.FC = () => {
     return (
         <AdminLayout>
             <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h2 className="text-2xl font-bold text-white tracking-tight">Property Info</h2>
-                        <p className="text-slate-400">Search and manage physical assets by address or location.</p>
-                    </div>
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
+                <div className="rounded-xl border border-slate-800 bg-slate-950 text-slate-200 shadow-sm">
+                    <div className="p-6 flex flex-col space-y-4 border-b border-slate-800">
+                        <div className="flex items-center justify-between">
+                            <div className="flex flex-col space-y-1">
+                                <h3 className="font-semibold text-lg text-white">All Properties</h3>
+                                <p className="text-sm text-slate-400">Search and manage physical assets by address or
+                                    location.</p>
+                            </div>
                             <Button onClick={() => {
                                 reset();
                                 setSelectedCity(null);
                                 setCostDisplay('');
-                            }} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                <Plus className="h-4 w-4 mr-2"/>
+                                setIsDialogOpen(true);
+                            }} variant="outline"
+                                    className="text-white border-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-white">
+                                <PlusCircle className="h-4 w-4 mr-2"/>
                                 Create Property
                             </Button>
-                        </DialogTrigger>
-                        <DialogContent
-                            className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
-                            <DialogHeader>
-                                <DialogTitle>Create Property</DialogTitle>
-                            </DialogHeader>
-                            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="col-span-2 space-y-2">
-                                        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Address</h3>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label>City</Label>
-                                        <Select onValueChange={(val) => {
-                                            const city = VN_LOCATIONS.find(c => c.name === val) || null;
-                                            setSelectedCity(city);
-                                            setValue('location.ward', '');
-                                            setValue('location.zipCode', '');
-                                        }}>
-                                            <SelectTrigger className="bg-slate-950 border-slate-800">
-                                                <SelectValue placeholder="Select City"/>
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {VN_LOCATIONS.map(city => (
-                                                    <SelectItem key={city.name}
-                                                                value={city.name}>{city.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <input type="hidden" {...register('location.city')} />
-                                        {errors.location?.city &&
-                                            <p className="text-red-500 text-sm">{errors.location.city.message}</p>}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label>Ward</Label>
-                                        <Controller
-                                            control={control}
-                                            name="location.ward"
-                                            render={({field}) => (
-                                                <SearchableSelect
-                                                    options={wardOptions}
-                                                    value={field.value}
-                                                    onChange={(val) => {
-                                                        field.onChange(val);
-                                                        const ward = selectedCity?.wards.find(w => w.name === val);
-                                                        if (ward) {
-                                                            setValue('location.zipCode', ward.zipCode);
-                                                        }
-                                                    }}
-                                                    placeholder={selectedCity ? "Select Ward" : "Select City first"}
-                                                    disabled={!selectedCity}
-                                                />
-                                            )}
-                                        />
-                                        {errors.location?.ward &&
-                                            <p className="text-red-500 text-sm">{errors.location.ward.message}</p>}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="zipCode">Zip Code</Label>
-                                        <Input
-                                            id="zipCode"
-                                            readOnly
-                                            className="bg-slate-900 border-slate-800 text-slate-400 cursor-not-allowed"
-                                            {...register('location.zipCode')}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2 col-span-2">
-                                        <Label>Street / House Number</Label>
-                                        <Input
-                                            placeholder="e.g. Số 10, Ngõ 5"
-                                            {...register('location.street')}
-                                            className="bg-slate-950 border-slate-800"
-                                        />
-                                        {errors.location?.street &&
-                                            <p className="text-red-500 text-sm">{errors.location.street.message}</p>}
-                                    </div>
-
-                                    <div className="col-span-2 space-y-2 pt-4">
-                                        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Property
-                                            Details</h3>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="constructionType">Construction Type</Label>
-                                        <Controller
-                                            control={control}
-                                            name="attributes.constructionType"
-                                            render={({field}) => (
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <SelectTrigger className="bg-slate-950 border-slate-800">
-                                                        <SelectValue placeholder="Select Type"/>
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {Object.values(ConstructionType).map((type) => (
-                                                            <SelectItem key={type}
-                                                                        value={type}>{formatEnum(type)}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
-                                        />
-                                        {errors.attributes?.constructionType &&
-                                            <p className="text-red-500 text-sm">{errors.attributes.constructionType.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="occupancyType">Occupancy Type</Label>
-                                        <Controller
-                                            control={control}
-                                            name="attributes.occupancyType"
-                                            render={({field}) => (
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <SelectTrigger className="bg-slate-950 border-slate-800">
-                                                        <SelectValue placeholder="Select Type"/>
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {Object.values(OccupancyType).map((type) => (
-                                                            <SelectItem key={type}
-                                                                        value={type}>{formatEnum(type)}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
-                                        />
-                                        {errors.attributes?.occupancyType &&
-                                            <p className="text-red-500 text-sm">{errors.attributes.occupancyType.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="yearBuilt">Year Built</Label>
-                                        <Controller
-                                            control={control}
-                                            name="attributes.yearBuilt"
-                                            render={({field}) => (
-                                                <NumberInput
-                                                    id="yearBuilt"
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                    placeholder={new Date().getFullYear().toString()}
-                                                    className="bg-slate-950 border-slate-800"
-                                                />
-                                            )}
-                                        />
-                                        {errors.attributes?.yearBuilt &&
-                                            <p className="text-red-500 text-sm">{errors.attributes.yearBuilt.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="noFloors">No. Floors</Label>
-                                        <Controller
-                                            control={control}
-                                            name="attributes.noFloors"
-                                            render={({field}) => (
-                                                <NumberInput
-                                                    id="noFloors"
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                    className="bg-slate-950 border-slate-800"
-                                                />
-                                            )}
-                                        />
-                                        {errors.attributes?.noFloors &&
-                                            <p className="text-red-500 text-sm">{errors.attributes.noFloors.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="squareMeters">Square Meters</Label>
-                                        <Controller
-                                            control={control}
-                                            name="attributes.squareMeters"
-                                            render={({field}) => (
-                                                <NumberInput
-                                                    id="squareMeters"
-                                                    step="0.01"
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                    placeholder="Enter area..."
-                                                    className="bg-slate-950 border-slate-800"
-                                                />
-                                            )}
-                                        />
-                                        {errors.attributes?.squareMeters &&
-                                            <p className="text-red-500 text-sm">{errors.attributes.squareMeters.message}</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="estimatedConstructionCost">Est. Cost</Label>
-                                        <Input
-                                            id="estimatedConstructionCost"
-                                            type="text"
-                                            value={costDisplay}
-                                            onChange={handleCostChange}
-                                            placeholder="0 ₫"
-                                            className="bg-slate-950 border-slate-800"
-                                        />
-                                        {errors.valuation?.estimatedConstructionCost &&
-                                            <p className="text-red-500 text-sm">{errors.valuation.estimatedConstructionCost.message}</p>}
-                                    </div>
-                                </div>
-                                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700">
-                                    Create Property
-                                </Button>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-
-                <Card className="bg-slate-900 border-slate-800">
-                    <CardHeader className="border-b border-slate-800 pb-4">
-                        <div className="flex items-center gap-4">
-                            <div className="relative flex-1 max-w-md">
-                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500"/>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="relative flex-1 max-w-sm">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500"/>
                                 <Input
                                     placeholder="Search by Address, City, or Zip Code..."
-                                    className="pl-8 bg-slate-950 border-slate-800 text-slate-200"
+                                    className="pl-9 bg-slate-900 border-slate-700 focus-visible:ring-indigo-500"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
                         </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
+                    </div>
+                    <div className="p-0">
                         <Table>
-                            <TableHeader className="bg-slate-950/50">
+                            <TableHeader className="bg-slate-900/50">
                                 <TableRow className="border-slate-800 hover:bg-slate-900/50">
                                     <TableHead onClick={() => handleSort('location.street')}
                                                className="text-slate-400 cursor-pointer hover:text-indigo-400 transition-colors">
@@ -475,7 +281,7 @@ const AdminPropertiesView: React.FC = () => {
                                         </TableCell>
                                     </TableRow>
                                 ) : filteredProperties.map((prop) => (
-                                    <TableRow key={prop.id} className="border-slate-800 hover:bg-slate-800/50 group">
+                                    <TableRow key={prop.id} className="border-slate-800 hover:bg-slate-900/50 group">
                                         <TableCell>
                                             <div className="flex items-center gap-3">
                                                 <div
@@ -531,8 +337,213 @@ const AdminPropertiesView: React.FC = () => {
                                 ))}
                             </TableBody>
                         </Table>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
+
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogContent
+                        className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>Create Property</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2 space-y-2">
+                                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Address</h3>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>City</Label>
+                                    <Select onValueChange={(val) => {
+                                        const city = VN_LOCATIONS.find(c => c.name === val) || null;
+                                        setSelectedCity(city);
+                                        setValue('location.ward', '');
+                                        setValue('location.zipCode', '');
+                                    }}>
+                                        <SelectTrigger className="bg-slate-950 border-slate-800">
+                                            <SelectValue placeholder="Select City"/>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {VN_LOCATIONS.map(city => (
+                                                <SelectItem key={city.name}
+                                                            value={city.name}>{city.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <input type="hidden" {...register('location.city')} />
+                                    {errors.location?.city &&
+                                        <p className="text-red-500 text-sm">{errors.location.city.message}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Ward</Label>
+                                    <Controller
+                                        control={control}
+                                        name="location.ward"
+                                        render={({field}) => (
+                                            <SearchableSelect
+                                                options={wardOptions}
+                                                value={field.value}
+                                                onChange={(val) => {
+                                                    field.onChange(val);
+                                                    const ward = selectedCity?.wards.find(w => w.name === val);
+                                                    if (ward) {
+                                                        setValue('location.zipCode', ward.zipCode);
+                                                    }
+                                                }}
+                                                placeholder={selectedCity ? "Select Ward" : "Select City first"}
+                                                disabled={!selectedCity}
+                                            />
+                                        )}
+                                    />
+                                    {errors.location?.ward &&
+                                        <p className="text-red-500 text-sm">{errors.location.ward.message}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="zipCode">Zip Code</Label>
+                                    <Input
+                                        id="zipCode"
+                                        readOnly
+                                        className="bg-slate-900 border-slate-800 text-slate-400 cursor-not-allowed"
+                                        {...register('location.zipCode')}
+                                    />
+                                </div>
+
+                                <div className="space-y-2 col-span-2">
+                                    <Label>Street / House Number</Label>
+                                    <Input
+                                        placeholder="e.g. Số 10, Ngõ 5"
+                                        {...register('location.street')}
+                                        className="bg-slate-950 border-slate-800"
+                                    />
+                                    {errors.location?.street &&
+                                        <p className="text-red-500 text-sm">{errors.location.street.message}</p>}
+                                </div>
+
+                                <div className="col-span-2 space-y-2 pt-4">
+                                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Property
+                                        Details</h3>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="constructionType">Construction Type</Label>
+                                    <Controller
+                                        control={control}
+                                        name="attributes.constructionType"
+                                        render={({field}) => (
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <SelectTrigger className="bg-slate-950 border-slate-800">
+                                                    <SelectValue placeholder="Select Type"/>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {Object.values(ConstructionType).map((type) => (
+                                                        <SelectItem key={type}
+                                                                    value={type}>{formatEnum(type)}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                    {errors.attributes?.constructionType &&
+                                        <p className="text-red-500 text-sm">{errors.attributes.constructionType.message}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="occupancyType">Occupancy Type</Label>
+                                    <Controller
+                                        control={control}
+                                        name="attributes.occupancyType"
+                                        render={({field}) => (
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <SelectTrigger className="bg-slate-950 border-slate-800">
+                                                    <SelectValue placeholder="Select Type"/>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {Object.values(OccupancyType).map((type) => (
+                                                        <SelectItem key={type}
+                                                                    value={type}>{formatEnum(type)}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                    {errors.attributes?.occupancyType &&
+                                        <p className="text-red-500 text-sm">{errors.attributes.occupancyType.message}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="yearBuilt">Year Built</Label>
+                                    <Controller
+                                        control={control}
+                                        name="attributes.yearBuilt"
+                                        render={({field}) => (
+                                            <NumberInput
+                                                id="yearBuilt"
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder={new Date().getFullYear().toString()}
+                                                className="bg-slate-950 border-slate-800"
+                                            />
+                                        )}
+                                    />
+                                    {errors.attributes?.yearBuilt &&
+                                        <p className="text-red-500 text-sm">{errors.attributes.yearBuilt.message}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="noFloors">No. Floors</Label>
+                                    <Controller
+                                        control={control}
+                                        name="attributes.noFloors"
+                                        render={({field}) => (
+                                            <NumberInput
+                                                id="noFloors"
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                className="bg-slate-950 border-slate-800"
+                                            />
+                                        )}
+                                    />
+                                    {errors.attributes?.noFloors &&
+                                        <p className="text-red-500 text-sm">{errors.attributes.noFloors.message}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="squareMeters">Square Meters</Label>
+                                    <Controller
+                                        control={control}
+                                        name="attributes.squareMeters"
+                                        render={({field}) => (
+                                            <NumberInput
+                                                id="squareMeters"
+                                                step="0.01"
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Enter area..."
+                                                className="bg-slate-950 border-slate-800"
+                                            />
+                                        )}
+                                    />
+                                    {errors.attributes?.squareMeters &&
+                                        <p className="text-red-500 text-sm">{errors.attributes.squareMeters.message}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="estimatedConstructionCost">Est. Cost</Label>
+                                    <Input
+                                        id="estimatedConstructionCost"
+                                        type="text"
+                                        value={costDisplay}
+                                        onChange={handleCostChange}
+                                        placeholder="0 ₫"
+                                        className="bg-slate-950 border-slate-800"
+                                    />
+                                    {errors.valuation?.estimatedConstructionCost &&
+                                        <p className="text-red-500 text-sm">{errors.valuation.estimatedConstructionCost.message}</p>}
+                                </div>
+                            </div>
+                            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700">
+                                Create Property
+                            </Button>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AdminLayout>
     );
