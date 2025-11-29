@@ -26,9 +26,7 @@ import {Controller, useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {Input} from '@/components/ui/input';
-import {NumberInput} from '@/components/ui/number-input';
 import {Label} from '@/components/ui/label';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -39,18 +37,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {Checkbox} from '@/components/ui/checkbox';
 import {LEAD_STATUS_CONFIG} from '../utils/statusMapping';
+import {SearchableSelect} from '@/components/ui/searchable-select';
 
 const createLeadSchema = z.object({
     fullName: z.string().min(1, 'Full Name is required'),
     phoneNumber: z.string().min(1, 'Phone Number is required'),
     email: z.email('Invalid email address'),
-    address: z.string().min(1, 'Address is required'),
-    city: z.string().min(1, 'City is required'),
-    cost: z.number().min(0, 'Cost is required'),
+    propertyId: z.string().min(1, 'Property is required'),
 });
 
 type CreateLeadFormData = z.infer<typeof createLeadSchema>;
-
 
 const AdminLeadsView: React.FC = () => {
     const queryClient = useQueryClient();
@@ -60,9 +56,18 @@ const AdminLeadsView: React.FC = () => {
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
 
     const {
+        data: properties,
+        isLoading: isPropertiesLoading
+    } = useQuery({
+        queryKey: ['admin-properties'],
+        queryFn: fetchAllProperties,
+    });
+
+    const {
         handleSubmit,
         reset,
         control,
+        watch,
         formState: {errors},
     } = useForm<CreateLeadFormData>({
         resolver: zodResolver(createLeadSchema),
@@ -70,9 +75,7 @@ const AdminLeadsView: React.FC = () => {
             fullName: '',
             phoneNumber: '',
             email: '',
-            address: '',
-            city: '',
-            cost: 0,
+            propertyId: '',
         },
     });
 
@@ -83,11 +86,6 @@ const AdminLeadsView: React.FC = () => {
     } = useQuery({
         queryKey: ['admin-leads', sortConfig],
         queryFn: () => fetchAllLeads(sortConfig.key, sortConfig.direction),
-    });
-
-    const {data: properties} = useQuery({
-        queryKey: ['admin-properties'],
-        queryFn: fetchAllProperties,
     });
 
     const createMutation = useMutation({
@@ -109,15 +107,9 @@ const AdminLeadsView: React.FC = () => {
     const onSubmit = (data: CreateLeadFormData) => {
         const userInfo = `${data.fullName} - ${data.phoneNumber} - ${data.email}`;
 
-        const propertyInfo = JSON.stringify({
-            address: data.address,
-            city: data.city,
-            cost: data.cost
-        });
-
         const payload = {
             userInfo,
-            propertyInfo,
+            propertyInfo: data.propertyId,
             status: 'ACTIVE'
         };
 
@@ -173,22 +165,41 @@ const AdminLeadsView: React.FC = () => {
         }
         return {name: userInfo, details: ''};
     };
-    const resolvePropertyInfo = (propertyInfoStr: string) => {
+
+    const renderPropertyCell = (propertyInfoStr: string) => {
+        if (properties && properties.length > 0) {
+            const matchedProp = properties.find(p => String(p.id) === String(propertyInfoStr));
+            if (matchedProp) {
+                return (
+                    <div className="flex flex-col">
+                        <span className="font-medium text-slate-200 truncate">{matchedProp.location.street}</span>
+                        <span className="text-xs text-slate-500 truncate">{matchedProp.location.city}</span>
+                    </div>
+                );
+            }
+        }
+
         try {
             const obj = JSON.parse(propertyInfoStr);
             if (obj && obj.address) {
-                return `${obj.address}, ${obj.city}`;
+                return (
+                    <div className="flex flex-col">
+                        <span className="font-medium text-slate-200 truncate">{obj.address}</span>
+                        <span className="text-xs text-slate-500 truncate">{obj.city}</span>
+                    </div>
+                );
             }
         } catch {
         }
 
-        if (properties && properties.length > 0) {
-            const matchedProp = properties.find(p => String(p.id) === String(propertyInfoStr));
-            if (matchedProp) {
-                return `${matchedProp.location.street} (${matchedProp.attributes.occupancyType})`;
-            }
-        }
-        return propertyInfoStr;
+        // Fallback for raw string
+        return (
+            <div className="flex items-center gap-2">
+                <span className="truncate max-w-[200px]" title={propertyInfoStr}>
+                    {propertyInfoStr}
+                </span>
+            </div>
+        );
     };
 
     const filteredLeads = leads?.filter(lead => {
@@ -223,7 +234,7 @@ const AdminLeadsView: React.FC = () => {
         {
             header: (
                 <div className="flex items-center gap-1">
-                    Property Info {sortConfig.key === 'propertyInfo' && <ArrowUpDown size={14}/>}
+                    Property {sortConfig.key === 'propertyInfo' && <ArrowUpDown size={14}/>}
                 </div>
             ),
             width: "30%",
@@ -314,6 +325,9 @@ const AdminLeadsView: React.FC = () => {
         }
     ];
 
+    const selectedPropertyId = watch('propertyId');
+    const selectedProperty = properties?.find(p => p.id === selectedPropertyId);
+
     return (
         <AdminLayout>
             <div className="space-y-6">
@@ -370,7 +384,6 @@ const AdminLeadsView: React.FC = () => {
                                 </TableRow>
                             ) : filteredLeads?.map((lead) => {
                                 const {name, details} = parseUserInfo(lead.userInfo);
-                                const displayProperty = resolvePropertyInfo(lead.propertyInfo);
 
                                 return (
                                     <TableRow key={lead.id}
@@ -389,13 +402,7 @@ const AdminLeadsView: React.FC = () => {
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-slate-300">
-                                            <div className="flex items-center gap-2">
-                                                <Building2 className="h-3 w-3 text-slate-500"/>
-                                                <span className="truncate max-w-[200px]"
-                                                      title={displayProperty}>
-                                                    {displayProperty}
-                                                </span>
-                                            </div>
+                                            {renderPropertyCell(lead.propertyInfo)}
                                         </TableCell>
                                         <TableCell>
                                             {(() => {
@@ -501,60 +508,51 @@ const AdminLeadsView: React.FC = () => {
                             <div className="border-t border-slate-800"/>
                             <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Property
-                                    Details</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="col-span-2">
-                                        <Label htmlFor="address" className="text-slate-300">Property Address</Label>
-                                        <Controller
-                                            name="address"
-                                            control={control}
-                                            render={({field}) => <Input id="address"
-                                                                        placeholder="123 Street Name" {...field}
-                                                                        className="bg-slate-900 border-slate-700 mt-1.5"/>}
-                                        />
-                                        {errors.address &&
-                                            <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>}
-                                    </div>
+                                    Selection</h4>
+                                <div className="grid grid-cols-1 gap-4">
                                     <div>
-                                        <Label htmlFor="city" className="text-slate-300">City / Province</Label>
+                                        <Label htmlFor="propertyId" className="text-slate-300">Select Property</Label>
                                         <Controller
-                                            name="city"
+                                            name="propertyId"
                                             control={control}
                                             render={({field}) => (
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <SelectTrigger className="bg-slate-900 border-slate-700 mt-1.5">
-                                                        <SelectValue placeholder="Select city"/>
-                                                    </SelectTrigger>
-                                                    <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                                                        <SelectItem value="Ho Chi Minh">Ho Chi Minh</SelectItem>
-                                                        <SelectItem value="Ha Noi">Ha Noi</SelectItem>
-                                                        <SelectItem value="Da Nang">Da Nang</SelectItem>
-                                                        <SelectItem value="Others">Others</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
-                                        />
-                                        {errors.city &&
-                                            <p className="text-red-500 text-xs mt-1">{errors.city.message}</p>}
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="cost" className="text-slate-300">Estimated Cost ($)</Label>
-                                        <Controller
-                                            name="cost"
-                                            control={control}
-                                            render={({field}) => (
-                                                <NumberInput
-                                                    id="cost"
-                                                    placeholder="500000"
+                                                <SearchableSelect
+                                                    options={properties?.map(p => ({
+                                                        value: p.id,
+                                                        label: p.location.street,
+                                                        sublabel: p.location.city
+                                                    })) || []}
                                                     value={field.value}
                                                     onChange={field.onChange}
-                                                    className="bg-slate-900 border-slate-700 mt-1.5"
+                                                    placeholder="Search property by address..."
+                                                    className="mt-1.5"
+                                                    isLoading={isPropertiesLoading}
                                                 />
                                             )}
                                         />
-                                        {errors.cost &&
-                                            <p className="text-red-500 text-xs mt-1">{errors.cost.message}</p>}
+                                        {errors.propertyId &&
+                                            <p className="text-red-500 text-xs mt-1">{errors.propertyId.message}</p>}
                                     </div>
+
+                                    {selectedProperty && (
+                                        <div className="rounded-md border border-slate-800 bg-slate-900/50 p-4 mt-2">
+                                            <div className="flex items-start gap-3">
+                                                <div className="p-2 bg-indigo-500/10 rounded-lg shrink-0">
+                                                    <Building2 className="h-5 w-5 text-indigo-400"/>
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                    <h5 className="font-medium text-slate-200 text-sm">{selectedProperty.location.street}</h5>
+                                                    <div className="text-xs text-slate-400 space-y-0.5">
+                                                        <p>{selectedProperty.location.ward}, {selectedProperty.location.city}</p>
+                                                        <p className="text-indigo-400 font-medium pt-1">
+                                                            Est.
+                                                            Cost: {selectedProperty.valuation.estimatedConstructionCost.toLocaleString()} VND
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
