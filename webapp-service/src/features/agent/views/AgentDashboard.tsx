@@ -4,7 +4,8 @@ import {ArrowRight, Bell, Calendar, Clock, DollarSign, FileText, Search, User} f
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {TableCell, TableRow} from "@/components/ui/table";
+import SharedTable, {Column} from "@/components/ui/shared-table";
 import {useQuery} from '@tanstack/react-query';
 import {fetchAgentLeads} from '../services/agentService';
 import {Skeleton} from '@/components/ui/skeleton';
@@ -16,6 +17,13 @@ const AgentDashboard: React.FC = () => {
         queryKey: ['agent-leads', agentId],
         queryFn: () => fetchAgentLeads(agentId)
     });
+
+    const columns: Column[] = [
+        {header: "Client", width: "25%"},
+        {header: "Property", width: "35%"},
+        {header: "Status", width: "15%"},
+        {header: "Action", width: "25%", className: "text-right"}
+    ];
 
     return (
         <AgentLayout>
@@ -88,66 +96,64 @@ const AgentDashboard: React.FC = () => {
                             </Button>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <Table>
-                                <TableHeader className="bg-slate-50/50">
-                                    <TableRow className="border-slate-100">
-                                        <TableHead className="w-[200px]">Client</TableHead>
-                                        <TableHead>Property</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Action</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {isLoading ? (
-                                        Array.from({length: 3}).map((_, i) => (
-                                            <TableRow key={i}>
-                                                <TableCell><Skeleton className="h-4 w-32"/></TableCell>
-                                                <TableCell><Skeleton className="h-4 w-48"/></TableCell>
-                                                <TableCell><Skeleton className="h-6 w-16"/></TableCell>
-                                                <TableCell><Skeleton className="h-8 w-20 ml-auto"/></TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : leads?.map((lead) => (
-                                        <TableRow key={lead.id} className="border-slate-100 hover:bg-slate-50/50 group">
-                                            <TableCell>
-                                                <div className="flex items-center gap-3">
+                            <SharedTable
+                                columns={columns}
+                                isLoading={isLoading}
+                                isEmpty={!isLoading && (!leads || leads.length === 0)}
+                                className="rounded-none border-0"
+                                headerClassName="bg-slate-50/50 border-slate-100"
+                                rowClassName="border-slate-100 hover:bg-slate-50/50"
+                                emptyMessage="No leads found."
+                            >
+                                {isLoading ? (
+                                    Array.from({length: 3}).map((_, i) => (
+                                        <TableRow key={i}>
+                                            <TableCell><Skeleton className="h-4 w-32"/></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-48"/></TableCell>
+                                            <TableCell><Skeleton className="h-6 w-16"/></TableCell>
+                                            <TableCell><Skeleton className="h-8 w-20 ml-auto"/></TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : leads?.map((lead) => (
+                                    <TableRow key={lead.id} className="border-slate-100 hover:bg-slate-50/50 group">
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <div
+                                                    className="h-8 w-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-medium text-slate-600">
+                                                    {lead.userInfo.substring(0, 2).toUpperCase()}
+                                                </div>
+                                                <div>
                                                     <div
-                                                        className="h-8 w-8 bg-slate-200 rounded-full flex items-center justify-center text-xs font-medium text-slate-600">
-                                                        {lead.userInfo.substring(0, 2).toUpperCase()}
-                                                    </div>
-                                                    <div>
-                                                        <div
-                                                            className="font-medium text-slate-900">{lead.userInfo}</div>
-                                                        <div className="text-xs text-slate-500 flex items-center gap-1">
-                                                            <Calendar
-                                                                className="h-3 w-3"/> {new Date(lead.createdAt).toLocaleDateString()}
-                                                        </div>
+                                                        className="font-medium text-slate-900">{lead.userInfo}</div>
+                                                    <div className="text-xs text-slate-500 flex items-center gap-1">
+                                                        <Calendar
+                                                            className="h-3 w-3"/> {new Date(lead.createdAt).toLocaleDateString()}
                                                     </div>
                                                 </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="text-sm text-slate-700">{lead.propertyInfo}</div>
-                                            </TableCell>
-                                            <TableCell>
-                                                {lead.status === 'NEW' ? (
-                                                    <Badge
-                                                        className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-none shadow-none">NEW</Badge>
-                                                ) : (
-                                                    <Badge variant="outline"
-                                                           className="text-slate-500 border-slate-200">{lead.status}</Badge>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button size="sm"
-                                                        className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-8">
-                                                    Quote
-                                                    <ArrowRight className="ml-1 h-3 w-3"/>
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="text-sm text-slate-700">{lead.propertyInfo}</div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {lead.status === 'NEW' ? (
+                                                <Badge
+                                                    className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-none shadow-none">NEW</Badge>
+                                            ) : (
+                                                <Badge variant="outline"
+                                                       className="text-slate-500 border-slate-200">{lead.status}</Badge>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button size="sm"
+                                                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-8">
+                                                Quote
+                                                <ArrowRight className="ml-1 h-3 w-3"/>
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </SharedTable>
                             <div className="p-4 border-t border-slate-100 text-center">
                                 <Button variant="ghost" size="sm"
                                         className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50">

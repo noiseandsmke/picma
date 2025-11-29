@@ -3,7 +3,8 @@ import {MoreVertical, Pencil, Search, Trash} from 'lucide-react';
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {TableCell, TableRow} from "@/components/ui/table";
+import SharedTable, {Column} from "@/components/ui/shared-table";
 import {Badge} from "@/components/ui/badge";
 import {Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from "@/components/ui/dropdown-menu";
@@ -69,6 +70,14 @@ const AdminUsersView: React.FC = () => {
         return 'User';
     };
 
+    const columns: Column[] = [
+        {header: "User", width: "35%", className: "text-slate-400"},
+        {header: "Role", width: "15%", className: "text-slate-400"},
+        {header: "Status", width: "15%", className: "text-slate-400"},
+        {header: "Last active", width: "20%", className: "text-slate-400"},
+        {header: "Actions", width: "15%", className: "text-right text-slate-400"}
+    ];
+
     return (
         <AdminLayout>
             <div className="space-y-6">
@@ -110,88 +119,82 @@ const AdminUsersView: React.FC = () => {
                         </div>
                     </CardHeader>
                     <CardContent className="p-0">
-                        <Table>
-                            <TableHeader className="bg-[#181624]">
-                                <TableRow className="border-[#2e2c3a] hover:bg-[#181624]">
-                                    <TableHead className="text-slate-400">User</TableHead>
-                                    <TableHead className="text-slate-400">Role</TableHead>
-                                    <TableHead className="text-slate-400">Status</TableHead>
-                                    <TableHead className="text-slate-400">Last active</TableHead>
-                                    <TableHead className="text-right text-slate-400">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isLoading ? (
-                                    Array.from({length: 4}).map((_, i) => (
-                                        <TableRow key={i} className="border-[#2e2c3a]">
-                                            <TableCell><Skeleton
-                                                className="h-8 w-8 rounded-full bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-16 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-20 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-8 w-8 ml-auto bg-slate-800"/></TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : filteredUsers?.map((user) => (
-                                    <TableRow key={user.id}
-                                              className="border-[#2e2c3a] hover:bg-[#181624]/50 group transition-colors">
-                                        <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                <div
-                                                    className="h-9 w-9 rounded-full bg-[#593bf2]/10 flex items-center justify-center text-[#593bf2] font-medium border border-[#593bf2]/20">
-                                                    {user.username?.substring(0, 2).toUpperCase() || 'NA'}
-                                                </div>
-                                                <div>
-                                                    <div className="font-medium text-slate-200">{user.username}</div>
-                                                    <div className="text-xs text-slate-500">{user.email}</div>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline"
-                                                   className="border-[#2e2c3a] text-slate-400 bg-[#181624]">
-                                                {getDisplayRole(user)}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <span className={cn("h-2 w-2 rounded-full",
-                                                    user.status === 'Active' ? "bg-emerald-500" :
-                                                        user.status === 'Away' ? "bg-amber-500" : "bg-slate-500"
-                                                )}/>
-                                                <span className="text-slate-300">{user.status || 'Offline'}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-slate-400">{user.lastActive || '-'}</TableCell>
-                                        <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button size="icon" variant="ghost"
-                                                            className="text-slate-500 hover:text-white hover:bg-[#593bf2]/20">
-                                                        <MoreVertical className="h-4 w-4"/>
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end"
-                                                                     className="bg-[#1e1c2e] border-slate-800 text-slate-200">
-                                                    <DropdownMenuItem
-                                                        className="focus:bg-slate-800 focus:text-white cursor-pointer">
-                                                        <Pencil className="mr-2 h-4 w-4"/>
-                                                        Edit profile
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        className="focus:bg-red-900/20 focus:text-red-400 text-red-400 cursor-pointer"
-                                                        onClick={() => user.id && deleteMutation.mutate(user.id)}
-                                                    >
-                                                        <Trash className="mr-2 h-4 w-4"/>
-                                                        Delete user
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
+                        <SharedTable
+                            columns={columns}
+                            isLoading={isLoading}
+                            isEmpty={!isLoading && (!filteredUsers || filteredUsers.length === 0)}
+                            emptyMessage="No users found."
+                        >
+                            {isLoading ? (
+                                Array.from({length: 4}).map((_, i) => (
+                                    <TableRow key={i} className="border-[#2e2c3a]">
+                                        <TableCell><Skeleton
+                                            className="h-8 w-8 rounded-full bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-16 bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-20 bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-8 w-8 ml-auto bg-slate-800"/></TableCell>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                ))
+                            ) : filteredUsers?.map((user) => (
+                                <TableRow key={user.id}
+                                          className="border-[#2e2c3a] hover:bg-[#181624]/50 group transition-colors">
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <div
+                                                className="h-9 w-9 rounded-full bg-[#593bf2]/10 flex items-center justify-center text-[#593bf2] font-medium border border-[#593bf2]/20">
+                                                {user.username?.substring(0, 2).toUpperCase() || 'NA'}
+                                            </div>
+                                            <div>
+                                                <div className="font-medium text-slate-200">{user.username}</div>
+                                                <div className="text-xs text-slate-500">{user.email}</div>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline"
+                                               className="border-[#2e2c3a] text-slate-400 bg-[#181624]">
+                                            {getDisplayRole(user)}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <span className={cn("h-2 w-2 rounded-full",
+                                                user.status === 'Active' ? "bg-emerald-500" :
+                                                    user.status === 'Away' ? "bg-amber-500" : "bg-slate-500"
+                                            )}/>
+                                            <span className="text-slate-300">{user.status || 'Offline'}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-slate-400">{user.lastActive || '-'}</TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button size="icon" variant="ghost"
+                                                        className="text-slate-500 hover:text-white hover:bg-[#593bf2]/20">
+                                                    <MoreVertical className="h-4 w-4"/>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end"
+                                                                 className="bg-[#1e1c2e] border-slate-800 text-slate-200">
+                                                <DropdownMenuItem
+                                                    className="focus:bg-slate-800 focus:text-white cursor-pointer">
+                                                    <Pencil className="mr-2 h-4 w-4"/>
+                                                    Edit profile
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="focus:bg-red-900/20 focus:text-red-400 text-red-400 cursor-pointer"
+                                                    onClick={() => user.id && deleteMutation.mutate(user.id)}
+                                                >
+                                                    <Trash className="mr-2 h-4 w-4"/>
+                                                    Delete user
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </SharedTable>
                     </CardContent>
                 </Card>
             </div>

@@ -16,7 +16,8 @@ import {
     User
 } from 'lucide-react';
 import {cn} from '@/lib/utils';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table";
+import {TableCell, TableRow} from "@/components/ui/table";
+import SharedTable, {Column} from '@/components/ui/shared-table';
 import {Badge} from '@/components/ui/badge';
 import {Skeleton} from '@/components/ui/skeleton';
 import {Button} from '@/components/ui/button';
@@ -200,6 +201,119 @@ const AdminLeadsView: React.FC = () => {
         return matchesSearch && matchesStatus;
     });
 
+    const columns: Column[] = [
+        {
+            header: (
+                <div className="flex items-center gap-1">
+                    ID {sortConfig.key === 'id' && <ArrowUpDown size={14}/>}
+                </div>
+            ),
+            width: "5%",
+            onClick: () => handleSort('id'),
+        },
+        {
+            header: (
+                <div className="flex items-center gap-1">
+                    User Info {sortConfig.key === 'userInfo' && <ArrowUpDown size={14}/>}
+                </div>
+            ),
+            width: "30%",
+            onClick: () => handleSort('userInfo'),
+        },
+        {
+            header: (
+                <div className="flex items-center gap-1">
+                    Property Info {sortConfig.key === 'propertyInfo' && <ArrowUpDown size={14}/>}
+                </div>
+            ),
+            width: "30%",
+            onClick: () => handleSort('propertyInfo'),
+        },
+        {
+            header: (
+                <div className="flex items-center gap-2">
+                    <span className="cursor-pointer" onClick={() => handleSort('status')}>
+                        Status {sortConfig.key === 'status' && <ArrowUpDown size={14}/>}
+                    </span>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost"
+                                    className="h-6 w-6 p-0 hover:bg-slate-800 rounded-full relative">
+                                <Filter
+                                    className={cn("h-3 w-3", selectedStatuses.length > 0 ? "text-indigo-400" : "text-slate-500")}/>
+                                {selectedStatuses.length > 0 && (
+                                    <span
+                                        className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-red-500 border border-slate-900"/>
+                                )}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start"
+                                             className="bg-slate-900 border-slate-800 text-slate-200 w-56">
+                            <DropdownMenuLabel
+                                className="text-xs font-normal text-slate-500 uppercase tracking-wider px-2 py-1.5">
+                                Filter by status
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator className="bg-slate-800"/>
+
+                            <DropdownMenuItem
+                                className="focus:bg-slate-800 focus:text-white cursor-pointer py-2 px-2"
+                                onSelect={(e) => {
+                                    e.preventDefault();
+                                    setSelectedStatuses([]);
+                                }}
+                            >
+                                <div className="flex items-center gap-3 w-full">
+                                    <Checkbox
+                                        checked={selectedStatuses.length === 0}
+                                        className="border-slate-600 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500 pointer-events-none"
+                                    />
+                                    <span className="text-sm">All Statuses</span>
+                                </div>
+                            </DropdownMenuItem>
+
+                            {Object.values(LEAD_STATUS_CONFIG).map((config) => (
+                                <DropdownMenuItem
+                                    key={config.value}
+                                    className="focus:bg-slate-800 focus:text-white cursor-pointer py-2 px-2"
+                                    onSelect={(e) => {
+                                        e.preventDefault();
+                                        toggleStatus(config.value);
+                                    }}
+                                >
+                                    <div className="flex items-center gap-3 w-full">
+                                        <Checkbox
+                                            checked={selectedStatuses.includes(config.value)}
+                                            className="border-slate-600 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500 pointer-events-none"
+                                        />
+                                        <div className="flex items-center gap-2">
+                                            <span
+                                                className={cn("h-2 w-2 rounded-full", config.dotClass)}/>
+                                            <span className="text-sm">{config.label}</span>
+                                        </div>
+                                    </div>
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            ),
+            width: "15%",
+        },
+        {
+            header: (
+                <div className="flex items-center gap-1">
+                    Created {sortConfig.key === 'createDate' && <ArrowUpDown size={14}/>}
+                </div>
+            ),
+            width: "15%",
+            onClick: () => handleSort('createDate'),
+        },
+        {
+            header: "Actions",
+            width: "5%",
+        }
+    ];
+
     return (
         <AdminLayout>
             <div className="space-y-6">
@@ -231,211 +345,107 @@ const AdminLeadsView: React.FC = () => {
                     </div>
 
                     <div className="p-0">
-                        <Table>
-                            <TableHeader className="bg-slate-900/50 border-slate-800">
-                                <TableRow className="border-slate-800 hover:bg-slate-900/50">
-                                    <TableHead className="text-slate-400 w-[80px] cursor-pointer"
-                                               onClick={() => handleSort('id')}>
-                                        <div className="flex items-center gap-1">
-                                            ID {sortConfig.key === 'id' &&
-                                            <ArrowUpDown size={14}/>}
-                                        </div>
-                                    </TableHead>
-                                    <TableHead className="text-slate-400 cursor-pointer"
-                                               onClick={() => handleSort('userInfo')}>
-                                        <div className="flex items-center gap-1">
-                                            User Info {sortConfig.key === 'userInfo' && <ArrowUpDown size={14}/>}
-                                        </div>
-                                    </TableHead>
-                                    <TableHead className="text-slate-400 cursor-pointer"
-                                               onClick={() => handleSort('propertyInfo')}>
-                                        <div className="flex items-center gap-1">
-                                            Property Info {sortConfig.key === 'propertyInfo' &&
-                                            <ArrowUpDown size={14}/>}
-                                        </div>
+                        <SharedTable
+                            columns={columns}
+                            isLoading={isLeadsLoading}
+                            isEmpty={!isLeadsLoading && !isLeadsError && (!filteredLeads || filteredLeads.length === 0)}
+                            emptyMessage="No leads found matching your criteria."
+                        >
+                            {isLeadsLoading ? (
+                                Array.from({length: 5}).map((_, i) => (
+                                    <TableRow key={i} className="border-slate-800">
+                                        <TableCell><Skeleton className="h-4 w-8 bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-48 bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-6 w-20 bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-8 w-8 bg-slate-800"/></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : isLeadsError ? (
+                                <TableRow className="border-slate-800">
+                                    <TableCell colSpan={columns.length} className="h-24 text-center text-red-400">
+                                        Failed to load leads data.
+                                    </TableCell>
+                                </TableRow>
+                            ) : filteredLeads?.map((lead) => {
+                                const {name, details} = parseUserInfo(lead.userInfo);
+                                const displayProperty = resolvePropertyInfo(lead.propertyInfo);
 
-                                    </TableHead>
-                                    <TableHead className="text-slate-400">
-                                        <div className="flex items-center gap-2">
-                                            <span className="cursor-pointer" onClick={() => handleSort('status')}>
-                                                Status {sortConfig.key === 'status' && <ArrowUpDown size={14}/>}
-                                            </span>
+                                return (
+                                    <TableRow key={lead.id}
+                                              className="border-slate-800 hover:bg-slate-900/50 transition-colors">
+                                        <TableCell className="font-medium text-slate-300">{lead.id}</TableCell>
+                                        <TableCell className="text-slate-300">
+                                            <div className="flex items-center gap-3">
+                                                <div
+                                                    className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
+                                                    <User size={14}/>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-slate-200">{name}</span>
+                                                    <span className="text-xs text-slate-500">{details}</span>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-slate-300">
+                                            <div className="flex items-center gap-2">
+                                                <Building2 className="h-3 w-3 text-slate-500"/>
+                                                <span className="truncate max-w-[200px]"
+                                                      title={displayProperty}>
+                                                    {displayProperty}
+                                                </span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {(() => {
+                                                const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
+                                                return (
+                                                    <Badge variant="outline"
+                                                           className={cn("border-0 font-medium", statusConfig.className)}>
+                                                        {statusConfig.label}
+                                                    </Badge>
+                                                );
+                                            })()}
+                                        </TableCell>
+                                        <TableCell className="text-slate-400 text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <Clock className="h-3 w-3 text-slate-600"/>
+                                                {formatDate(lead.createDate)}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost"
-                                                            className="h-6 w-6 p-0 hover:bg-slate-800 rounded-full relative">
-                                                        <Filter
-                                                            className={cn("h-3 w-3", selectedStatuses.length > 0 ? "text-indigo-400" : "text-slate-500")}/>
-                                                        {selectedStatuses.length > 0 && (
-                                                            <span
-                                                                className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-red-500 border border-slate-900"/>
-                                                        )}
+                                                            className="h-8 w-8 p-0 text-slate-400 hover:text-white">
+                                                        <span className="sr-only">Open menu</span>
+                                                        <MoreHorizontal className="h-4 w-4"/>
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="start"
-                                                                     className="bg-slate-900 border-slate-800 text-slate-200 w-56">
-                                                    <DropdownMenuLabel
-                                                        className="text-xs font-normal text-slate-500 uppercase tracking-wider px-2 py-1.5">
-                                                        Filter by status
-                                                    </DropdownMenuLabel>
-                                                    <DropdownMenuSeparator className="bg-slate-800"/>
-
+                                                <DropdownMenuContent align="end"
+                                                                     className="bg-slate-900 border-slate-800 text-slate-200">
+                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                     <DropdownMenuItem
-                                                        className="focus:bg-slate-800 focus:text-white cursor-pointer py-2 px-2"
-                                                        onSelect={(e) => {
-                                                            e.preventDefault();
-                                                            setSelectedStatuses([]);
-                                                        }}
-                                                    >
-                                                        <div className="flex items-center gap-3 w-full">
-                                                            <Checkbox
-                                                                checked={selectedStatuses.length === 0}
-                                                                className="border-slate-600 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500 pointer-events-none"
-                                                            />
-                                                            <span className="text-sm">All Statuses</span>
-                                                        </div>
+                                                        className="focus:bg-slate-800 focus:text-white cursor-pointer">
+                                                        <Eye className="mr-2 h-4 w-4"/>
+                                                        View Details
                                                     </DropdownMenuItem>
-
-                                                    {Object.values(LEAD_STATUS_CONFIG).map((config) => (
-                                                        <DropdownMenuItem
-                                                            key={config.value}
-                                                            className="focus:bg-slate-800 focus:text-white cursor-pointer py-2 px-2"
-                                                            onSelect={(e) => {
-                                                                e.preventDefault();
-                                                                toggleStatus(config.value);
-                                                            }}
-                                                        >
-                                                            <div className="flex items-center gap-3 w-full">
-                                                                <Checkbox
-                                                                    checked={selectedStatuses.includes(config.value)}
-                                                                    className="border-slate-600 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500 pointer-events-none"
-                                                                />
-                                                                <div className="flex items-center gap-2">
-                                                                    <span
-                                                                        className={cn("h-2 w-2 rounded-full", config.dotClass)}/>
-                                                                    <span className="text-sm">{config.label}</span>
-                                                                </div>
-                                                            </div>
-                                                        </DropdownMenuItem>
-                                                    ))}
+                                                    <DropdownMenuSeparator className="bg-slate-800"/>
+                                                    <DropdownMenuItem
+                                                        className="focus:bg-red-500/10 focus:text-red-400 text-red-400 cursor-pointer"
+                                                        onClick={() => handleDelete(lead.id)}
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4"/>
+                                                        Delete Lead
+                                                    </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
-                                        </div>
-                                    </TableHead>
-                                    <TableHead className="text-slate-400 cursor-pointer"
-                                               onClick={() => handleSort('createDate')}>
-                                        <div className="flex items-center gap-1">
-                                            Created {sortConfig.key === 'createDate' && <ArrowUpDown size={14}/>}
-                                        </div>
-                                    </TableHead>
-                                    <TableHead className="text-slate-400">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isLeadsLoading ? (
-                                    Array.from({length: 5}).map((_, i) => (
-                                        <TableRow key={i} className="border-slate-800">
-                                            <TableCell><Skeleton className="h-4 w-8 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-48 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-6 w-20 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
-                                            <TableCell><Skeleton className="h-8 w-8 bg-slate-800"/></TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : isLeadsError ? (
-                                    <TableRow className="border-slate-800">
-                                        <TableCell colSpan={6} className="h-24 text-center text-red-400">
-                                            Failed to load leads data.
                                         </TableCell>
                                     </TableRow>
-                                ) : filteredLeads && filteredLeads.length > 0 ? (
-                                    filteredLeads.map((lead) => {
-                                        const {name, details} = parseUserInfo(lead.userInfo);
-                                        const displayProperty = resolvePropertyInfo(lead.propertyInfo);
-
-                                        return (
-                                            <TableRow key={lead.id}
-                                                      className="border-slate-800 hover:bg-slate-900/50 transition-colors">
-                                                <TableCell className="font-medium text-slate-300">{lead.id}</TableCell>
-                                                <TableCell className="text-slate-300">
-                                                    <div className="flex items-center gap-3">
-                                                        <div
-                                                            className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
-                                                            <User size={14}/>
-                                                        </div>
-                                                        <div className="flex flex-col">
-                                                            <span className="font-bold text-slate-200">{name}</span>
-                                                            <span className="text-xs text-slate-500">{details}</span>
-                                                        </div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-slate-300">
-                                                    <div className="flex items-center gap-2">
-                                                        <Building2 className="h-3 w-3 text-slate-500"/>
-                                                        <span className="truncate max-w-[200px]"
-                                                              title={displayProperty}>
-                                                            {displayProperty}
-                                                        </span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {(() => {
-                                                        const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
-                                                        return (
-                                                            <Badge variant="outline"
-                                                                   className={cn("border-0 font-medium", statusConfig.className)}>
-                                                                {statusConfig.label}
-                                                            </Badge>
-                                                        );
-                                                    })()}
-                                                </TableCell>
-                                                <TableCell className="text-slate-400 text-sm">
-                                                    <div className="flex items-center gap-2">
-                                                        <Clock className="h-3 w-3 text-slate-600"/>
-                                                        {formatDate(lead.createDate)}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost"
-                                                                    className="h-8 w-8 p-0 text-slate-400 hover:text-white">
-                                                                <span className="sr-only">Open menu</span>
-                                                                <MoreHorizontal className="h-4 w-4"/>
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end"
-                                                                             className="bg-slate-900 border-slate-800 text-slate-200">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuItem
-                                                                className="focus:bg-slate-800 focus:text-white cursor-pointer">
-                                                                <Eye className="mr-2 h-4 w-4"/>
-                                                                View Details
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator className="bg-slate-800"/>
-                                                            <DropdownMenuItem
-                                                                className="focus:bg-red-500/10 focus:text-red-400 text-red-400 cursor-pointer"
-                                                                onClick={() => handleDelete(lead.id)}
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4"/>
-                                                                Delete Lead
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })
-                                ) : (
-                                    <TableRow className="border-slate-800">
-                                        <TableCell colSpan={6} className="h-24 text-center text-slate-500">
-                                            No leads found matching your criteria.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                                );
+                            })}
+                        </SharedTable>
                     </div>
                 </div>
 
