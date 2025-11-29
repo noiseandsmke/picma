@@ -27,10 +27,10 @@ public class UserOutboundApi {
     private String picma_groups_api;
     @Getter
     @Value("${picma.iam.groups.owners}")
-    private String picma_group_prop_owners;
+    private String picma_owners_group;
     @Getter
     @Value("${picma.iam.groups.agents}")
-    private String picma_group_agents;
+    private String picma_agents_group;
 
     public UserOutboundApi(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -46,21 +46,21 @@ public class UserOutboundApi {
                 if (resHeaders.containsKey("Location")) {
                     String headersValue = resHeaders.getFirst("Location");
                     log.info("Location = {}", headersValue);
-                    String userId = headersValue.replace(picma_users_api + "/", "");
-                    log.info("User ID = {}", userId);
-                    String groupId;
-                    if (!StringUtils.hasLength(user.getGroupId())) {
-                        groupId = picma_group_prop_owners;
-                        log.info("Property Owners group ID = {}", groupId);
-                    } else {
-                        groupId = user.getGroupId();
-                        log.info("Other group ID = {}", groupId);
-                    }
-                    boolean isProvisioned = provisioningUser(userId, groupId, accessToken);
-                    if (isProvisioned) {
-                        user.setGroupId(groupId);
-                    } else {
-                        // delete user
+                    if (headersValue != null) {
+                        String userId = headersValue.replace(picma_users_api + "/", "");
+                        log.info("User ID = {}", userId);
+                        String groupId;
+                        if (!StringUtils.hasLength(user.getGroupId())) {
+                            groupId = picma_owners_group;
+                            log.info("Property Owners group ID = {}", groupId);
+                        } else {
+                            groupId = user.getGroupId();
+                            log.info("Other group ID = {}", groupId);
+                        }
+                        boolean isProvisioned = provisioningUser(userId, groupId, accessToken);
+                        if (isProvisioned) {
+                            user.setGroupId(groupId);
+                        }
                     }
                 }
             } else {
@@ -73,7 +73,6 @@ public class UserOutboundApi {
     }
 
     public boolean provisioningUser(String userId, String groupId, String accessToken) {
-        boolean provisioned = false;
         String provisioningApi = picma_users_api + "/" + userId + "/groups/" + groupId;
         log.info("User provisioning :: API = {}", provisioningApi);
         HttpEntity<?> reqEntity = OutboundUtils.getHttpEntity(null, accessToken);
@@ -81,18 +80,16 @@ public class UserOutboundApi {
             ResponseEntity<?> resEntity = restTemplate.exchange(provisioningApi, HttpMethod.PUT, reqEntity, Object.class);
             log.info("User provisioning :: Status code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
-                provisioned = true;
+                return true;
             } else {
                 throw new RuntimeException("Something went wrong while provisioning user");
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return provisioned;
     }
 
     public boolean deprovisioningUser(String userId, String groupId, String accessToken) {
-        boolean deprovisioned = false;
         log.info("User deprovisioning :: User ID = {}", userId);
         log.info("User deprovisioning :: Group ID = {}", groupId);
         String deprovisioningApi = picma_users_api + "/" + userId + "/groups/" + groupId;
@@ -102,14 +99,13 @@ public class UserOutboundApi {
             ResponseEntity<?> resEntity = restTemplate.exchange(deprovisioningApi, HttpMethod.DELETE, reqEntity, Object.class);
             log.info("User deprovisioning :: Status code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
-                deprovisioned = true;
+                return true;
             } else {
                 throw new RuntimeException("Something went wrong while deprovisioning user");
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return deprovisioned;
     }
 
     public User getUserById(String userId, String accessToken) {
@@ -121,8 +117,7 @@ public class UserOutboundApi {
             ResponseEntity<User> resEntity = restTemplate.exchange(userApi, HttpMethod.GET, reqEntity, User.class);
             log.info("Get User by ID :: Status code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
-                User user = resEntity.getBody();
-                return user;
+                return resEntity.getBody();
             } else {
                 throw new RuntimeException("Something went wrong while getting user by ID");
             }
@@ -132,7 +127,6 @@ public class UserOutboundApi {
     }
 
     public boolean deleteUserById(String userId, String accessToken) {
-        boolean isDeleted = false;
         log.info("Delete User by ID :: User ID = {}", userId);
         String userApi = picma_users_api + "/" + userId;
         log.info("Delete User by ID :: API = {}", userApi);
@@ -141,14 +135,13 @@ public class UserOutboundApi {
             ResponseEntity<?> resEntity = restTemplate.exchange(userApi, HttpMethod.DELETE, reqEntity, ResponseEntity.class);
             log.info("Delete User by ID :: Status code = {}", resEntity.getStatusCode().value());
             if (resEntity.getStatusCode().is2xxSuccessful()) {
-                isDeleted = true;
+                return true;
             } else {
                 throw new RuntimeException("Something went wrong while getting user by ID");
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return isDeleted;
     }
 
     public List<User> getAllUsers(String accessToken) throws UserException {
@@ -161,7 +154,7 @@ public class UserOutboundApi {
             if (resEntity.getStatusCode().is2xxSuccessful()) {
                 List<User> userList = resEntity.getBody();
                 log.info("Get Users :: NO. users = {}", userList != null ? userList.size() : 0);
-                return Optional.ofNullable(userList).get();
+                return Optional.ofNullable(userList).orElse(new ArrayList<>());
             } else {
                 throw new UserException(resEntity.toString(), resEntity.getStatusCode().value());
             }
@@ -185,7 +178,7 @@ public class UserOutboundApi {
                 List<User> usersList = resEntity.getBody();
                 log.info("Get POs :: NO. users = {}", usersList != null ? usersList.size() : 0);
                 if (!CollectionUtils.isEmpty(usersList)) {
-                    usersList.stream().forEach(user -> {
+                    usersList.forEach(user -> {
                         user.setGroupId(groupId);
                         modifiedUsersList.add(user);
                     });
@@ -200,11 +193,11 @@ public class UserOutboundApi {
     }
 
     public List<User> getAllAgents(String accessToken) {
-        return getAllMembersOfGroup(picma_group_agents, accessToken);
+        return getAllMembersOfGroup(picma_agents_group, accessToken);
     }
 
     public List<User> getAllPropertyOwners(String accessToken) {
-        return getAllMembersOfGroup(picma_group_prop_owners, accessToken);
+        return getAllMembersOfGroup(picma_owners_group, accessToken);
     }
 
     public void updateProfile(User user, String accessToken) {
