@@ -1,5 +1,30 @@
 @import "tailwindcss";
 
+@layer base {
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background-color: #334155;
+        border-radius: 9999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background-color: #475569;
+    }
+
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: #334155 transparent;
+    }
+}
+
 @layer utilities {
     .no-spinner::-webkit-inner-spin-button,
     .no-spinner::-webkit-outer-spin-button {
