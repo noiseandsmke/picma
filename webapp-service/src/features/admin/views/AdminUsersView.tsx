@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
-import {MoreVertical, Pencil, Search, Trash} from 'lucide-react';
-import {Card, CardContent, CardHeader} from "@/components/ui/card";
+import {MoreVertical, Pencil, PlusCircle, Search, Trash} from 'lucide-react';
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {TableCell, TableRow} from "@/components/ui/table";
@@ -71,8 +70,8 @@ const AdminUsersView: React.FC = () => {
     };
 
     const columns: Column[] = [
-        {header: "User", width: "35%", className: "text-slate-400"},
-        {header: "Role", width: "15%", className: "text-slate-400"},
+        {header: "User", width: activeTab === 'all' ? "35%" : "50%", className: "text-slate-400"},
+        ...(activeTab === 'all' ? [{header: "Role", width: "15%", className: "text-slate-400"}] : []),
         {header: "Status", width: "15%", className: "text-slate-400"},
         {header: "Last active", width: "20%", className: "text-slate-400"},
         {header: "Actions", width: "15%", className: "text-right text-slate-400"}
@@ -81,44 +80,61 @@ const AdminUsersView: React.FC = () => {
     return (
         <AdminLayout>
             <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-100">User management</h1>
-                    </div>
-                    <Button
-                        className="bg-indigo-600 hover:bg-indigo-700"
-                        onClick={() => setIsCreateOpen(true)}
-                    >
-                        Add new user
-                    </Button>
-                </div>
-
-                <Card className="bg-[#141124] border-[#2e2c3a]">
-                    <CardHeader className="border-b border-[#2e2c3a] pb-4">
+                <div className="rounded-xl border border-slate-800 bg-slate-950 text-slate-200 shadow-sm">
+                    {/* Header Section */}
+                    <div className="p-6 flex flex-col space-y-4 border-b border-slate-800">
                         <div className="flex items-center justify-between">
-                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[400px]">
-                                <TabsList className="bg-[#181624] border border-[#2e2c3a]">
-                                    <TabsTrigger value="all"
-                                                 className="data-[state=active]:bg-[#593bf2] data-[state=active]:text-white text-slate-400">All
-                                        users</TabsTrigger>
-                                    <TabsTrigger value="agent"
-                                                 className="data-[state=active]:bg-[#593bf2] data-[state=active]:text-white text-slate-400">Agents</TabsTrigger>
-                                    <TabsTrigger value="owner"
-                                                 className="data-[state=active]:bg-[#593bf2] data-[state=active]:text-white text-slate-400">Owners</TabsTrigger>
+                            <div className="flex flex-col space-y-1">
+                                <h3 className="font-semibold text-lg text-white">All Users</h3>
+                                <p className="text-sm text-slate-400">Manage and track system users.</p>
+                            </div>
+                            <Button
+                                onClick={() => setIsCreateOpen(true)}
+                                variant="outline"
+                                className="text-white border-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-white"
+                            >
+                                <PlusCircle className="h-4 w-4 mr-2"/>
+                                Create User
+                            </Button>
+                        </div>
+                        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
+                                <TabsList className="bg-slate-900 border border-slate-800">
+                                    <TabsTrigger
+                                        value="all"
+                                        className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white text-slate-400"
+                                    >
+                                        All Users
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="agent"
+                                        className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white text-slate-400"
+                                    >
+                                        Agents
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="owner"
+                                        className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white text-slate-400"
+                                    >
+                                        Owners
+                                    </TabsTrigger>
                                 </TabsList>
                             </Tabs>
-                            <div className="relative w-64">
-                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500"/>
+
+                            <div className="relative flex-1 max-w-sm w-full md:w-64">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500"/>
                                 <Input
                                     placeholder="Search users..."
-                                    className="pl-8 bg-[#181624] border-[#2e2c3a] text-slate-200 placeholder:text-slate-500 focus-visible:ring-[#593bf2]"
+                                    className="pl-9 bg-slate-900 border-slate-700 focus-visible:ring-indigo-500"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
                         </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
+                    </div>
+
+                    {/* Table Section */}
+                    <div className="p-0">
                         <SharedTable
                             columns={columns}
                             isLoading={isLoading}
@@ -127,10 +143,12 @@ const AdminUsersView: React.FC = () => {
                         >
                             {isLoading ? (
                                 Array.from({length: 4}).map((_, i) => (
-                                    <TableRow key={i} className="border-[#2e2c3a]">
+                                    <TableRow key={i} className="border-slate-800">
                                         <TableCell><Skeleton
                                             className="h-8 w-8 rounded-full bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
+                                        {activeTab === 'all' && (
+                                            <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
+                                        )}
                                         <TableCell><Skeleton className="h-4 w-16 bg-slate-800"/></TableCell>
                                         <TableCell><Skeleton className="h-4 w-20 bg-slate-800"/></TableCell>
                                         <TableCell><Skeleton className="h-8 w-8 ml-auto bg-slate-800"/></TableCell>
@@ -138,11 +156,11 @@ const AdminUsersView: React.FC = () => {
                                 ))
                             ) : filteredUsers?.map((user) => (
                                 <TableRow key={user.id}
-                                          className="border-[#2e2c3a] hover:bg-[#181624]/50 group transition-colors">
+                                          className="border-slate-800 hover:bg-slate-900/50 group transition-colors">
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <div
-                                                className="h-9 w-9 rounded-full bg-[#593bf2]/10 flex items-center justify-center text-[#593bf2] font-medium border border-[#593bf2]/20">
+                                                className="h-9 w-9 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-500 font-medium border border-indigo-500/20">
                                                 {user.username?.substring(0, 2).toUpperCase() || 'NA'}
                                             </div>
                                             <div>
@@ -151,12 +169,14 @@ const AdminUsersView: React.FC = () => {
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline"
-                                               className="border-[#2e2c3a] text-slate-400 bg-[#181624]">
-                                            {getDisplayRole(user)}
-                                        </Badge>
-                                    </TableCell>
+                                    {activeTab === 'all' && (
+                                        <TableCell>
+                                            <Badge variant="outline"
+                                                   className="border-slate-800 text-slate-400 bg-slate-900">
+                                                {getDisplayRole(user)}
+                                            </Badge>
+                                        </TableCell>
+                                    )}
                                     <TableCell>
                                         <div className="flex items-center gap-2">
                                             <span className={cn("h-2 w-2 rounded-full",
@@ -171,12 +191,12 @@ const AdminUsersView: React.FC = () => {
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button size="icon" variant="ghost"
-                                                        className="text-slate-500 hover:text-white hover:bg-[#593bf2]/20">
+                                                        className="text-slate-500 hover:text-white hover:bg-indigo-500/20">
                                                     <MoreVertical className="h-4 w-4"/>
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end"
-                                                                 className="bg-[#1e1c2e] border-slate-800 text-slate-200">
+                                                                 className="bg-slate-900 border-slate-800 text-slate-200">
                                                 <DropdownMenuItem
                                                     className="focus:bg-slate-800 focus:text-white cursor-pointer">
                                                     <Pencil className="mr-2 h-4 w-4"/>
@@ -195,16 +215,16 @@ const AdminUsersView: React.FC = () => {
                                 </TableRow>
                             ))}
                         </SharedTable>
-                    </CardContent>
-                </Card>
-            </div>
+                    </div>
+                </div>
 
-            <CreateUserDialog
-                open={isCreateOpen}
-                onOpenChange={setIsCreateOpen}
-                onSubmit={(data) => createMutation.mutate(data)}
-                isSubmitting={createMutation.isPending}
-            />
+                <CreateUserDialog
+                    open={isCreateOpen}
+                    onOpenChange={setIsCreateOpen}
+                    onSubmit={(data) => createMutation.mutate(data)}
+                    isSubmitting={createMutation.isPending}
+                />
+            </div>
         </AdminLayout>
     );
 };
