@@ -273,48 +273,48 @@ const AdminLeadsView: React.FC = () => {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="start"
-                                                                     className="bg-slate-900 border-slate-800 text-slate-200">
+                                                                     className="bg-slate-900 border-slate-800 text-slate-200 w-56">
                                                     <DropdownMenuLabel
-                                                        className="text-xs font-normal text-slate-500 uppercase tracking-wider mb-1">
+                                                        className="text-xs font-normal text-slate-500 uppercase tracking-wider px-2 py-1.5">
                                                         Filter by status
                                                     </DropdownMenuLabel>
                                                     <DropdownMenuSeparator className="bg-slate-800"/>
 
                                                     <DropdownMenuItem
-                                                        className="focus:bg-slate-800 focus:text-white cursor-pointer py-3"
+                                                        className="focus:bg-slate-800 focus:text-white cursor-pointer py-2 px-2"
                                                         onSelect={(e) => {
                                                             e.preventDefault();
                                                             setSelectedStatuses([]);
                                                         }}
                                                     >
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-3 w-full">
                                                             <Checkbox
                                                                 checked={selectedStatuses.length === 0}
-                                                                onCheckedChange={() => setSelectedStatuses([])}
-                                                                className="border-slate-600 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                                                className="border-slate-600 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500 pointer-events-none"
                                                             />
-                                                            <span>All Statuses</span>
+                                                            <span className="text-sm">All Statuses</span>
                                                         </div>
                                                     </DropdownMenuItem>
 
                                                     {Object.values(LEAD_STATUS_CONFIG).map((config) => (
                                                         <DropdownMenuItem
                                                             key={config.value}
-                                                            className="focus:bg-slate-800 focus:text-white cursor-pointer py-3"
+                                                            className="focus:bg-slate-800 focus:text-white cursor-pointer py-2 px-2"
                                                             onSelect={(e) => {
                                                                 e.preventDefault();
                                                                 toggleStatus(config.value);
                                                             }}
                                                         >
-                                                            <div className="flex items-center gap-2">
+                                                            <div className="flex items-center gap-3 w-full">
                                                                 <Checkbox
                                                                     checked={selectedStatuses.includes(config.value)}
-                                                                    onCheckedChange={() => toggleStatus(config.value)}
-                                                                    className="border-slate-600 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                                                    className="border-slate-600 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500 pointer-events-none"
                                                                 />
-                                                                <span
-                                                                    className={cn("h-2 w-2 rounded-full", config.dotClass)}/>
-                                                                {config.label}
+                                                                <div className="flex items-center gap-2">
+                                                                    <span
+                                                                        className={cn("h-2 w-2 rounded-full", config.dotClass)}/>
+                                                                    <span className="text-sm">{config.label}</span>
+                                                                </div>
                                                             </div>
                                                         </DropdownMenuItem>
                                                     ))}
