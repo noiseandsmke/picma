@@ -13,8 +13,8 @@ spring:
         registration:
           keycloak:
             provider: ${IDP:keycloak}
-            client-id: ${IDP_CLIENT:dai-ichi-insurer}
-            client-secret: ${IDP_SECRET:WJmbj3fln4LK1sHr9xh2b7y8Eum9iXWc}
+            client-id: ${IDP_CLIENT:user-authnz-client}
+            client-secret: ${IDP_SECRET:IN1s7kAP5qbeKarl8i97WrxYYWxELpZe}
             authorization-grant-type: ${OIDC_GRANT_TYPE:authorization_code}
             redirect-uri: "{baseUrl}/login/oauth2/code/"
             scope: ${OIDC_SCOPE:openid}

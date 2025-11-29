@@ -26,7 +26,7 @@ public class UserOutboundApi {
     @Value("${picma.iam.groupsApi}")
     private String picma_groups_api;
     @Getter
-    @Value("${picma.iam.groups.property-owners}")
+    @Value("${picma.iam.groups.owners}")
     private String picma_group_prop_owners;
     @Getter
     @Value("${picma.iam.groups.agents}")

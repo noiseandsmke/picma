@@ -8,8 +8,8 @@ picma:
     usersApi: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/admin/realms/${IDP_REALMS:picma}/users
     groupsApi: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/admin/realms/${IDP_REALMS:picma}/groups
     groups:
-      property-owners: ${PROPERTY_OWNERS_GROUP_ID:163e8a2c-8788-4bfc-bff8-e0d349bc9ac2}
-      agents: ${AGENTS_GROUP_ID:agents-group-id-placeholder}
+      owners: ${OWNERS_GROUP_ID:d41e9d41-afb7-408e-bbd0-970b093268ab}
+      agents: ${AGENTS_GROUP_ID:2a576f8b-ee0d-4c57-be7a-de4a490e298d}
 eureka:
   client:
     service-url:
