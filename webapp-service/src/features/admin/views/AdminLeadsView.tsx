@@ -30,13 +30,13 @@ import {Label} from '@/components/ui/label';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {
     DropdownMenu,
-    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import {Checkbox} from '@/components/ui/checkbox';
 import {LEAD_STATUS_CONFIG} from '../utils/statusMapping';
 
 const createLeadSchema = z.object({
@@ -56,7 +56,7 @@ const AdminLeadsView: React.FC = () => {
     const [sortConfig, setSortConfig] = useState({key: 'id', direction: 'asc'});
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('ALL');
+    const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
 
     const {
         handleSubmit,
@@ -142,6 +142,16 @@ const AdminLeadsView: React.FC = () => {
         setSortConfig({key, direction});
     };
 
+    const toggleStatus = (status: string) => {
+        setSelectedStatuses(prev => {
+            if (prev.includes(status)) {
+                return prev.filter(s => s !== status);
+            } else {
+                return [...prev, status];
+            }
+        });
+    };
+
     const formatDate = (dateStr: string) => {
         try {
             return new Date(dateStr).toLocaleDateString();
@@ -185,7 +195,7 @@ const AdminLeadsView: React.FC = () => {
             lead.userInfo.toLowerCase().includes(searchTerm.toLowerCase()) ||
             String(lead.id).includes(searchTerm);
 
-        const matchesStatus = statusFilter === 'ALL' || lead.status === statusFilter;
+        const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(lead.status);
 
         return matchesSearch && matchesStatus;
     });
@@ -197,13 +207,13 @@ const AdminLeadsView: React.FC = () => {
                     <div className="p-6 flex flex-col space-y-4 border-b border-slate-800">
                         <div className="flex items-center justify-between">
                             <div className="flex flex-col space-y-1">
-                                <h3 className="font-semibold text-lg text-white">All leads</h3>
+                                <h3 className="font-semibold text-lg text-white">All Leads</h3>
                                 <p className="text-sm text-slate-400">Manage and track all insurance leads.</p>
                             </div>
                             <Button onClick={handleCreate} variant="outline"
                                     className="text-white border-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-white">
                                 <PlusCircle className="h-4 w-4 mr-2"/>
-                                Create lead
+                                Create Lead
                             </Button>
                         </div>
                         <div className="flex gap-4">
@@ -234,13 +244,13 @@ const AdminLeadsView: React.FC = () => {
                                     <TableHead className="text-slate-400 cursor-pointer"
                                                onClick={() => handleSort('userInfo')}>
                                         <div className="flex items-center gap-1">
-                                            User info {sortConfig.key === 'userInfo' && <ArrowUpDown size={14}/>}
+                                            User Info {sortConfig.key === 'userInfo' && <ArrowUpDown size={14}/>}
                                         </div>
                                     </TableHead>
                                     <TableHead className="text-slate-400 cursor-pointer"
                                                onClick={() => handleSort('propertyInfo')}>
                                         <div className="flex items-center gap-1">
-                                            Property info {sortConfig.key === 'propertyInfo' &&
+                                            Property Info {sortConfig.key === 'propertyInfo' &&
                                             <ArrowUpDown size={14}/>}
                                         </div>
 
@@ -253,33 +263,60 @@ const AdminLeadsView: React.FC = () => {
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost"
-                                                            className="h-6 w-6 p-0 hover:bg-slate-800 rounded-full">
+                                                            className="h-6 w-6 p-0 hover:bg-slate-800 rounded-full relative">
                                                         <Filter
-                                                            className={cn("h-3 w-3", statusFilter !== 'ALL' ? "text-indigo-400" : "text-slate-500")}/>
+                                                            className={cn("h-3 w-3", selectedStatuses.length > 0 ? "text-indigo-400" : "text-slate-500")}/>
+                                                        {selectedStatuses.length > 0 && (
+                                                            <span
+                                                                className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-red-500 border border-slate-900"/>
+                                                        )}
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="start"
                                                                      className="bg-slate-900 border-slate-800 text-slate-200">
-                                                    <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
+                                                    <DropdownMenuLabel
+                                                        className="text-xs font-normal text-slate-500 uppercase tracking-wider mb-1">
+                                                        Filter by status
+                                                    </DropdownMenuLabel>
                                                     <DropdownMenuSeparator className="bg-slate-800"/>
-                                                    <DropdownMenuCheckboxItem
-                                                        checked={statusFilter === 'ALL'}
-                                                        onCheckedChange={() => setStatusFilter('ALL')}
-                                                        className="focus:bg-slate-800 focus:text-white cursor-pointer"
+
+                                                    <DropdownMenuItem
+                                                        className="focus:bg-slate-800 focus:text-white cursor-pointer py-3"
+                                                        onSelect={(e) => {
+                                                            e.preventDefault();
+                                                            setSelectedStatuses([]);
+                                                        }}
                                                     >
-                                                        All statuses
-                                                    </DropdownMenuCheckboxItem>
+                                                        <div className="flex items-center gap-2">
+                                                            <Checkbox
+                                                                checked={selectedStatuses.length === 0}
+                                                                onCheckedChange={() => setSelectedStatuses([])}
+                                                                className="border-slate-600 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                                            />
+                                                            <span>All Statuses</span>
+                                                        </div>
+                                                    </DropdownMenuItem>
+
                                                     {Object.values(LEAD_STATUS_CONFIG).map((config) => (
-                                                        <DropdownMenuCheckboxItem
+                                                        <DropdownMenuItem
                                                             key={config.value}
-                                                            checked={statusFilter === config.value}
-                                                            onCheckedChange={() => setStatusFilter(config.value)}
-                                                            className="focus:bg-slate-800 focus:text-white cursor-pointer"
+                                                            className="focus:bg-slate-800 focus:text-white cursor-pointer py-3"
+                                                            onSelect={(e) => {
+                                                                e.preventDefault();
+                                                                toggleStatus(config.value);
+                                                            }}
                                                         >
-                                                            <span
-                                                                className={cn("h-2 w-2 rounded-full mr-2", config.dotClass)}/>
-                                                            {config.label}
-                                                        </DropdownMenuCheckboxItem>
+                                                            <div className="flex items-center gap-2">
+                                                                <Checkbox
+                                                                    checked={selectedStatuses.includes(config.value)}
+                                                                    onCheckedChange={() => toggleStatus(config.value)}
+                                                                    className="border-slate-600 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                                                />
+                                                                <span
+                                                                    className={cn("h-2 w-2 rounded-full", config.dotClass)}/>
+                                                                {config.label}
+                                                            </div>
+                                                        </DropdownMenuItem>
                                                     ))}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -374,7 +411,7 @@ const AdminLeadsView: React.FC = () => {
                                                             <DropdownMenuItem
                                                                 className="focus:bg-slate-800 focus:text-white cursor-pointer">
                                                                 <Eye className="mr-2 h-4 w-4"/>
-                                                                View details
+                                                                View Details
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator className="bg-slate-800"/>
                                                             <DropdownMenuItem
@@ -382,7 +419,7 @@ const AdminLeadsView: React.FC = () => {
                                                                 onClick={() => handleDelete(lead.id)}
                                                             >
                                                                 <Trash2 className="mr-2 h-4 w-4"/>
-                                                                Delete lead
+                                                                Delete Lead
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
@@ -405,15 +442,15 @@ const AdminLeadsView: React.FC = () => {
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogContent className="bg-slate-950 border-slate-800 text-white sm:max-w-[600px]">
                         <DialogHeader>
-                            <DialogTitle>Create new lead</DialogTitle>
+                            <DialogTitle>Create New Lead</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
                             <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">User
-                                    information</h4>
+                                    Information</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="col-span-2 md:col-span-1">
-                                        <Label htmlFor="fullName" className="text-slate-300">Full name</Label>
+                                        <Label htmlFor="fullName" className="text-slate-300">Full Name</Label>
                                         <Controller
                                             name="fullName"
                                             control={control}
@@ -425,7 +462,7 @@ const AdminLeadsView: React.FC = () => {
                                             <p className="text-red-500 text-xs mt-1">{errors.fullName.message}</p>}
                                     </div>
                                     <div className="col-span-2 md:col-span-1">
-                                        <Label htmlFor="phoneNumber" className="text-slate-300">Phone number</Label>
+                                        <Label htmlFor="phoneNumber" className="text-slate-300">Phone Number</Label>
                                         <Controller
                                             name="phoneNumber"
                                             control={control}
@@ -437,7 +474,7 @@ const AdminLeadsView: React.FC = () => {
                                             <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>}
                                     </div>
                                     <div className="col-span-2">
-                                        <Label htmlFor="email" className="text-slate-300">Email address</Label>
+                                        <Label htmlFor="email" className="text-slate-300">Email Address</Label>
                                         <Controller
                                             name="email"
                                             control={control}
@@ -454,10 +491,10 @@ const AdminLeadsView: React.FC = () => {
                             <div className="border-t border-slate-800"/>
                             <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Property
-                                    details</h4>
+                                    Details</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="col-span-2">
-                                        <Label htmlFor="address" className="text-slate-300">Property address</Label>
+                                        <Label htmlFor="address" className="text-slate-300">Property Address</Label>
                                         <Controller
                                             name="address"
                                             control={control}
@@ -491,7 +528,7 @@ const AdminLeadsView: React.FC = () => {
                                             <p className="text-red-500 text-xs mt-1">{errors.city.message}</p>}
                                     </div>
                                     <div>
-                                        <Label htmlFor="cost" className="text-slate-300">Estimated cost ($)</Label>
+                                        <Label htmlFor="cost" className="text-slate-300">Estimated Cost ($)</Label>
                                         <Controller
                                             name="cost"
                                             control={control}
@@ -517,7 +554,7 @@ const AdminLeadsView: React.FC = () => {
                                 </DialogClose>
                                 <Button type="submit" disabled={createMutation.isPending}
                                         className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                    {createMutation.isPending ? 'Creating...' : 'Create lead'}
+                                    {createMutation.isPending ? 'Creating...' : 'Create Lead'}
                                 </Button>
                             </DialogFooter>
                         </form>
