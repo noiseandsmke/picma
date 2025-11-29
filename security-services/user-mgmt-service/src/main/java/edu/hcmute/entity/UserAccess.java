@@ -3,14 +3,9 @@ package edu.hcmute.entity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 @Data
 @NoArgsConstructor
-public class UserAccess implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -5790951155079618416L;
+public class UserAccess {
     boolean manageGroupMembership = true;
     boolean view = true;
     boolean mapRoles = true;
