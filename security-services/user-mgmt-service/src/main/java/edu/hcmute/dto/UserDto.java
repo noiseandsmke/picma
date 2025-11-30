@@ -1,5 +1,6 @@
 package edu.hcmute.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -28,6 +29,9 @@ public record UserDto(
 
         String zipcode,
 
-        String group
+        String group,
+
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        String password
 ) {
 }

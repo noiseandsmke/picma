@@ -8,11 +8,11 @@ import java.util.List;
 public interface UserService {
     UserDto createUser(UserDto userDto);
 
-    UserDto registerUser(UserDto userDto);
-
     UserDto getUserById(String userId);
 
-    boolean deleteUserById(String userId);
+    void updateUserStatus(String userId, boolean enabled);
+
+    void switchGroup(String userId, String targetGroup);
 
     UserDto updateUser(UserDto userDto);
 
@@ -23,6 +23,4 @@ public interface UserService {
     List<UserDto> getAllAgents();
 
     List<UserDto> getAllPropertyOwners();
-
-    void forgotPassword(String email);
 }

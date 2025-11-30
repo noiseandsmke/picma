@@ -7,6 +7,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,15 +23,16 @@ public interface UserMapper {
     @Mapping(target = "group", expression = "java(determineGroup(groupName))")
     UserDto toDtoWithGroup(User user, @Context String groupName);
 
-    @Mapping(target = "attributes", ignore = true)
+    @Mapping(target = "attributes", source = "zipcode", qualifiedByName = "mapAttributes")
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "enabled", constant = "true")
+    @Mapping(target = "enabled", ignore = true)
     @Mapping(target = "totp", constant = "false")
     @Mapping(target = "realmRoles", ignore = true)
     @Mapping(target = "clientRoles", ignore = true)
     @Mapping(target = "groups", ignore = true)
     @Mapping(target = "access", ignore = true)
     @Mapping(target = "createdTimestamp", ignore = true)
+    @Mapping(target = "credentials", ignore = true)
     User toEntity(UserDto userDto);
 
     @Named("mapZipcode")
@@ -41,6 +44,16 @@ public interface UserMapper {
             }
         }
         return null;
+    }
+
+    @Named("mapAttributes")
+    default Map<String, List<String>> mapAttributes(String zipcode) {
+        if (zipcode == null || zipcode.isEmpty()) {
+            return null;
+        }
+        Map<String, List<String>> attributes = new HashMap<>();
+        attributes.put("zipcode", Collections.singletonList(zipcode));
+        return attributes;
     }
 
     default String determineGroup(String groupName) {

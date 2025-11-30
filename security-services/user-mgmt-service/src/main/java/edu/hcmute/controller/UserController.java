@@ -53,13 +53,6 @@ public class UserController {
         return new ResponseEntity<>(userDto, HttpStatus.CREATED);
     }
 
-    @PostMapping("/user/register")
-    @Operation(description = "registerUser")
-    public ResponseEntity<UserDto> registerUser(@Valid @RequestBody UserDto userDto) {
-        userDto = userService.registerUser(userDto);
-        return new ResponseEntity<>(userDto, HttpStatus.CREATED);
-    }
-
     @GetMapping("/user/{userId}")
     @Operation(description = "getUserById", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<UserDto> getUserById(@PathVariable String userId) {
@@ -68,14 +61,24 @@ public class UserController {
         return ResponseEntity.ok(userDto);
     }
 
-    @DeleteMapping("/user/{userId}")
-    @Operation(description = "deleteUserById", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<?> deleteUserById(@PathVariable String userId) {
-        log.info("UserController :: deleteUserById :: Id = {}", userId);
-        boolean isDeleted = userService.deleteUserById(userId);
-        Map<String, String> message = new HashMap<>();
-        message.put("Message", "User with Id = " + userId + " deleted " + isDeleted);
-        return ResponseEntity.ok(message);
+    @PutMapping("/user/{userId}/status")
+    @Operation(description = "updateUserStatus", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Map<String, String>> updateUserStatus(@PathVariable String userId, @RequestParam boolean enabled) {
+        log.info("UserController :: updateUserStatus :: Id = {}, enabled = {}", userId, enabled);
+        userService.updateUserStatus(userId, enabled);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "User status updated to " + enabled);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/user/{userId}/switch-group")
+    @Operation(description = "switchGroup", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Map<String, String>> switchGroup(@PathVariable String userId, @RequestParam String targetGroup) {
+        log.info("UserController :: switchGroup :: Id = {}, targetGroup = {}", userId, targetGroup);
+        userService.switchGroup(userId, targetGroup);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "User switched to group " + targetGroup);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/user/profile")
@@ -83,11 +86,5 @@ public class UserController {
     public ResponseEntity<UserDto> updateProfile(@Valid @RequestBody UserDto userDto) {
         userDto = userService.updateUser(userDto);
         return ResponseEntity.ok(userDto);
-    }
-
-    @PostMapping("/user/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
-        userService.forgotPassword(email);
-        return ResponseEntity.ok().build();
     }
 }

@@ -26,4 +26,13 @@ public class User {
     private List<String> groups;
     private UserAccess access;
     private Long createdTimestamp;
+    private List<CredentialRepresentation> credentials;
+
+    @Data
+    @NoArgsConstructor
+    public static class CredentialRepresentation {
+        private String type;
+        private String value;
+        private boolean temporary;
+    }
 }
