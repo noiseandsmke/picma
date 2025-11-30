@@ -4,7 +4,6 @@ import edu.hcmute.dto.UserDto;
 import edu.hcmute.entity.User;
 import edu.hcmute.exception.UserException;
 import edu.hcmute.mapper.UserMapper;
-import edu.hcmute.outbound.UserOutboundApi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
