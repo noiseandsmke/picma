@@ -11,7 +11,7 @@ export interface UserDto {
     status?: string;
     lastActive?: string;
     zipCode?: string;
-    groupId?: string;
+    group?: string | null;
     emailVerified?: boolean;
     enabled?: boolean;
     totp?: boolean;
@@ -64,11 +64,19 @@ export const createUser = async (user: UserDto): Promise<UserDto> => {
     return response.data;
 };
 
-export const deleteUser = async (userId: string): Promise<void> => {
-    await userClient.delete(`/users/${userId}`);
-};
-
 export const updateUser = async (user: UserDto): Promise<UserDto> => {
     const response = await userClient.put<UserDto>('/users/profile', user);
     return response.data;
+};
+
+export const updateUserStatus = async (userId: string, enabled: boolean): Promise<void> => {
+    await userClient.put(`/users/${userId}/status`, null, {
+        params: {enabled}
+    });
+};
+
+export const switchUserGroup = async (userId: string, targetGroup: 'agents' | 'owners'): Promise<void> => {
+    await userClient.put(`/users/${userId}/switch-group`, null, {
+        params: {targetGroup}
+    });
 };

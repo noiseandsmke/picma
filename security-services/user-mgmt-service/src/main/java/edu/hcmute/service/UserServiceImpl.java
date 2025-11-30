@@ -89,13 +89,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateUserStatus(String userId, boolean enabled) {
-        User user = new User();
-        user.setId(userId);
-        user.setEnabled(enabled);
+    public void updateUserStatus(String userId) {
         try {
+            User currentUser = keycloakAdminClient.getUserById(userId);
+            boolean newStatus = !currentUser.isEnabled();
+            User user = new User();
+            user.setId(userId);
+            user.setEnabled(newStatus);
             keycloakAdminClient.updateUser(userId, user);
-            log.info("Updated status for user {} to enabled={}", userId, enabled);
+            log.info("Updated status for user {} to enabled={}", userId, newStatus);
         } catch (Exception e) {
             log.error("Failed to update status for user {}", userId, e);
             throw new RuntimeException("Failed to update user status", e);
@@ -103,29 +105,35 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void switchGroup(String userId, String targetGroup) {
-        String targetGroupId;
-        if ("agents".equalsIgnoreCase(targetGroup)) {
-            targetGroupId = agentsGroupId;
-        } else if ("owners".equalsIgnoreCase(targetGroup)) {
-            targetGroupId = ownersGroupId;
-        } else {
-            throw new IllegalArgumentException("Invalid target group: " + targetGroup);
-        }
+    public void switchGroup(String userId) {
         try {
             // 1. Get current groups
             List<Map<String, Object>> currentGroups = keycloakAdminClient.getUserGroups(userId);
-            // 2. Identify and leave old groups (Owners or Agents)
+            String currentGroupId = null;
+            String targetGroupId = null;
+            // 2. Identify current group (Owner or Agent)
             for (Map<String, Object> group : currentGroups) {
                 String id = (String) group.get("id");
-                if (id.equals(ownersGroupId) || id.equals(agentsGroupId)) {
-                    if (!id.equals(targetGroupId)) {
-                        log.info("Leaving group {} for user {}", id, userId);
-                        keycloakAdminClient.leaveGroup(userId, id);
-                    }
+                if (id.equals(ownersGroupId)) {
+                    currentGroupId = ownersGroupId;
+                    targetGroupId = agentsGroupId;
+                    break;
+                } else if (id.equals(agentsGroupId)) {
+                    currentGroupId = agentsGroupId;
+                    targetGroupId = ownersGroupId;
+                    break;
                 }
             }
-            // 3. Join new group
+            if (currentGroupId == null) {
+                log.warn("User {} is neither Owner nor Agent. Defaulting to Owners group.", userId);
+                targetGroupId = ownersGroupId;
+            }
+            // 3. Leave old group if exists
+            if (currentGroupId != null) {
+                log.info("Leaving group {} for user {}", currentGroupId, userId);
+                keycloakAdminClient.leaveGroup(userId, currentGroupId);
+            }
+            // 4. Join new group
             log.info("Joining group {} for user {}", targetGroupId, userId);
             keycloakAdminClient.joinGroup(userId, targetGroupId);
         } catch (Exception e) {

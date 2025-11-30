@@ -10,9 +10,9 @@ public interface UserService {
 
     UserDto getUserById(String userId);
 
-    void updateUserStatus(String userId, boolean enabled);
+    void updateUserStatus(String userId);
 
-    void switchGroup(String userId, String targetGroup);
+    void switchGroup(String userId);
 
     UserDto updateUser(UserDto userDto);
 

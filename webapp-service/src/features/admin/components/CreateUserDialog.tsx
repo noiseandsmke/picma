@@ -45,13 +45,13 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: C
     });
 
     const handleSubmit = (values: z.infer<typeof userSchema>) => {
-        let groupId = "";
-        if (values.role === 'agent') groupId = "agent-group-id-placeholder";
-        else if (values.role === 'owner') groupId = "163e8a2c-8788-4bfc-bff8-e0d349bc9ac2";
+        let group = "";
+        if (values.role === 'agent') group = "agents";
+        else if (values.role === 'owner') group = "owners";
 
         onSubmit({
             ...values,
-            groupId: groupId
+            group: group
         });
         form.reset();
     };

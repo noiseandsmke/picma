@@ -61,23 +61,25 @@ public class UserController {
         return ResponseEntity.ok(userDto);
     }
 
-    @PutMapping("/user/{userId}/status")
+    @PutMapping("/user/status")
     @Operation(description = "updateUserStatus", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<Map<String, String>> updateUserStatus(@PathVariable String userId, @RequestParam boolean enabled) {
-        log.info("UserController :: updateUserStatus :: Id = {}, enabled = {}", userId, enabled);
-        userService.updateUserStatus(userId, enabled);
+    public ResponseEntity<Map<String, String>> updateUserStatus(@RequestBody edu.hcmute.dto.UserActionDto userActionDto) {
+        String userId = userActionDto.userId();
+        log.info("UserController :: updateUserStatus :: Id = {}", userId);
+        userService.updateUserStatus(userId);
         Map<String, String> response = new HashMap<>();
-        response.put("message", "User status updated to " + enabled);
+        response.put("message", "User status updated");
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/user/{userId}/switch-group")
+    @PutMapping("/user/switch-group")
     @Operation(description = "switchGroup", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<Map<String, String>> switchGroup(@PathVariable String userId, @RequestParam String targetGroup) {
-        log.info("UserController :: switchGroup :: Id = {}, targetGroup = {}", userId, targetGroup);
-        userService.switchGroup(userId, targetGroup);
+    public ResponseEntity<Map<String, String>> switchGroup(@RequestBody edu.hcmute.dto.UserActionDto userActionDto) {
+        String userId = userActionDto.userId();
+        log.info("UserController :: switchGroup :: Id = {}", userId);
+        userService.switchGroup(userId);
         Map<String, String> response = new HashMap<>();
-        response.put("message", "User switched to group " + targetGroup);
+        response.put("message", "User group switched");
         return ResponseEntity.ok(response);
     }
 

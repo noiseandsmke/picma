@@ -1,15 +1,21 @@
 import React, {useState} from 'react';
-import {MoreVertical, Pencil, PlusCircle, Search, Trash} from 'lucide-react';
+import {ArrowLeftRight, MoreVertical, Pencil, PlusCircle, Power, Search} from 'lucide-react';
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from "@/components/ui/shared-table";
 import {Badge} from "@/components/ui/badge";
 import {Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs";
-import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from "@/components/ui/dropdown-menu";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import {cn} from "@/lib/utils";
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {createUser, deleteUser, fetchUsers, UserDto} from '../services/userService';
+import {createUser, fetchUsers, switchUserGroup, updateUserStatus, UserDto} from '../services/userService';
 import {Skeleton} from '@/components/ui/skeleton';
 import AdminLayout from '../layouts/AdminLayout';
 import {CreateUserDialog} from '../components/CreateUserDialog';
@@ -40,15 +46,29 @@ const AdminUsersView: React.FC = () => {
         }
     });
 
-    const deleteMutation = useMutation({
-        mutationFn: deleteUser,
-        onSuccess: async () => {
+    const statusMutation = useMutation({
+        mutationFn: ({userId, enabled}: { userId: string, enabled: boolean }) =>
+            updateUserStatus(userId, enabled),
+        onSuccess: async (_, variables) => {
             await queryClient.invalidateQueries({queryKey: ['admin-users']});
-            toast.success("User deleted successfully");
+            toast.success(`User ${variables.enabled ? 'enabled' : 'disabled'} successfully`);
         },
         onError: (error) => {
             console.error(error);
-            toast.error("Failed to delete user");
+            toast.error("Failed to update user status");
+        }
+    });
+
+    const switchGroupMutation = useMutation({
+        mutationFn: ({userId, targetGroup}: { userId: string, targetGroup: 'agents' | 'owners' }) =>
+            switchUserGroup(userId, targetGroup),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({queryKey: ['admin-users']});
+            toast.success("User group switched successfully");
+        },
+        onError: (error) => {
+            console.error(error);
+            toast.error("Failed to switch user group");
         }
     });
 
@@ -64,8 +84,9 @@ const AdminUsersView: React.FC = () => {
 
     const getDisplayRole = (user: UserDto) => {
         if (user.role) return user.role;
-        if (user.groupId === 'agent-group-id-placeholder') return 'Agent';
-        if (user.groupId === '163e8a2c-8788-4bfc-bff8-e0d349bc9ac2') return 'Owner';
+
+        if (user.group === 'agents') return 'Agent';
+        if (user.group === 'owners') return 'Owner';
         return 'User';
     };
 
@@ -81,7 +102,6 @@ const AdminUsersView: React.FC = () => {
         <AdminLayout>
             <div className="space-y-6">
                 <div className="rounded-xl border border-slate-800 bg-slate-950 text-slate-200 shadow-sm">
-                    {/* Header Section */}
                     <div className="p-6 flex flex-col space-y-4 border-b border-slate-800">
                         <div className="flex items-center justify-between">
                             <div className="flex flex-col space-y-1">
@@ -133,7 +153,6 @@ const AdminUsersView: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Table Section */}
                     <div className="p-0">
                         <SharedTable
                             columns={columns}
@@ -180,10 +199,11 @@ const AdminUsersView: React.FC = () => {
                                     <TableCell>
                                         <div className="flex items-center gap-2">
                                             <span className={cn("h-2 w-2 rounded-full",
-                                                user.status === 'Active' ? "bg-emerald-500" :
-                                                    user.status === 'Away' ? "bg-amber-500" : "bg-slate-500"
+                                                user.enabled ? "bg-emerald-500" : "bg-red-500"
                                             )}/>
-                                            <span className="text-slate-300">{user.status || 'Offline'}</span>
+                                            <span className="text-slate-300">
+                                                {user.enabled ? 'Active' : 'Disabled'}
+                                            </span>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-slate-400">{user.lastActive || '-'}</TableCell>
@@ -202,13 +222,35 @@ const AdminUsersView: React.FC = () => {
                                                     <Pencil className="mr-2 h-4 w-4"/>
                                                     Edit profile
                                                 </DropdownMenuItem>
+
+                                                <DropdownMenuSeparator className="bg-slate-800"/>
+                                                
                                                 <DropdownMenuItem
-                                                    className="focus:bg-red-900/20 focus:text-red-400 text-red-400 cursor-pointer"
-                                                    onClick={() => user.id && deleteMutation.mutate(user.id)}
+                                                    className={cn("focus:bg-slate-800 cursor-pointer",
+                                                        user.enabled ? "text-red-400 focus:text-red-400" : "text-emerald-400 focus:text-emerald-400"
+                                                    )}
+                                                    onClick={() => user.id && statusMutation.mutate({
+                                                        userId: user.id,
+                                                        enabled: !user.enabled
+                                                    })}
                                                 >
-                                                    <Trash className="mr-2 h-4 w-4"/>
-                                                    Delete user
+                                                    <Power className="mr-2 h-4 w-4"/>
+                                                    {user.enabled ? "Disable Account" : "Enable Account"}
                                                 </DropdownMenuItem>
+
+                                                {/* Switch Group Action */}
+                                                {(user.group === 'agents' || user.group === 'owners') && (
+                                                    <DropdownMenuItem
+                                                        className="focus:bg-slate-800 focus:text-white cursor-pointer text-amber-500"
+                                                        onClick={() => user.id && switchGroupMutation.mutate({
+                                                            userId: user.id,
+                                                            targetGroup: user.group === 'agents' ? 'owners' : 'agents'
+                                                        })}
+                                                    >
+                                                        <ArrowLeftRight className="mr-2 h-4 w-4"/>
+                                                        {user.group === 'agents' ? "Switch to Owner" : "Switch to Agent"}
+                                                    </DropdownMenuItem>
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>

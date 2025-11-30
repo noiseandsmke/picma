@@ -2,7 +2,6 @@ package edu.hcmute.service;
 
 import edu.hcmute.dto.UserDto;
 import edu.hcmute.entity.User;
-import edu.hcmute.exception.UserException;
 import edu.hcmute.mapper.UserMapper;
 import edu.hcmute.outbound.KeycloakAdminClient;
 import edu.hcmute.outbound.KeycloakGroupClient;
@@ -41,14 +40,14 @@ public class UserServiceImplTest {
     void createUser_success() {
         String ownersGroupId = "owners-group-id";
         ReflectionTestUtils.setField(userService, "ownersGroupId", ownersGroupId);
-        UserDto inputDto = new UserDto(null, "u", "f", "l", "e@e.com", true, "12345", null);
+        UserDto inputDto = new UserDto(null, "u", "f", "l", "e@e.com", true, "12345", null, "password");
         User entity = new User();
-        UserDto resultDto = new UserDto("created-id", "u", "f", "l", "e@e.com", true, "12345", ownersGroupId);
+        UserDto resultDto = new UserDto("created-id", "u", "f", "l", "e@e.com", true, "12345", ownersGroupId, null);
         when(userMapper.toEntity(inputDto)).thenReturn(entity);
         ResponseEntity<Void> responseEntity = ResponseEntity.created(URI.create("http://localhost/users/created-id")).build();
         when(keycloakAdminClient.createUser(entity)).thenReturn(responseEntity);
         when(keycloakAdminClient.joinGroup(eq("created-id"), eq(ownersGroupId))).thenReturn(ResponseEntity.ok().build());
-        when(userMapper.toDtoWithGroup(eq(entity), eq(ownersGroupId))).thenReturn(resultDto);
+        when(userMapper.toDtoWithGroup(eq(entity), eq("owners"))).thenReturn(resultDto);
         UserDto result = userService.createUser(inputDto);
         assertNotNull(result);
         assertEquals("created-id", result.id());
@@ -60,7 +59,7 @@ public class UserServiceImplTest {
     void getUserById_success() {
         String id = "1";
         User entity = new User();
-        UserDto resultDto = new UserDto(id, "u", "f", "l", "e@e.com", true, "12345", "owners");
+        UserDto resultDto = new UserDto(id, "u", "f", "l", "e@e.com", true, "12345", "owners", null);
         when(keycloakAdminClient.getUserById(id)).thenReturn(entity);
         when(userMapper.toDto(entity)).thenReturn(resultDto);
         UserDto result = userService.getUserById(id);
@@ -69,18 +68,10 @@ public class UserServiceImplTest {
     }
 
     @Test
-    void deleteUserById_success() {
-        String id = "1";
-        when(keycloakAdminClient.deleteUser(id)).thenReturn(ResponseEntity.noContent().build());
-        boolean result = userService.deleteUserById(id);
-        assertTrue(result);
-    }
-
-    @Test
-    void getAllUsers_success() throws UserException {
+    void getAllUsers_success() {
         User entity = new User();
         entity.setId("1");
-        UserDto resultDto = new UserDto("1", "u", "f", "l", "e@e.com", true, "12345", "owners");
+        UserDto resultDto = new UserDto("1", "u", "f", "l", "e@e.com", true, "12345", "owners", null);
         when(keycloakAdminClient.getUsers("*")).thenReturn(Collections.singletonList(entity));
         when(keycloakAdminClient.getUserGroups("1")).thenReturn(Collections.emptyList());
         when(userMapper.toDtoWithGroup(eq(entity), any())).thenReturn(resultDto);
@@ -93,7 +84,7 @@ public class UserServiceImplTest {
     void getAllMembersOfGroup_success() {
         String groupId = "g1";
         User entity = new User();
-        UserDto resultDto = new UserDto("1", "u", "f", "l", "e@e.com", true, "12345", "owners");
+        UserDto resultDto = new UserDto("1", "u", "f", "l", "e@e.com", true, "12345", "owners", null);
         when(keycloakGroupClient.getGroupMembers(groupId)).thenReturn(Collections.singletonList(entity));
         when(userMapper.toDto(entity)).thenReturn(resultDto);
         List<UserDto> result = userService.getAllMembersOfGroup(groupId);
