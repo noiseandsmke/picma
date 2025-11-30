@@ -6,25 +6,23 @@ import edu.hcmute.exception.UserException;
 import java.util.List;
 
 public interface UserService {
-    UserDto createUser(UserDto userDto, String accessToken);
+    UserDto createUser(UserDto userDto);
 
     UserDto registerUser(UserDto userDto);
 
-    UserDto getUserById(String userId, String accessToken);
+    UserDto getUserById(String userId);
 
-    boolean deleteUserById(String userId, String accessToken);
+    boolean deleteUserById(String userId);
 
-    UserDto updateUser(UserDto userDto, String accessToken);
+    UserDto updateUser(UserDto userDto);
 
-    List<UserDto> getAllUsers(String accessToken) throws UserException;
+    List<UserDto> getAllUsers() throws UserException;
 
-    List<UserDto> getAllMembersOfGroup(String groupId, String accessToken);
+    List<UserDto> getAllMembersOfGroup(String groupId);
 
-    List<UserDto> getAllAgents(String accessToken);
+    List<UserDto> getAllAgents();
 
-    List<UserDto> getAllPropertyOwners(String accessToken);
+    List<UserDto> getAllPropertyOwners();
 
     void forgotPassword(String email);
-
-    void resetPassword(String token, String password);
 }

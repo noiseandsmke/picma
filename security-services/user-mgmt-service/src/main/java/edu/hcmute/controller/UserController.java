@@ -5,12 +5,10 @@ import edu.hcmute.exception.UserException;
 import edu.hcmute.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -20,21 +18,17 @@ import java.util.Map;
 @RestController
 @Slf4j
 public class UserController {
-    private final String bearerPrefix = "Bearer ";
     private final UserService userService;
-    private final HttpServletRequest request;
 
-    public UserController(UserService userService, HttpServletRequest request) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.request = request;
     }
 
     @GetMapping({"/users", "/users/"})
     @Operation(description = "getAllUsers", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<List<UserDto>> getAllUsers(@RequestHeader(required = false) String userType) throws UserException {
         log.info("UserController :: getAllUsers :: userType : {}", userType);
-        String accessToken = getAccessToken();
-        List<UserDto> userList = userService.getAllUsers(accessToken);
+        List<UserDto> userList = userService.getAllUsers();
         return new ResponseEntity<>(userList, HttpStatus.OK);
     }
 
@@ -42,8 +36,7 @@ public class UserController {
     @Operation(description = "getAllPropertyOwners", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<List<UserDto>> getAllPropertyOwners() {
         log.info("UserController :: getAllPropertyOwners");
-        String accessToken = getAccessToken();
-        List<UserDto> ownersList = userService.getAllPropertyOwners(accessToken);
+        List<UserDto> ownersList = userService.getAllPropertyOwners();
         return ResponseEntity.ok(ownersList);
     }
 
@@ -51,16 +44,14 @@ public class UserController {
     @Operation(description = "getAllAgents", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<List<UserDto>> getAllAgents() {
         log.info("UserController :: getAllAgents");
-        String accessToken = getAccessToken();
-        List<UserDto> agentsList = userService.getAllAgents(accessToken);
+        List<UserDto> agentsList = userService.getAllAgents();
         return ResponseEntity.ok(agentsList);
     }
 
     @PostMapping({"/users", "/users/"})
     @Operation(description = "createUser", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {
-        String accessToken = getAccessToken();
-        userDto = userService.createUser(userDto, accessToken);
+        userDto = userService.createUser(userDto);
         return new ResponseEntity<>(userDto, HttpStatus.CREATED);
     }
 
@@ -76,8 +67,7 @@ public class UserController {
     @Operation(description = "getUserById", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<UserDto> getUserById(@PathVariable String userId) {
         log.info("UserController :: getUserById :: Id = {}", userId);
-        String accessToken = getAccessToken();
-        UserDto userDto = userService.getUserById(userId, accessToken);
+        UserDto userDto = userService.getUserById(userId);
         return ResponseEntity.ok(userDto);
     }
 
@@ -85,8 +75,7 @@ public class UserController {
     @Operation(description = "deleteUserById", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> deleteUserById(@PathVariable String userId) {
         log.info("UserController :: deleteUserById :: Id = {}", userId);
-        String accessToken = getAccessToken();
-        boolean isDeleted = userService.deleteUserById(userId, accessToken);
+        boolean isDeleted = userService.deleteUserById(userId);
         Map<String, String> message = new HashMap<>();
         message.put("Message", "User with Id = " + userId + " deleted " + isDeleted);
         return ResponseEntity.ok(message);
@@ -95,8 +84,7 @@ public class UserController {
     @PutMapping("/users/profile")
     @Operation(description = "updateProfile", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<UserDto> updateProfile(@Valid @RequestBody UserDto userDto) {
-        String accessToken = getAccessToken();
-        userDto = userService.updateUser(userDto, accessToken);
+        userDto = userService.updateUser(userDto);
         return ResponseEntity.ok(userDto);
     }
 
@@ -104,13 +92,5 @@ public class UserController {
     public ResponseEntity<?> forgotPassword(@RequestParam String email) {
         userService.forgotPassword(email);
         return ResponseEntity.ok().build();
-    }
-
-    private String getAccessToken() {
-        String accessToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(accessToken) && StringUtils.hasText(bearerPrefix)) {
-            return StringUtils.replace(accessToken, bearerPrefix, "");
-        }
-        return null;
     }
 }
