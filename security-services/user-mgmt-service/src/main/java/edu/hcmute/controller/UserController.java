@@ -24,15 +24,15 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping({"/users", "/users/"})
+    @GetMapping("/user")
     @Operation(description = "getAllUsers", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<UserDto>> getAllUsers(@RequestHeader(required = false) String userType) throws UserException {
-        log.info("UserController :: getAllUsers :: userType : {}", userType);
+    public ResponseEntity<List<UserDto>> getAllUsers() throws UserException {
+        log.info("UserController :: getAllUsers");
         List<UserDto> userList = userService.getAllUsers();
         return new ResponseEntity<>(userList, HttpStatus.OK);
     }
 
-    @GetMapping("/users/owners")
+    @GetMapping("/user/owners")
     @Operation(description = "getAllPropertyOwners", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<List<UserDto>> getAllPropertyOwners() {
         log.info("UserController :: getAllPropertyOwners");
@@ -40,7 +40,7 @@ public class UserController {
         return ResponseEntity.ok(ownersList);
     }
 
-    @GetMapping("/users/agents")
+    @GetMapping("/user/agents")
     @Operation(description = "getAllAgents", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<List<UserDto>> getAllAgents() {
         log.info("UserController :: getAllAgents");
@@ -48,22 +48,21 @@ public class UserController {
         return ResponseEntity.ok(agentsList);
     }
 
-    @PostMapping({"/users", "/users/"})
+    @PostMapping("/user")
     @Operation(description = "createUser", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {
         userDto = userService.createUser(userDto);
         return new ResponseEntity<>(userDto, HttpStatus.CREATED);
     }
 
-    @PostMapping("/users/register")
+    @PostMapping("/user/register")
     @Operation(description = "registerUser")
     public ResponseEntity<UserDto> registerUser(@Valid @RequestBody UserDto userDto) {
-        // Public endpoint for self-registration
         userDto = userService.registerUser(userDto);
         return new ResponseEntity<>(userDto, HttpStatus.CREATED);
     }
 
-    @GetMapping("/users/{userId}")
+    @GetMapping("/user/{userId}")
     @Operation(description = "getUserById", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<UserDto> getUserById(@PathVariable String userId) {
         log.info("UserController :: getUserById :: Id = {}", userId);
@@ -71,7 +70,7 @@ public class UserController {
         return ResponseEntity.ok(userDto);
     }
 
-    @DeleteMapping("/users/{userId}")
+    @DeleteMapping("/user/{userId}")
     @Operation(description = "deleteUserById", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> deleteUserById(@PathVariable String userId) {
         log.info("UserController :: deleteUserById :: Id = {}", userId);
@@ -81,14 +80,14 @@ public class UserController {
         return ResponseEntity.ok(message);
     }
 
-    @PutMapping("/users/profile")
+    @PutMapping("/user/profile")
     @Operation(description = "updateProfile", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<UserDto> updateProfile(@Valid @RequestBody UserDto userDto) {
         userDto = userService.updateUser(userDto);
         return ResponseEntity.ok(userDto);
     }
 
-    @PostMapping("/users/forgot-password")
+    @PostMapping("/user/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam String email) {
         userService.forgotPassword(email);
         return ResponseEntity.ok().build();

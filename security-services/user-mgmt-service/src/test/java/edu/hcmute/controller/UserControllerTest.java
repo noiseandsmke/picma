@@ -33,11 +33,10 @@ public class UserControllerTest {
 
     @Test
     void getAllUsers_shouldReturnListOfUsers() throws Exception {
-        // id, username, firstName, lastName, email, emailVerified, zipcode, group
         UserDto userDto = new UserDto("1", "u", "f", "l", "e@e.com", true, "12345", "owners");
         List<UserDto> userList = Collections.singletonList(userDto);
         when(userService.getAllUsers()).thenReturn(userList);
-        ResponseEntity<List<UserDto>> response = userController.getAllUsers("admin");
+        ResponseEntity<List<UserDto>> response = userController.getAllUsers();
         assertNotNull(response);
         assertEquals(200, response.getStatusCode().value());
         assertEquals(userList, response.getBody());
