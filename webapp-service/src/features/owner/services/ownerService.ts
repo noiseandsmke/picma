@@ -55,7 +55,7 @@ export const fetchAgentsForDirectory = async (zipCode: string): Promise<AgentDto
                     name: `${user.firstName || ''} ${user.lastName || user.username}`.trim(),
                     firm: "Local Insurance Co.",
                     rating: 5.0,
-                    zipCode: user.zipCode || zipCode,
+                    zipCode: user.zipcode || zipCode,
                     phone: "555-0123"
                 } as AgentDto;
             }

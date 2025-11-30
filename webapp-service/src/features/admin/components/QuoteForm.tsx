@@ -165,11 +165,9 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         enabled: !!selectedLead?.propertyInfo,
     });
 
-    // Auto-fill Address
     useEffect(() => {
         if (!initialData && selectedProperty) {
             const currentAddress = getValues('propertyAddress');
-            // Only autofill if empty
             if (!currentAddress) {
                 const addr = `${selectedProperty.location.street}, ${selectedProperty.location.ward}, ${selectedProperty.location.city}`;
                 setValue('propertyAddress', addr);
@@ -177,39 +175,22 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         }
     }, [selectedProperty, setValue, getValues, initialData]);
 
-    // Auto-calc End Date
     useEffect(() => {
         if (startDate && !getValues('endDate')) {
             setValue('endDate', addYears(startDate, 1));
         }
     }, [startDate, setValue, getValues]);
 
-    // Auto-populate Coverages based on Plan & SumInsured
-    // Improved logic: Only auto-update if we are NOT editing an existing quote with different values
-    // OR if the user explicitly changes Plan/SumInsured significantly.
-    // To prevent wiping manual edits, we can check if the current coverages match the "previous" default for the "previous" plan.
-    // But keeping it simple: If user changes Plan, reset. If user changes SumInsured, update limits.
+
     useEffect(() => {
         if (sumInsured > 0) {
-            // If loading initial data, don't overwrite
             if (initialData && initialData.plan === selectedPlan && initialData.sumInsured === sumInsured && fields.length > 0) {
                 return;
             }
-
-            // If we already have fields and this effect runs, it might be due to SumInsured change or Plan change.
-            // If Plan changed, we should probably reset structure.
-            // If SumInsured changed, we should update limits BUT keep user customizations?
-            // Requirement: "System should load list based on Plan".
-            // We'll stick to: Plan Change -> Reset. SumInsured Change -> Update Default Limits.
-
             const defaults = getDefaultCoverages(selectedPlan, sumInsured);
-
-            // Check if we effectively changed plan or first load
-            // We replace to ensure consistency with the Plan.
             replace(defaults);
         }
-    }, [selectedPlan, sumInsured]); // Removed replace/initialData from deps to avoid loops, though linter might complain in real IDE.
-
+    }, [selectedPlan, sumInsured]);
 
     const calculatePremium = (plan: string, sum: number) => {
         let rate = 0.001;
@@ -251,7 +232,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
     const agentOptions = agents?.map(a => ({
         value: a.id || '',
         label: `${a.firstName} ${a.lastName}`,
-        sublabel: `@${a.username} - ${a.zipCode || 'No Zip'}`
+        sublabel: `@${a.username} - ${a.zipcode || 'No Zip'}`
     })) || [];
 
     const setQuickDuration = (years: number) => {
@@ -272,8 +253,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
     return (
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                {/* SECTION 1: GENERAL INFO */}
                 <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
                         <User size={14} className="text-indigo-400"/> General info
@@ -396,8 +375,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                         </div>
                     </div>
                 </div>
-
-                {/* SECTION 2: PROPERTY & PLAN */}
                 <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
                         <Home size={14} className="text-emerald-400"/> Property & plan
@@ -465,8 +442,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                         </div>
                     </div>
                 </div>
-
-                {/* SECTION 3: COVERAGES (TABLE) */}
                 <div className="lg:col-span-1 space-y-4">
                     <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
                         <Shield size={14} className="text-amber-400"/> Coverages & deductibles
@@ -538,8 +513,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                         </Table>
                     </div>
                 </div>
-
-                {/* FOOTER: PREMIUM CALCULATION */}
                 <div className="col-span-1 lg:col-span-3 mt-4">
                     <div className="rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-4">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-4">

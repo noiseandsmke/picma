@@ -47,11 +47,11 @@ const AdminUsersView: React.FC = () => {
     });
 
     const statusMutation = useMutation({
-        mutationFn: ({userId, enabled}: { userId: string, enabled: boolean }) =>
-            updateUserStatus(userId, enabled),
-        onSuccess: async (_, variables) => {
+        mutationFn: ({userId}: { userId: string }) =>
+            updateUserStatus(userId),
+        onSuccess: async () => {
             await queryClient.invalidateQueries({queryKey: ['admin-users']});
-            toast.success(`User ${variables.enabled ? 'enabled' : 'disabled'} successfully`);
+            toast.success(`User status updated successfully`);
         },
         onError: (error) => {
             console.error(error);
@@ -60,8 +60,8 @@ const AdminUsersView: React.FC = () => {
     });
 
     const switchGroupMutation = useMutation({
-        mutationFn: ({userId, targetGroup}: { userId: string, targetGroup: 'agents' | 'owners' }) =>
-            switchUserGroup(userId, targetGroup),
+        mutationFn: ({userId}: { userId: string }) =>
+            switchUserGroup(userId),
         onSuccess: async () => {
             await queryClient.invalidateQueries({queryKey: ['admin-users']});
             toast.success("User group switched successfully");
@@ -224,27 +224,24 @@ const AdminUsersView: React.FC = () => {
                                                 </DropdownMenuItem>
 
                                                 <DropdownMenuSeparator className="bg-slate-800"/>
-                                                
+
                                                 <DropdownMenuItem
                                                     className={cn("focus:bg-slate-800 cursor-pointer",
                                                         user.enabled ? "text-red-400 focus:text-red-400" : "text-emerald-400 focus:text-emerald-400"
                                                     )}
                                                     onClick={() => user.id && statusMutation.mutate({
-                                                        userId: user.id,
-                                                        enabled: !user.enabled
+                                                        userId: user.id
                                                     })}
                                                 >
                                                     <Power className="mr-2 h-4 w-4"/>
                                                     {user.enabled ? "Disable Account" : "Enable Account"}
                                                 </DropdownMenuItem>
 
-                                                {/* Switch Group Action */}
                                                 {(user.group === 'agents' || user.group === 'owners') && (
                                                     <DropdownMenuItem
                                                         className="focus:bg-slate-800 focus:text-white cursor-pointer text-amber-500"
                                                         onClick={() => user.id && switchGroupMutation.mutate({
-                                                            userId: user.id,
-                                                            targetGroup: user.group === 'agents' ? 'owners' : 'agents'
+                                                            userId: user.id
                                                         })}
                                                     >
                                                         <ArrowLeftRight className="mr-2 h-4 w-4"/>
