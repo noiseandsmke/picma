@@ -68,10 +68,9 @@ services:
       - picma-network
   picma-cache-server-service:
     container_name: cache-server
-    image: redis/redis-stack-server:7.4.0-v7
+    image: redis:8.0-alpine
     restart: on-failure
-    environment:
-      REDIS_ARGS: "--requirepass password --user username on >password ~* allcommands --user default off nopass nocommands"
+    command: redis-server --requirepass password
     ports:
       - "6379:6379"
     networks:

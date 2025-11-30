@@ -9,7 +9,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableDiscoveryClient
 @EnableFeignClients
 public class UserAuthnzServiceApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(UserAuthnzServiceApplication.class, args);
     }
