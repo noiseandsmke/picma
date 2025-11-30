@@ -1,8 +1,19 @@
 spring:
   application:
     name: user-mgmt-service
-server:
-  port: ${APP_PORT:5051}
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak-admin:
+            provider: keycloak
+            client-id: user-mgmt-client
+            client-secret: zJruEZzWjp6rdKgcLtccU0eEfc2O0w3v
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            token-uri: http://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/token
 picma:
   iam:
     usersApi: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/admin/realms/${IDP_REALMS:picma}/users
@@ -23,3 +34,5 @@ management:
     web:
       exposure:
         include: "*"
+server:
+  port: ${APP_PORT:5051}

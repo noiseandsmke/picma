@@ -10,11 +10,14 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -32,8 +35,41 @@ public class UserOutboundApi {
     @Value("${picma.iam.groups.agents}")
     private String picma_agents_group;
 
+    @Value("${spring.security.oauth2.client.registration.keycloak-admin.client-id}")
+    private String clientId;
+
+    @Value("${spring.security.oauth2.client.registration.keycloak-admin.client-secret}")
+    private String clientSecret;
+
+    @Value("${spring.security.oauth2.client.provider.keycloak.token-uri}")
+    private String tokenUri;
+
     public UserOutboundApi(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
+    }
+
+    public String getAdminToken() {
+        log.info("### Fetching user-mgmt-client admin access token");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("client_id", clientId);
+        body.add("client_secret", clientSecret);
+        body.add("grant_type", "client_credentials");
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(tokenUri, request, Map.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                String accessToken = (String) response.getBody().get("access_token");
+                log.info("~~> successfully retrieved admin access token");
+                return accessToken;
+            } else {
+                throw new RuntimeException("Failed to retrieve access token: " + response.getStatusCode());
+            }
+        } catch (Exception e) {
+            log.error("~~> error fetching admin token", e);
+            throw new RuntimeException("Error fetching admin token: " + e.getMessage());
+        }
     }
 
     public User createUser(User user, String accessToken) {

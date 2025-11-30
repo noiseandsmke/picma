@@ -1,15 +1,13 @@
 package edu.hcmute.service;
 
 import edu.hcmute.outbound.UserOutboundApi;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class GroupServiceImpl implements GroupService {
-    private UserOutboundApi userOutboundApi;
-
-    public GroupServiceImpl(UserOutboundApi userOutboundApi) {
-        this.userOutboundApi = userOutboundApi;
-    }
+    private final UserOutboundApi userOutboundApi;
 
     @Override
     public boolean provisoningUser(String userId, String groupId, String accessToken) {

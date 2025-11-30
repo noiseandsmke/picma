@@ -37,8 +37,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto registerUser(UserDto userDto) {
         log.info("Register User :: {}", userDto);
-        // TODO: Implement Client Credentials flow to get admin token to create user
-        return userDto;
+        String accessToken = userOutboundApi.getAdminToken();
+        User user = userMapper.toEntity(userDto);
+        user = userOutboundApi.createUser(user, accessToken);
+        return userMapper.toDto(user);
     }
 
     @Override

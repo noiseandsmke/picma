@@ -5,24 +5,24 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UserDto(
-        @NotEmpty(message = "{username.notEmpty.message}")
-        @Size(min = 3, max = 255, message = "{username.size.message}")
+        @NotEmpty
+        @Size(min = 3, max = 255)
         String username,
 
-        @NotEmpty(message = "{firstName.notEmpty.message}")
-        @Size(max = 255, message = "{firstName.size.message}")
+        @NotEmpty
+        @Size(max = 255)
         String firstName,
 
-        @NotEmpty(message = "{lastName.notEmpty.message}")
-        @Size(max = 255, message = "{lastName.size.message}")
+        @NotEmpty
+        @Size(max = 255)
         String lastName,
 
-        @NotEmpty(message = "{email.notEmpty.message}")
-        @Size(max = 255, message = "{email.size.message}")
+        @NotEmpty
+        @Size(max = 255)
         @Pattern(regexp = "^[\\w-\\\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")
         String email,
 
-        @NotEmpty(message = "{mobile.notEmpty.message}")
+        @NotEmpty
         @Pattern(regexp = "^[+]*[(]?[0-9]{1,4}[)]?[-\\s\\\\./0-9]*$")
         String mobile,
 
