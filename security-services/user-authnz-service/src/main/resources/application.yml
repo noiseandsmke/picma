@@ -20,6 +20,7 @@ spring:
             scope: ${OIDC_SCOPE:openid}
         provider:
           keycloak:
+            authorization-uri: http://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/auth
             issuer-uri: http://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}
             token-uri: http://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/token
 server:
@@ -37,3 +38,6 @@ management:
     web:
       exposure:
         include: "*"
+
+keycloak:
+  auth-server-url: http://${IDP_HOST:localhost}:${IDP_PORT:8081}
