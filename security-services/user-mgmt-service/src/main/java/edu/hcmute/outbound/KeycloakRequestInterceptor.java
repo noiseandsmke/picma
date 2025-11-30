@@ -5,7 +5,6 @@ import feign.RequestInterceptor;
 import feign.RequestTemplate;
 
 public class KeycloakRequestInterceptor implements RequestInterceptor {
-
     private final TokenManagerService tokenManagerService;
 
     public KeycloakRequestInterceptor(TokenManagerService tokenManagerService) {

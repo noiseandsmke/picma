@@ -10,7 +10,6 @@ import java.util.List;
 
 @FeignClient(name = "keycloak-group-client", url = "${picma.iam.groupsApi}", configuration = KeycloakClientConfig.class)
 public interface KeycloakGroupClient {
-
     @GetMapping("/{groupId}/members")
-    List<User> getGroupMembers(@PathVariable("groupId") String groupId);
+    List<User> getGroupMembers(@PathVariable String groupId);
 }

@@ -13,26 +13,26 @@ import java.util.Map;
 public interface KeycloakAdminClient {
 
     @GetMapping
-    List<User> getUsers(@RequestParam("search") String search);
+    List<User> getUsers(@RequestParam String search);
 
     @GetMapping("/{id}")
-    User getUserById(@PathVariable("id") String id);
+    User getUserById(@PathVariable String id);
 
     @PostMapping
     ResponseEntity<Void> createUser(@RequestBody User user);
 
     @PutMapping("/{id}")
-    ResponseEntity<Void> updateUser(@PathVariable("id") String id, @RequestBody User user);
+    ResponseEntity<Void> updateUser(@PathVariable String id, @RequestBody User user);
 
     @DeleteMapping("/{id}")
-    ResponseEntity<Void> deleteUser(@PathVariable("id") String id);
+    ResponseEntity<Void> deleteUser(@PathVariable String id);
 
     @GetMapping("/{userId}/groups")
-    List<Map<String, Object>> getUserGroups(@PathVariable("userId") String userId);
+    List<Map<String, Object>> getUserGroups(@PathVariable String userId);
 
     @PutMapping("/{userId}/groups/{groupId}")
-    ResponseEntity<Void> joinGroup(@PathVariable("userId") String userId, @PathVariable("groupId") String groupId);
+    ResponseEntity<Void> joinGroup(@PathVariable String userId, @PathVariable String groupId);
 
     @DeleteMapping("/{userId}/groups/{groupId}")
-    ResponseEntity<Void> leaveGroup(@PathVariable("userId") String userId, @PathVariable("groupId") String groupId);
+    ResponseEntity<Void> leaveGroup(@PathVariable String userId, @PathVariable String groupId);
 }

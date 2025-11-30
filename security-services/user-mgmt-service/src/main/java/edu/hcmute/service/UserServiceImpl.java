@@ -5,6 +5,7 @@ import edu.hcmute.entity.User;
 import edu.hcmute.mapper.UserMapper;
 import edu.hcmute.outbound.KeycloakAdminClient;
 import edu.hcmute.outbound.KeycloakGroupClient;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final KeycloakAdminClient keycloakAdminClient;
@@ -28,15 +30,8 @@ public class UserServiceImpl implements UserService {
 
     @Value("${picma.iam.groups.owners}")
     private String ownersGroupId;
-
     @Value("${picma.iam.groups.agents}")
     private String agentsGroupId;
-
-    public UserServiceImpl(UserMapper userMapper, KeycloakAdminClient keycloakAdminClient, KeycloakGroupClient keycloakGroupClient) {
-        this.userMapper = userMapper;
-        this.keycloakAdminClient = keycloakAdminClient;
-        this.keycloakGroupClient = keycloakGroupClient;
-    }
 
     @Override
     public UserDto createUser(UserDto userDto) {
