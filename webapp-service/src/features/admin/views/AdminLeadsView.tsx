@@ -1,20 +1,16 @@
 import React, {useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
-import {createLead, deleteLead, fetchAllLeads} from '../services/leadService';
-import {fetchAllProperties} from '../services/propertyService';
+import {createLead, CreateLeadDto, deleteLead, fetchAllLeads} from '../services/leadService';
 import {
-    ArrowUpDown,
-    Building2,
-    Clock,
-    Eye,
-    Filter,
-    MoreHorizontal,
-    PlusCircle,
-    Search,
-    Trash2,
-    User
-} from 'lucide-react';
+    ConstructionType,
+    createProperty,
+    fetchAllProperties,
+    OccupancyType,
+    PropertyInfoDto
+} from '../services/propertyService';
+import {fetchUsers} from '../services/userService';
+import {ArrowUpDown, Clock, Eye, Filter, MoreHorizontal, PlusCircle, Search, Trash2, User} from 'lucide-react';
 import {cn} from '@/lib/utils';
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from '@/components/ui/shared-table';
@@ -38,15 +34,42 @@ import {
 import {Checkbox} from '@/components/ui/checkbox';
 import {LEAD_STATUS_CONFIG} from '../utils/statusMapping';
 import {SearchableSelect} from '@/components/ui/searchable-select';
+import {toast} from 'sonner';
+import {ConfirmDialog} from '@/components/ui/confirm-dialog';
+import {City, VN_LOCATIONS} from '@/lib/vn-locations';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {NumberInput} from '@/components/ui/number-input';
+
+const constructionTypeValues = Object.values(ConstructionType) as [string, ...string[]];
+const occupancyTypeValues = Object.values(OccupancyType) as [string, ...string[]];
 
 const createLeadSchema = z.object({
-    fullName: z.string().min(1, 'Full Name is required'),
-    phoneNumber: z.string().min(1, 'Phone Number is required'),
-    email: z.email('Invalid email address'),
-    propertyId: z.string().min(1, 'Property is required'),
+    userId: z.string().min(1, 'User (Owner) is required'),
+    property: z.object({
+        location: z.object({
+            street: z.string().min(1, "Street is required"),
+            ward: z.string().min(1, "Ward is required"),
+            city: z.string().min(1, "City is required"),
+            zipCode: z.string().min(1, "Zip Code is required"),
+        }),
+        attributes: z.object({
+            constructionType: z.enum(constructionTypeValues),
+            occupancyType: z.enum(occupancyTypeValues),
+            yearBuilt: z.coerce.number().min(1800, "Year Built must be valid"),
+            noFloors: z.coerce.number().min(1, "Number of floors must be at least 1"),
+            squareMeters: z.coerce.number().min(1, "Square Meters must be positive"),
+        }),
+        valuation: z.object({
+            estimatedConstructionCost: z.coerce.number().min(0, "Cost must be positive"),
+        }),
+    })
 });
 
 type CreateLeadFormData = z.infer<typeof createLeadSchema>;
+
+const formatEnum = (val: string) => {
+    return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase().replace(/_/g, ' ');
+};
 
 const AdminLeadsView: React.FC = () => {
     const queryClient = useQueryClient();
@@ -54,28 +77,55 @@ const AdminLeadsView: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
+
+    const [selectedCity, setSelectedCity] = useState<City | null>(null);
+    const [costDisplay, setCostDisplay] = useState('');
 
     const {
         data: properties,
-        isLoading: isPropertiesLoading
     } = useQuery({
         queryKey: ['admin-properties'],
         queryFn: fetchAllProperties,
     });
 
     const {
+        data: owners,
+        isLoading: isOwnersLoading
+    } = useQuery({
+        queryKey: ['admin-owners'],
+        queryFn: () => fetchUsers('owner'),
+    });
+
+    const {
         handleSubmit,
         reset,
         control,
-        watch,
+        setValue,
+        register,
         formState: {errors},
     } = useForm<CreateLeadFormData>({
-        resolver: zodResolver(createLeadSchema),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(createLeadSchema) as any,
         defaultValues: {
-            fullName: '',
-            phoneNumber: '',
-            email: '',
-            propertyId: '',
+            userId: '',
+            property: {
+                location: {
+                    city: '',
+                    ward: '',
+                    zipCode: '',
+                    street: '',
+                },
+                attributes: {
+                    yearBuilt: new Date().getFullYear(),
+                    noFloors: 1,
+                    squareMeters: 0,
+                    // Default enum values will be handled by Select components or validation
+                },
+                valuation: {
+                    estimatedConstructionCost: 0
+                }
+            }
         },
     });
 
@@ -88,43 +138,86 @@ const AdminLeadsView: React.FC = () => {
         queryFn: () => fetchAllLeads(sortConfig.key, sortConfig.direction),
     });
 
-    const createMutation = useMutation({
+    const createPropertyMutation = useMutation({
+        mutationFn: createProperty,
+    });
+
+    const createLeadMutation = useMutation({
         mutationFn: createLead,
         onSuccess: async () => {
             await queryClient.invalidateQueries({queryKey: ['admin-leads']});
+            await queryClient.invalidateQueries({queryKey: ['admin-properties']});
             setIsModalOpen(false);
             reset();
+            setSelectedCity(null);
+            setCostDisplay('');
+            toast.success("Lead created successfully");
         },
+        onError: (error) => {
+            console.error(error);
+            toast.error("Failed to create lead");
+        }
     });
 
     const deleteMutation = useMutation({
         mutationFn: deleteLead,
         onSuccess: async () => {
             await queryClient.invalidateQueries({queryKey: ['admin-leads']});
+            setDeleteId(null);
+            toast.success("Lead deleted successfully");
+        },
+        onError: () => {
+            toast.error("Failed to delete lead");
         }
     });
 
-    const onSubmit = (data: CreateLeadFormData) => {
-        const userInfo = `${data.fullName} - ${data.phoneNumber} - ${data.email}`;
+    const onSubmit = async (data: CreateLeadFormData) => {
+        try {
+            const owner = owners?.find(u => u.id === data.userId);
+            if (!owner) {
+                toast.error("Selected owner not found");
+                return;
+            }
 
-        const payload = {
-            userInfo,
-            propertyInfo: data.propertyId,
-            status: 'ACTIVE'
-        };
+            // 1. Create Property
+            const propertyPayload: Omit<PropertyInfoDto, 'id'> = {
+                userId: data.userId,
+                location: data.property.location,
+                attributes: {
+                    ...data.property.attributes,
+                    constructionType: data.property.attributes.constructionType as unknown as ConstructionType,
+                    occupancyType: data.property.attributes.occupancyType as unknown as OccupancyType,
+                },
+                valuation: data.property.valuation
+            };
 
-        createMutation.mutate(payload);
+            const createdProperty = await createPropertyMutation.mutateAsync(propertyPayload);
+
+            // 2. Create Lead
+            const userInfo = `${owner.firstName} ${owner.lastName} - ${owner.mobile} - ${owner.email}`;
+            const leadPayload: CreateLeadDto = {
+                userInfo,
+                propertyInfo: createdProperty.id,
+                status: 'ACTIVE',
+                userId: data.userId
+            };
+
+            createLeadMutation.mutate(leadPayload);
+        } catch (error) {
+            console.error("Error in lead creation flow:", error);
+            toast.error("Failed to create property or lead");
+        }
     };
 
     const handleCreate = () => {
         reset();
+        setSelectedCity(null);
+        setCostDisplay('');
         setIsModalOpen(true);
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this lead?')) {
-            deleteMutation.mutate(id);
-        }
+        setDeleteId(id);
     };
 
     const handleSort = (key: string) => {
@@ -190,6 +283,7 @@ const AdminLeadsView: React.FC = () => {
                 );
             }
         } catch {
+            // Ignore error
         }
 
         // Fallback for raw string
@@ -201,6 +295,19 @@ const AdminLeadsView: React.FC = () => {
             </div>
         );
     };
+
+    const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value.replace(/[^0-9]/g, '');
+        const val = parseInt(raw || '0', 10);
+        setValue('property.valuation.estimatedConstructionCost', val);
+        setCostDisplay(val === 0 ? '' : raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' ₫');
+    };
+
+    const wardOptions = selectedCity?.wards.map(w => ({
+        value: w.name,
+        label: w.name,
+        sublabel: w.zipCode
+    })) || [];
 
     const filteredLeads = leads?.filter(lead => {
         const matchesSearch =
@@ -324,9 +431,6 @@ const AdminLeadsView: React.FC = () => {
             width: "5%",
         }
     ];
-
-    const selectedPropertyId = watch('propertyId');
-    const selectedProperty = properties?.find(p => p.id === selectedPropertyId);
 
     return (
         <AdminLayout>
@@ -457,102 +561,242 @@ const AdminLeadsView: React.FC = () => {
                 </div>
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="bg-slate-950 border-slate-800 text-white sm:max-w-[600px]">
+                    <DialogContent
+                        className="bg-slate-950 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Create New Lead</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
+                            {/* Section 1: Owner Selection */}
                             <div className="space-y-4">
-                                <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">User
-                                    Information</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="col-span-2 md:col-span-1">
-                                        <Label htmlFor="fullName" className="text-slate-300">Full Name</Label>
+                                <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Owner
+                                    Selection</h4>
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <Label htmlFor="userId" className="text-slate-300">Select Owner</Label>
                                         <Controller
-                                            name="fullName"
+                                            name="userId"
                                             control={control}
-                                            render={({field}) => <Input id="fullName"
-                                                                        placeholder="Nguyen Van A" {...field}
-                                                                        className="bg-slate-900 border-slate-700 mt-1.5"/>}
+                                            render={({field}) => (
+                                                <SearchableSelect
+                                                    options={owners?.map(u => ({
+                                                        value: u.id || '',
+                                                        label: `${u.firstName} ${u.lastName}`,
+                                                        sublabel: u.email
+                                                    })) || []}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Search owner by name..."
+                                                    className="mt-1.5"
+                                                    isLoading={isOwnersLoading}
+                                                />
+                                            )}
                                         />
-                                        {errors.fullName &&
-                                            <p className="text-red-500 text-xs mt-1">{errors.fullName.message}</p>}
-                                    </div>
-                                    <div className="col-span-2 md:col-span-1">
-                                        <Label htmlFor="phoneNumber" className="text-slate-300">Phone Number</Label>
-                                        <Controller
-                                            name="phoneNumber"
-                                            control={control}
-                                            render={({field}) => <Input id="phoneNumber"
-                                                                        placeholder="0901234567" {...field}
-                                                                        className="bg-slate-900 border-slate-700 mt-1.5"/>}
-                                        />
-                                        {errors.phoneNumber &&
-                                            <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>}
-                                    </div>
-                                    <div className="col-span-2">
-                                        <Label htmlFor="email" className="text-slate-300">Email Address</Label>
-                                        <Controller
-                                            name="email"
-                                            control={control}
-                                            render={({field}) => <Input id="email" type="email"
-                                                                        placeholder="example@email.com" {...field}
-                                                                        className="bg-slate-900 border-slate-700 mt-1.5"/>}
-                                        />
-                                        {errors.email &&
-                                            <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+                                        {errors.userId &&
+                                            <p className="text-red-500 text-xs mt-1">{errors.userId.message}</p>}
                                     </div>
                                 </div>
                             </div>
 
                             <div className="border-t border-slate-800"/>
+
+                            {/* Section 2: Property Creation */}
                             <div className="space-y-4">
-                                <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Property
-                                    Selection</h4>
-                                <div className="grid grid-cols-1 gap-4">
-                                    <div>
-                                        <Label htmlFor="propertyId" className="text-slate-300">Select Property</Label>
+                                <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Create
+                                    Property</h4>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>City</Label>
                                         <Controller
-                                            name="propertyId"
                                             control={control}
+                                            name="property.location.city"
+                                            render={({field}) => (
+                                                <Select
+                                                    value={field.value}
+                                                    onValueChange={(val) => {
+                                                        field.onChange(val);
+                                                        const city = VN_LOCATIONS.find(c => c.name === val) || null;
+                                                        setSelectedCity(city);
+                                                        setValue('property.location.ward', '');
+                                                        setValue('property.location.zipCode', '');
+                                                    }}
+                                                >
+                                                    <SelectTrigger className="bg-slate-900 border-slate-700">
+                                                        <SelectValue placeholder="Select city"/>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {VN_LOCATIONS.map(city => (
+                                                            <SelectItem key={city.name}
+                                                                        value={city.name}>{city.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        />
+                                        {errors.property?.location?.city &&
+                                            <p className="text-red-500 text-xs">{errors.property.location.city.message}</p>}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label>Ward</Label>
+                                        <Controller
+                                            control={control}
+                                            name="property.location.ward"
                                             render={({field}) => (
                                                 <SearchableSelect
-                                                    options={properties?.map(p => ({
-                                                        value: p.id,
-                                                        label: p.location.street,
-                                                        sublabel: p.location.city
-                                                    })) || []}
+                                                    options={wardOptions}
                                                     value={field.value}
-                                                    onChange={field.onChange}
-                                                    placeholder="Search property by address..."
-                                                    className="mt-1.5"
-                                                    isLoading={isPropertiesLoading}
+                                                    onChange={(val) => {
+                                                        field.onChange(val);
+                                                        const ward = selectedCity?.wards.find(w => w.name === val);
+                                                        if (ward) {
+                                                            setValue('property.location.zipCode', ward.zipCode);
+                                                        }
+                                                    }}
+                                                    placeholder={selectedCity ? "Select ward" : "Select city first"}
+                                                    disabled={!selectedCity}
                                                 />
                                             )}
                                         />
-                                        {errors.propertyId &&
-                                            <p className="text-red-500 text-xs mt-1">{errors.propertyId.message}</p>}
+                                        {errors.property?.location?.ward &&
+                                            <p className="text-red-500 text-xs">{errors.property.location.ward.message}</p>}
                                     </div>
 
-                                    {selectedProperty && (
-                                        <div className="rounded-md border border-slate-800 bg-slate-900/50 p-4 mt-2">
-                                            <div className="flex items-start gap-3">
-                                                <div className="p-2 bg-indigo-500/10 rounded-lg shrink-0">
-                                                    <Building2 className="h-5 w-5 text-indigo-400"/>
-                                                </div>
-                                                <div className="flex flex-col gap-1">
-                                                    <h5 className="font-medium text-slate-200 text-sm">{selectedProperty.location.street}</h5>
-                                                    <div className="text-xs text-slate-400 space-y-0.5">
-                                                        <p>{selectedProperty.location.ward}, {selectedProperty.location.city}</p>
-                                                        <p className="text-indigo-400 font-medium pt-1">
-                                                            Est.
-                                                            Cost: {selectedProperty.valuation.estimatedConstructionCost.toLocaleString()} VND
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="zipCode">Zip code</Label>
+                                        <Input
+                                            id="zipCode"
+                                            readOnly
+                                            className="bg-slate-900 border-slate-800 text-slate-400 cursor-not-allowed"
+                                            {...register('property.location.zipCode')}
+                                        />
+                                        {errors.property?.location?.zipCode &&
+                                            <p className="text-red-500 text-xs">{errors.property.location.zipCode.message}</p>}
+                                    </div>
+
+                                    <div className="space-y-2 col-span-2">
+                                        <Label>Street / House number</Label>
+                                        <Input
+                                            placeholder="e.g. Số 10, Ngõ 5"
+                                            {...register('property.location.street')}
+                                            className="bg-slate-900 border-slate-700"
+                                        />
+                                        {errors.property?.location?.street &&
+                                            <p className="text-red-500 text-xs">{errors.property.location.street.message}</p>}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="constructionType">Construction type</Label>
+                                        <Controller
+                                            control={control}
+                                            name="property.attributes.constructionType"
+                                            render={({field}) => (
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <SelectTrigger className="bg-slate-900 border-slate-700">
+                                                        <SelectValue placeholder="Select type"/>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {Object.values(ConstructionType).map((type) => (
+                                                            <SelectItem key={type}
+                                                                        value={type}>{formatEnum(type)}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        />
+                                        {errors.property?.attributes?.constructionType &&
+                                            <p className="text-red-500 text-xs">{errors.property.attributes.constructionType.message}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="occupancyType">Occupancy type</Label>
+                                        <Controller
+                                            control={control}
+                                            name="property.attributes.occupancyType"
+                                            render={({field}) => (
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <SelectTrigger className="bg-slate-900 border-slate-700">
+                                                        <SelectValue placeholder="Select type"/>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {Object.values(OccupancyType).map((type) => (
+                                                            <SelectItem key={type}
+                                                                        value={type}>{formatEnum(type)}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        />
+                                        {errors.property?.attributes?.occupancyType &&
+                                            <p className="text-red-500 text-xs">{errors.property.attributes.occupancyType.message}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="yearBuilt">Year built</Label>
+                                        <Controller
+                                            control={control}
+                                            name="property.attributes.yearBuilt"
+                                            render={({field}) => (
+                                                <NumberInput
+                                                    id="yearBuilt"
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder={new Date().getFullYear().toString()}
+                                                    className="bg-slate-900 border-slate-700"
+                                                />
+                                            )}
+                                        />
+                                        {errors.property?.attributes?.yearBuilt &&
+                                            <p className="text-red-500 text-xs">{errors.property.attributes.yearBuilt.message}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="noFloors">No. floors</Label>
+                                        <Controller
+                                            control={control}
+                                            name="property.attributes.noFloors"
+                                            render={({field}) => (
+                                                <NumberInput
+                                                    id="noFloors"
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    className="bg-slate-900 border-slate-700"
+                                                />
+                                            )}
+                                        />
+                                        {errors.property?.attributes?.noFloors &&
+                                            <p className="text-red-500 text-xs">{errors.property.attributes.noFloors.message}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="squareMeters">Square meters</Label>
+                                        <Controller
+                                            control={control}
+                                            name="property.attributes.squareMeters"
+                                            render={({field}) => (
+                                                <NumberInput
+                                                    id="squareMeters"
+                                                    step="0.01"
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Enter area..."
+                                                    className="bg-slate-900 border-slate-700"
+                                                />
+                                            )}
+                                        />
+                                        {errors.property?.attributes?.squareMeters &&
+                                            <p className="text-red-500 text-xs">{errors.property.attributes.squareMeters.message}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="estimatedConstructionCost">Est. cost</Label>
+                                        <Input
+                                            id="estimatedConstructionCost"
+                                            type="text"
+                                            value={costDisplay}
+                                            onChange={handleCostChange}
+                                            placeholder="0 ₫"
+                                            className="bg-slate-900 border-slate-700"
+                                        />
+                                        {errors.property?.valuation?.estimatedConstructionCost &&
+                                            <p className="text-red-500 text-xs">{errors.property.valuation.estimatedConstructionCost.message}</p>}
+                                    </div>
                                 </div>
                             </div>
 
@@ -560,14 +804,25 @@ const AdminLeadsView: React.FC = () => {
                                 <DialogClose asChild>
                                     <Button type="button" variant="ghost">Cancel</Button>
                                 </DialogClose>
-                                <Button type="submit" disabled={createMutation.isPending}
+                                <Button type="submit"
+                                        disabled={createLeadMutation.isPending || createPropertyMutation.isPending}
                                         className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                    {createMutation.isPending ? 'Creating...' : 'Create Lead'}
+                                    {(createLeadMutation.isPending || createPropertyMutation.isPending) ? 'Creating...' : 'Create Lead'}
                                 </Button>
                             </DialogFooter>
                         </form>
                     </DialogContent>
                 </Dialog>
+
+                <ConfirmDialog
+                    open={deleteId !== null}
+                    onOpenChange={(open) => !open && setDeleteId(null)}
+                    title="Delete Lead"
+                    description="Are you sure you want to delete this lead? This action cannot be undone."
+                    onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+                    confirmText="Delete"
+                    variant="destructive"
+                />
             </div>
         </AdminLayout>
     );

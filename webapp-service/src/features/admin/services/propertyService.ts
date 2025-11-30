@@ -38,6 +38,7 @@ export interface PropertyInfoDto {
     location: PropertyLocationDto;
     attributes: PropertyAttributesDto;
     valuation: PropertyValuationDto;
+    userId?: string;
 }
 
 const PROPERTY_SERVICE_URL = import.meta.env.VITE_PROPERTY_SERVICE_URL || 'http://localhost:7101';

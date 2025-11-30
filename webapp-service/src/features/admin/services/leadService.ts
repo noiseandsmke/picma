@@ -8,13 +8,14 @@ export interface PropertyLeadDto {
     createDate: string;
     expiryDate: string;
     assignedAgents?: string[];
-    valuation?: number; // Added based on requirement for "Use Lead Valuation"
+    valuation?: number;
 }
 
 export interface CreateLeadDto {
     userInfo: string;
     propertyInfo: string;
     status: string;
+    userId?: string;
 }
 
 export interface LeadStatsDto {
