@@ -6,7 +6,6 @@ spring:
       host: ${REDIS_CACHE_HOST:localhost}
       port: ${REDIS_CACHE_PORT:6379}
       password: ${REDIS_CACHE_PASSWORD:password}
-      username: ${REDIS_CACHE_USERNAME:username}
   security:
     oauth2:
       client:
@@ -20,9 +19,9 @@ spring:
             scope: ${OIDC_SCOPE:openid}
         provider:
           keycloak:
-            authorization-uri: https://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/auth
-            issuer-uri: https://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}
-            token-uri: https://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/token
+            authorization-uri: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/auth
+            issuer-uri: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}
+            token-uri: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/token
 server:
   port: ${APP_PORT:5052}
 eureka:
@@ -40,11 +39,11 @@ management:
       probability: 1.0
   zipkin:
     tracing:
-      endpoint: http://zipkin-server:9411/api/v2/spans
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
   endpoints:
     web:
       exposure:
         include: "*"
 
 keycloak:
-  auth-server-url: https://${IDP_HOST:localhost}:${IDP_PORT:8081}
+  auth-server-url: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}
