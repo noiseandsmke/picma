@@ -3,6 +3,9 @@ spring:
     name: user-mgmt-service
   security:
     oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/certs
       client:
         registration:
           keycloak-admin:
@@ -13,8 +16,12 @@ spring:
             scope: openid
         provider:
           keycloak:
-            token-uri: http://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/token
+            token-uri: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/token
 picma:
+  admin:
+    username: ${ADMIN_USERNAME:admin}
+    password: ${ADMIN_PASSWORD:admin}
+    email: ${ADMIN_EMAIL:admin@picma.com}
   iam:
     usersApi: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/admin/realms/${IDP_REALMS:picma}/users
     groupsApi: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/admin/realms/${IDP_REALMS:picma}/groups
@@ -30,6 +37,12 @@ eureka:
     instance-id: ${spring.application.name}:${server.port}
     prefer-ip-address: ${REGISTRY_PREFER_IP:false}
 management:
+  zipkin:
+    tracing:
+      endpoint: http://${ZIPKIN_HOST:localhost}:${ZIPKIN_PORT:9411}/api/v2/spans
+  tracing:
+    sampling:
+      probability: 1.0
   endpoints:
     web:
       exposure:
