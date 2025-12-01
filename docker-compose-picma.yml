@@ -75,6 +75,15 @@ services:
       - "6379:6379"
     networks:
       - picma-network
+  zipkin-server:
+    image: openzipkin/zipkin
+    container_name: zipkin-server
+    environment:
+      - STORAGE_TYPE=mem
+    ports:
+      - "9411:9411"
+    networks:
+      - picma-network
 networks:
   picma-network:
     name: picma-network

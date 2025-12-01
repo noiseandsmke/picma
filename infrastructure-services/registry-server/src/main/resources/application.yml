@@ -13,7 +13,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:http://${eureka.instance.hostname}:${server.port}/eureka/}
+      defaultZone: ${http://${eureka.instance.hostname}:${server.port}/eureka/}
   server:
     wait-time-in-ms-when-sync-empty: 5
     response-cache-update-interval-ms: 5000
