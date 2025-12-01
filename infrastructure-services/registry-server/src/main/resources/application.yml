@@ -13,7 +13,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: ${http://${eureka.instance.hostname}:${server.port}/eureka/}
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
   server:
     wait-time-in-ms-when-sync-empty: 5
     response-cache-update-interval-ms: 5000
@@ -28,6 +28,6 @@ management:
       probability: 1.0
   zipkin:
     tracing:
-      endpoint: ${ZIPKIN_ENDPOINT:http://zipkin-server:9411/api/v2/spans}
+      endpoint: ${ZIPKIN_ENDPOINT:}
 server:
   port: ${REGISTRY_PORT:8761}
