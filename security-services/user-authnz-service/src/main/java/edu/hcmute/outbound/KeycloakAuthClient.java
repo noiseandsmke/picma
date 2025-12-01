@@ -1,5 +1,6 @@
 package edu.hcmute.outbound;
 
+import edu.hcmute.config.KeycloakClientConfig;
 import edu.hcmute.dto.TokenResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.Map;
 
-@FeignClient(name = "keycloak-client", url = "${keycloak.auth-server-url}")
+@FeignClient(name = "keycloak-client", url = "${keycloak.auth-server-url}", configuration = KeycloakClientConfig.class)
 public interface KeycloakAuthClient {
 
     @PostMapping(value = "/realms/{realm}/protocol/openid-connect/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)

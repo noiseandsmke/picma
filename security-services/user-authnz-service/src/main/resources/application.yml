@@ -20,9 +20,9 @@ spring:
             scope: ${OIDC_SCOPE:openid}
         provider:
           keycloak:
-            authorization-uri: http://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/auth
-            issuer-uri: http://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}
-            token-uri: http://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/token
+            authorization-uri: https://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/auth
+            issuer-uri: https://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}
+            token-uri: https://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/token
 server:
   port: ${APP_PORT:5052}
 eureka:
@@ -34,10 +34,17 @@ eureka:
     instance-id: ${spring.application.name}:${server.port}
     prefer-ip-address: ${REGISTRY_PREFER_IP:true}
 management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://zipkin-server:9411/api/v2/spans
   endpoints:
     web:
       exposure:
         include: "*"
 
 keycloak:
-  auth-server-url: http://${IDP_HOST:localhost}:${IDP_PORT:8081}
+  auth-server-url: https://${IDP_HOST:localhost}:${IDP_PORT:8081}

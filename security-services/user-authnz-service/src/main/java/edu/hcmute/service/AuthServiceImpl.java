@@ -6,7 +6,8 @@ import edu.hcmute.dto.TokenResponse;
 import edu.hcmute.exception.AuthException;
 import edu.hcmute.outbound.KeycloakAuthClient;
 import edu.hcmute.outbound.KeycloakProperties;
-import feign.FeignException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -14,18 +15,15 @@ import org.springframework.util.MultiValueMap;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-
     private final KeycloakAuthClient keycloakAuthClient;
     private final KeycloakProperties keycloakProperties;
-
-    public AuthServiceImpl(KeycloakAuthClient keycloakAuthClient, KeycloakProperties keycloakProperties) {
-        this.keycloakAuthClient = keycloakAuthClient;
-        this.keycloakProperties = keycloakProperties;
-    }
-
+    private final RedisTemplate<String, Object> redisTemplate;
+    
     @Override
     public TokenResponse login(LoginRequest request) {
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
@@ -34,11 +32,12 @@ public class AuthServiceImpl implements AuthService {
         map.add("grant_type", "password");
         map.add("username", request.username());
         map.add("password", request.password());
-        try {
-            return keycloakAuthClient.getToken(keycloakProperties.getRealm(), map);
-        } catch (FeignException e) {
-            throw new AuthException("Login failed: " + e.contentUTF8(), e.status());
+        TokenResponse tokenResponse = keycloakAuthClient.getToken(keycloakProperties.getRealm(), map);
+        if (tokenResponse != null) {
+            String key = "USER_TOKEN:" + request.username();
+            redisTemplate.opsForValue().set(key, tokenResponse, tokenResponse.expiresIn(), TimeUnit.SECONDS);
         }
+        return tokenResponse;
     }
 
     @Override
@@ -48,11 +47,7 @@ public class AuthServiceImpl implements AuthService {
         map.add("client_secret", keycloakProperties.getCredentials().getSecret());
         map.add("grant_type", "refresh_token");
         map.add("refresh_token", refreshToken);
-        try {
-            return keycloakAuthClient.getToken(keycloakProperties.getRealm(), map);
-        } catch (FeignException e) {
-            throw new AuthException("Refresh token failed: " + e.contentUTF8(), e.status());
-        }
+        return keycloakAuthClient.getToken(keycloakProperties.getRealm(), map);
     }
 
     @Override
@@ -61,11 +56,7 @@ public class AuthServiceImpl implements AuthService {
         map.add("client_id", keycloakProperties.getResource());
         map.add("client_secret", keycloakProperties.getCredentials().getSecret());
         map.add("refresh_token", refreshToken);
-        try {
-            keycloakAuthClient.logout(keycloakProperties.getRealm(), map);
-        } catch (FeignException e) {
-            throw new AuthException("Logout failed: " + e.contentUTF8(), e.status());
-        }
+        keycloakAuthClient.logout(keycloakProperties.getRealm(), map);
     }
 
     @Override
@@ -83,11 +74,7 @@ public class AuthServiceImpl implements AuthService {
         credential.put("value", request.password());
         credential.put("temporary", false);
         user.put("credentials", Collections.singletonList(credential));
-        try {
-            keycloakAuthClient.createUser(keycloakProperties.getRealm(), "Bearer " + adminToken, user);
-        } catch (FeignException e) {
-            throw new AuthException("Failed to register user: " + e.contentUTF8(), e.status());
-        }
+        keycloakAuthClient.createUser(keycloakProperties.getRealm(), "Bearer " + adminToken, user);
     }
 
     private String getAdminToken() {
@@ -95,13 +82,9 @@ public class AuthServiceImpl implements AuthService {
         map.add("client_id", keycloakProperties.getResource());
         map.add("client_secret", keycloakProperties.getCredentials().getSecret());
         map.add("grant_type", "client_credentials");
-        try {
-            TokenResponse response = keycloakAuthClient.getToken(keycloakProperties.getRealm(), map);
-            if (response != null) {
-                return response.accessToken();
-            }
-        } catch (FeignException e) {
-            throw new AuthException("Failed to obtain admin token: " + e.contentUTF8(), e.status());
+        TokenResponse response = keycloakAuthClient.getToken(keycloakProperties.getRealm(), map);
+        if (response != null) {
+            return response.accessToken();
         }
         throw new AuthException("Failed to obtain admin token", 500);
     }
