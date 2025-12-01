@@ -18,6 +18,9 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.GET, "/login/**").permitAll()
+                        .pathMatchers(HttpMethod.POST, "/login/**").permitAll()
+                        .pathMatchers("/fallback").permitAll()
+                        .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/**").permitAll()
                         .anyExchange().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(Customizer.withDefaults())).build();

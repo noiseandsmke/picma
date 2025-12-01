@@ -25,21 +25,20 @@ public class GatewayFilter implements GlobalFilter {
         log.info("Path = {}", request.getPath());
         log.info("URI = {}", request.getURI());
         log.info("Address = {}", request.getRemoteAddress());
-
         return chain.filter(exchange).then(Mono.fromRunnable(() -> {
             HttpHeaders headers = exchange.getResponse().getHeaders();
             headers.add("picmaUri", request.getURI().toString());
-
             String encodedJSessionId = null;
             HttpCookie requestCookie = request.getCookies().getFirst("JSESSIONID");
             if (requestCookie != null) {
                 log.info("{} = {}", requestCookie.getName(), requestCookie.getValue());
                 encodedJSessionId = Base64.getEncoder().encodeToString(requestCookie.getValue().getBytes());
             }
-
             MultiValueMap<String, ResponseCookie> responseCookie = exchange.getResponse().getCookies();
-            log.info("Removing JSESSIONID...");
-            responseCookie.remove("JSESSIONID", responseCookie.get("JSESSIONID"));
+            if (responseCookie.containsKey("JSESSIONID")) {
+                log.info("Removing JSESSIONID...");
+                responseCookie.remove("JSESSIONID", responseCookie.get("JSESSIONID"));
+            }
             if (encodedJSessionId != null) {
                 responseCookie.addIfAbsent("PicmaIgCookie", ResponseCookie.fromClientResponse("JSESSIONID", encodedJSessionId).build());
             }

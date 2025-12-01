@@ -1,11 +1,17 @@
 spring:
   application:
     name: iden-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:password}
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: http://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}
+          jwk-set-uri: http://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/certs
   cloud:
     gateway:
       server:
@@ -17,32 +23,6 @@ spring:
           filter:
             local-response-cache:
               enabled: true
-          routes:
-            #            - id: userMgmt-getAllUsers-route
-            #              predicates:
-            #                - Path=/picma/users/**
-            #              uri: lb://USER-MGMT-SERVICE
-            #              filters:
-            #                - RewritePath=/picma/users/?(?<segment>.*),/users/$\{segment}
-            #                - AddRequestHeader=userType,owner
-            - id: userMgmt-documents-route-01
-              predicates:
-                - Path=/swagger-ui.html
-              uri: lb://USER-MGMT-SERVICE
-            - id: userMgmt-documents-route-02
-              predicates:
-                - Path=/swagger-ui/**
-              uri: lb://USER-MGMT-SERVICE
-            - id: userMgmt-documents-route-03
-              predicates:
-                - Path=/v3/**
-              uri: lb://USER-MGMT-SERVICE
-            - id: userAuthNZ-token-route
-              predicates:
-                - Path=/login/**
-              uri: lb://USER-AUTHNZ-SERVICE
-              filters:
-                - RewritePath=/login/?(?<segment>.*), /token/$\{segment}
 server:
   port: 6060
 management:
