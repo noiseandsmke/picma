@@ -1,19 +1,33 @@
 spring:
   application:
     name: registry-server
-server:
-  port: ${REGISTRY_PORT:8761}
 eureka:
-  client:
-    register-with-eureka: false
-    fetch-registry: false
-    service-url:
-      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
   instance:
     hostname: ${REGISTRY_HOST:localhost}
     prefer-ip-address: ${REGISTRY_PREFER_IP:true}
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+    metadata-map:
+      zone: ${EUREKA_ZONE:zone-1}
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:http://${eureka.instance.hostname}:${server.port}/eureka/}
+  server:
+    wait-time-in-ms-when-sync-empty: 5
+    response-cache-update-interval-ms: 5000
 management:
   endpoints:
     web:
       exposure:
         include: "*"
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://zipkin-server:9411/api/v2/spans}
+server:
+  port: ${REGISTRY_PORT:8761}
