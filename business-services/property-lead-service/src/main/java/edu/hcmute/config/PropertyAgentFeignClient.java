@@ -12,5 +12,5 @@ public interface PropertyAgentFeignClient {
     String getAgentLeadsByAgentId(@RequestParam String agentId);
 
     @GetMapping("/agent/{agentId}")
-    AgentDto getAgentById(@PathVariable("agentId") String agentId);
+    AgentDto getAgentById(@PathVariable String agentId);
 }

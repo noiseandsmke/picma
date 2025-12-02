@@ -23,16 +23,6 @@ spring:
           filter:
             local-response-cache:
               enabled: true
-server:
-  port: 6060
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-  endpoint:
-    gateway:
-      access: unrestricted
 eureka:
   client:
     service-url:
@@ -42,3 +32,22 @@ eureka:
     hostname: ${REGISTRY_HOST:localhost}
     instance-id: ${spring.application.name}:${server.port}
     prefer-ip-address: ${REGISTRY_PREFER_IP:true}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    gateway:
+      access: unrestricted
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:}
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+server:
+  port: 6060

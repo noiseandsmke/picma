@@ -21,7 +21,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: health,info,prometheus,metrics
   tracing:
     enabled: true
     sampling:
@@ -29,5 +29,8 @@ management:
   zipkin:
     tracing:
       endpoint: ${ZIPKIN_ENDPOINT:}
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
 server:
-  port: ${REGISTRY_PORT:8761}
+  port: 8761

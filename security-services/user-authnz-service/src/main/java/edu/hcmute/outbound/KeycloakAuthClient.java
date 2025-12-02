@@ -17,19 +17,19 @@ public interface KeycloakAuthClient {
 
     @PostMapping(value = "/realms/{realm}/protocol/openid-connect/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     TokenResponse getToken(
-            @PathVariable("realm") String realm,
+            @PathVariable String realm,
             @RequestBody MultiValueMap<String, ?> params
     );
 
     @PostMapping(value = "/realms/{realm}/protocol/openid-connect/logout", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     void logout(
-            @PathVariable("realm") String realm,
+            @PathVariable String realm,
             @RequestBody MultiValueMap<String, ?> params
     );
 
     @PostMapping(value = "/admin/realms/{realm}/users", consumes = MediaType.APPLICATION_JSON_VALUE)
     void createUser(
-            @PathVariable("realm") String realm,
+            @PathVariable String realm,
             @RequestHeader("Authorization") String token,
             @RequestBody Map<String, Object> userRepresentation
     );

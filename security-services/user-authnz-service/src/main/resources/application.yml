@@ -22,8 +22,8 @@ spring:
             authorization-uri: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/auth
             issuer-uri: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}
             token-uri: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/token
-server:
-  port: ${APP_PORT:5052}
+keycloak:
+  auth-server-url: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}
 eureka:
   client:
     service-url:
@@ -39,11 +39,13 @@ management:
       probability: 1.0
   zipkin:
     tracing:
-      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+      endpoint: ${ZIPKIN_ENDPOINT:}
   endpoints:
     web:
       exposure:
-        include: "*"
-
-keycloak:
-  auth-server-url: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}
+        include: health,info,prometheus,metrics
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+server:
+  port: 5052
