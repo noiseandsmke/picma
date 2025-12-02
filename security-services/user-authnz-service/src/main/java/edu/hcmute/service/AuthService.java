@@ -1,13 +1,13 @@
 package edu.hcmute.service;
 
 import edu.hcmute.dto.LoginRequest;
-import edu.hcmute.dto.LoginResponse;
 import edu.hcmute.dto.RegisterRequest;
+import edu.hcmute.dto.TokenResponse;
 
 public interface AuthService {
-    LoginResponse login(LoginRequest request);
+    TokenResponse login(LoginRequest request);
 
-    LoginResponse refresh(String refreshToken, String oldAccessToken);
+    TokenResponse refresh(String refreshToken, String oldAccessToken);
 
     void logout(String refreshToken);
 

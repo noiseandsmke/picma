@@ -1,9 +1,9 @@
 package edu.hcmute.controller;
 
 import edu.hcmute.dto.LoginRequest;
-import edu.hcmute.dto.LoginResponse;
 import edu.hcmute.dto.RefreshTokenRequest;
 import edu.hcmute.dto.RegisterRequest;
+import edu.hcmute.dto.TokenResponse;
 import edu.hcmute.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,11 +21,11 @@ import java.util.Map;
 public class TokenProcessController {
     private final AuthService authService;
 
-    @Operation(summary = "Login with username and password", description = "Authenticates user and returns JWT tokens with user information.")
-    @ApiResponse(responseCode = "200", description = "Successful operation", content = @Content(schema = @Schema(implementation = LoginResponse.class)))
+    @Operation(summary = "Login with username and password", description = "Authenticates user and returns JWT tokens.")
+    @ApiResponse(responseCode = "200", description = "Successful operation", content = @Content(schema = @Schema(implementation = TokenResponse.class)))
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
-        LoginResponse response = authService.login(loginRequest);
+    public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest loginRequest) {
+        TokenResponse response = authService.login(loginRequest);
         return ResponseEntity.ok(response);
     }
 
@@ -38,23 +38,23 @@ public class TokenProcessController {
     }
 
     @Operation(summary = "Refresh access token", description = "Obtains a new access token using a refresh token. Old access token will be blacklisted.")
-    @ApiResponse(responseCode = "200", description = "Successful operation", content = @Content(schema = @Schema(implementation = LoginResponse.class)))
+    @ApiResponse(responseCode = "200", description = "Successful operation", content = @Content(schema = @Schema(implementation = TokenResponse.class)))
     @PostMapping("/refresh")
-    public ResponseEntity<LoginResponse> refresh(
+    public ResponseEntity<TokenResponse> refresh(
             @RequestBody RefreshTokenRequest request,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         String oldAccessToken = null;
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             oldAccessToken = authHeader.substring(7);
         }
-        LoginResponse response = authService.refresh(request.refreshToken(), oldAccessToken);
+        TokenResponse response = authService.refresh(request.refreshToken(), oldAccessToken);
         return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Logout", description = "Logs out the user by invalidating the refresh token.")
     @ApiResponse(responseCode = "200", description = "Logged out successfully")
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout(@RequestParam String refreshToken) {
+    public ResponseEntity<Map<String, String>> logout(@RequestParam("refresh_token") String refreshToken) {
         authService.logout(refreshToken);
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }

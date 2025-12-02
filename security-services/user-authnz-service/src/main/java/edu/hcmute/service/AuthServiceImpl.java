@@ -1,6 +1,9 @@
 package edu.hcmute.service;
 
-import edu.hcmute.dto.*;
+import edu.hcmute.dto.LoginRequest;
+import edu.hcmute.dto.RegisterRequest;
+import edu.hcmute.dto.TokenResponse;
+import edu.hcmute.dto.UserInfo;
 import edu.hcmute.exception.AuthException;
 import edu.hcmute.outbound.KeycloakAuthClient;
 import edu.hcmute.outbound.KeycloakProperties;
@@ -25,12 +28,13 @@ public class AuthServiceImpl implements AuthService {
     private static final String USER_SESSION_PREFIX = "USER_SESSION:";
     private static final String TOKEN_BLACKLIST_PREFIX = "TOKEN_BLACKLIST:";
     private static final String REFRESH_TOKEN_PREFIX = "REFRESH_TOKEN:";
+
     private final KeycloakAuthClient keycloakAuthClient;
     private final KeycloakProperties keycloakProperties;
     private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
-    public LoginResponse login(LoginRequest request) {
+    public TokenResponse login(LoginRequest request) {
         log.info("Login attempt for user: {}", request.username());
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("client_id", keycloakProperties.getResource());
@@ -47,35 +51,19 @@ public class AuthServiceImpl implements AuthService {
         List<String> roles = userInfo.realmAccess() != null && userInfo.realmAccess().roles() != null
                 ? userInfo.realmAccess().roles()
                 : Collections.emptyList();
-        LoginResponse.UserData userData = new LoginResponse.UserData(
-                userInfo.sub(),
-                userInfo.username(),
-                userInfo.email(),
-                userInfo.name(),
-                roles
-        );
-        LoginResponse loginResponse = new LoginResponse(
-                tokenResponse.accessToken(),
-                tokenResponse.refreshToken(),
-                tokenResponse.expiresIn(),
-                tokenResponse.refreshExpiresIn(),
-                tokenResponse.tokenType(),
-                null,
-                userData
-        );
         String sessionKey = USER_SESSION_PREFIX + request.username();
-        redisTemplate.opsForValue().set(sessionKey, loginResponse, tokenResponse.expiresIn(), TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set(sessionKey, tokenResponse, tokenResponse.expiresIn(), TimeUnit.SECONDS);
         String refreshTokenKey = REFRESH_TOKEN_PREFIX + tokenResponse.refreshToken();
         Map<String, String> refreshTokenData = new HashMap<>();
         refreshTokenData.put("username", request.username());
         refreshTokenData.put("accessToken", tokenResponse.accessToken());
         redisTemplate.opsForValue().set(refreshTokenKey, refreshTokenData, tokenResponse.refreshExpiresIn(), TimeUnit.SECONDS);
         log.info("User {} logged in successfully with roles: {}", request.username(), roles);
-        return loginResponse;
+        return tokenResponse;
     }
 
     @Override
-    public LoginResponse refresh(String refreshToken, String oldAccessToken) {
+    public TokenResponse refresh(String refreshToken, String oldAccessToken) {
         log.info("Refreshing token");
         if (oldAccessToken != null && !oldAccessToken.isEmpty()) {
             try {
@@ -100,24 +88,8 @@ public class AuthServiceImpl implements AuthService {
         List<String> roles = userInfo.realmAccess() != null && userInfo.realmAccess().roles() != null
                 ? userInfo.realmAccess().roles()
                 : Collections.emptyList();
-        LoginResponse.UserData userData = new LoginResponse.UserData(
-                userInfo.sub(),
-                userInfo.username(),
-                userInfo.email(),
-                userInfo.name(),
-                roles
-        );
-        LoginResponse loginResponse = new LoginResponse(
-                tokenResponse.accessToken(),
-                tokenResponse.refreshToken(),
-                tokenResponse.expiresIn(),
-                tokenResponse.refreshExpiresIn(),
-                tokenResponse.tokenType(),
-                null,
-                userData
-        );
         String sessionKey = USER_SESSION_PREFIX + userInfo.username();
-        redisTemplate.opsForValue().set(sessionKey, loginResponse, tokenResponse.expiresIn(), TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set(sessionKey, tokenResponse, tokenResponse.expiresIn(), TimeUnit.SECONDS);
         String newRefreshTokenKey = REFRESH_TOKEN_PREFIX + tokenResponse.refreshToken();
         Map<String, String> refreshTokenData = new HashMap<>();
         refreshTokenData.put("username", userInfo.username());
@@ -126,7 +98,7 @@ public class AuthServiceImpl implements AuthService {
         String oldRefreshTokenKey = REFRESH_TOKEN_PREFIX + refreshToken;
         redisTemplate.delete(oldRefreshTokenKey);
         log.info("Token refreshed successfully for user: {}", userInfo.username());
-        return loginResponse;
+        return tokenResponse;
     }
 
     @Override
