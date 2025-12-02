@@ -5,10 +5,8 @@ import {Controller, useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {Command, Eye, EyeOff, Lock, User} from 'lucide-react';
-import axios from 'axios';
-import {jwtDecode} from 'jwt-decode';
 import {toast} from 'sonner';
-import {ENV} from '@/config/env';
+import {authService} from '@/services/authService';
 
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from '@/components/ui/card';
@@ -28,6 +26,7 @@ const LoginView: React.FC = () => {
     const {login} = useAuth();
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
@@ -46,37 +45,46 @@ const LoginView: React.FC = () => {
     } = form;
 
     const onSubmit = async (data: LoginFormValues) => {
+        setIsLoading(true);
         try {
-            const response = await axios.post(`${ENV.API_URL}/auth/login`, {
+            const response = await authService.login({
                 username: data.username,
                 password: data.password,
             });
 
-            const {access_token} = response.data;
-            const decoded: any = jwtDecode(access_token);
-            const roles = decoded.realm_access?.roles || [];
-
             const user = {
-                id: decoded.sub,
-                username: decoded.preferred_username,
-                email: decoded.email,
-                roles: roles,
+                id: response.user.id,
+                username: response.user.username,
+                email: response.user.email,
+                roles: response.user.roles,
             };
 
-            login(access_token, user);
+            sessionStorage.setItem('access_token', response.access_token);
+            sessionStorage.setItem('refresh_token', response.refresh_token);
+            sessionStorage.setItem('token_expires_at', String(Date.now() + response.expires_in * 1000));
+
+            login(response.access_token, user);
             toast.success('Logged in successfully');
 
-            if (roles.includes('ADMIN')) navigate('/admin/dashboard');
-            else if (roles.includes('AGENT')) navigate('/agent/dashboard');
-            else navigate('/owner/dashboard');
+            const roles = response.user.roles.map(r => r.toUpperCase());
+            if (roles.includes('ADMIN')) {
+                navigate('/admin/dashboard');
+            } else if (roles.includes('AGENT')) {
+                navigate('/agent/dashboard');
+            } else {
+                navigate('/owner/dashboard');
+            }
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Login error:', error);
+            const errorMessage = error.response?.data?.message || 'Invalid username or password';
             setError('root', {
                 type: 'manual',
-                message: 'Invalid username or password',
+                message: errorMessage,
             });
             toast.error('Login failed. Please check your credentials.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -139,6 +147,7 @@ const LoginView: React.FC = () => {
                                 id="username"
                                 type="text"
                                 placeholder="username"
+                                disabled={isLoading}
                                 className="pl-9 bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-indigo-500"
                                 {...register('username')}
                             />
@@ -155,6 +164,7 @@ const LoginView: React.FC = () => {
                                 id="password"
                                 type={showPassword ? 'text' : 'password'}
                                 placeholder="••••••••"
+                                disabled={isLoading}
                                 className="pl-9 pr-9 bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-indigo-500"
                                 {...register('password')}
                             />
@@ -162,6 +172,7 @@ const LoginView: React.FC = () => {
                                 type="button"
                                 variant="ghost"
                                 size="sm"
+                                disabled={isLoading}
                                 className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent hover:text-slate-300 text-slate-400"
                                 onClick={() => setShowPassword(!showPassword)}
                             >
@@ -171,8 +182,8 @@ const LoginView: React.FC = () => {
                                     <Eye className="h-4 w-4" aria-hidden="true"/>
                                 )}
                                 <span className="sr-only">
-                    {showPassword ? 'Hide password' : 'Show password'}
-                    </span>
+                                    {showPassword ? 'Hide password' : 'Show password'}
+                                </span>
                             </Button>
                         </div>
                         {errors.password && (
@@ -189,6 +200,7 @@ const LoginView: React.FC = () => {
                                     <Checkbox
                                         id="rememberMe"
                                         checked={field.value}
+                                        disabled={isLoading}
                                         onCheckedChange={field.onChange}
                                         className="border-slate-600 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
                                     />
@@ -200,6 +212,7 @@ const LoginView: React.FC = () => {
                             </Label>
                         </div>
                         <Button variant="link" className="px-0 font-normal text-slate-300 hover:text-indigo-400 h-auto"
+                                disabled={isLoading}
                                 onClick={(e) => {
                                     e.preventDefault();
                                     console.log("Forgot password");
@@ -208,9 +221,11 @@ const LoginView: React.FC = () => {
                         </Button>
                     </div>
 
-                    <Button type="submit"
-                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20">
-                        Sign in
+                    <Button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20">
+                        {isLoading ? 'Signing in...' : 'Sign in'}
                     </Button>
                 </form>
             </CardContent>
@@ -218,6 +233,7 @@ const LoginView: React.FC = () => {
                 <div className="text-sm text-slate-400">
                     Don&apos;t have an account?{' '}
                     <Button variant="link" className="p-0 text-indigo-400 hover:text-indigo-300 h-auto font-normal"
+                            disabled={isLoading}
                             onClick={() => navigate('/signup')}>
                         Signup
                     </Button>

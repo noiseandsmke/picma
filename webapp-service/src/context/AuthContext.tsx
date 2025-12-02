@@ -18,7 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
     });
 
     useEffect(() => {
-        const token = sessionStorage.getItem('token');
+        const token = sessionStorage.getItem('access_token');
         const userStr = sessionStorage.getItem('user');
         if (token && userStr) {
             try {
@@ -26,23 +26,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
                 setAuth({isAuthenticated: true, user, token});
             } catch (e) {
                 console.error("Failed to parse user from session storage", e);
-                sessionStorage.removeItem('token');
-                sessionStorage.removeItem('user');
+                sessionStorage.clear();
             }
         }
     }, []);
 
     const login = (token: string, user: User) => {
-        sessionStorage.setItem('token', token);
+        sessionStorage.setItem('access_token', token);
         sessionStorage.setItem('user', JSON.stringify(user));
         setAuth({isAuthenticated: true, user, token});
     };
 
-    const logout = () => {
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('user');
-        setAuth({isAuthenticated: false, user: null, token: null});
-        window.location.href = '/login';
+    const logout = async () => {
+        const refreshToken = sessionStorage.getItem('refresh_token');
+
+        try {
+            if (refreshToken) {
+                const {authService} = await import('@/services/authService');
+                await authService.logout(refreshToken);
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            sessionStorage.clear();
+            setAuth({isAuthenticated: false, user: null, token: null});
+            window.location.href = '/login';
+        }
     };
 
     const hasRole = (role: UserRole): boolean => {

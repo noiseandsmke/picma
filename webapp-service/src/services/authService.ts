@@ -1,17 +1,47 @@
 import apiClient from './apiClient';
 
-export interface ExchangeRequest {
-    code: string;
-    code_verifier: string;
-    redirect_uri: string;
+export interface LoginRequest {
+    username: string;
+    password: string;
+}
+
+export interface RefreshTokenRequest {
+    refresh_token: string;
+}
+
+export interface UserData {
+    id: string;
+    username: string;
+    email: string;
+    name: string;
+    roles: string[];
+}
+
+export interface LoginResponse {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+    refresh_expires_in: number;
+    token_type: string;
+    id_token?: string;
+    user: UserData;
 }
 
 export const authService = {
-    exchangeToken: async (data: ExchangeRequest) => {
-        return apiClient.post('/auth/exchange', data);
+    login: async (data: LoginRequest): Promise<LoginResponse> => {
+        const response = await apiClient.post('/auth/login', data);
+        return response.data;
     },
 
-    getLoginUrl: (redirectUri: string, codeChallenge: string) => {
-        return `http://localhost:8180/realms/picma/protocol/openid-connect/auth?client_id=picma-web&response_type=code&scope=openid profile email&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+    refresh: async (refreshToken: string, oldAccessToken?: string): Promise<LoginResponse> => {
+        const response = await apiClient.post('/auth/refresh',
+            {refresh_token: refreshToken},
+            {headers: oldAccessToken ? {Authorization: `Bearer ${oldAccessToken}`} : {}}
+        );
+        return response.data;
+    },
+
+    logout: async (refreshToken: string): Promise<void> => {
+        await apiClient.post(`/auth/logout?refresh_token=${refreshToken}`);
     }
 };
