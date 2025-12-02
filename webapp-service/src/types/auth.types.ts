@@ -19,3 +19,24 @@ export interface AuthState {
     user: User | null;
     token: string | null;
 }
+
+export interface LoginRequest {
+    username: string;
+    password: string;
+}
+
+export interface RefreshTokenRequest {
+    refresh_token: string;
+}
+
+export interface TokenResponse {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+    refresh_expires_in: number;
+    token_type: string;
+    id_token?: string;
+    not_before_policy?: number;
+    session_state?: string;
+    scope?: string;
+}

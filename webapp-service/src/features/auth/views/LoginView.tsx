@@ -7,6 +7,7 @@ import * as z from 'zod';
 import {Command, Eye, EyeOff, Lock, User} from 'lucide-react';
 import {toast} from 'sonner';
 import {authService} from '@/services/authService';
+import {jwtDecode} from 'jwt-decode';
 
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from '@/components/ui/card';
@@ -52,24 +53,30 @@ const LoginView: React.FC = () => {
                 password: data.password,
             });
 
+            const decoded: any = jwtDecode(response.access_token);
+
+            const roles = decoded.realm_access?.roles || [];
+
             const user = {
-                id: response.user.id,
-                username: response.user.username,
-                email: response.user.email,
-                roles: response.user.roles,
+                id: decoded.sub,
+                username: decoded.preferred_username,
+                email: decoded.email,
+                roles: roles,
+                zipcode: decoded.zipcode,
             };
 
             sessionStorage.setItem('access_token', response.access_token);
             sessionStorage.setItem('refresh_token', response.refresh_token);
             sessionStorage.setItem('token_expires_at', String(Date.now() + response.expires_in * 1000));
+            sessionStorage.setItem('user', JSON.stringify(user));
 
             login(response.access_token, user);
             toast.success('Logged in successfully');
 
-            const roles = response.user.roles.map(r => r.toUpperCase());
-            if (roles.includes('ADMIN')) {
+            const upperRoles = roles.map((r: string) => r.toUpperCase());
+            if (upperRoles.includes('ADMIN')) {
                 navigate('/admin/dashboard');
-            } else if (roles.includes('AGENT')) {
+            } else if (upperRoles.includes('AGENT')) {
                 navigate('/agent/dashboard');
             } else {
                 navigate('/owner/dashboard');
@@ -77,7 +84,7 @@ const LoginView: React.FC = () => {
 
         } catch (error: any) {
             console.error('Login error:', error);
-            const errorMessage = error.response?.data?.message || 'Invalid username or password';
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Invalid username or password';
             setError('root', {
                 type: 'manual',
                 message: errorMessage,
@@ -87,6 +94,7 @@ const LoginView: React.FC = () => {
             setIsLoading(false);
         }
     };
+
 
     return (
         <Card className="w-full border-[#2e2c3a] bg-[#141124] text-slate-50 shadow-xl ring-1 ring-[#2e2c3a]">
