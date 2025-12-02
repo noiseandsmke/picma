@@ -1,4 +1,4 @@
-import axios from 'axios';
+import apiClient from '@/services/apiClient';
 
 export enum ConstructionType {
     CONCRETE = 'CONCRETE',
@@ -41,12 +41,11 @@ export interface PropertyInfoDto {
     userId?: string;
 }
 
-const PROPERTY_SERVICE_URL = import.meta.env.VITE_PROPERTY_SERVICE_URL || 'http://localhost:7101';
-const propertyClient = axios.create({baseURL: PROPERTY_SERVICE_URL});
+const BASE_PATH = '/picma/properties';
 
 export const fetchAllProperties = async (): Promise<PropertyInfoDto[]> => {
     try {
-        const response = await propertyClient.get<PropertyInfoDto[]>('/propertyInfo');
+        const response = await apiClient.get<PropertyInfoDto[]>(`${BASE_PATH}/propertyInfo`);
         return response.data;
     } catch (error) {
         console.error("Failed to fetch all properties", error);
@@ -55,20 +54,20 @@ export const fetchAllProperties = async (): Promise<PropertyInfoDto[]> => {
 };
 
 export const fetchPropertyById = async (id: string): Promise<PropertyInfoDto> => {
-    const response = await propertyClient.get<PropertyInfoDto>(`/propertyInfo/${id}`);
+    const response = await apiClient.get<PropertyInfoDto>(`${BASE_PATH}/propertyInfo/${id}`);
     return response.data;
 };
 
 export const createProperty = async (property: Omit<PropertyInfoDto, 'id'>): Promise<PropertyInfoDto> => {
-    const response = await propertyClient.post<PropertyInfoDto>('/propertyInfo', property);
+    const response = await apiClient.post<PropertyInfoDto>(`${BASE_PATH}/propertyInfo`, property);
     return response.data;
 };
 
 export const deleteProperty = async (id: string): Promise<void> => {
-    await propertyClient.delete(`/propertyInfo/${id}`);
+    await apiClient.delete(`${BASE_PATH}/propertyInfo/${id}`);
 };
 
 export const getPropertyByZipCode = async (zipCode: string): Promise<PropertyInfoDto[]> => {
-    const response = await propertyClient.get<PropertyInfoDto[]>(`/propertyInfo/zipcode/${zipCode}`);
+    const response = await apiClient.get<PropertyInfoDto[]>(`${BASE_PATH}/propertyInfo/zipcode/${zipCode}`);
     return response.data;
 };

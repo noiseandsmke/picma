@@ -92,7 +92,7 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(({
         const num = raw ? parseInt(raw, 10) : 0;
         setDisplayValue(new Intl.NumberFormat('vi-VN').format(num));
         if (onChange) {
-            // @ts-ignore
+            // @ts-expect-error - onChange typing is incompatible with react-hook-form sometimes
             onChange(num);
         }
     };
@@ -124,11 +124,13 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         getValues,
         formState: {errors},
     } = useForm<QuoteFormData>({
-        resolver: zodResolver(quoteSchema) as any,
+        // @ts-expect-error - zodResolver type mismatch
+        resolver: zodResolver(quoteSchema),
         defaultValues: {
             leadId: initialData?.leadId || 0,
             agentId: initialData?.agentId || '',
-            plan: (initialData?.plan as any) || 'BRONZE',
+            // @ts-expect-error - enum type mismatch with string
+            plan: initialData?.plan || 'BRONZE',
             propertyAddress: initialData?.propertyAddress || '',
             sumInsured: initialData?.sumInsured || 0,
             startDate: initialData?.startDate ? new Date(initialData.startDate) : new Date(),
@@ -190,7 +192,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
             const defaults = getDefaultCoverages(selectedPlan, sumInsured);
             replace(defaults);
         }
-    }, [selectedPlan, sumInsured]);
+    }, [selectedPlan, sumInsured, replace, initialData, fields.length]);
 
     const calculatePremium = (plan: string, sum: number) => {
         let rate = 0.001;
@@ -428,7 +430,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                 control={control}
                                 render={({field}) => (
                                     <Select onValueChange={field.onChange} value={field.value}>
-                                        <SelectTrigger className="bg-slate-950 border-slate-700 h-9 text-xs">
+                                        <SelectTrigger className="bg-slate-900 border-slate-700 h-9 text-xs">
                                             <SelectValue placeholder="Select plan"/>
                                         </SelectTrigger>
                                         <SelectContent className="bg-slate-900 border-slate-800 text-white">

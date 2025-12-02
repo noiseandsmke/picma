@@ -11,6 +11,7 @@ import AgentDashboard from '@/features/agent/views/AgentDashboard';
 import OwnerDashboard from '@/features/owner/views/OwnerDashboard';
 import AdminUsersView from '@/features/admin/views/AdminUsersView';
 import AdminPropertiesView from '@/features/admin/views/AdminPropertiesView';
+import {UserRole} from '@/types/auth.types';
 
 const App: React.FC = () => {
     return (
@@ -19,8 +20,7 @@ const App: React.FC = () => {
                 <Route element={<AuthLayout/>}>
                     <Route path="/login" element={<LoginView/>}/>
                 </Route>
-
-                <Route element={<ProtectedRoute/>}>
+                <Route element={<ProtectedRoute allowedRoles={[UserRole.ADMIN]}/>}>
                     <Route path="/admin">
                         <Route path="dashboard" element={<AdminDashboard/>}/>
                         <Route path="users/*" element={<AdminUsersView/>}/>
@@ -30,16 +30,14 @@ const App: React.FC = () => {
                         <Route index element={<Navigate to="/admin/dashboard" replace/>}/>
                     </Route>
                 </Route>
-
-                <Route element={<ProtectedRoute/>}>
+                <Route element={<ProtectedRoute allowedRoles={[UserRole.AGENT]}/>}>
                     <Route path="/agent/*" element={<AgentDashboard/>}/>
                 </Route>
-
-                <Route element={<ProtectedRoute/>}>
+                <Route element={<ProtectedRoute allowedRoles={[UserRole.OWNER]}/>}>
                     <Route path="/owner/*" element={<OwnerDashboard/>}/>
                 </Route>
 
-                <Route path="/" element={<Navigate to="/admin/dashboard" replace/>}/>
+                <Route path="/" element={<Navigate to="/login" replace/>}/>
             </Routes>
             <Toaster position="top-right" theme="dark"/>
         </Router>

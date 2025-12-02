@@ -1,4 +1,4 @@
-import axios from 'axios';
+import apiClient from '@/services/apiClient';
 
 export interface UserDto {
     id?: string;
@@ -17,31 +17,19 @@ export interface UserDto {
     totp?: boolean;
 }
 
-const USER_SERVICE_URL = import.meta.env.VITE_USER_SERVICE_URL || 'http://localhost:5051';
-
-const userClient = axios.create({
-    baseURL: USER_SERVICE_URL,
-});
-
-userClient.interceptors.request.use((config) => {
-    const token = sessionStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
+const BASE_PATH = '/picma/users';
 
 export const fetchUsers = async (role?: string): Promise<UserDto[]> => {
     try {
-        let endpoint = '/user';
+        let endpoint = `${BASE_PATH}/user`;
         if (role) {
-            if (role.toLowerCase() === 'agent') endpoint = '/user/agents';
-            else if (role.toLowerCase() === 'owner') endpoint = '/user/owners';
-            else if (role.toLowerCase() === 'broker') endpoint = '/user/brokers';
-            else if (role.toLowerCase() === 'staff') endpoint = '/user/staff';
+            if (role.toLowerCase() === 'agent') endpoint = `${BASE_PATH}/user/agents`;
+            else if (role.toLowerCase() === 'owner') endpoint = `${BASE_PATH}/user/owners`;
+            else if (role.toLowerCase() === 'broker') endpoint = `${BASE_PATH}/user/brokers`;
+            else if (role.toLowerCase() === 'staff') endpoint = `${BASE_PATH}/user/staff`;
         }
 
-        const response = await userClient.get<UserDto[]>(endpoint);
+        const response = await apiClient.get<UserDto[]>(endpoint);
         return response.data;
     } catch (error) {
         console.error("Failed to fetch users", error);
@@ -51,7 +39,7 @@ export const fetchUsers = async (role?: string): Promise<UserDto[]> => {
 
 export const fetchUserById = async (userId: string): Promise<UserDto | null> => {
     try {
-        const response = await userClient.get<UserDto>(`/user/${userId}`);
+        const response = await apiClient.get<UserDto>(`${BASE_PATH}/user/${userId}`);
         return response.data;
     } catch (error) {
         console.error(`Failed to fetch user ${userId}`, error);
@@ -60,19 +48,19 @@ export const fetchUserById = async (userId: string): Promise<UserDto | null> => 
 };
 
 export const createUser = async (user: UserDto): Promise<UserDto> => {
-    const response = await userClient.post<UserDto>('/user', user);
+    const response = await apiClient.post<UserDto>(`${BASE_PATH}/user`, user);
     return response.data;
 };
 
 export const updateUser = async (user: UserDto): Promise<UserDto> => {
-    const response = await userClient.put<UserDto>('/user/profile', user);
+    const response = await apiClient.put<UserDto>(`${BASE_PATH}/user/profile`, user);
     return response.data;
 };
 
 export const updateUserStatus = async (userId: string): Promise<void> => {
-    await userClient.put('/user/status', {userId});
+    await apiClient.put(`${BASE_PATH}/user/status`, {userId});
 };
 
 export const switchUserGroup = async (userId: string): Promise<void> => {
-    await userClient.post('/user/switch-group', {userId});
+    await apiClient.post(`${BASE_PATH}/user/switch-group`, {userId});
 };

@@ -57,16 +57,16 @@ const AdminQuotesView: React.FC = () => {
         },
     });
 
-    const handleFormSubmit = (data: any) => {
+    const handleFormSubmit = (data: Partial<PropertyQuoteDto>) => {
         if (selectedQuote) {
             updateMutation.mutate({
                 ...selectedQuote,
                 ...data,
-            });
+            } as PropertyQuoteDto);
         } else {
             createMutation.mutate({
                 ...data,
-            });
+            } as PropertyQuoteDto);
         }
     };
 

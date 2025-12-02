@@ -1,4 +1,4 @@
-import axios from 'axios';
+import apiClient from '@/services/apiClient';
 import {fetchUserById} from '../../admin/services/userService';
 
 export interface PropertyDto {
@@ -21,16 +21,13 @@ export interface AgentDto {
     phone?: string;
 }
 
-const PROPERTY_SERVICE_URL = import.meta.env.VITE_PROPERTY_SERVICE_URL || 'http://localhost:7101';
-const AGENT_SERVICE_URL = import.meta.env.VITE_AGENT_SERVICE_URL || 'http://localhost:7104';
-
-const propertyClient = axios.create({baseURL: PROPERTY_SERVICE_URL});
-const agentClient = axios.create({baseURL: AGENT_SERVICE_URL});
+const PROPERTY_BASE_PATH = '/picma/properties';
+const AGENT_BASE_PATH = '/picma/agents';
 
 export const fetchOwnerProperties = async (ownerId: string): Promise<PropertyDto[]> => {
     console.log(`Fetching properties for owner context: ${ownerId}`);
     try {
-        const response = await propertyClient.get<PropertyDto[]>('/propertyInfo');
+        const response = await apiClient.get<PropertyDto[]>(`${PROPERTY_BASE_PATH}/propertyInfo`);
         return response.data;
     } catch (error) {
         console.error("Failed to fetch properties", error);
@@ -40,8 +37,8 @@ export const fetchOwnerProperties = async (ownerId: string): Promise<PropertyDto
 
 export const fetchAgentsForDirectory = async (zipCode: string): Promise<AgentDto[]> => {
     try {
-        const idsResponse = await agentClient.get<string[]>(`/agents/zipcode/${zipCode}`);
-        const agentIds = idsResponse.data;
+        const response = await apiClient.get<string[]>(`${AGENT_BASE_PATH}/agents/zipcode/${zipCode}`);
+        const agentIds = response.data;
 
         if (!agentIds || agentIds.length === 0) {
             return [];
