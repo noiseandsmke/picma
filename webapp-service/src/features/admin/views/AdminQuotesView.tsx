@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
 import {createQuote, deleteQuote, fetchAllQuotes, PropertyQuoteDto, updateQuote} from '../services/quoteService';
+import {format} from 'date-fns';
 import {ArrowUpDown, CalendarClock, MoreHorizontal, PlusCircle} from 'lucide-react';
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from "@/components/ui/shared-table";
@@ -57,15 +58,21 @@ const AdminQuotesView: React.FC = () => {
         },
     });
 
-    const handleFormSubmit = (data: Partial<PropertyQuoteDto>) => {
+    const handleFormSubmit = (data: any) => {
+        const payload = {
+            ...data,
+            startDate: data.startDate ? format(data.startDate, 'yyyy-MM-dd') : undefined,
+            endDate: data.endDate ? format(data.endDate, 'yyyy-MM-dd') : undefined,
+        };
+
         if (selectedQuote) {
             updateMutation.mutate({
                 ...selectedQuote,
-                ...data,
+                ...payload,
             } as PropertyQuoteDto);
         } else {
             createMutation.mutate({
-                ...data,
+                ...payload,
             } as PropertyQuoteDto);
         }
     };

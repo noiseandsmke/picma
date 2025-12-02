@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {Controller, useFieldArray, useForm, useWatch} from 'react-hook-form';
+import {Controller, SubmitHandler, useFieldArray, useForm, useWatch} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {useQuery} from '@tanstack/react-query';
@@ -123,7 +123,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         setValue,
         getValues,
         formState: {errors},
-    } = useForm<QuoteFormData>({
+    } = useForm<QuoteFormData, any, QuoteFormData>({
         // @ts-expect-error - zodResolver type mismatch
         resolver: zodResolver(quoteSchema),
         defaultValues: {
@@ -218,7 +218,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         }
     };
 
-    const handleFormSubmit = (data: QuoteFormData) => {
+    const handleFormSubmit: SubmitHandler<QuoteFormData> = (data) => {
         onSubmit({
             ...data,
             premium: calculatedPremium
