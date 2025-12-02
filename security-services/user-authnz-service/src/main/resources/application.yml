@@ -24,6 +24,10 @@ spring:
             token-uri: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/token
 keycloak:
   auth-server-url: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}
+  realm: ${IDP_REALMS:picma}
+  resource: ${IDP_CLIENT:user-authnz-client}
+  credentials:
+    secret: ${IDP_SECRET:IN1s7kAP5qbeKarl8i97WrxYYWxELpZe}
 eureka:
   client:
     service-url:
