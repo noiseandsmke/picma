@@ -37,19 +37,9 @@ eureka:
     instance-id: ${spring.application.name}:${server.port}
     prefer-ip-address: ${REGISTRY_PREFER_IP:true}
 management:
-  tracing:
-    enabled: true
-    sampling:
-      probability: 1.0
-  zipkin:
-    tracing:
-      endpoint: ${ZIPKIN_ENDPOINT:}
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics
-logging:
-  pattern:
-    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+        include: "*"
 server:
   port: 5052

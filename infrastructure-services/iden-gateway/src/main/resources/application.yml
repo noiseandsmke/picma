@@ -36,18 +36,6 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics
-  endpoint:
-    gateway:
-      access: unrestricted
-  tracing:
-    sampling:
-      probability: 1.0
-  zipkin:
-    tracing:
-      endpoint: ${ZIPKIN_ENDPOINT:}
-logging:
-  pattern:
-    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+        include: "*"
 server:
   port: 6060

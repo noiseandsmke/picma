@@ -19,16 +19,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics
-  tracing:
-    sampling:
-      probability: 1.0
-  zipkin:
-    tracing:
-      endpoint: ${ZIPKIN_ENDPOINT:}
-logging:
-  pattern:
-    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+        include: "*"
 picma:
   services:
     property-mgmt-service:

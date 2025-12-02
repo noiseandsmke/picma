@@ -7,13 +7,6 @@ spring:
         jwt:
           jwk-set-uri: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/certs
       client:
-        registration:
-          keycloak-admin:
-            provider: keycloak
-            client-id: user-mgmt-client
-            client-secret: zJruEZzWjp6rdKgcLtccU0eEfc2O0w3v
-            authorization-grant-type: client_credentials
-            scope: openid
         provider:
           keycloak:
             token-uri: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/token
@@ -33,12 +26,6 @@ eureka:
     instance-id: ${spring.application.name}:${server.port}
     prefer-ip-address: ${REGISTRY_PREFER_IP:false}
 management:
-  zipkin:
-    tracing:
-      endpoint: ${ZIPKIN_HOST:}
-  tracing:
-    sampling:
-      probability: 1.0
   endpoints:
     web:
       exposure:
