@@ -4,33 +4,13 @@ spring:
 eureka:
   instance:
     hostname: ${REGISTRY_HOST:localhost}
-    prefer-ip-address: ${REGISTRY_PREFER_IP:true}
-    lease-renewal-interval-in-seconds: 5
-    lease-expiration-duration-in-seconds: 10
-    metadata-map:
-      zone: ${EUREKA_ZONE:zone-1}
   client:
     register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
-  server:
-    wait-time-in-ms-when-sync-empty: 5
-    response-cache-update-interval-ms: 5000
+    fetch-registry: false
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics
-  tracing:
-    enabled: true
-    sampling:
-      probability: 1.0
-  zipkin:
-    tracing:
-      endpoint: ${ZIPKIN_ENDPOINT:}
-logging:
-  pattern:
-    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+        include: "*"
 server:
   port: 8761
