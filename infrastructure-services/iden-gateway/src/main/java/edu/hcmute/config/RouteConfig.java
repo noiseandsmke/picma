@@ -44,14 +44,11 @@ public class RouteConfig {
                                         .setFallbackUri("forward:/fallback"))
                         )
                         .uri("lb://USER-MGMT-SERVICE"))
-                .route("userAuthNZ-token-route", route -> route
-                        .path("/login/**")
+                .route("auth-service-route", route -> route
+                        .path("/auth/**")
                         .filters(filter -> filter
-                                .rewritePath("/login/?(?<segment>.*)", "/token/${segment}")
                                 .circuitBreaker(config -> config.setName("authCircuitBreaker")
                                         .setFallbackUri("forward:/fallback"))
-                                .retry(retryConfig -> retryConfig.setRetries(3)
-                                        .setSeries(org.springframework.http.HttpStatus.Series.SERVER_ERROR))
                         )
                         .uri("lb://USER-AUTHNZ-SERVICE"))
                 .route("userMgmt-swagger-ui", route -> route.path("/swagger-ui.html")

@@ -4,7 +4,7 @@ import {useNavigate} from 'react-router-dom';
 import {Controller, useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {Command, Eye, EyeOff, Lock, Mail} from 'lucide-react';
+import {Command, Eye, EyeOff, Lock, User} from 'lucide-react';
 
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from '@/components/ui/card';
@@ -13,7 +13,7 @@ import {Checkbox} from '@/components/ui/checkbox';
 import {Label} from '@/components/ui/label';
 
 const loginSchema = z.object({
-    email: z.email('Invalid email address'),
+    username: z.string().min(1, 'Username is required'),
     password: z.string().min(1, 'Password is required'),
     rememberMe: z.boolean().optional(),
 });
@@ -28,7 +28,7 @@ const LoginView: React.FC = () => {
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
-            email: '',
+            username: '',
             password: '',
             rememberMe: false,
         },
@@ -42,16 +42,16 @@ const LoginView: React.FC = () => {
     } = form;
 
     const onSubmit = (data: LoginFormValues) => {
-        if ((data.email === 'admin@admin.com' || data.email === 'agent@picma.com' || data.email === 'owner@picma.com') && (data.password === 'admin' || data.password === 'password')) {
+        if ((data.username === 'admin' || data.username === 'agent' || data.username === 'owner') && (data.password === 'admin' || data.password === 'password')) {
             const roles = [];
-            if (data.email.includes('admin')) roles.push('ADMIN');
-            if (data.email.includes('agent')) roles.push('AGENT');
-            if (data.email.includes('owner')) roles.push('OWNER');
+            if (data.username === 'admin') roles.push('ADMIN');
+            if (data.username === 'agent') roles.push('AGENT');
+            if (data.username === 'owner') roles.push('OWNER');
 
             const dummyUser = {
                 id: '1',
-                username: data.email.split('@')[0],
-                email: data.email,
+                username: data.username,
+                email: `${data.username}@picma.com`,
                 roles: roles,
             };
             login('dummy-token', dummyUser);
@@ -62,13 +62,13 @@ const LoginView: React.FC = () => {
         } else {
             setError('root', {
                 type: 'manual',
-                message: 'Invalid email or password',
+                message: 'Invalid username or password',
             });
         }
     };
 
     return (
-        <Card className="w-full border-slate-800 bg-slate-950 text-slate-50 shadow-xl ring-1 ring-slate-800">
+        <Card className="w-full border-[#2e2c3a] bg-[#141124] text-slate-50 shadow-xl ring-1 ring-[#2e2c3a]">
             <CardHeader className="space-y-4 text-center">
                 <div
                     className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600/20 text-indigo-500">
@@ -82,7 +82,6 @@ const LoginView: React.FC = () => {
             <CardContent className="space-y-4">
                 <Button variant="outline"
                         className="w-full bg-slate-900 border-slate-700 hover:bg-slate-800 hover:text-slate-50 text-slate-200">
-                    {/* Simple Google Icon SVG */}
                     <svg className="h-4 w-4" viewBox="0 0 24 24">
                         <path
                             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -109,7 +108,7 @@ const LoginView: React.FC = () => {
                         <span className="w-full border-t border-slate-700"/>
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-slate-950 px-2 text-slate-400">Or</span>
+                        <span className="bg-[#141124] px-2 text-slate-400">Or</span>
                     </div>
                 </div>
 
@@ -120,19 +119,19 @@ const LoginView: React.FC = () => {
                         </div>
                     )}
                     <div className="space-y-2">
-                        <Label htmlFor="email" className="text-slate-200">Email</Label>
+                        <Label htmlFor="username" className="text-slate-200">Username</Label>
                         <div className="relative">
-                            <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-400"/>
+                            <User className="absolute left-3 top-2.5 h-4 w-4 text-slate-400"/>
                             <Input
-                                id="email"
-                                type="email"
-                                placeholder="name@example.com"
+                                id="username"
+                                type="text"
+                                placeholder="username"
                                 className="pl-9 bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-indigo-500"
-                                {...register('email')}
+                                {...register('username')}
                             />
                         </div>
-                        {errors.email && (
-                            <p className="text-xs text-red-500">{errors.email.message}</p>
+                        {errors.username && (
+                            <p className="text-xs text-red-500">{errors.username.message}</p>
                         )}
                     </div>
                     <div className="space-y-2">
