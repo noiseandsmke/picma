@@ -1,5 +1,6 @@
 package edu.hcmute.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.hcmute.dto.LoginRequest;
 import edu.hcmute.dto.RegisterRequest;
 import edu.hcmute.dto.TokenResponse;
@@ -26,12 +27,11 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class AuthServiceImpl implements AuthService {
     private static final String USER_SESSION_PREFIX = "USER_SESSION:";
-    private static final String TOKEN_BLACKLIST_PREFIX = "TOKEN_BLACKLIST:";
-    private static final String REFRESH_TOKEN_PREFIX = "REFRESH_TOKEN:";
 
     private final KeycloakAuthClient keycloakAuthClient;
     private final KeycloakProperties keycloakProperties;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     @Override
     public TokenResponse login(LoginRequest request) {
@@ -51,13 +51,14 @@ public class AuthServiceImpl implements AuthService {
         List<String> roles = userInfo.realmAccess() != null && userInfo.realmAccess().roles() != null
                 ? userInfo.realmAccess().roles()
                 : Collections.emptyList();
-        String sessionKey = USER_SESSION_PREFIX + request.username();
-        redisTemplate.opsForValue().set(sessionKey, tokenResponse, tokenResponse.expiresIn(), TimeUnit.SECONDS);
-        String refreshTokenKey = REFRESH_TOKEN_PREFIX + tokenResponse.refreshToken();
-        Map<String, String> refreshTokenData = new HashMap<>();
-        refreshTokenData.put("username", request.username());
-        refreshTokenData.put("accessToken", tokenResponse.accessToken());
-        redisTemplate.opsForValue().set(refreshTokenKey, refreshTokenData, tokenResponse.refreshExpiresIn(), TimeUnit.SECONDS);
+        try {
+            String sessionKey = USER_SESSION_PREFIX + request.username();
+            String sessionJson = objectMapper.writeValueAsString(tokenResponse);
+            redisTemplate.opsForValue().set(sessionKey, sessionJson, tokenResponse.expiresIn(), TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("Error serializing token to redis", e);
+            throw new AuthException("Failed to store session", 500);
+        }
         log.info("User {} logged in successfully with roles: {}", request.username(), roles);
         return tokenResponse;
     }
@@ -65,16 +66,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public TokenResponse refresh(String refreshToken, String oldAccessToken) {
         log.info("Refreshing token");
-        if (oldAccessToken != null && !oldAccessToken.isEmpty()) {
-            try {
-                String jti = JwtUtil.getJtiFromToken(oldAccessToken);
-                String blacklistKey = TOKEN_BLACKLIST_PREFIX + jti;
-                redisTemplate.opsForValue().set(blacklistKey, "blacklisted", 1800, TimeUnit.SECONDS);
-                log.info("Old access token blacklisted: {}", jti);
-            } catch (Exception e) {
-                log.warn("Failed to blacklist old token: {}", e.getMessage());
-            }
-        }
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("client_id", keycloakProperties.getResource());
         map.add("client_secret", keycloakProperties.getCredentials().getSecret());
@@ -85,18 +76,14 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Failed to refresh token", 401);
         }
         UserInfo userInfo = JwtUtil.parseJwt(tokenResponse.accessToken());
-        List<String> roles = userInfo.realmAccess() != null && userInfo.realmAccess().roles() != null
-                ? userInfo.realmAccess().roles()
-                : Collections.emptyList();
-        String sessionKey = USER_SESSION_PREFIX + userInfo.username();
-        redisTemplate.opsForValue().set(sessionKey, tokenResponse, tokenResponse.expiresIn(), TimeUnit.SECONDS);
-        String newRefreshTokenKey = REFRESH_TOKEN_PREFIX + tokenResponse.refreshToken();
-        Map<String, String> refreshTokenData = new HashMap<>();
-        refreshTokenData.put("username", userInfo.username());
-        refreshTokenData.put("accessToken", tokenResponse.accessToken());
-        redisTemplate.opsForValue().set(newRefreshTokenKey, refreshTokenData, tokenResponse.refreshExpiresIn(), TimeUnit.SECONDS);
-        String oldRefreshTokenKey = REFRESH_TOKEN_PREFIX + refreshToken;
-        redisTemplate.delete(oldRefreshTokenKey);
+        try {
+            String sessionKey = USER_SESSION_PREFIX + userInfo.username();
+            String sessionJson = objectMapper.writeValueAsString(tokenResponse);
+            redisTemplate.opsForValue().set(sessionKey, sessionJson, tokenResponse.expiresIn(), TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("Error serializing token to redis", e);
+            throw new AuthException("Failed to store session", 500);
+        }
         log.info("Token refreshed successfully for user: {}", userInfo.username());
         return tokenResponse;
     }
@@ -109,8 +96,6 @@ public class AuthServiceImpl implements AuthService {
         map.add("client_secret", keycloakProperties.getCredentials().getSecret());
         map.add("refresh_token", refreshToken);
         keycloakAuthClient.logout(keycloakProperties.getRealm(), map);
-        String refreshTokenKey = REFRESH_TOKEN_PREFIX + refreshToken;
-        redisTemplate.delete(refreshTokenKey);
         log.info("User logged out successfully");
     }
 
