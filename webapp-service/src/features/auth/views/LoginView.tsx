@@ -5,6 +5,10 @@ import {Controller, useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {Command, Eye, EyeOff, Lock, User} from 'lucide-react';
+import axios from 'axios';
+import {jwtDecode} from 'jwt-decode';
+import {toast} from 'sonner';
+import {ENV} from '@/config/env';
 
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from '@/components/ui/card';
@@ -41,29 +45,38 @@ const LoginView: React.FC = () => {
         formState: {errors},
     } = form;
 
-    const onSubmit = (data: LoginFormValues) => {
-        if ((data.username === 'admin' || data.username === 'agent' || data.username === 'owner') && (data.password === 'admin' || data.password === 'password')) {
-            const roles = [];
-            if (data.username === 'admin') roles.push('ADMIN');
-            if (data.username === 'agent') roles.push('AGENT');
-            if (data.username === 'owner') roles.push('OWNER');
-
-            const dummyUser = {
-                id: '1',
+    const onSubmit = async (data: LoginFormValues) => {
+        try {
+            const response = await axios.post(`${ENV.API_URL}/auth/login`, {
                 username: data.username,
-                email: `${data.username}@picma.com`,
+                password: data.password,
+            });
+
+            const {access_token} = response.data;
+            const decoded: any = jwtDecode(access_token);
+            const roles = decoded.realm_access?.roles || [];
+
+            const user = {
+                id: decoded.sub,
+                username: decoded.preferred_username,
+                email: decoded.email,
                 roles: roles,
             };
-            login('dummy-token', dummyUser);
+
+            login(access_token, user);
+            toast.success('Logged in successfully');
 
             if (roles.includes('ADMIN')) navigate('/admin/dashboard');
             else if (roles.includes('AGENT')) navigate('/agent/dashboard');
-            else if (roles.includes('OWNER')) navigate('/owner/dashboard');
-        } else {
+            else navigate('/owner/dashboard');
+
+        } catch (error) {
+            console.error('Login error:', error);
             setError('root', {
                 type: 'manual',
                 message: 'Invalid username or password',
             });
+            toast.error('Login failed. Please check your credentials.');
         }
     };
 

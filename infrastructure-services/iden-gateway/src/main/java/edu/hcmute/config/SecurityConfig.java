@@ -17,6 +17,7 @@ public class SecurityConfig {
         return httpSecurity
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
+                        .pathMatchers("/auth/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/login/**").permitAll()
                         .pathMatchers(HttpMethod.POST, "/login/**").permitAll()
                         .pathMatchers("/fallback").permitAll()

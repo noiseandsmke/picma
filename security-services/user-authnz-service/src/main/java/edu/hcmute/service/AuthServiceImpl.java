@@ -23,19 +23,20 @@ public class AuthServiceImpl implements AuthService {
     private final KeycloakAuthClient keycloakAuthClient;
     private final KeycloakProperties keycloakProperties;
     private final RedisTemplate<String, Object> redisTemplate;
-    
+
     @Override
     public TokenResponse login(LoginRequest request) {
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("client_id", keycloakProperties.getResource());
         map.add("client_secret", keycloakProperties.getCredentials().getSecret());
-        map.add("grant_type", "password");
         map.add("username", request.username());
         map.add("password", request.password());
+        map.add("grant_type", "password");
+        map.add("scope", "openid");
         TokenResponse tokenResponse = keycloakAuthClient.getToken(keycloakProperties.getRealm(), map);
         if (tokenResponse != null) {
-            String key = "USER_TOKEN:" + request.username();
-            redisTemplate.opsForValue().set(key, tokenResponse, tokenResponse.expiresIn(), TimeUnit.SECONDS);
+            String cacheKey = "USER_SESSION:" + request.username();
+            redisTemplate.opsForValue().set(cacheKey, tokenResponse, tokenResponse.expiresIn(), TimeUnit.SECONDS);
         }
         return tokenResponse;
     }
