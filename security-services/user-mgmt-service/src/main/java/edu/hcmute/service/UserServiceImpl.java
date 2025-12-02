@@ -89,56 +89,29 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateUserStatus(String userId) {
+    public void convertOwnerToAgent(String userId) {
         try {
-            User currentUser = keycloakAdminClient.getUserById(userId);
-            boolean newStatus = !currentUser.isEnabled();
-            User user = new User();
-            user.setId(userId);
-            user.setEnabled(newStatus);
-            keycloakAdminClient.updateUser(userId, user);
-            log.info("Updated status for user {} to enabled={}", userId, newStatus);
-        } catch (Exception e) {
-            log.error("Failed to update status for user {}", userId, e);
-            throw new RuntimeException("Failed to update user status", e);
-        }
-    }
-
-    @Override
-    public void switchGroup(String userId) {
-        try {
-            // 1. Get current groups
             List<Map<String, Object>> currentGroups = keycloakAdminClient.getUserGroups(userId);
-            String currentGroupId = null;
-            String targetGroupId = null;
-            // 2. Identify current group (Owner or Agent)
+            boolean isOwner = false;
             for (Map<String, Object> group : currentGroups) {
                 String id = (String) group.get("id");
                 if (id.equals(ownersGroupId)) {
-                    currentGroupId = ownersGroupId;
-                    targetGroupId = agentsGroupId;
-                    break;
-                } else if (id.equals(agentsGroupId)) {
-                    currentGroupId = agentsGroupId;
-                    targetGroupId = ownersGroupId;
+                    isOwner = true;
                     break;
                 }
             }
-            if (currentGroupId == null) {
-                log.warn("User {} is neither Owner nor Agent. Defaulting to Owners group.", userId);
-                targetGroupId = ownersGroupId;
+            if (!isOwner) {
+                log.warn("User {} is not in Owners group. Cannot convert to Agent.", userId);
+                throw new RuntimeException("User is not a Property Owner. Cannot convert to Agent.");
             }
-            // 3. Leave old group if exists
-            if (currentGroupId != null) {
-                log.info("Leaving group {} for user {}", currentGroupId, userId);
-                keycloakAdminClient.leaveGroup(userId, currentGroupId);
-            }
-            // 4. Join new group
-            log.info("Joining group {} for user {}", targetGroupId, userId);
-            keycloakAdminClient.joinGroup(userId, targetGroupId);
+            log.info("Removing user {} from Owners group", userId);
+            keycloakAdminClient.leaveGroup(userId, ownersGroupId);
+            log.info("Adding user {} to Agents group", userId);
+            keycloakAdminClient.joinGroup(userId, agentsGroupId);
+            log.info("Successfully converted user {} from Owner to Agent", userId);
         } catch (Exception e) {
-            log.error("Failed to switch group for user {}", userId, e);
-            throw new RuntimeException("Failed to switch group", e);
+            log.error("Failed to convert user {} from Owner to Agent", userId, e);
+            throw new RuntimeException("Failed to convert user from Owner to Agent: " + e.getMessage(), e);
         }
     }
 

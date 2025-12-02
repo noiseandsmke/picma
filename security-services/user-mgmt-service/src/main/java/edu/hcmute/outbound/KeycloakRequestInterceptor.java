@@ -1,19 +1,26 @@
 package edu.hcmute.outbound;
 
-import edu.hcmute.service.TokenManagerService;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
+@Slf4j
 public class KeycloakRequestInterceptor implements RequestInterceptor {
-    private final TokenManagerService tokenManagerService;
-
-    public KeycloakRequestInterceptor(TokenManagerService tokenManagerService) {
-        this.tokenManagerService = tokenManagerService;
-    }
 
     @Override
     public void apply(RequestTemplate template) {
-        String token = tokenManagerService.getSystemToken();
-        template.header("Authorization", "Bearer " + token);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            Jwt jwt = jwtAuth.getToken();
+            String tokenValue = jwt.getTokenValue();
+            log.debug("Adding Bearer token from SecurityContext to Keycloak Admin API request");
+            template.header("Authorization", "Bearer " + tokenValue);
+        } else {
+            log.warn("No JWT authentication found in SecurityContext. Request to Keycloak Admin API may fail.");
+        }
     }
 }

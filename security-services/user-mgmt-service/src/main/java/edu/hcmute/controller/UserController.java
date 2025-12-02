@@ -34,7 +34,7 @@ public class UserController {
 
     @GetMapping("/user/owners")
     @Operation(description = "getAllPropertyOwners", security = @SecurityRequirement(name = "bearerAuth"))
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ACMAAGENT')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserDto>> getAllPropertyOwners() {
         log.info("UserController :: getAllPropertyOwners");
         List<UserDto> ownersList = userService.getAllPropertyOwners();
@@ -67,27 +67,16 @@ public class UserController {
         return ResponseEntity.ok(userDto);
     }
 
-    @PutMapping("/user/status")
-    @Operation(description = "updateUserStatus", security = @SecurityRequirement(name = "bearerAuth"))
+    @PutMapping("/user/convert-to-agent")
+    @Operation(description = "convertOwnerToAgent - Convert a Property Owner to Agent (one-way conversion)",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, String>> updateUserStatus(@RequestBody edu.hcmute.dto.UserActionDto userActionDto) {
+    public ResponseEntity<Map<String, String>> convertOwnerToAgent(@RequestBody edu.hcmute.dto.UserActionDto userActionDto) {
         String userId = userActionDto.userId();
-        log.info("UserController :: updateUserStatus :: Id = {}", userId);
-        userService.updateUserStatus(userId);
+        log.info("UserController :: convertOwnerToAgent :: Id = {}", userId);
+        userService.convertOwnerToAgent(userId);
         Map<String, String> response = new HashMap<>();
-        response.put("message", "User status updated");
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/user/switch-group")
-    @Operation(description = "switchGroup", security = @SecurityRequirement(name = "bearerAuth"))
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, String>> switchGroup(@RequestBody edu.hcmute.dto.UserActionDto userActionDto) {
-        String userId = userActionDto.userId();
-        log.info("UserController :: switchGroup :: Id = {}", userId);
-        userService.switchGroup(userId);
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "User group switched");
+        response.put("message", "User successfully converted from Owner to Agent");
         return ResponseEntity.ok(response);
     }
 

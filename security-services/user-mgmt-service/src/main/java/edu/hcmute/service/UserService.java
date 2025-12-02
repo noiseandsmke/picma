@@ -10,9 +10,7 @@ public interface UserService {
 
     UserDto getUserById(String userId);
 
-    void updateUserStatus(String userId);
-
-    void switchGroup(String userId);
+    void convertOwnerToAgent(String userId);
 
     UserDto updateUser(UserDto userDto);
 

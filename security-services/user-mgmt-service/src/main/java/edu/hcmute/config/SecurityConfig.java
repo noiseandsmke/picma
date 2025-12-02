@@ -61,7 +61,7 @@ public class SecurityConfig {
                 return Collections.emptyList();
             }
             return roles.stream()
-                    .map(roleName -> "ROLE_" + roleName.toUpperCase()) // Prefix with ROLE_ for standard Spring Security
+                    .map(roleName -> "ROLE_" + roleName.toUpperCase())
                     .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toList());
         }
