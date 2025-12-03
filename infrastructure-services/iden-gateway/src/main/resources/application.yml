@@ -3,29 +3,31 @@ spring:
     name: iden-gateway
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
-      routes:
-        - id: user-authnz-service
-          uri: lb://USER-AUTHNZ-SERVICE
-          predicates:
-            - Path=/auth/**
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+          routes:
+            - id: user-authnz-service
+              uri: lb://USER-AUTHNZ-SERVICE
+              predicates:
+                - Path=/auth/**
 
-        - id: user-mgmt-service
-          uri: lb://USER-MGMT-SERVICE
-          predicates:
-            - Path=/picma/users/**
-          filters:
-            - RewritePath=/picma/users/(?<segment>.*), /user/${segment}
+            - id: user-mgmt-service
+              uri: lb://USER-MGMT-SERVICE
+              predicates:
+                - Path=/picma/users/**
+              filters:
+                - RewritePath=/picma/users/(?<segment>.*), /user/${segment}
 
-        - id: property-mgmt-service
-          uri: lb://PROPERTY-MGMT-SERVICE
-          predicates:
-            - Path=/picma/properties/**
-          filters:
-            - RewritePath=/picma/properties/(?<segment>.*), /propertyInfo/${segment}
+            - id: property-mgmt-service
+              uri: lb://PROPERTY-MGMT-SERVICE
+              predicates:
+                - Path=/picma/properties/**
+              filters:
+                - RewritePath=/picma/properties/(?<segment>.*), /propertyInfo/${segment}
 
   security:
     oauth2:
