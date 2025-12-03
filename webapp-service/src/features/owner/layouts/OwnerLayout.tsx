@@ -61,15 +61,15 @@ const OwnerLayout: React.FC<OwnerLayoutProps> = ({children}) => {
     };
 
     return (
-        <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
+        <div className="flex h-screen bg-slate-950 font-sans overflow-hidden">
             <aside
-                className="w-64 flex-shrink-0 border-r border-slate-200 bg-white text-slate-600 flex flex-col shadow-sm">
-                <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100">
+                className="w-64 flex-shrink-0 border-r border-slate-800 bg-slate-950 text-slate-300 flex flex-col shadow-sm">
+                <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
                     <div className="flex items-center gap-2">
                         <div
                             className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">P
                         </div>
-                        <span className="font-semibold text-slate-800 tracking-tight">PICMA Owner</span>
+                        <span className="font-semibold text-white tracking-tight">PICMA Owner</span>
                     </div>
                 </div>
 
@@ -87,33 +87,33 @@ const OwnerLayout: React.FC<OwnerLayoutProps> = ({children}) => {
                                         className={cn(
                                             "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors group",
                                             isActive
-                                                ? "bg-indigo-50 text-indigo-700"
-                                                : "hover:bg-slate-50 hover:text-slate-900"
+                                                ? "bg-indigo-600 text-white"
+                                                : "hover:bg-slate-900 hover:text-white"
                                         )}
                                     >
                                         <item.icon
-                                            className={cn("mr-3 h-4 w-4", isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600")}/>
+                                            className={cn("mr-3 h-4 w-4", isActive ? "text-white" : "text-slate-500 group-hover:text-white")}/>
                                         {item.label}
                                     </Link>
                                 ) : (
                                     <button
                                         onClick={() => toggleMenu(item.label)}
-                                        className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-colors group text-slate-600"
+                                        className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-900 hover:text-white transition-colors group text-slate-300"
                                     >
                                         <div className="flex items-center">
                                             <item.icon
-                                                className="mr-3 h-4 w-4 text-slate-400 group-hover:text-slate-600"/>
+                                                className="mr-3 h-4 w-4 text-slate-500 group-hover:text-white"/>
                                             {item.label}
                                         </div>
                                         {hasChildren && (
-                                            isOpen ? <ChevronDown className="h-4 w-4 text-slate-400"/> :
-                                                <ChevronRight className="h-4 w-4 text-slate-400"/>
+                                            isOpen ? <ChevronDown className="h-4 w-4 text-slate-500"/> :
+                                                <ChevronRight className="h-4 w-4 text-slate-500"/>
                                         )}
                                     </button>
                                 )}
 
                                 {hasChildren && isOpen && (
-                                    <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-2">
+                                    <div className="ml-4 mt-1 space-y-1 border-l border-slate-800 pl-2">
                                         {item.children!.map((child) => {
                                             const isChildActive = child.href ? location.pathname.startsWith(child.href) : false;
                                             return (
@@ -123,8 +123,8 @@ const OwnerLayout: React.FC<OwnerLayoutProps> = ({children}) => {
                                                     className={cn(
                                                         "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors group",
                                                         isChildActive
-                                                            ? "text-indigo-600 font-semibold"
-                                                            : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                                                            ? "bg-indigo-600/10 text-indigo-400"
+                                                            : "text-slate-400 hover:text-white hover:bg-slate-900"
                                                     )}
                                                 >
                                                     {child.label}
@@ -138,54 +138,54 @@ const OwnerLayout: React.FC<OwnerLayoutProps> = ({children}) => {
                     })}
                 </div>
 
-                <div className="p-3 border-t border-slate-100 space-y-1">
+                <div className="p-3 border-t border-slate-800 space-y-1">
                     <Link
                         to="/owner/profile"
-                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors group"
+                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-900 hover:text-white transition-colors group"
                     >
-                        <User className="mr-3 h-4 w-4 text-slate-400 group-hover:text-slate-600"/>
+                        <User className="mr-3 h-4 w-4 text-slate-500 group-hover:text-white"/>
                         Profile
                     </Link>
                     <Link
                         to="/owner/support"
-                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors group"
+                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-900 hover:text-white transition-colors group"
                     >
-                        <HelpCircle className="mr-3 h-4 w-4 text-slate-400 group-hover:text-slate-600"/>
+                        <HelpCircle className="mr-3 h-4 w-4 text-slate-500 group-hover:text-white"/>
                         Support
                     </Link>
                     <Link
                         to="/owner/settings"
-                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors group"
+                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-900 hover:text-white transition-colors group"
                     >
-                        <Settings className="mr-3 h-4 w-4 text-slate-400 group-hover:text-slate-600"/>
+                        <Settings className="mr-3 h-4 w-4 text-slate-500 group-hover:text-white"/>
                         Settings
                     </Link>
                     <button
                         onClick={logout}
-                        className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-700 transition-colors group"
+                        className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-red-900/10 hover:text-red-500 transition-colors group"
                     >
-                        <LogOut className="mr-3 h-4 w-4 text-slate-400 group-hover:text-red-600"/>
+                        <LogOut className="mr-3 h-4 w-4 text-slate-500 group-hover:text-red-500"/>
                         Logout
                     </button>
                 </div>
             </aside>
 
-            <main className="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
+            <main className="flex-1 flex flex-col overflow-hidden bg-slate-950 relative">
                 <header
-                    className="h-16 flex items-center justify-between px-8 border-b border-slate-200 bg-white flex-shrink-0 shadow-sm z-10">
+                    className="h-16 flex items-center justify-between px-8 border-b border-slate-800 bg-slate-950 flex-shrink-0 shadow-sm z-10">
                     <div>
-                        <h1 className="text-xl font-semibold text-slate-800">Owner Dashboard</h1>
-                        <p className="text-xs text-slate-500">Manage your property assets</p>
+                        <h1 className="text-xl font-semibold text-white">Owner Dashboard</h1>
+                        <p className="text-xs text-slate-400">Manage your property assets</p>
                     </div>
                     <div className="flex items-center gap-4">
                         <div
-                            className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors">
+                            className="flex items-center gap-3 cursor-pointer hover:bg-slate-900 p-2 rounded-lg transition-colors">
                             <div
-                                className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white ring-2 ring-white shadow-sm">
-                                {user?.username.substring(0, 2).toUpperCase()}
+                                className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white ring-2 ring-slate-800 shadow-sm">
+                                {user?.username ? user.username.substring(0, 2).toUpperCase() : 'OW'}
                             </div>
-                            <span className="text-sm font-medium text-slate-700">{user?.username}</span>
-                            <ChevronDown className="h-4 w-4 text-slate-400"/>
+                            <span className="text-sm font-medium text-slate-300">{user?.username || 'Owner'}</span>
+                            <ChevronDown className="h-4 w-4 text-slate-500"/>
                         </div>
                     </div>
                 </header>
