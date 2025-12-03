@@ -16,6 +16,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 
 @Component
@@ -36,14 +37,23 @@ public class LoggingGlobalFilter implements GlobalFilter, Ordered {
             @Override
             public Mono<Void> writeWith(@NonNull Publisher<? extends DataBuffer> body) {
                 if (body instanceof Flux<? extends DataBuffer> fluxBody) {
-                    return super.writeWith(fluxBody.map(dataBuffer -> {
-                        byte[] content = new byte[dataBuffer.readableByteCount()];
-                        dataBuffer.read(content);
-                        DataBufferUtils.release(dataBuffer);
-                        String responseBody = new String(content, StandardCharsets.UTF_8);
+                    return super.writeWith(fluxBody.buffer().map(dataBuffers -> {
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        dataBuffers.forEach(dataBuffer -> {
+                            byte[] content = new byte[dataBuffer.readableByteCount()];
+                            dataBuffer.read(content);
+                            DataBufferUtils.release(dataBuffer);
+                            try {
+                                outputStream.write(content);
+                            } catch (Exception e) {
+                                log.error("Error writing to output stream", e);
+                            }
+                        });
+                        byte[] fullContent = outputStream.toByteArray();
+                        String responseBody = new String(fullContent, StandardCharsets.UTF_8);
                         log.info("Response Status: {}", getDelegate().getStatusCode());
                         log.info("Response Body: {}", responseBody);
-                        return bufferFactory.wrap(content);
+                        return bufferFactory.wrap(fullContent);
                     }));
                 }
                 return super.writeWith(body);
