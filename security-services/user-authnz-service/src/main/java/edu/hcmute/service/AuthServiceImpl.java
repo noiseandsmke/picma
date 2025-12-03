@@ -93,6 +93,11 @@ public class AuthServiceImpl implements AuthService {
         user.put("email", request.email());
         user.put("enabled", true);
         user.put("emailVerified", false);
+        if (request.zipcode() != null && !request.zipcode().isEmpty()) {
+            Map<String, List<String>> attributes = new HashMap<>();
+            attributes.put("zipcode", Collections.singletonList(request.zipcode()));
+            user.put("attributes", attributes);
+        }
         Map<String, Object> credential = new HashMap<>();
         credential.put("type", "password");
         credential.put("value", request.password());

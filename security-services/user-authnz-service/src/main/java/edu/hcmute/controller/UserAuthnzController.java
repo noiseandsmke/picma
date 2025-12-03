@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-public class TokenProcessController {
+public class UserAuthnzController {
     private final AuthService authService;
 
     @Operation(summary = "Login with username and password", description = "Authenticates user and returns JWT tokens.")
@@ -37,7 +38,7 @@ public class TokenProcessController {
     @Operation(summary = "Register new user", description = "Registers a new user in Keycloak.")
     @ApiResponse(responseCode = "200", description = "User registered successfully")
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> register(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<Map<String, String>> register(@RequestBody @Valid RegisterRequest registerRequest) {
         authService.register(registerRequest);
         return ResponseEntity.ok(Map.of("message", "User registered successfully"));
     }
