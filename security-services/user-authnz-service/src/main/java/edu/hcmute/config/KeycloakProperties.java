@@ -1,4 +1,4 @@
-package edu.hcmute.outbound;
+package edu.hcmute.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

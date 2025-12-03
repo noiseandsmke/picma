@@ -1,6 +1,5 @@
-package edu.hcmute.outbound;
+package edu.hcmute.config;
 
-import edu.hcmute.config.KeycloakClientConfig;
 import edu.hcmute.dto.TokenResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;

@@ -1,10 +1,13 @@
 package edu.hcmute.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.hcmute.dto.*;
+import edu.hcmute.config.KeycloakAuthClient;
+import edu.hcmute.config.KeycloakProperties;
+import edu.hcmute.dto.LoginRequest;
+import edu.hcmute.dto.RegisterRequest;
+import edu.hcmute.dto.TokenResponse;
+import edu.hcmute.dto.UserInfo;
 import edu.hcmute.exception.AuthException;
-import edu.hcmute.outbound.KeycloakAuthClient;
-import edu.hcmute.outbound.KeycloakProperties;
 import edu.hcmute.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthServiceImpl implements AuthService {
-    private static final String USER_SESSION_PREFIX = "USER_SESSION:";
+    private static final String USER_SESSION_PREFIX = "user:";
 
     private final KeycloakAuthClient keycloakAuthClient;
     private final KeycloakProperties keycloakProperties;
@@ -74,12 +77,22 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout(String refreshToken) {
         log.info("Logging out user");
+        try {
+            String username = extractUsernameFromRefreshToken(refreshToken);
+            if (username != null) {
+                String sessionKey = USER_SESSION_PREFIX + username;
+                redisTemplate.delete(sessionKey);
+                log.info("Deleted session for user: {}", username);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to delete session from Redis: {}", e.getMessage());
+        }
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("client_id", keycloakProperties.getResource());
         map.add("client_secret", keycloakProperties.getCredentials().getSecret());
         map.add("refresh_token", refreshToken);
         keycloakAuthClient.logout(keycloakProperties.getRealm(), map);
-        log.info("User logged out successfully");
+        log.info("User logged out successfully from Keycloak");
     }
 
     @Override
@@ -110,15 +123,23 @@ public class AuthServiceImpl implements AuthService {
     private void saveSessionToRedis(String username, TokenResponse tokenResponse) {
         try {
             String sessionKey = USER_SESSION_PREFIX + username;
-            SessionData sessionData = SessionData.from(tokenResponse);
-            String sessionJson = objectMapper.writeValueAsString(sessionData);
+            String tokenJson = objectMapper.writeValueAsString(tokenResponse);
             long ttl = tokenResponse.expiresIn();
-            redisTemplate.opsForValue().set(sessionKey, sessionJson, ttl, TimeUnit.SECONDS);
-            log.info("Saved session for user {} with expires_in={} seconds, TTL={} seconds",
-                    username, tokenResponse.expiresIn(), ttl);
+            redisTemplate.opsForValue().set(sessionKey, tokenJson, ttl, TimeUnit.SECONDS);
+            log.info("Saved session for user {} with TTL={} seconds", username, ttl);
         } catch (Exception e) {
-            log.error("Error serializing session to Redis for user {}", username, e);
+            log.error("Error saving session to Redis for user {}", username, e);
             throw new AuthException("Failed to store session", 500);
+        }
+    }
+
+    private String extractUsernameFromRefreshToken(String refreshToken) {
+        try {
+            UserInfo userInfo = JwtUtil.parseJwt(refreshToken);
+            return userInfo.username();
+        } catch (Exception e) {
+            log.warn("Failed to extract username from refresh token: {}", e.getMessage());
+            return null;
         }
     }
 
