@@ -1,28 +1,42 @@
 spring:
   application:
     name: iden-gateway
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:password}
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-authnz-service
+          uri: lb://USER-AUTHNZ-SERVICE
+          predicates:
+            - Path=/auth/**
+
+        - id: user-mgmt-service
+          uri: lb://USER-MGMT-SERVICE
+          predicates:
+            - Path=/picma/users/**
+          filters:
+            - RewritePath=/picma/users/(?<segment>.*), /user/${segment}
+
+        - id: property-mgmt-service
+          uri: lb://PROPERTY-MGMT-SERVICE
+          predicates:
+            - Path=/picma/properties/**
+          filters:
+            - RewritePath=/picma/properties/(?<segment>.*), /propertyInfo/${segment}
+
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: http://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}
           jwk-set-uri: http://${IDP_HOST:localhost}:${IDP_PORT:8081}/realms/${IDP_REALMS:picma}/protocol/openid-connect/certs
-  cloud:
-    gateway:
-      server:
-        webflux:
-          enabled: true
-          discovery:
-            locator:
-              enabled: true
-          filter:
-            local-response-cache:
-              enabled: true
+
+server:
+  port: 6060
+
 eureka:
   client:
     service-url:
@@ -32,10 +46,10 @@ eureka:
     hostname: ${REGISTRY_HOST:localhost}
     instance-id: ${spring.application.name}:${server.port}
     prefer-ip-address: ${REGISTRY_PREFER_IP:true}
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-server:
-  port: 6060
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: INFO
+    org.springframework.security: INFO
+    org.springframework.web.reactive: INFO
