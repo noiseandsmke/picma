@@ -13,7 +13,6 @@ import java.util.Map;
 
 @FeignClient(name = "keycloak-client", url = "${keycloak.auth-server-url}", configuration = KeycloakClientConfig.class)
 public interface KeycloakAuthClient {
-
     @PostMapping(value = "/realms/{realm}/protocol/openid-connect/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     TokenResponse getToken(
             @PathVariable String realm,
