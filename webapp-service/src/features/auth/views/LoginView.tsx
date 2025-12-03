@@ -48,12 +48,28 @@ const LoginView: React.FC = () => {
     const onSubmit = async (data: LoginFormValues) => {
         setIsLoading(true);
         try {
+            console.log('Sending login request...');
             const response = await authService.login({
                 username: data.username,
                 password: data.password,
             });
 
+            console.log('Login response received:', response);
+            console.log('Access token exists:', !!response.access_token);
+            console.log('Response keys:', Object.keys(response));
+
+            if (!response.access_token) {
+                console.error('No access token in response');
+                setError('root', {
+                    type: 'manual',
+                    message: 'Invalid response from server',
+                });
+                toast.error('Login failed. Please check your credentials.');
+                return;
+            }
+
             const decoded: any = jwtDecode(response.access_token);
+            console.log('Decoded JWT:', decoded);
 
             const roles = decoded.realm_access?.roles || [];
 
@@ -84,6 +100,11 @@ const LoginView: React.FC = () => {
 
         } catch (error: any) {
             console.error('Login error:', error);
+            console.error('Error details:', {
+                message: error.message,
+                response: error.response,
+                data: error.response?.data
+            });
             const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Invalid username or password';
             setError('root', {
                 type: 'manual',

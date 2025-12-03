@@ -19,7 +19,13 @@ public class RouteConfig {
     @Bean
     @Primary
     public KeyResolver userKeyResolver() {
-        return exchange -> Mono.just(exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
+        return exchange -> {
+            if (exchange.getRequest().getRemoteAddress() != null &&
+                    exchange.getRequest().getRemoteAddress().getAddress() != null) {
+                return Mono.just(exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
+            }
+            return Mono.just("unknown");
+        };
     }
 
     @Bean
@@ -46,10 +52,6 @@ public class RouteConfig {
                         .uri("lb://USER-MGMT-SERVICE"))
                 .route("auth-service-route", route -> route
                         .path("/auth/**")
-                        .filters(filter -> filter
-                                .circuitBreaker(config -> config.setName("authCircuitBreaker")
-                                        .setFallbackUri("forward:/fallback"))
-                        )
                         .uri("lb://USER-AUTHNZ-SERVICE"))
                 .route("userMgmt-swagger-ui", route -> route.path("/swagger-ui.html")
                         .uri("lb://USER-MGMT-SERVICE"))

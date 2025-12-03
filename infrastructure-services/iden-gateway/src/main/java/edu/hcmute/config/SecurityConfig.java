@@ -16,6 +16,8 @@ public class SecurityConfig {
         log.info("### Configure Resource Server ###");
         return httpSecurity
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers("/auth/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/login/**").permitAll()
