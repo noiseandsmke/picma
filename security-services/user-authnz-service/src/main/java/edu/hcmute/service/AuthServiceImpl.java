@@ -1,10 +1,7 @@
 package edu.hcmute.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.hcmute.dto.LoginRequest;
-import edu.hcmute.dto.RegisterRequest;
-import edu.hcmute.dto.TokenResponse;
-import edu.hcmute.dto.UserInfo;
+import edu.hcmute.dto.*;
 import edu.hcmute.exception.AuthException;
 import edu.hcmute.outbound.KeycloakAuthClient;
 import edu.hcmute.outbound.KeycloakProperties;
@@ -51,14 +48,7 @@ public class AuthServiceImpl implements AuthService {
         List<String> roles = userInfo.realmAccess() != null && userInfo.realmAccess().roles() != null
                 ? userInfo.realmAccess().roles()
                 : Collections.emptyList();
-        try {
-            String sessionKey = USER_SESSION_PREFIX + request.username();
-            String sessionJson = objectMapper.writeValueAsString(tokenResponse);
-            redisTemplate.opsForValue().set(sessionKey, sessionJson, tokenResponse.expiresIn(), TimeUnit.SECONDS);
-        } catch (Exception e) {
-            log.error("Error serializing token to redis", e);
-            throw new AuthException("Failed to store session", 500);
-        }
+        saveSessionToRedis(request.username(), tokenResponse);
         log.info("User {} logged in successfully with roles: {}", request.username(), roles);
         return tokenResponse;
     }
@@ -76,14 +66,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException("Failed to refresh token", 401);
         }
         UserInfo userInfo = JwtUtil.parseJwt(tokenResponse.accessToken());
-        try {
-            String sessionKey = USER_SESSION_PREFIX + userInfo.username();
-            String sessionJson = objectMapper.writeValueAsString(tokenResponse);
-            redisTemplate.opsForValue().set(sessionKey, sessionJson, tokenResponse.expiresIn(), TimeUnit.SECONDS);
-        } catch (Exception e) {
-            log.error("Error serializing token to redis", e);
-            throw new AuthException("Failed to store session", 500);
-        }
+        saveSessionToRedis(userInfo.username(), tokenResponse);
         log.info("Token refreshed successfully for user: {}", userInfo.username());
         return tokenResponse;
     }
@@ -117,6 +100,21 @@ public class AuthServiceImpl implements AuthService {
         user.put("credentials", Collections.singletonList(credential));
         keycloakAuthClient.createUser(keycloakProperties.getRealm(), "Bearer " + adminToken, user);
         log.info("User {} registered successfully", request.username());
+    }
+
+    private void saveSessionToRedis(String username, TokenResponse tokenResponse) {
+        try {
+            String sessionKey = USER_SESSION_PREFIX + username;
+            SessionData sessionData = SessionData.from(tokenResponse);
+            String sessionJson = objectMapper.writeValueAsString(sessionData);
+            long ttl = tokenResponse.expiresIn();
+            redisTemplate.opsForValue().set(sessionKey, sessionJson, ttl, TimeUnit.SECONDS);
+            log.info("Saved session for user {} with expires_in={} seconds, TTL={} seconds",
+                    username, tokenResponse.expiresIn(), ttl);
+        } catch (Exception e) {
+            log.error("Error serializing session to Redis for user {}", username, e);
+            throw new AuthException("Failed to store session", 500);
+        }
     }
 
     private String getAdminToken() {

@@ -28,6 +28,10 @@ keycloak:
   resource: ${IDP_CLIENT:user-authnz-client}
   credentials:
     secret: ${IDP_SECRET:IN1s7kAP5qbeKarl8i97WrxYYWxELpZe}
+token:
+  refresh:
+    interval: 60000
+    threshold-percentage: 0.2
 eureka:
   client:
     service-url:
