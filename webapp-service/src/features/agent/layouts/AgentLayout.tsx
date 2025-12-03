@@ -59,15 +59,15 @@ const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
     };
 
     return (
-        <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
+        <div className="flex h-screen bg-slate-950 font-sans overflow-hidden">
             <aside
-                className="w-64 flex-shrink-0 border-r border-slate-200 bg-white text-slate-600 flex flex-col shadow-sm">
-                <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100">
+                className="w-64 flex-shrink-0 border-r border-slate-800 bg-slate-950 text-slate-300 flex flex-col shadow-sm">
+                <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
                     <div className="flex items-center gap-2">
                         <div
-                            className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">P
+                            className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">P
                         </div>
-                        <span className="font-semibold text-slate-800 tracking-tight">PICMA Agent</span>
+                        <span className="font-semibold text-white tracking-tight">PICMA Agent</span>
                     </div>
                 </div>
 
@@ -85,33 +85,33 @@ const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
                                         className={cn(
                                             "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors group",
                                             isActive
-                                                ? "bg-emerald-50 text-emerald-700"
-                                                : "hover:bg-slate-50 hover:text-slate-900"
+                                                ? "bg-indigo-600 text-white"
+                                                : "hover:bg-slate-900 hover:text-white"
                                         )}
                                     >
                                         <item.icon
-                                            className={cn("mr-3 h-4 w-4", isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600")}/>
+                                            className={cn("mr-3 h-4 w-4", isActive ? "text-white" : "text-slate-500 group-hover:text-white")}/>
                                         {item.label}
                                     </Link>
                                 ) : (
                                     <button
                                         onClick={() => toggleMenu(item.label)}
-                                        className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-colors group text-slate-600"
+                                        className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-900 hover:text-white transition-colors group text-slate-300"
                                     >
                                         <div className="flex items-center">
                                             <item.icon
-                                                className="mr-3 h-4 w-4 text-slate-400 group-hover:text-slate-600"/>
+                                                className="mr-3 h-4 w-4 text-slate-500 group-hover:text-white"/>
                                             {item.label}
                                         </div>
                                         {hasChildren && (
-                                            isOpen ? <ChevronDown className="h-4 w-4 text-slate-400"/> :
-                                                <ChevronRight className="h-4 w-4 text-slate-400"/>
+                                            isOpen ? <ChevronDown className="h-4 w-4 text-slate-500"/> :
+                                                <ChevronRight className="h-4 w-4 text-slate-500"/>
                                         )}
                                     </button>
                                 )}
 
                                 {hasChildren && isOpen && (
-                                    <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-2">
+                                    <div className="ml-4 mt-1 space-y-1 border-l border-slate-800 pl-2">
                                         {item.children!.map((child) => {
                                             const isChildActive = child.href ? location.pathname.startsWith(child.href) : false;
                                             return (
@@ -121,8 +121,8 @@ const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
                                                     className={cn(
                                                         "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors group",
                                                         isChildActive
-                                                            ? "text-emerald-600 font-semibold"
-                                                            : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                                                            ? "bg-indigo-600/10 text-indigo-400"
+                                                            : "text-slate-400 hover:text-white hover:bg-slate-900"
                                                     )}
                                                 >
                                                     {child.label}
@@ -136,48 +136,48 @@ const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
                     })}
                 </div>
 
-                <div className="p-3 border-t border-slate-100 space-y-1">
+                <div className="p-3 border-t border-slate-800 space-y-1">
                     <Link
                         to="/agent/support"
-                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors group"
+                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-900 hover:text-white transition-colors group"
                     >
-                        <HelpCircle className="mr-3 h-4 w-4 text-slate-400 group-hover:text-slate-600"/>
+                        <HelpCircle className="mr-3 h-4 w-4 text-slate-500 group-hover:text-white"/>
                         Support
                     </Link>
                     <Link
                         to="/agent/settings"
-                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors group"
+                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-900 hover:text-white transition-colors group"
                     >
-                        <Settings className="mr-3 h-4 w-4 text-slate-400 group-hover:text-slate-600"/>
+                        <Settings className="mr-3 h-4 w-4 text-slate-500 group-hover:text-white"/>
                         Settings
                     </Link>
                 </div>
             </aside>
 
-            <main className="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
+            <main className="flex-1 flex flex-col overflow-hidden bg-slate-950 relative">
                 <header
-                    className="h-16 flex items-center justify-between px-8 border-b border-slate-200 bg-white flex-shrink-0 shadow-sm z-10">
+                    className="h-16 flex items-center justify-between px-8 border-b border-slate-800 bg-slate-950 flex-shrink-0 shadow-sm z-10">
                     <div>
-                        <h1 className="text-xl font-semibold text-slate-800">Agent Dashboard</h1>
+                        <h1 className="text-xl font-semibold text-white">Agent Dashboard</h1>
                         <div className="flex items-center gap-2">
                              <span
-                                 className={cn("text-xs font-medium px-2 py-0.5 rounded-full", "bg-blue-100 text-blue-700")}>
+                                 className={cn("text-xs font-medium px-2 py-0.5 rounded-full", "bg-blue-500/20 text-blue-300")}>
                                 Insurance Agent
                             </span>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                        <div className="text-xs text-slate-400 bg-slate-900 px-3 py-1 rounded-full">
                             Internal Announcement: Q3 Goals Meeting tomorrow at 10 AM
                         </div>
 
                         <div
-                            className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors">
+                            className="flex items-center gap-3 cursor-pointer hover:bg-slate-900 p-2 rounded-lg transition-colors">
                             <div
-                                className="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-bold text-white ring-2 ring-white shadow-sm">
-                                {user?.username.substring(0, 2).toUpperCase()}
+                                className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white ring-2 ring-slate-800 shadow-sm">
+                                {(user?.username || 'AG').substring(0, 2).toUpperCase()}
                             </div>
-                            <span className="text-sm font-medium text-slate-700">{user?.username}</span>
+                            <span className="text-sm font-medium text-slate-300">{user?.username}</span>
                             <ChevronDown className="h-4 w-4 text-slate-400"/>
                         </div>
                     </div>
