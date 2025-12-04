@@ -1,18 +1,16 @@
 import apiClient from '@/services/apiClient';
 
-export enum ConstructionType {
-    CONCRETE = 'CONCRETE',
-    STEEL_FRAME = 'STEEL_FRAME',
-    MASONRY = 'MASONRY',
-    WOOD_FRAME = 'WOOD_FRAME'
-}
+export type ConstructionType =
+    | 'CONCRETE'
+    | 'STEEL_FRAME'
+    | 'MASONRY'
+    | 'WOOD_FRAME';
 
-export enum OccupancyType {
-    RESIDENTIAL = 'RESIDENTIAL',
-    COMMERCIAL = 'COMMERCIAL',
-    INDUSTRIAL = 'INDUSTRIAL',
-    MIXED_USE = 'MIXED_USE'
-}
+export type OccupancyType =
+    | 'RESIDENTIAL'
+    | 'COMMERCIAL'
+    | 'INDUSTRIAL'
+    | 'MIXED_USE';
 
 export interface PropertyLocationDto {
     street: string;
@@ -45,7 +43,7 @@ const BASE_PATH = '/picma/properties';
 
 export const fetchAllProperties = async (): Promise<PropertyInfoDto[]> => {
     try {
-        const response = await apiClient.get<PropertyInfoDto[]>(`${BASE_PATH}/propertyInfo`);
+        const response = await apiClient.get<PropertyInfoDto[]>(`${BASE_PATH}`);
         return response.data;
     } catch (error) {
         console.error("Failed to fetch all properties", error);
@@ -54,20 +52,16 @@ export const fetchAllProperties = async (): Promise<PropertyInfoDto[]> => {
 };
 
 export const fetchPropertyById = async (id: string): Promise<PropertyInfoDto> => {
-    const response = await apiClient.get<PropertyInfoDto>(`${BASE_PATH}/propertyInfo/${id}`);
+    const response = await apiClient.get<PropertyInfoDto>(`${BASE_PATH}/${id}`);
     return response.data;
 };
 
 export const createProperty = async (property: Omit<PropertyInfoDto, 'id'>): Promise<PropertyInfoDto> => {
-    const response = await apiClient.post<PropertyInfoDto>(`${BASE_PATH}/propertyInfo`, property);
+    const response = await apiClient.post<PropertyInfoDto>(`${BASE_PATH}`, property);
     return response.data;
 };
 
 export const deleteProperty = async (id: string): Promise<void> => {
-    await apiClient.delete(`${BASE_PATH}/propertyInfo/${id}`);
-};
-
-export const getPropertyByZipCode = async (zipCode: string): Promise<PropertyInfoDto[]> => {
-    const response = await apiClient.get<PropertyInfoDto[]>(`${BASE_PATH}/propertyInfo/zipcode/${zipCode}`);
+    const response = await apiClient.delete(`${BASE_PATH}/${id}`);
     return response.data;
 };

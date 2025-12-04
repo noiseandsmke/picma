@@ -1,21 +1,14 @@
 import React, {useState} from 'react';
-import {ArrowLeftRight, MoreVertical, Pencil, PlusCircle, Power, Search} from 'lucide-react';
+import {ArrowLeftRight, MoreVertical, Pencil, PlusCircle, Search} from 'lucide-react';
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from "@/components/ui/shared-table";
 import {Badge} from "@/components/ui/badge";
 import {Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import {cn} from "@/lib/utils";
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {createUser, fetchUsers, switchUserGroup, updateUserStatus, UserDto} from '../services/userService';
+import {createUser, fetchUsers, switchUserGroup, UserDto} from '../services/userService';
 import {Skeleton} from '@/components/ui/skeleton';
 import AdminLayout from '../layouts/AdminLayout';
 import {CreateUserDialog} from '../components/CreateUserDialog';
@@ -46,19 +39,6 @@ const AdminUsersView: React.FC = () => {
         }
     });
 
-    const statusMutation = useMutation({
-        mutationFn: ({userId}: { userId: string }) =>
-            updateUserStatus(userId),
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({queryKey: ['admin-users']});
-            toast.success(`User status updated successfully`);
-        },
-        onError: (error) => {
-            console.error(error);
-            toast.error("Failed to update user status");
-        }
-    });
-
     const switchGroupMutation = useMutation({
         mutationFn: ({userId}: { userId: string }) =>
             switchUserGroup(userId),
@@ -77,14 +57,13 @@ const AdminUsersView: React.FC = () => {
         return (
             user.username.toLowerCase().includes(term) ||
             user.email.toLowerCase().includes(term) ||
-            (user.firstName && user.firstName.toLowerCase().includes(term)) ||
-            (user.lastName && user.lastName.toLowerCase().includes(term))
+            (user.firstName?.toLowerCase().includes(term)) ||
+            (user.lastName?.toLowerCase().includes(term))
         );
     });
 
     const getDisplayRole = (user: UserDto) => {
         if (user.role) return user.role;
-
         if (user.group === 'agents') return 'Agent';
         if (user.group === 'owners') return 'Owner';
         return 'User';
@@ -161,8 +140,8 @@ const AdminUsersView: React.FC = () => {
                             emptyMessage="No users found."
                         >
                             {isLoading ? (
-                                Array.from({length: 4}).map((_, i) => (
-                                    <TableRow key={i} className="border-slate-800">
+                                [1, 2, 3, 4].map((id) => (
+                                    <TableRow key={`skeleton-${id}`} className="border-slate-800">
                                         <TableCell><Skeleton
                                             className="h-8 w-8 rounded-full bg-slate-800"/></TableCell>
                                         {activeTab === 'all' && (
@@ -198,12 +177,8 @@ const AdminUsersView: React.FC = () => {
                                     )}
                                     <TableCell>
                                         <div className="flex items-center gap-2">
-                                            <span className={cn("h-2 w-2 rounded-full",
-                                                user.enabled ? "bg-emerald-500" : "bg-red-500"
-                                            )}/>
-                                            <span className="text-slate-300">
-                                                {user.enabled ? 'Active' : 'Disabled'}
-                                            </span>
+                                            <span className="h-2 w-2 rounded-full bg-emerald-500"/>
+                                            <span className="text-slate-300">Active</span>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-slate-400">{user.lastActive || '-'}</TableCell>
@@ -223,21 +198,7 @@ const AdminUsersView: React.FC = () => {
                                                     Edit profile
                                                 </DropdownMenuItem>
 
-                                                <DropdownMenuSeparator className="bg-slate-800"/>
-
-                                                <DropdownMenuItem
-                                                    className={cn("focus:bg-slate-800 cursor-pointer",
-                                                        user.enabled ? "text-red-400 focus:text-red-400" : "text-emerald-400 focus:text-emerald-400"
-                                                    )}
-                                                    onClick={() => user.id && statusMutation.mutate({
-                                                        userId: user.id
-                                                    })}
-                                                >
-                                                    <Power className="mr-2 h-4 w-4"/>
-                                                    {user.enabled ? "Disable Account" : "Enable Account"}
-                                                </DropdownMenuItem>
-
-                                                {(user.group === 'agents' || user.group === 'owners') && (
+                                                {(user.group === 'owners') && (
                                                     <DropdownMenuItem
                                                         className="focus:bg-slate-800 focus:text-white cursor-pointer text-amber-500"
                                                         onClick={() => user.id && switchGroupMutation.mutate({
@@ -245,7 +206,7 @@ const AdminUsersView: React.FC = () => {
                                                         })}
                                                     >
                                                         <ArrowLeftRight className="mr-2 h-4 w-4"/>
-                                                        {user.group === 'agents' ? "Switch to Owner" : "Switch to Agent"}
+                                                        Switch to Agent
                                                     </DropdownMenuItem>
                                                 )}
                                             </DropdownMenuContent>

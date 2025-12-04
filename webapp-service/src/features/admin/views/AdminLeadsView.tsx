@@ -40,8 +40,8 @@ import {City, VN_LOCATIONS} from '@/lib/vn-locations';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {NumberInput} from '@/components/ui/number-input';
 
-const constructionTypeValues = Object.values(ConstructionType) as [string, ...string[]];
-const occupancyTypeValues = Object.values(OccupancyType) as [string, ...string[]];
+const constructionTypeValues = ['CONCRETE', 'STEEL_FRAME', 'MASONRY', 'WOOD_FRAME'] as const;
+const occupancyTypeValues = ['RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL', 'MIXED_USE'] as const;
 
 const createLeadSchema = z.object({
     userId: z.string().min(1, 'User (Owner) is required'),
@@ -68,7 +68,7 @@ const createLeadSchema = z.object({
 type CreateLeadFormData = z.infer<typeof createLeadSchema>;
 
 const formatEnum = (val: string) => {
-    return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase().replace(/_/g, ' ');
+    return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase().replaceAll('_', ' ');
 };
 
 const AdminLeadsView: React.FC = () => {
@@ -120,7 +120,6 @@ const AdminLeadsView: React.FC = () => {
                     yearBuilt: new Date().getFullYear(),
                     noFloors: 1,
                     squareMeters: 0,
-                    // Default enum values will be handled by Select components or validation
                 },
                 valuation: {
                     estimatedConstructionCost: 0
@@ -179,21 +178,19 @@ const AdminLeadsView: React.FC = () => {
                 return;
             }
 
-            // 1. Create Property
             const propertyPayload: Omit<PropertyInfoDto, 'id'> = {
                 userId: data.userId,
                 location: data.property.location,
                 attributes: {
                     ...data.property.attributes,
-                    constructionType: data.property.attributes.constructionType as unknown as ConstructionType,
-                    occupancyType: data.property.attributes.occupancyType as unknown as OccupancyType,
+                    constructionType: data.property.attributes.constructionType as ConstructionType,
+                    occupancyType: data.property.attributes.occupancyType as OccupancyType,
                 },
                 valuation: data.property.valuation
             };
 
             const createdProperty = await createPropertyMutation.mutateAsync(propertyPayload);
 
-            // 2. Create Lead
             const userInfo = `${owner.firstName} ${owner.lastName} - ${owner.mobile} - ${owner.email}`;
             const leadPayload: CreateLeadDto = {
                 userInfo,
@@ -274,7 +271,7 @@ const AdminLeadsView: React.FC = () => {
 
         try {
             const obj = JSON.parse(propertyInfoStr);
-            if (obj && obj.address) {
+            if (obj?.address) {
                 return (
                     <div className="flex flex-col">
                         <span className="font-medium text-slate-200 truncate">{obj.address}</span>
@@ -283,10 +280,9 @@ const AdminLeadsView: React.FC = () => {
                 );
             }
         } catch {
-            // Ignore error
+
         }
 
-        // Fallback for raw string
         return (
             <div className="flex items-center gap-2">
                 <span className="truncate max-w-[200px]" title={propertyInfoStr}>
@@ -297,10 +293,10 @@ const AdminLeadsView: React.FC = () => {
     };
 
     const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const raw = e.target.value.replace(/[^0-9]/g, '');
-        const val = parseInt(raw || '0', 10);
+        const raw = e.target.value.replaceAll(/\D/g, '');
+        const val = Number.parseInt(raw || '0', 10);
         setValue('property.valuation.estimatedConstructionCost', val);
-        setCostDisplay(val === 0 ? '' : raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' ₫');
+        setCostDisplay(val === 0 ? '' : raw.replaceAll(/\B(?=(\d{3})+(?!\d))/g, ",") + ' ₫');
     };
 
     const wardOptions = selectedCity?.wards.map(w => ({
@@ -350,9 +346,10 @@ const AdminLeadsView: React.FC = () => {
         {
             header: (
                 <div className="flex items-center gap-2">
-                    <span className="cursor-pointer" onClick={() => handleSort('status')}>
+                    <Button variant="ghost" onClick={() => handleSort('status')}
+                            className="h-auto p-0 font-normal hover:bg-transparent hover:text-inherit">
                         Status {sortConfig.key === 'status' && <ArrowUpDown size={14}/>}
-                    </span>
+                    </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost"
@@ -432,6 +429,99 @@ const AdminLeadsView: React.FC = () => {
         }
     ];
 
+    let content;
+    if (isLeadsLoading) {
+        content = [1, 2, 3, 4, 5].map((id) => (
+            <TableRow key={`skeleton-${id}`} className="border-slate-800">
+                <TableCell><Skeleton className="h-4 w-8 bg-slate-800"/></TableCell>
+                <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
+                <TableCell><Skeleton className="h-4 w-48 bg-slate-800"/></TableCell>
+                <TableCell><Skeleton className="h-6 w-20 bg-slate-800"/></TableCell>
+                <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
+                <TableCell><Skeleton className="h-8 w-8 bg-slate-800"/></TableCell>
+            </TableRow>
+        ));
+    } else if (isLeadsError) {
+        content = (
+            <TableRow className="border-slate-800">
+                <TableCell colSpan={columns.length} className="h-24 text-center text-red-400">
+                    Failed to load leads data.
+                </TableCell>
+            </TableRow>
+        );
+    } else {
+        content = filteredLeads?.map((lead) => {
+            const {name, details} = parseUserInfo(lead.userInfo);
+
+            return (
+                <TableRow key={lead.id}
+                          className="border-slate-800 hover:bg-slate-900/50 transition-colors">
+                    <TableCell className="font-medium text-slate-300">{lead.id}</TableCell>
+                    <TableCell className="text-slate-300">
+                        <div className="flex items-center gap-3">
+                            <div
+                                className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
+                                <User size={14}/>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="font-bold text-slate-200">{name}</span>
+                                <span className="text-xs text-slate-500">{details}</span>
+                            </div>
+                        </div>
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                        {renderPropertyCell(lead.propertyInfo)}
+                    </TableCell>
+                    <TableCell>
+                        {(() => {
+                            const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
+                            return (
+                                <Badge variant="outline"
+                                       className={cn("border-0 font-medium", statusConfig.className)}>
+                                    {statusConfig.label}
+                                </Badge>
+                            );
+                        })()}
+                    </TableCell>
+                    <TableCell className="text-slate-400 text-sm">
+                        <div className="flex items-center gap-2">
+                            <Clock className="h-3 w-3 text-slate-600"/>
+                            {formatDate(lead.createDate)}
+                        </div>
+                    </TableCell>
+                    <TableCell>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost"
+                                        className="h-8 w-8 p-0 text-slate-400 hover:text-white">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4"/>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end"
+                                                 className="bg-slate-900 border-slate-800 text-slate-200">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem
+                                    className="focus:bg-slate-800 focus:text-white cursor-pointer">
+                                    <Eye className="mr-2 h-4 w-4"/>
+                                    View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="bg-slate-800"/>
+                                <DropdownMenuItem
+                                    className="focus:bg-red-500/10 focus:text-red-400 text-red-400 cursor-pointer"
+                                    onClick={() => handleDelete(lead.id)}
+                                >
+                                    <Trash2 className="mr-2 h-4 w-4"/>
+                                    Delete Lead
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </TableCell>
+                </TableRow>
+            );
+        });
+    }
+
     return (
         <AdminLayout>
             <div className="space-y-6">
@@ -469,93 +559,7 @@ const AdminLeadsView: React.FC = () => {
                             isEmpty={!isLeadsLoading && !isLeadsError && (!filteredLeads || filteredLeads.length === 0)}
                             emptyMessage="No leads found matching your criteria."
                         >
-                            {isLeadsLoading ? (
-                                Array.from({length: 5}).map((_, i) => (
-                                    <TableRow key={i} className="border-slate-800">
-                                        <TableCell><Skeleton className="h-4 w-8 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-48 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-6 w-20 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-8 w-8 bg-slate-800"/></TableCell>
-                                    </TableRow>
-                                ))
-                            ) : isLeadsError ? (
-                                <TableRow className="border-slate-800">
-                                    <TableCell colSpan={columns.length} className="h-24 text-center text-red-400">
-                                        Failed to load leads data.
-                                    </TableCell>
-                                </TableRow>
-                            ) : filteredLeads?.map((lead) => {
-                                const {name, details} = parseUserInfo(lead.userInfo);
-
-                                return (
-                                    <TableRow key={lead.id}
-                                              className="border-slate-800 hover:bg-slate-900/50 transition-colors">
-                                        <TableCell className="font-medium text-slate-300">{lead.id}</TableCell>
-                                        <TableCell className="text-slate-300">
-                                            <div className="flex items-center gap-3">
-                                                <div
-                                                    className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
-                                                    <User size={14}/>
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-slate-200">{name}</span>
-                                                    <span className="text-xs text-slate-500">{details}</span>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-slate-300">
-                                            {renderPropertyCell(lead.propertyInfo)}
-                                        </TableCell>
-                                        <TableCell>
-                                            {(() => {
-                                                const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
-                                                return (
-                                                    <Badge variant="outline"
-                                                           className={cn("border-0 font-medium", statusConfig.className)}>
-                                                        {statusConfig.label}
-                                                    </Badge>
-                                                );
-                                            })()}
-                                        </TableCell>
-                                        <TableCell className="text-slate-400 text-sm">
-                                            <div className="flex items-center gap-2">
-                                                <Clock className="h-3 w-3 text-slate-600"/>
-                                                {formatDate(lead.createDate)}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost"
-                                                            className="h-8 w-8 p-0 text-slate-400 hover:text-white">
-                                                        <span className="sr-only">Open menu</span>
-                                                        <MoreHorizontal className="h-4 w-4"/>
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end"
-                                                                     className="bg-slate-900 border-slate-800 text-slate-200">
-                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                    <DropdownMenuItem
-                                                        className="focus:bg-slate-800 focus:text-white cursor-pointer">
-                                                        <Eye className="mr-2 h-4 w-4"/>
-                                                        View Details
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator className="bg-slate-800"/>
-                                                    <DropdownMenuItem
-                                                        className="focus:bg-red-500/10 focus:text-red-400 text-red-400 cursor-pointer"
-                                                        onClick={() => handleDelete(lead.id)}
-                                                    >
-                                                        <Trash2 className="mr-2 h-4 w-4"/>
-                                                        Delete Lead
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
+                            {content}
                         </SharedTable>
                     </div>
                 </div>
@@ -567,7 +571,6 @@ const AdminLeadsView: React.FC = () => {
                             <DialogTitle>Create New Lead</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
-                            {/* Section 1: Owner Selection */}
                             <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Owner
                                     Selection</h4>
@@ -600,7 +603,6 @@ const AdminLeadsView: React.FC = () => {
 
                             <div className="border-t border-slate-800"/>
 
-                            {/* Section 2: Property Creation */}
                             <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Create
                                     Property</h4>
@@ -697,7 +699,7 @@ const AdminLeadsView: React.FC = () => {
                                                         <SelectValue placeholder="Select type"/>
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {Object.values(ConstructionType).map((type) => (
+                                                        {constructionTypeValues.map((type) => (
                                                             <SelectItem key={type}
                                                                         value={type}>{formatEnum(type)}</SelectItem>
                                                         ))}
@@ -719,7 +721,7 @@ const AdminLeadsView: React.FC = () => {
                                                         <SelectValue placeholder="Select type"/>
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {Object.values(OccupancyType).map((type) => (
+                                                        {occupancyTypeValues.map((type) => (
                                                             <SelectItem key={type}
                                                                         value={type}>{formatEnum(type)}</SelectItem>
                                                         ))}

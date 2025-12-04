@@ -6,7 +6,7 @@ export interface UserDto {
     email: string;
     firstName: string;
     lastName: string;
-    mobile: string;
+    mobile?: string;
     role?: string;
     status?: string;
     lastActive?: string;
@@ -21,12 +21,11 @@ const BASE_PATH = '/picma/users';
 
 export const fetchUsers = async (role?: string): Promise<UserDto[]> => {
     try {
-        let endpoint = `${BASE_PATH}/user`;
+        let endpoint = `${BASE_PATH}`;
+
         if (role) {
-            if (role.toLowerCase() === 'agent') endpoint = `${BASE_PATH}/user/agents`;
-            else if (role.toLowerCase() === 'owner') endpoint = `${BASE_PATH}/user/owners`;
-            else if (role.toLowerCase() === 'broker') endpoint = `${BASE_PATH}/user/brokers`;
-            else if (role.toLowerCase() === 'staff') endpoint = `${BASE_PATH}/user/staff`;
+            if (role.toLowerCase() === 'agent') endpoint = `${BASE_PATH}/agents`;
+            else if (role.toLowerCase() === 'owner') endpoint = `${BASE_PATH}/owners`;
         }
 
         const response = await apiClient.get<UserDto[]>(endpoint);
@@ -39,7 +38,7 @@ export const fetchUsers = async (role?: string): Promise<UserDto[]> => {
 
 export const fetchUserById = async (userId: string): Promise<UserDto | null> => {
     try {
-        const response = await apiClient.get<UserDto>(`${BASE_PATH}/user/${userId}`);
+        const response = await apiClient.get<UserDto>(`${BASE_PATH}/${userId}`);
         return response.data;
     } catch (error) {
         console.error(`Failed to fetch user ${userId}`, error);
@@ -48,19 +47,19 @@ export const fetchUserById = async (userId: string): Promise<UserDto | null> => 
 };
 
 export const createUser = async (user: UserDto): Promise<UserDto> => {
-    const response = await apiClient.post<UserDto>(`${BASE_PATH}/user`, user);
+    const response = await apiClient.post<UserDto>(`${BASE_PATH}`, user);
     return response.data;
 };
 
 export const updateUser = async (user: UserDto): Promise<UserDto> => {
-    const response = await apiClient.put<UserDto>(`${BASE_PATH}/user/profile`, user);
+    const response = await apiClient.put<UserDto>(`${BASE_PATH}/profile`, user);
     return response.data;
 };
 
 export const updateUserStatus = async (userId: string): Promise<void> => {
-    await apiClient.put(`${BASE_PATH}/user/status`, {userId});
+    console.warn("Backend does not support direct status toggling via API yet.", userId);
 };
 
 export const switchUserGroup = async (userId: string): Promise<void> => {
-    await apiClient.post(`${BASE_PATH}/user/switch-group`, {userId});
+    await apiClient.put(`${BASE_PATH}/convert-to-agent`, {userId});
 };
