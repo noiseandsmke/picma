@@ -22,3 +22,11 @@ picma:
       api-key: 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
     lead:
       base-uri: http://localhost:7103/property-leads/
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${REGISTRY_HOST:localhost}:${REGISTRY_PORT:8761}/eureka/
+  instance:
+    hostname: ${REGISTRY_HOST:localhost}
+    instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: ${REGISTRY_PREFER_IP:true}

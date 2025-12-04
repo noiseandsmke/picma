@@ -18,3 +18,11 @@ properties:
       name: ${COLLECTION_NAME:property_management}
 server:
   port: 7101
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${REGISTRY_HOST:localhost}:${REGISTRY_PORT:8761}/eureka/
+  instance:
+    hostname: ${REGISTRY_HOST:localhost}
+    instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: ${REGISTRY_PREFER_IP:true}
