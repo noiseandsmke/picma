@@ -26,9 +26,10 @@ public class PropertyManagementController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PropertyInfoDto>> getAllPropertiesInfo() {
-        log.info("### Getting all PropertiesInfo ###");
-        return ResponseEntity.ok(propertyInfoService.getAllProperties());
+    public ResponseEntity<List<PropertyInfoDto>> getAllPropertiesInfo(@RequestParam(required = false) String sort,
+                                                                      @RequestParam(defaultValue = "asc") String direction) {
+        log.info("### Getting all PropertiesInfo with sort: {}, direction: {} ###", sort, direction);
+        return ResponseEntity.ok(propertyInfoService.getAllProperties(sort, direction));
     }
 
     @GetMapping("/{propertyId}")
@@ -48,10 +49,5 @@ public class PropertyManagementController {
         log.info("### Deleting PropertyInfo by id = {} ###", propertyId);
         propertyInfoService.deletePropertyById(propertyId);
         return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
-        return ResponseEntity.badRequest().body(ex.getMessage());
     }
 }

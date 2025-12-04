@@ -22,8 +22,8 @@ const AdminUsersView: React.FC = () => {
     const queryClient = useQueryClient();
 
     const {data: users, isLoading} = useQuery({
-        queryKey: ['admin-users', activeTab],
-        queryFn: () => fetchUsers(activeTab)
+        queryKey: ['admin-users', activeTab, searchTerm],
+        queryFn: () => fetchUsers(activeTab, searchTerm)
     });
 
     const createMutation = useMutation({
@@ -50,16 +50,6 @@ const AdminUsersView: React.FC = () => {
             console.error(error);
             toast.error("Failed to switch user group");
         }
-    });
-
-    const filteredUsers = users?.filter(user => {
-        const term = searchTerm.toLowerCase();
-        return (
-            user.username.toLowerCase().includes(term) ||
-            user.email.toLowerCase().includes(term) ||
-            (user.firstName?.toLowerCase().includes(term)) ||
-            (user.lastName?.toLowerCase().includes(term))
-        );
     });
 
     const getDisplayRole = (user: UserDto) => {
@@ -136,7 +126,7 @@ const AdminUsersView: React.FC = () => {
                         <SharedTable
                             columns={columns}
                             isLoading={isLoading}
-                            isEmpty={!isLoading && (!filteredUsers || filteredUsers.length === 0)}
+                            isEmpty={!isLoading && (!users || users.length === 0)}
                             emptyMessage="No users found."
                         >
                             {isLoading ? (
@@ -152,7 +142,7 @@ const AdminUsersView: React.FC = () => {
                                         <TableCell><Skeleton className="h-8 w-8 ml-auto bg-slate-800"/></TableCell>
                                     </TableRow>
                                 ))
-                            ) : filteredUsers?.map((user) => (
+                            ) : users?.map((user) => (
                                 <TableRow key={user.id}
                                           className="border-slate-800 hover:bg-slate-900/50 group transition-colors">
                                     <TableCell>

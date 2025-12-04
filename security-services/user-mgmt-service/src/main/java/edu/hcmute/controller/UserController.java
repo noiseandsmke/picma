@@ -26,9 +26,9 @@ public class UserController {
     @GetMapping("/user")
     @Operation(description = "getAllUsers", security = @SecurityRequirement(name = "bearerAuth"))
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserDto>> getAllUsers() throws UserException {
-        log.info("UserController :: getAllUsers");
-        List<UserDto> userList = userService.getAllUsers();
+    public ResponseEntity<List<UserDto>> getAllUsers(@RequestParam(required = false) String search) throws UserException {
+        log.info("UserController :: getAllUsers with search: {}", search);
+        List<UserDto> userList = userService.getAllUsers(search);
         return new ResponseEntity<>(userList, HttpStatus.OK);
     }
 

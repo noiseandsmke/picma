@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class UserServiceImplTest {
+class UserServiceImplTest {
 
     @Mock
     private KeycloakAdminClient keycloakAdminClient;
@@ -46,8 +46,8 @@ public class UserServiceImplTest {
         when(userMapper.toEntity(inputDto)).thenReturn(entity);
         ResponseEntity<Void> responseEntity = ResponseEntity.created(URI.create("http://localhost/users/created-id")).build();
         when(keycloakAdminClient.createUser(entity)).thenReturn(responseEntity);
-        when(keycloakAdminClient.joinGroup(eq("created-id"), eq(ownersGroupId))).thenReturn(ResponseEntity.ok().build());
-        when(userMapper.toDtoWithGroup(eq(entity), eq("owners"))).thenReturn(resultDto);
+        when(keycloakAdminClient.joinGroup("created-id", ownersGroupId)).thenReturn(ResponseEntity.ok().build());
+        when(userMapper.toDtoWithGroup(entity, "owners")).thenReturn(resultDto);
         UserDto result = userService.createUser(inputDto);
         assertNotNull(result);
         assertEquals("created-id", result.id());
@@ -75,7 +75,7 @@ public class UserServiceImplTest {
         when(keycloakAdminClient.getUsers("*")).thenReturn(Collections.singletonList(entity));
         when(keycloakAdminClient.getUserGroups("1")).thenReturn(Collections.emptyList());
         when(userMapper.toDtoWithGroup(eq(entity), any())).thenReturn(resultDto);
-        List<UserDto> result = userService.getAllUsers();
+        List<UserDto> result = userService.getAllUsers(null);
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
     }

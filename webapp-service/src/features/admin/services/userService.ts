@@ -19,16 +19,21 @@ export interface UserDto {
 
 const BASE_PATH = '/picma/users';
 
-export const fetchUsers = async (role?: string): Promise<UserDto[]> => {
+export const fetchUsers = async (role?: string, search?: string): Promise<UserDto[]> => {
     try {
         let endpoint = `${BASE_PATH}`;
+        const params: Record<string, string> = {};
 
         if (role) {
             if (role.toLowerCase() === 'agent') endpoint = `${BASE_PATH}/agents`;
             else if (role.toLowerCase() === 'owner') endpoint = `${BASE_PATH}/owners`;
         }
 
-        const response = await apiClient.get<UserDto[]>(endpoint);
+        if (search) {
+            params.search = search;
+        }
+
+        const response = await apiClient.get<UserDto[]>(endpoint, {params});
         return response.data;
     } catch (error) {
         console.error("Failed to fetch users", error);
@@ -49,15 +54,6 @@ export const fetchUserById = async (userId: string): Promise<UserDto | null> => 
 export const createUser = async (user: UserDto): Promise<UserDto> => {
     const response = await apiClient.post<UserDto>(`${BASE_PATH}`, user);
     return response.data;
-};
-
-export const updateUser = async (user: UserDto): Promise<UserDto> => {
-    const response = await apiClient.put<UserDto>(`${BASE_PATH}/profile`, user);
-    return response.data;
-};
-
-export const updateUserStatus = async (userId: string): Promise<void> => {
-    console.warn("Backend does not support direct status toggling via API yet.", userId);
 };
 
 export const switchUserGroup = async (userId: string): Promise<void> => {

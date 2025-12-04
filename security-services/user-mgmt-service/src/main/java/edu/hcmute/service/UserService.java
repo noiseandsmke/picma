@@ -14,7 +14,7 @@ public interface UserService {
 
     UserDto updateUser(UserDto userDto);
 
-    List<UserDto> getAllUsers() throws UserException;
+    List<UserDto> getAllUsers(String search) throws UserException;
 
     List<UserDto> getAllMembersOfGroup(String groupId);
 

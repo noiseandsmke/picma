@@ -23,7 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class PropertyManagementControllerTest {
+class PropertyManagementControllerTest {
 
     @Mock
     private PropertyInfoService propertyInfoService;
@@ -49,50 +49,40 @@ public class PropertyManagementControllerTest {
                 new PropertyValuationDto(2500000000L)
         );
         PropertyInfoDto returnedDto = createSampleDto();
-
         when(propertyInfoService.createPropertyInfo(any(PropertyInfoDto.class))).thenReturn(returnedDto);
-
         ResponseEntity<PropertyInfoDto> response = propertyManagementController.savePropertyInfo(inputDto);
-
         assertNotNull(response);
-        assertEquals(201, response.getStatusCodeValue());
+        assertEquals(201, response.getStatusCode().value());
         assertEquals(returnedDto, response.getBody());
     }
 
     @Test
     void getAllPropertiesInfo_shouldReturnListOfProperties() {
         List<PropertyInfoDto> propertiesList = Collections.singletonList(createSampleDto());
-
-        when(propertyInfoService.getAllProperties()).thenReturn(propertiesList);
-
-        ResponseEntity<List<PropertyInfoDto>> response = propertyManagementController.getAllPropertiesInfo();
-
+        when(propertyInfoService.getAllProperties(null, "asc")).thenReturn(propertiesList);
+        ResponseEntity<List<PropertyInfoDto>> response = propertyManagementController.getAllPropertiesInfo(null, "asc");
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
         assertEquals(1, response.getBody().size());
     }
 
     @Test
     void getPropertyById_shouldReturnProperty() {
         PropertyInfoDto propertyDto = createSampleDto();
-
         when(propertyInfoService.getPropertyInfoById("1")).thenReturn(propertyDto);
-
         ResponseEntity<PropertyInfoDto> response = propertyManagementController.getPropertyById("1");
-
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(propertyDto, response.getBody());
     }
 
     @Test
     void deletePropertyById_shouldReturnNoContent() {
         doNothing().when(propertyInfoService).deletePropertyById("1");
-
         ResponseEntity<Void> response = propertyManagementController.deletePropertyById("1");
-
         assertNotNull(response);
-        assertEquals(204, response.getStatusCodeValue());
+        assertEquals(204, response.getStatusCode().value());
         verify(propertyInfoService).deletePropertyById("1");
     }
 }

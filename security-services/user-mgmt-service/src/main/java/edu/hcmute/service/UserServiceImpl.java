@@ -15,12 +15,14 @@ import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+    private static final String GROUP_AGENTS = "agents";
+    private static final String GROUP_OWNERS = "owners";
+
     private final UserMapper userMapper;
     private final KeycloakAdminClient keycloakAdminClient;
     private final KeycloakGroupClient keycloakGroupClient;
@@ -33,6 +35,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto createUser(UserDto userDto) {
         log.info("Request data = {}", userDto.toString());
+        User user = prepareUserEntity(userDto);
+        log.info("Creating User :: {}", user);
+        ResponseEntity<Void> response = keycloakAdminClient.createUser(user);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            return processCreatedUser(response.getHeaders().getLocation(), user, userDto.group());
+        } else {
+            throw new IllegalArgumentException("Failed to create user: " + response.getStatusCode());
+        }
+    }
+
+    private User prepareUserEntity(UserDto userDto) {
         User user = userMapper.toEntity(userDto);
         user.setEnabled(true);
         if (StringUtils.hasText(userDto.password())) {
@@ -42,34 +55,40 @@ public class UserServiceImpl implements UserService {
             credential.setTemporary(false);
             user.setCredentials(Collections.singletonList(credential));
         }
-        log.info("Creating User :: {}", user);
-        ResponseEntity<Void> response = keycloakAdminClient.createUser(user);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            String userId = extractUserIdFromLocation(response.getHeaders().getLocation());
-            if (userId != null) {
-                log.info("Created User ID = {}", userId);
-                user.setId(userId);
-                String groupId = userDto.group();
-                if (!StringUtils.hasLength(groupId)) {
-                    groupId = ownersGroupId;
-                    log.info("Assigning default Property Owners group ID = {}", groupId);
-                } else if ("agents".equalsIgnoreCase(groupId)) {
-                    groupId = agentsGroupId;
-                } else if ("owners".equalsIgnoreCase(groupId)) {
-                    groupId = ownersGroupId;
-                }
-                try {
-                    keycloakAdminClient.joinGroup(userId, groupId);
-                } catch (Exception e) {
-                    log.error("Failed to join group {} for user {}", groupId, userId, e);
-                    throw new RuntimeException("User created but failed to join group", e);
-                }
-                return userMapper.toDtoWithGroup(user, groupId.equals(agentsGroupId) ? "agents" : "owners");
-            } else {
-                throw new RuntimeException("User created but Location header missing");
-            }
+        return user;
+    }
+
+    private UserDto processCreatedUser(URI location, User user, String requestedGroupId) {
+        String userId = extractUserIdFromLocation(location);
+        if (userId != null) {
+            log.info("Created User ID = {}", userId);
+            user.setId(userId);
+            String groupId = resolveGroupId(requestedGroupId);
+            assignUserToGroup(userId, groupId);
+            return userMapper.toDtoWithGroup(user, groupId.equals(agentsGroupId) ? GROUP_AGENTS : GROUP_OWNERS);
         } else {
-            throw new RuntimeException("Failed to create user: " + response.getStatusCode());
+            throw new IllegalStateException("User created but Location header missing");
+        }
+    }
+
+    private String resolveGroupId(String requestedGroupId) {
+        if (!StringUtils.hasLength(requestedGroupId)) {
+            log.info("Assigning default Property Owners group ID = {}", ownersGroupId);
+            return ownersGroupId;
+        } else if (GROUP_AGENTS.equalsIgnoreCase(requestedGroupId)) {
+            return agentsGroupId;
+        } else if (GROUP_OWNERS.equalsIgnoreCase(requestedGroupId)) {
+            return ownersGroupId;
+        }
+        return requestedGroupId;
+    }
+
+    private void assignUserToGroup(String userId, String groupId) {
+        try {
+            keycloakAdminClient.joinGroup(userId, groupId);
+        } catch (Exception e) {
+            log.error("Failed to join group {} for user {}", groupId, userId, e);
+            throw new IllegalStateException("User created but failed to join group", e);
         }
     }
 
@@ -84,7 +103,7 @@ public class UserServiceImpl implements UserService {
         try {
             return userMapper.toDto(keycloakAdminClient.getUserById(userId));
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException(e);
         }
     }
 
@@ -102,7 +121,7 @@ public class UserServiceImpl implements UserService {
             }
             if (!isOwner) {
                 log.warn("User {} is not in Owners group. Cannot convert to Agent.", userId);
-                throw new RuntimeException("User is not a Property Owner. Cannot convert to Agent.");
+                throw new IllegalStateException("User is not a Property Owner. Cannot convert to Agent.");
             }
             log.info("Removing user {} from Owners group", userId);
             keycloakAdminClient.leaveGroup(userId, ownersGroupId);
@@ -111,7 +130,7 @@ public class UserServiceImpl implements UserService {
             log.info("Successfully converted user {} from Owner to Agent", userId);
         } catch (Exception e) {
             log.error("Failed to convert user {} from Owner to Agent", userId, e);
-            throw new RuntimeException("Failed to convert user from Owner to Agent: " + e.getMessage(), e);
+            throw new IllegalStateException("Failed to convert user from Owner to Agent: " + e.getMessage(), e);
         }
     }
 
@@ -125,29 +144,40 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDto> getAllUsers() {
-        log.info("UserServiceImpl :: getAllUsers using Feign Client");
-        List<User> userList = keycloakAdminClient.getUsers("*");
+    public List<UserDto> getAllUsers(String search) {
+        log.info("UserServiceImpl :: getAllUsers using Feign Client with search: {}", search);
+        if (!StringUtils.hasText(search)) {
+            search = "*";
+        }
+        List<User> userList = keycloakAdminClient.getUsers(search);
         if (CollectionUtils.isEmpty(userList)) {
             return new ArrayList<>();
         }
         List<UserDto> uiUserList = new ArrayList<>();
         for (User user : userList) {
-            try {
-                String priorityGroup = null;
-                try {
-                    List<Map<String, Object>> groups = keycloakAdminClient.getUserGroups(user.getId());
-                    priorityGroup = determinePriorityGroup(groups);
-                } catch (Exception e) {
-                    log.warn("Could not fetch groups for user {}: {}", user.getId(), e.getMessage());
-                }
-                uiUserList.add(userMapper.toDtoWithGroup(user, priorityGroup));
-            } catch (Exception e) {
-                log.error("Error mapping user {}", user.getId(), e);
-            }
+            processUserForList(user, uiUserList);
         }
         log.info("UserServiceImpl :: uiUserList size = {}", uiUserList.size());
         return uiUserList;
+    }
+
+    private void processUserForList(User user, List<UserDto> uiUserList) {
+        try {
+            String priorityGroup = fetchUserPriorityGroup(user.getId());
+            uiUserList.add(userMapper.toDtoWithGroup(user, priorityGroup));
+        } catch (Exception e) {
+            log.error("Error mapping user {}", user.getId(), e);
+        }
+    }
+
+    private String fetchUserPriorityGroup(String userId) {
+        try {
+            List<Map<String, Object>> groups = keycloakAdminClient.getUserGroups(userId);
+            return determinePriorityGroup(groups);
+        } catch (Exception e) {
+            log.warn("Could not fetch groups for user {}: {}", userId, e.getMessage());
+            return null;
+        }
     }
 
     private String determinePriorityGroup(List<Map<String, Object>> groups) {
@@ -168,8 +198,8 @@ public class UserServiceImpl implements UserService {
                 isOwner = true;
             }
         }
-        if (isAgent) return "agents";
-        if (isOwner) return "owners";
+        if (isAgent) return GROUP_AGENTS;
+        if (isOwner) return GROUP_OWNERS;
         return (String) groups.get(0).get("name");
     }
 
@@ -177,7 +207,7 @@ public class UserServiceImpl implements UserService {
     public List<UserDto> getAllMembersOfGroup(String groupId) {
         List<User> userList = keycloakGroupClient.getGroupMembers(groupId);
         if (!CollectionUtils.isEmpty(userList)) {
-            return userList.stream().map(userMapper::toDto).collect(Collectors.toList());
+            return userList.stream().map(userMapper::toDto).toList();
         } else {
             return new ArrayList<>();
         }

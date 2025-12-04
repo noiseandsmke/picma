@@ -17,7 +17,7 @@ const formatCurrency = (amount: number) => {
 };
 
 const formatEnum = (val: string) => {
-    return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase().replace(/_/g, ' ');
+    return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase().replaceAll('_', ' ');
 };
 
 const AdminPropertiesView: React.FC = () => {
@@ -27,8 +27,8 @@ const AdminPropertiesView: React.FC = () => {
     const queryClient = useQueryClient();
 
     const {data: properties, isLoading} = useQuery({
-        queryKey: ['admin-properties'],
-        queryFn: fetchAllProperties
+        queryKey: ['admin-properties', sortConfig],
+        queryFn: () => fetchAllProperties(sortConfig?.key, sortConfig?.direction)
     });
 
     const deleteMutation = useMutation({
@@ -49,47 +49,11 @@ const AdminPropertiesView: React.FC = () => {
 
     const handleSort = (key: string) => {
         let direction: 'asc' | 'desc' = 'asc';
-        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+        if (sortConfig?.key === key && sortConfig?.direction === 'asc') {
             direction = 'desc';
         }
         setSortConfig({key, direction});
     };
-
-    const sortedProperties = React.useMemo(() => {
-        if (!properties) return [];
-        const sortableProperties = [...properties];
-        if (sortConfig !== null) {
-            sortableProperties.sort((a, b) => {
-                let aValue: unknown = a;
-                let bValue: unknown = b;
-
-                const keys = sortConfig.key.split('.') as (keyof typeof a)[];
-                for (const k of keys) {
-                    if (aValue && typeof aValue === 'object') {
-                        aValue = (aValue as Record<string, unknown>)[k];
-                    }
-                    if (bValue && typeof bValue === 'object') {
-                        bValue = (bValue as Record<string, unknown>)[k];
-                    }
-                }
-
-                if (aValue === undefined || bValue === undefined) return 0;
-
-                if (typeof aValue === 'string' && typeof bValue === 'string') {
-                    return sortConfig.direction === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-                }
-
-                if ((aValue as number) < (bValue as number)) {
-                    return sortConfig.direction === 'asc' ? -1 : 1;
-                }
-                if ((aValue as number) > (bValue as number)) {
-                    return sortConfig.direction === 'asc' ? 1 : -1;
-                }
-                return 0;
-            });
-        }
-        return sortableProperties;
-    }, [properties, sortConfig]);
 
     const columns: Column[] = [
         {
@@ -151,12 +115,12 @@ const AdminPropertiesView: React.FC = () => {
                         <SharedTable
                             columns={columns}
                             isLoading={isLoading}
-                            isEmpty={!isLoading && sortedProperties.length === 0}
+                            isEmpty={!isLoading && (!properties || properties.length === 0)}
                             emptyMessage="No properties found."
                         >
                             {isLoading ? (
-                                Array.from({length: 4}).map((_, i) => (
-                                    <TableRow key={i} className="border-slate-800">
+                                ['skel-1', 'skel-2', 'skel-3', 'skel-4'].map((id) => (
+                                    <TableRow key={id} className="border-slate-800">
                                         <TableCell><Skeleton className="h-8 w-48 bg-slate-800"/></TableCell>
                                         <TableCell><Skeleton className="h-6 w-16 bg-slate-800"/></TableCell>
                                         <TableCell><Skeleton className="h-6 w-20 bg-slate-800"/></TableCell>
@@ -166,7 +130,7 @@ const AdminPropertiesView: React.FC = () => {
                                         <TableCell><Skeleton className="h-8 w-8 ml-auto bg-slate-800"/></TableCell>
                                     </TableRow>
                                 ))
-                            ) : sortedProperties.map((prop) => (
+                            ) : properties?.map((prop) => (
                                 <TableRow key={prop.id} className="border-slate-800 hover:bg-slate-900/50 group">
                                     <TableCell>
                                         <div className="flex items-center gap-3">

@@ -19,7 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class UserControllerTest {
+class UserControllerTest {
 
     @Mock
     private UserService userService;
@@ -35,12 +35,12 @@ public class UserControllerTest {
     void getAllUsers_shouldReturnListOfUsers() throws Exception {
         UserDto userDto = new UserDto("1", "u", "f", "l", "e@e.com", true, "12345", "owners", null);
         List<UserDto> userList = Collections.singletonList(userDto);
-        when(userService.getAllUsers()).thenReturn(userList);
-        ResponseEntity<List<UserDto>> response = userController.getAllUsers();
+        when(userService.getAllUsers(null)).thenReturn(userList);
+        ResponseEntity<List<UserDto>> response = userController.getAllUsers(null);
         assertNotNull(response);
         assertEquals(200, response.getStatusCode().value());
         assertEquals(userList, response.getBody());
-        verify(userService).getAllUsers();
+        verify(userService).getAllUsers(null);
     }
 
     @Test

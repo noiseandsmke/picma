@@ -53,7 +53,7 @@ apiClient.interceptors.response.use(
                     originalRequest.headers.Authorization = `Bearer ${token}`;
                     return apiClient(originalRequest);
                 }).catch(err => {
-                    return Promise.reject(err);
+                    throw err;
                 });
             }
 
@@ -65,8 +65,8 @@ apiClient.interceptors.response.use(
 
             if (!refreshToken) {
                 sessionStorage.clear();
-                window.location.href = '/login';
-                return Promise.reject(error);
+                globalThis.location.href = '/login';
+                throw error;
             }
 
             try {
@@ -97,8 +97,8 @@ apiClient.interceptors.response.use(
             } catch (refreshError) {
                 processQueue(refreshError, null);
                 sessionStorage.clear();
-                window.location.href = '/login';
-                return Promise.reject(refreshError);
+                globalThis.location.href = '/login';
+                throw refreshError;
             } finally {
                 isRefreshing = false;
             }
@@ -108,7 +108,7 @@ apiClient.interceptors.response.use(
             console.error("Access Forbidden");
         }
 
-        return Promise.reject(error);
+        throw error;
     }
 );
 
