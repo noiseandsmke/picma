@@ -75,6 +75,12 @@ services:
       - "6379:6379"
     networks:
       - picma-network
+  apache-kafka-service:
+    container_name: broker
+    image: apache/kafka:4.0.0
+    restart: on-failure
+    ports:
+      - "9092:9092"
 networks:
   picma-network:
     name: picma-network
