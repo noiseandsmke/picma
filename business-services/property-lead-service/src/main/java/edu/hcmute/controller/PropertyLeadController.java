@@ -1,6 +1,7 @@
 package edu.hcmute.controller;
 
 import edu.hcmute.dto.LeadStatsDto;
+import edu.hcmute.dto.LeadTrendDto;
 import edu.hcmute.dto.PropertyLeadDto;
 import edu.hcmute.service.PropertyLeadService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,6 +55,12 @@ public class PropertyLeadController {
     @Operation(description = "Get lead statistics", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<LeadStatsDto> getLeadStats() {
         return ResponseEntity.ok(propertyLeadService.getLeadStats());
+    }
+
+    @GetMapping("/stats/trend")
+    @Operation(description = "Get lead trend data", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<List<LeadTrendDto>> getLeadTrend() {
+        return ResponseEntity.ok(propertyLeadService.getLeadTrend());
     }
 
     @GetMapping("/{leadId}")

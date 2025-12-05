@@ -2,16 +2,20 @@ package edu.hcmute.service;
 
 import edu.hcmute.dto.UserDto;
 import edu.hcmute.entity.User;
+import edu.hcmute.exception.UserException;
 import edu.hcmute.mapper.UserMapper;
 import edu.hcmute.outbound.KeycloakAdminClient;
 import edu.hcmute.outbound.KeycloakGroupClient;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
 import java.util.*;
@@ -102,8 +106,12 @@ public class UserServiceImpl implements UserService {
     public UserDto getUserById(String userId) {
         try {
             return userMapper.toDto(keycloakAdminClient.getUserById(userId));
+        } catch (FeignException.NotFound e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + userId);
+        } catch (FeignException.Unauthorized e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized to access Keycloak Admin API. Check user permissions.");
         } catch (Exception e) {
-            throw new IllegalArgumentException(e);
+            throw new UserException("Error fetching user by id " + userId, 500, e);
         }
     }
 
@@ -149,16 +157,24 @@ public class UserServiceImpl implements UserService {
         if (!StringUtils.hasText(search)) {
             search = "*";
         }
-        List<User> userList = keycloakAdminClient.getUsers(search);
-        if (CollectionUtils.isEmpty(userList)) {
-            return new ArrayList<>();
+        try {
+            List<User> userList = keycloakAdminClient.getUsers(search);
+            if (CollectionUtils.isEmpty(userList)) {
+                return new ArrayList<>();
+            }
+            List<UserDto> uiUserList = new ArrayList<>();
+            for (User user : userList) {
+                processUserForList(user, uiUserList);
+            }
+            log.info("UserServiceImpl :: uiUserList size = {}", uiUserList.size());
+            return uiUserList;
+        } catch (FeignException.Unauthorized e) {
+            log.error("Unauthorized access to Keycloak Admin API", e);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized access to Keycloak Admin API");
+        } catch (Exception e) {
+            log.error("Error fetching users", e);
+            throw new UserException("Error fetching users", 500, e);
         }
-        List<UserDto> uiUserList = new ArrayList<>();
-        for (User user : userList) {
-            processUserForList(user, uiUserList);
-        }
-        log.info("UserServiceImpl :: uiUserList size = {}", uiUserList.size());
-        return uiUserList;
     }
 
     private void processUserForList(User user, List<UserDto> uiUserList) {
@@ -205,11 +221,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getAllMembersOfGroup(String groupId) {
-        List<User> userList = keycloakGroupClient.getGroupMembers(groupId);
-        if (!CollectionUtils.isEmpty(userList)) {
-            return userList.stream().map(userMapper::toDto).toList();
-        } else {
-            return new ArrayList<>();
+        try {
+            List<User> userList = keycloakGroupClient.getGroupMembers(groupId);
+            if (!CollectionUtils.isEmpty(userList)) {
+                return userList.stream().map(userMapper::toDto).toList();
+            } else {
+                return new ArrayList<>();
+            }
+        } catch (FeignException.Unauthorized e) {
+            log.error("Unauthorized access to Keycloak Group API", e);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized access to Keycloak Group API");
+        } catch (Exception e) {
+            log.error("Error fetching group members", e);
+            throw new UserException("Error fetching group members", 500, e);
         }
     }
 

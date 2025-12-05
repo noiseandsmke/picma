@@ -1,4 +1,4 @@
-import axios from 'axios';
+import apiClient from '@/services/apiClient';
 
 export interface PropertyLeadDto {
     id: number;
@@ -30,40 +30,40 @@ export interface LeadTrendData {
     count: number;
 }
 
-const LEAD_SERVICE_URL = import.meta.env.VITE_LEAD_SERVICE_URL || 'http://localhost:7103/property-lead';
+const LEAD_SERVICE_URL = '/picma/leads';
 
 export const fetchAllLeads = async (sort = 'id', order = 'asc'): Promise<PropertyLeadDto[]> => {
-    const response = await axios.get<PropertyLeadDto[]>(`${LEAD_SERVICE_URL}/all`, {
+    const response = await apiClient.get<PropertyLeadDto[]>(`${LEAD_SERVICE_URL}/all`, {
         params: {sort, order},
     });
     return response.data;
 };
 
 export const fetchLeadById = async (id: number): Promise<PropertyLeadDto> => {
-    const response = await axios.get<PropertyLeadDto>(`${LEAD_SERVICE_URL}/${id}`);
+    const response = await apiClient.get<PropertyLeadDto>(`${LEAD_SERVICE_URL}/${id}`);
     return response.data;
 };
 
 export const fetchLeadStats = async (): Promise<LeadStatsDto> => {
-    const response = await axios.get<LeadStatsDto>(`${LEAD_SERVICE_URL}/stats`);
+    const response = await apiClient.get<LeadStatsDto>(`${LEAD_SERVICE_URL}/stats`);
     return response.data;
 };
 
 export const fetchLeadTrend = async (): Promise<LeadTrendData[]> => {
-    const response = await axios.get<LeadTrendData[]>(`${LEAD_SERVICE_URL}/trend`);
+    const response = await apiClient.get<LeadTrendData[]>(`${LEAD_SERVICE_URL}/stats/trend`);
     return response.data;
 };
 
 export const createLead = async (leadData: CreateLeadDto): Promise<PropertyLeadDto> => {
-    const response = await axios.post<PropertyLeadDto>(`${LEAD_SERVICE_URL}`, leadData);
+    const response = await apiClient.post<PropertyLeadDto>(`${LEAD_SERVICE_URL}`, leadData);
     return response.data;
-}
+};
 
 export const updateLead = async (leadData: PropertyLeadDto): Promise<PropertyLeadDto> => {
-    const response = await axios.put<PropertyLeadDto>(`${LEAD_SERVICE_URL}/${leadData.id}`, leadData);
+    const response = await apiClient.put<PropertyLeadDto>(`${LEAD_SERVICE_URL}/${leadData.id}`, leadData);
     return response.data;
-}
+};
 
 export const deleteLead = async (leadId: number): Promise<void> => {
-    await axios.delete(`${LEAD_SERVICE_URL}/${leadId}`);
-}
+    await apiClient.delete(`${LEAD_SERVICE_URL}/${leadId}`);
+};

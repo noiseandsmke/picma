@@ -20,35 +20,25 @@ export interface UserDto {
 const BASE_PATH = '/picma/users';
 
 export const fetchUsers = async (role?: string, search?: string): Promise<UserDto[]> => {
-    try {
-        let endpoint = `${BASE_PATH}`;
-        const params: Record<string, string> = {};
+    let endpoint = `${BASE_PATH}`;
+    const params: Record<string, string> = {};
 
-        if (role) {
-            if (role.toLowerCase() === 'agent') endpoint = `${BASE_PATH}/agents`;
-            else if (role.toLowerCase() === 'owner') endpoint = `${BASE_PATH}/owners`;
-        }
-
-        if (search) {
-            params.search = search;
-        }
-
-        const response = await apiClient.get<UserDto[]>(endpoint, {params});
-        return response.data;
-    } catch (error) {
-        console.error("Failed to fetch users", error);
-        return [];
+    if (role) {
+        if (role.toLowerCase() === 'agent') endpoint = `${BASE_PATH}/agents`;
+        else if (role.toLowerCase() === 'owner') endpoint = `${BASE_PATH}/owners`;
     }
+
+    if (search) {
+        params.search = search;
+    }
+
+    const response = await apiClient.get<UserDto[]>(endpoint, {params});
+    return response.data;
 };
 
 export const fetchUserById = async (userId: string): Promise<UserDto | null> => {
-    try {
-        const response = await apiClient.get<UserDto>(`${BASE_PATH}/${userId}`);
-        return response.data;
-    } catch (error) {
-        console.error(`Failed to fetch user ${userId}`, error);
-        return null;
-    }
+    const response = await apiClient.get<UserDto>(`${BASE_PATH}/${userId}`);
+    return response.data;
 };
 
 export const createUser = async (user: UserDto): Promise<UserDto> => {

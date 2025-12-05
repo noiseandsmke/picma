@@ -1,4 +1,4 @@
-import axios from 'axios';
+import apiClient from '@/services/apiClient';
 
 export interface PremiumDto {
     net: number;
@@ -36,25 +36,25 @@ export type CreateQuoteDto =
     premium: PremiumDto;
 };
 
-const QUOTE_SERVICE_URL = import.meta.env.VITE_QUOTE_SERVICE_URL || 'http://localhost:7102/property-quote';
+const QUOTE_SERVICE_URL = '/picma/quotes';
 
 export const fetchAllQuotes = async (sort = 'id', order = 'asc'): Promise<PropertyQuoteDto[]> => {
-    const response = await axios.get<PropertyQuoteDto[]>(`${QUOTE_SERVICE_URL}`, {
+    const response = await apiClient.get<PropertyQuoteDto[]>(`${QUOTE_SERVICE_URL}`, {
         params: {sort, order},
     });
     return response.data;
 };
 
 export const createQuote = async (quote: CreateQuoteDto): Promise<PropertyQuoteDto> => {
-    const response = await axios.post<PropertyQuoteDto>(`${QUOTE_SERVICE_URL}`, quote);
+    const response = await apiClient.post<PropertyQuoteDto>(`${QUOTE_SERVICE_URL}`, quote);
     return response.data;
 };
 
 export const updateQuote = async (quote: PropertyQuoteDto): Promise<PropertyQuoteDto> => {
-    const response = await axios.put<PropertyQuoteDto>(`${QUOTE_SERVICE_URL}/${quote.id}`, quote);
+    const response = await apiClient.put<PropertyQuoteDto>(`${QUOTE_SERVICE_URL}/${quote.id}`, quote);
     return response.data;
 };
 
 export const deleteQuote = async (id: number): Promise<void> => {
-    await axios.delete(`${QUOTE_SERVICE_URL}/${id}`);
+    await apiClient.delete(`${QUOTE_SERVICE_URL}/${id}`);
 };

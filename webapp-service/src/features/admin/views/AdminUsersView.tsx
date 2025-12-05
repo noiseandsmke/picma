@@ -21,7 +21,7 @@ const AdminUsersView: React.FC = () => {
 
     const queryClient = useQueryClient();
 
-    const {data: users, isLoading} = useQuery({
+    const {data: users, isLoading, isError, error} = useQuery({
         queryKey: ['admin-users', activeTab, searchTerm],
         queryFn: () => fetchUsers(activeTab, searchTerm)
     });
@@ -123,10 +123,15 @@ const AdminUsersView: React.FC = () => {
                     </div>
 
                     <div className="p-0">
+                        {isError && (
+                            <div className="p-6 text-center text-red-500 bg-red-500/10 border-b border-red-500/20">
+                                Failed to load users: {error instanceof Error ? error.message : 'Unknown error'}
+                            </div>
+                        )}
                         <SharedTable
                             columns={columns}
                             isLoading={isLoading}
-                            isEmpty={!isLoading && (!users || users.length === 0)}
+                            isEmpty={!isLoading && !isError && (!users || users.length === 0)}
                             emptyMessage="No users found."
                         >
                             {isLoading ? (

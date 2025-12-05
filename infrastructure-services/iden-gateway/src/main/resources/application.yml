@@ -20,14 +20,28 @@ spring:
               predicates:
                 - Path=/picma/users/**
               filters:
-                - RewritePath=/picma/users/?(?<segment>.*), /user/${segment}
+                - RewritePath=/picma/users(?<segment>/?.*), /user${segment}
 
             - id: property-mgmt-service
               uri: lb://PROPERTY-MGMT-SERVICE
               predicates:
                 - Path=/picma/properties/**
               filters:
-                - RewritePath=/picma/properties/?(?<segment>.*), /propertyInfo/${segment}
+                - RewritePath=/picma/properties(?<segment>/?.*), /propertyInfo${segment}
+
+            - id: property-lead-service
+              uri: lb://PROPERTY-LEAD-SERVICE
+              predicates:
+                - Path=/picma/leads/**
+              filters:
+                - RewritePath=/picma/leads(?<segment>/?.*), /property-lead${segment}
+
+            - id: property-quote-service
+              uri: lb://PROPERTY-QUOTE-SERVICE
+              predicates:
+                - Path=/picma/quotes/**
+              filters:
+                - RewritePath=/picma/quotes(?<segment>/?.*), /property-quote${segment}
 
   security:
     oauth2:

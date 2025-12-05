@@ -86,7 +86,7 @@ const AdminLeadsView: React.FC = () => {
         data: properties,
     } = useQuery({
         queryKey: ['admin-properties'],
-        queryFn: fetchAllProperties,
+        queryFn: () => fetchAllProperties(),
     });
 
     const {
@@ -257,7 +257,7 @@ const AdminLeadsView: React.FC = () => {
     };
 
     const renderPropertyCell = (propertyInfoStr: string) => {
-        if (properties && properties.length > 0) {
+        if (Array.isArray(properties) && properties.length > 0) {
             const matchedProp = properties.find(p => String(p.id) === String(propertyInfoStr));
             if (matchedProp) {
                 return (

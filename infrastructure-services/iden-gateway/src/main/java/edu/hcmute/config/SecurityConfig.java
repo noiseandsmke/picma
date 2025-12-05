@@ -1,5 +1,6 @@
 package edu.hcmute.config;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,12 +32,17 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         log.info("### Configuring Security Web Filter Chain ###");
         return http
+                .cors(ServerHttpSecurity.CorsSpec::disable)
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/auth/**").permitAll()
+                        .pathMatchers(HttpMethod.OPTIONS).permitAll()
                         .pathMatchers(HttpMethod.GET, "/picma/properties/**").permitAll()
+                        .pathMatchers("/picma/leads/**").authenticated()
+                        .pathMatchers("/picma/quotes/**").authenticated()
+                        .pathMatchers("/picma/users/**").authenticated()
                         .pathMatchers("/picma/admin/**").hasRole("ADMIN")
                         .pathMatchers("/picma/agent/**").hasRole("AGENT")
                         .pathMatchers("/picma/owner/**").hasRole("OWNER")
@@ -58,9 +64,10 @@ public class SecurityConfig {
         return new ReactiveJwtAuthenticationConverterAdapter(jwtAuthenticationConverter);
     }
 
+    @SuppressWarnings("unchecked")
     static class KeycloakRealmRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
         @Override
-        public Collection<GrantedAuthority> convert(Jwt jwt) {
+        public Collection<GrantedAuthority> convert(@NotNull Jwt jwt) {
             final Map<String, Object> realmAccess = (Map<String, Object>) jwt.getClaims().get("realm_access");
             if (realmAccess == null || realmAccess.isEmpty()) {
                 return Collections.emptyList();

@@ -8,10 +8,12 @@ import edu.hcmute.domain.LeadStatus;
 import edu.hcmute.dto.*;
 import edu.hcmute.entity.PropertyLead;
 import edu.hcmute.event.PropertyLeadProducer;
+import edu.hcmute.exception.PropertyLeadException;
 import edu.hcmute.mapper.PropertyLeadMapper;
 import edu.hcmute.repo.PropertyLeadRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
     private final PropertyLeadMapper propertyLeadMapper;
     private final PropertyLeadProducer propertyLeadProducer;
     private final ObjectMapper objectMapper;
+    private final ObjectProvider<PropertyLeadService> propertyLeadServiceProvider;
 
     @Override
     @Transactional
@@ -45,7 +48,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
             return propertyLeadMapper.toDto(propertyLead);
         } catch (Exception e) {
             log.error("~~> error creating PropertyLead: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to create PropertyLead: " + e.getMessage(), e);
+            throw new PropertyLeadException("Failed to create PropertyLead: " + e.getMessage(), e);
         }
     }
 
@@ -55,14 +58,14 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         log.info("### Update PropertyLead with id: {} ###", leadId);
         try {
             PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
-                    .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + leadId));
+                    .orElseThrow(() -> new PropertyLeadException("PropertyLead not found with id: " + leadId));
             propertyLeadMapper.updateEntity(propertyLead, propertyLeadDto);
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> PropertyLead updated with id: {}", propertyLead.getId());
             return propertyLeadMapper.toDto(propertyLead);
         } catch (Exception e) {
             log.error("~~> error updating PropertyLead: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to update PropertyLead: " + e.getMessage(), e);
+            throw new PropertyLeadException("Failed to update PropertyLead: " + e.getMessage(), e);
         }
     }
 
@@ -73,7 +76,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
                 .orElseThrow(() -> {
                     log.warn("~~> no PropertyLead found with id: {}", leadId);
-                    return new RuntimeException("No PropertyLead found with id: " + leadId);
+                    return new PropertyLeadException("No PropertyLead found with id: " + leadId);
                 });
         log.info("~~> found PropertyLead: {}", propertyLead);
         return propertyLeadMapper.toDto(propertyLead);
@@ -84,16 +87,9 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
     public PropertyLeadDto updateLeadStatus(Integer leadId, String status) {
         log.info("### Updating lead status for leadId = {} to status = {} ###", leadId, status);
         try {
-            LeadStatus newStatus;
-            try {
-                newStatus = LeadStatus.valueOf(status.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid status: " + status + ". Valid statuses are: " +
-                        String.join(", ", Arrays.stream(LeadStatus.values())
-                                .map(Enum::name).toArray(String[]::new)));
-            }
+            LeadStatus newStatus = parseLeadStatus(status);
             PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
-                    .orElseThrow(() -> new RuntimeException("PropertyLead not found with id: " + leadId));
+                    .orElseThrow(() -> new PropertyLeadException("PropertyLead not found with id: " + leadId));
             LeadStatus currentStatus = propertyLead.getStatus();
             validateStatusTransition(currentStatus, newStatus);
             propertyLead.setStatus(newStatus);
@@ -105,7 +101,17 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
             throw e;
         } catch (Exception e) {
             log.error("~~> error updating lead status: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to update lead status: " + e.getMessage(), e);
+            throw new PropertyLeadException("Failed to update lead status: " + e.getMessage(), e);
+        }
+    }
+
+    private LeadStatus parseLeadStatus(String status) {
+        try {
+            return LeadStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid status: " + status + ". Valid statuses are: " +
+                    String.join(", ", Arrays.stream(LeadStatus.values())
+                            .map(Enum::name).toArray(String[]::new)));
         }
     }
 
@@ -136,8 +142,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
                                     currentStatus, newStatus));
                 }
                 break;
-            case REJECTED:
-            case EXPIRED:
+            case REJECTED, EXPIRED:
                 throw new IllegalStateException(
                         String.format("Cannot change status from %s to %s. %s is a final state.",
                                 currentStatus, newStatus, currentStatus));
@@ -168,7 +173,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         try {
             leadStatus = LeadStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid status: " + status);
+            throw new PropertyLeadException("Invalid status: " + status);
         }
         List<PropertyLead> propertyLeadList = propertyLeadRepo.findByStatus(leadStatus);
         if (propertyLeadList.isEmpty()) {
@@ -216,7 +221,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
             AgentDto agent = propertyAgentFeignClient.getAgentById(agentId);
             String agentZipCode = agent.zipCode();
             log.info("~~> agent {} has zipCode: {}", agentId, agentZipCode);
-            List<PropertyLeadDto> availableLeadsDtos = findPropertyLeadsByZipcode(agentZipCode);
+            List<PropertyLeadDto> availableLeadsDtos = propertyLeadServiceProvider.getObject().findPropertyLeadsByZipcode(agentZipCode);
             List<PropertyLead> availableLeads = availableLeadsDtos.stream()
                     .map(propertyLeadMapper::toEntity)
                     .toList();
@@ -230,30 +235,18 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
                     .filter(al -> "REJECTED".equalsIgnoreCase(al.leadAction()))
                     .map(AgentLeadDto::leadId)
                     .collect(Collectors.toSet());
-            List<PropertyLead> visibleLeads = new ArrayList<>();
-            for (PropertyLead lead : availableLeads) {
-                if (!rejectedLeadIds.contains(lead.getId())) {
-                    visibleLeads.add(lead);
-                }
-            }
-            for (PropertyLead lead : interactedLeads) {
-                if (visibleLeads.stream().anyMatch(l -> l.getId().equals(lead.getId()))) {
-                    continue;
-                }
-                if (rejectedLeadIds.contains(lead.getId())) {
-                    continue;
-                }
-                visibleLeads.add(lead);
-            }
-            Set<PropertyLead> uniqueLeads = new HashSet<>(visibleLeads);
+            Set<PropertyLead> uniqueLeads = new HashSet<>();
+            uniqueLeads.addAll(availableLeads);
+            uniqueLeads.addAll(interactedLeads);
+            uniqueLeads.removeIf(lead -> rejectedLeadIds.contains(lead.getId()));
             log.info("~~> total {} leads visible to agent {}", uniqueLeads.size(), agentId);
             return uniqueLeads.stream()
                     .map(propertyLeadMapper::toDto)
                     .sorted(Comparator.comparing(PropertyLeadDto::id))
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (Exception e) {
             log.error("~~> error fetching leads for agent {}: {}", agentId, e.getMessage(), e);
-            return findAllPropertyLeads();
+            return propertyLeadServiceProvider.getObject().findAllPropertyLeads();
         }
     }
 
@@ -276,7 +269,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
     public void deletePropertyLeadById(Integer leadId) {
         log.info("### Delete PropertyLead by id = {} ###", leadId);
         if (!propertyLeadRepo.existsById(leadId)) {
-            throw new RuntimeException("PropertyLead not found with id: " + leadId);
+            throw new PropertyLeadException("PropertyLead not found with id: " + leadId);
         }
         propertyLeadRepo.deleteById(leadId);
         log.info("~~> successfully deleted PropertyLead with id: {}", leadId);
@@ -293,6 +286,22 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         long overdue = allLeads.stream().filter(l -> LeadStatus.EXPIRED == l.getStatus() ||
                 (l.getExpiryDate() != null && l.getExpiryDate().isBefore(LocalDate.now()))).count();
         return new LeadStatsDto(total, accepted, rejected, overdue);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<LeadTrendDto> getLeadTrend() {
+        log.info("### Get Lead Trend ###");
+        List<PropertyLead> allLeads = propertyLeadRepo.findAll();
+        Map<LocalDate, Long> trendMap = allLeads.stream()
+                .collect(Collectors.groupingBy(
+                        PropertyLead::getCreateDate,
+                        Collectors.counting()
+                ));
+        return trendMap.entrySet().stream()
+                .map(entry -> new LeadTrendDto(entry.getKey(), entry.getValue()))
+                .sorted(Comparator.comparing(LeadTrendDto::date))
+                .toList();
     }
 
     @Override

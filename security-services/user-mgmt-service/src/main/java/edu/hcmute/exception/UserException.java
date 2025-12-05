@@ -1,16 +1,15 @@
 package edu.hcmute.exception;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.io.Serial;
-
 @Getter
-@AllArgsConstructor
-public class UserException extends Exception {
-    @Serial
-    private static final long serialVersionUID = -8761721031457177925L;
+public class UserException extends RuntimeException {
+    private final String errorMessage;
+    private final int errorCode;
 
-    private String errorMessage;
-    private int errorCode;
+    public UserException(String errorMessage, int errorCode, Throwable cause) {
+        super(errorMessage, cause);
+        this.errorMessage = errorMessage;
+        this.errorCode = errorCode;
+    }
 }

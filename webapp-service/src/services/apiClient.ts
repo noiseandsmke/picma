@@ -25,6 +25,89 @@ const processQueue = (error: any, token: string | null = null) => {
     failedQueue = [];
 };
 
+const handleTokenRefresh = async (error: any) => {
+    const originalRequest = error.config;
+
+    if (originalRequest._retry) {
+        throw error;
+    }
+
+    if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+            failedQueue.push({resolve, reject});
+        }).then(token => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return apiClient(originalRequest);
+        }).catch(err => {
+            throw err;
+        });
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    const refreshToken = sessionStorage.getItem('refresh_token');
+    const oldAccessToken = sessionStorage.getItem('access_token');
+
+    if (!refreshToken) {
+        sessionStorage.clear();
+        globalThis.location.href = '/login';
+        throw error;
+    }
+
+    try {
+        const {authService} = await import('./authService');
+        const response = await authService.refresh(refreshToken, oldAccessToken || undefined);
+
+        const {jwtDecode} = await import('jwt-decode');
+        const decodedAccess: any = jwtDecode(response.access_token);
+
+        let decodedId: any = {};
+        if (response.id_token) {
+            decodedId = jwtDecode(response.id_token);
+        } else {
+            const oldIdToken = sessionStorage.getItem('id_token');
+            if (oldIdToken) {
+                try {
+                    decodedId = jwtDecode(oldIdToken);
+                } catch (e) {
+                    console.warn("Failed to decode old ID token", e);
+                }
+            }
+        }
+
+        const user = {
+            id: decodedAccess.sub,
+            username: decodedAccess.preferred_username,
+            email: decodedAccess.email,
+            roles: decodedAccess.realm_access?.roles || [],
+            zipcode: decodedId.zipcode || decodedAccess.zipcode,
+        };
+
+        sessionStorage.setItem('access_token', response.access_token);
+        sessionStorage.setItem('refresh_token', response.refresh_token);
+        if (response.id_token) {
+            sessionStorage.setItem('id_token', response.id_token);
+        }
+        sessionStorage.setItem('token_expires_at', String(Date.now() + response.expires_in * 1000));
+        sessionStorage.setItem('user', JSON.stringify(user));
+
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${response.access_token}`;
+        originalRequest.headers.Authorization = `Bearer ${response.access_token}`;
+
+        processQueue(null, response.access_token);
+
+        return apiClient(originalRequest);
+    } catch (refreshError) {
+        processQueue(refreshError, null);
+        sessionStorage.clear();
+        globalThis.location.href = '/login';
+        throw refreshError;
+    } finally {
+        isRefreshing = false;
+    }
+};
+
 apiClient.interceptors.request.use(
     (config) => {
         const token = sessionStorage.getItem('access_token');
@@ -43,65 +126,8 @@ apiClient.interceptors.response.use(
         return response;
     },
     async (error) => {
-        const originalRequest = error.config;
-
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            if (isRefreshing) {
-                return new Promise((resolve, reject) => {
-                    failedQueue.push({resolve, reject});
-                }).then(token => {
-                    originalRequest.headers.Authorization = `Bearer ${token}`;
-                    return apiClient(originalRequest);
-                }).catch(err => {
-                    throw err;
-                });
-            }
-
-            originalRequest._retry = true;
-            isRefreshing = true;
-
-            const refreshToken = sessionStorage.getItem('refresh_token');
-            const oldAccessToken = sessionStorage.getItem('access_token');
-
-            if (!refreshToken) {
-                sessionStorage.clear();
-                globalThis.location.href = '/login';
-                throw error;
-            }
-
-            try {
-                const {authService} = await import('./authService');
-                const response = await authService.refresh(refreshToken, oldAccessToken || undefined);
-
-                const {jwtDecode} = await import('jwt-decode');
-                const decoded: any = jwtDecode(response.access_token);
-                const user = {
-                    id: decoded.sub,
-                    username: decoded.preferred_username,
-                    email: decoded.email,
-                    roles: decoded.realm_access?.roles || [],
-                    zipcode: decoded.zipcode,
-                };
-
-                sessionStorage.setItem('access_token', response.access_token);
-                sessionStorage.setItem('refresh_token', response.refresh_token);
-                sessionStorage.setItem('token_expires_at', String(Date.now() + response.expires_in * 1000));
-                sessionStorage.setItem('user', JSON.stringify(user));
-
-                apiClient.defaults.headers.common['Authorization'] = `Bearer ${response.access_token}`;
-                originalRequest.headers.Authorization = `Bearer ${response.access_token}`;
-
-                processQueue(null, response.access_token);
-
-                return apiClient(originalRequest);
-            } catch (refreshError) {
-                processQueue(refreshError, null);
-                sessionStorage.clear();
-                globalThis.location.href = '/login';
-                throw refreshError;
-            } finally {
-                isRefreshing = false;
-            }
+        if (error.response?.status === 401) {
+            return handleTokenRefresh(error);
         }
 
         if (error.response?.status === 403) {

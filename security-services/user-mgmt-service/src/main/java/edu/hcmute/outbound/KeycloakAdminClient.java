@@ -11,7 +11,6 @@ import java.util.Map;
 
 @FeignClient(name = "keycloak-admin-client", url = "${picma.iam.usersApi}", configuration = KeycloakClientConfig.class)
 public interface KeycloakAdminClient {
-
     @GetMapping
     List<User> getUsers(@RequestParam String search);
 

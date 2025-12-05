@@ -10,17 +10,21 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 
 @Slf4j
 public class KeycloakRequestInterceptor implements RequestInterceptor {
-
     @Override
     public void apply(RequestTemplate template) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+            String tokenValue = jwt.getTokenValue();
+            log.info("Adding Bearer token from SecurityContext to Keycloak Admin API request. User: {}", authentication.getName());
+            template.header("Authorization", "Bearer " + tokenValue);
+        } else if (authentication instanceof JwtAuthenticationToken jwtAuth) {
             Jwt jwt = jwtAuth.getToken();
             String tokenValue = jwt.getTokenValue();
-            log.debug("Adding Bearer token from SecurityContext to Keycloak Admin API request");
+            log.info("Adding Bearer token from SecurityContext (JwtAuthenticationToken) to Keycloak Admin API request. User: {}", authentication.getName());
             template.header("Authorization", "Bearer " + tokenValue);
         } else {
-            log.warn("No JWT authentication found in SecurityContext. Request to Keycloak Admin API may fail.");
+            String authClass = (authentication != null) ? authentication.getClass().getName() : "null";
+            log.warn("No JWT authentication found in SecurityContext. Auth class: {}. Request to Keycloak Admin API may fail.", authClass);
         }
     }
 }

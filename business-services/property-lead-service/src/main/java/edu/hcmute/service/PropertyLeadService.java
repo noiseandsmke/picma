@@ -1,6 +1,7 @@
 package edu.hcmute.service;
 
 import edu.hcmute.dto.LeadStatsDto;
+import edu.hcmute.dto.LeadTrendDto;
 import edu.hcmute.dto.PropertyLeadDto;
 
 import java.util.List;
@@ -25,6 +26,8 @@ public interface PropertyLeadService {
     void deletePropertyLeadById(Integer leadId);
 
     LeadStatsDto getLeadStats();
+
+    List<LeadTrendDto> getLeadTrend();
 
     List<PropertyLeadDto> getAllLeads(String sort, String order);
 }

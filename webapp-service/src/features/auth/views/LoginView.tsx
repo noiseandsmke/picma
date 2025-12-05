@@ -55,8 +55,6 @@ const LoginView: React.FC = () => {
             });
 
             console.log('Login response received:', response);
-            console.log('Access token exists:', !!response.access_token);
-            console.log('Response keys:', Object.keys(response));
 
             if (!response.access_token) {
                 console.error('No access token in response');
@@ -68,21 +66,32 @@ const LoginView: React.FC = () => {
                 return;
             }
 
-            const decoded: any = jwtDecode(response.access_token);
-            console.log('Decoded JWT:', decoded);
+            const decodedAccess: any = jwtDecode(response.access_token);
+            let decodedId: any = {};
+            if (response.id_token) {
+                decodedId = jwtDecode(response.id_token);
+            }
 
-            const roles = decoded.realm_access?.roles || [];
+            console.log('Decoded Access Token:', decodedAccess);
+            console.log('Decoded ID Token:', decodedId);
 
+            const roles = decodedAccess.realm_access?.roles || [];
+
+            // Prefer ID token for profile info, Access token for auth info
             const user = {
-                id: decoded.sub,
-                username: decoded.preferred_username,
-                email: decoded.email,
+                id: decodedAccess.sub,
+                username: decodedAccess.preferred_username,
+                email: decodedAccess.email,
                 roles: roles,
-                zipcode: decoded.zipcode,
+                // Zipcode is usually in ID token
+                zipcode: decodedId.zipcode || decodedAccess.zipcode,
             };
 
             sessionStorage.setItem('access_token', response.access_token);
             sessionStorage.setItem('refresh_token', response.refresh_token);
+            if (response.id_token) {
+                sessionStorage.setItem('id_token', response.id_token);
+            }
             sessionStorage.setItem('token_expires_at', String(Date.now() + response.expires_in * 1000));
             sessionStorage.setItem('user', JSON.stringify(user));
 
