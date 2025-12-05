@@ -10,6 +10,9 @@ export interface PropertyDto {
     imageUrl?: string;
     isInsured: boolean;
     lastAssessmentDate?: string;
+    valuation?: {
+        marketValue: number;
+    }
 }
 
 export interface AgentDto {
@@ -27,7 +30,7 @@ const AGENT_BASE_PATH = '/picma/agents';
 export const fetchOwnerProperties = async (ownerId: string): Promise<PropertyDto[]> => {
     console.log(`Fetching properties for owner context: ${ownerId}`);
     try {
-        const response = await apiClient.get<PropertyDto[]>(`${PROPERTY_BASE_PATH}/propertyInfo`);
+        const response = await apiClient.get<PropertyDto[]>(`${PROPERTY_BASE_PATH}/propertyInfo/user/${ownerId}`);
         return response.data;
     } catch (error) {
         console.error("Failed to fetch properties", error);

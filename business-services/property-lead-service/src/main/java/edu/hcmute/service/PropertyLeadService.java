@@ -23,6 +23,8 @@ public interface PropertyLeadService {
 
     List<PropertyLeadDto> findPropertyLeadsOfAgent(String agentId);
 
+    List<PropertyLeadDto> findPropertyLeadsByUser(String userId);
+
     void deletePropertyLeadById(Integer leadId);
 
     LeadStatsDto getLeadStats();

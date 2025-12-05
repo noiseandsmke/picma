@@ -68,6 +68,18 @@ public class PropertyInfoServiceImpl implements PropertyInfoService {
     }
 
     @Override
+    public List<PropertyInfoDto> getPropertiesByUserId(String userId) {
+        log.info("### Get Properties by userId = {} ###", userId);
+        List<PropertyInfo> properties = propertyInfoRepo.findByUserId(userId);
+        if (properties.isEmpty()) {
+            log.warn("~~> No properties found for userId: {}", userId);
+            return List.of();
+        }
+        log.info("~~> Found {} properties for userId: {}", properties.size(), userId);
+        return properties.stream().map(propertyMgmtMapper::toDto).toList();
+    }
+
+    @Override
     public void deletePropertyById(String id) {
         log.info("### Delete PropertyInfo by id = {} ###", id);
         if (!propertyInfoRepo.existsById(id)) {

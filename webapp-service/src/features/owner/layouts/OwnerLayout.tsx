@@ -1,5 +1,5 @@
 import React, {ReactNode, useState} from 'react';
-import {ChevronDown, FileText, HelpCircle, Home, LayoutDashboard, LogOut, Search, Settings, User} from 'lucide-react';
+import {ChevronDown, HelpCircle, LayoutDashboard, LogOut, Settings, User} from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
 import SidebarNavigation, {NavItem} from '@/components/ui/sidebar-navigation';
@@ -10,21 +10,6 @@ const navItems: NavItem[] = [
         icon: LayoutDashboard,
         href: '/owner/dashboard',
     },
-    {
-        label: 'My Assets',
-        icon: Home,
-        children: [
-            {label: 'Properties', icon: Home, href: '/owner/properties'},
-            {label: 'Quotes', icon: FileText, href: '/owner/quotes'},
-        ]
-    },
-    {
-        label: 'Directory',
-        icon: Search,
-        children: [
-            {label: 'Find Agents', icon: Search, href: '/owner/agents'},
-        ]
-    },
 ];
 
 interface OwnerLayoutProps {
@@ -33,7 +18,7 @@ interface OwnerLayoutProps {
 
 const OwnerLayout: React.FC<OwnerLayoutProps> = ({children}) => {
     const {user, logout} = useAuth();
-    const [openMenus, setOpenMenus] = useState<string[]>(['My Assets', 'Directory']);
+    const [openMenus, setOpenMenus] = useState<string[]>([]);
 
     const toggleMenu = (label: string) => {
         setOpenMenus(prev =>

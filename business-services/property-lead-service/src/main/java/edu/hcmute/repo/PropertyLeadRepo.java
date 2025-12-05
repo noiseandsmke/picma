@@ -14,4 +14,6 @@ public interface PropertyLeadRepo extends JpaRepository<PropertyLead, Integer> {
     List<PropertyLead> findByStatusIn(List<LeadStatus> statuses);
 
     List<PropertyLead> findByPropertyInfoIn(List<String> propertyIds);
+
+    List<PropertyLead> findByUserInfo(String userInfo);
 }

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useMemo} from 'react';
 import AgentLayout from '../layouts/AgentLayout';
 import {ArrowRight, Bell, Calendar, Clock, DollarSign, FileText, Search, User} from 'lucide-react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
@@ -7,16 +7,53 @@ import {Badge} from "@/components/ui/badge";
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from "@/components/ui/shared-table";
 import {useQuery} from '@tanstack/react-query';
-import {fetchAgentLeads} from '../services/agentService';
+import {fetchAgentLeads, fetchAgentQuotes} from '../services/agentService';
 import {Skeleton} from '@/components/ui/skeleton';
+import {useAuth} from '@/context/AuthContext';
+import {formatCurrency} from '@/lib/utils';
 
 const AgentDashboard: React.FC = () => {
-    const [agentId] = useState('agent123');
+    const {user} = useAuth();
+    const agentId = user?.id || '';
 
-    const {data: leads, isLoading} = useQuery({
+    const {data: leads, isLoading: isLeadsLoading} = useQuery({
         queryKey: ['agent-leads', agentId],
-        queryFn: () => fetchAgentLeads(agentId)
+        queryFn: () => fetchAgentLeads(agentId),
+        enabled: !!agentId
     });
+
+    const {data: quotes, isLoading: isQuotesLoading} = useQuery({
+        queryKey: ['agent-quotes', agentId],
+        queryFn: () => fetchAgentQuotes(agentId),
+        enabled: !!agentId
+    });
+
+    const newLeadsCount = useMemo(() => leads?.filter(l => l.status === 'NEW').length || 0, [leads]);
+
+    // We assume 'pending quotes' are those not accepted/rejected yet? Or maybe just total quotes?
+    // AgentLeadAction might be relevant here but let's count quotes created this month or valid.
+    // For now, let's use total count of quotes as a proxy or if status logic is available.
+    // Assuming quotes returned are all relevant.
+    const pendingQuotesCount = quotes?.length || 0;
+
+    // Calculate "This Month" revenue or value. Assuming 'premium' is available in quote or sumInsured.
+    // PropertyQuoteDto has 'premium' object with 'total'.
+    const thisMonthValue = useMemo(() => {
+        if (!quotes) return 0;
+        const now = new Date();
+        const thisMonth = now.getMonth();
+        const thisYear = now.getFullYear();
+        return quotes.reduce((acc, q) => {
+            // Assuming startDate indicates when it was quoted/sold
+            if (q.startDate) {
+                const d = new Date(q.startDate);
+                if (d.getMonth() === thisMonth && d.getFullYear() === thisYear) {
+                    return acc + (q.premium?.total || 0);
+                }
+            }
+            return acc;
+        }, 0);
+    }, [quotes]);
 
     const columns: Column[] = [
         {header: "Client", width: "25%"},
@@ -24,6 +61,8 @@ const AgentDashboard: React.FC = () => {
         {header: "Status", width: "15%"},
         {header: "Action", width: "25%", className: "text-right"}
     ];
+
+    const isLoading = isLeadsLoading || isQuotesLoading;
 
     return (
         <AgentLayout>
@@ -35,7 +74,7 @@ const AgentDashboard: React.FC = () => {
                                 <p className="text-sm font-medium text-slate-400">New Leads</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
                                     {isLoading ? <Skeleton
-                                        className="h-8 w-12 bg-slate-800"/> : leads?.filter(l => l.status === 'NEW').length || 0}
+                                        className="h-8 w-12 bg-slate-800"/> : newLeadsCount}
                                 </h3>
                             </div>
                             <div
@@ -47,8 +86,10 @@ const AgentDashboard: React.FC = () => {
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Pending Quotes</p>
-                                <h3 className="text-2xl font-bold text-white mt-1">5</h3>
+                                <p className="text-sm font-medium text-slate-400">Total Quotes</p>
+                                <h3 className="text-2xl font-bold text-white mt-1">
+                                    {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800"/> : pendingQuotesCount}
+                                </h3>
                             </div>
                             <div
                                 className="h-10 w-10 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400">
@@ -60,7 +101,10 @@ const AgentDashboard: React.FC = () => {
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-slate-400">This Month</p>
-                                <h3 className="text-2xl font-bold text-white mt-1">$4,250</h3>
+                                <h3 className="text-2xl font-bold text-white mt-1">
+                                    {isLoading ?
+                                        <Skeleton className="h-8 w-24 bg-slate-800"/> : formatCurrency(thisMonthValue)}
+                                </h3>
                             </div>
                             <div
                                 className="h-10 w-10 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400">
@@ -72,7 +116,7 @@ const AgentDashboard: React.FC = () => {
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-slate-400">Tasks Due</p>
-                                <h3 className="text-2xl font-bold text-white mt-1">3</h3>
+                                <h3 className="text-2xl font-bold text-white mt-1">0</h3>
                             </div>
                             <div
                                 className="h-10 w-10 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-400">
@@ -108,7 +152,7 @@ const AgentDashboard: React.FC = () => {
                             >
                                 {isLoading ? (
                                     Array.from({length: 3}).map((_, i) => (
-                                        <TableRow key={i} className="border-slate-800">
+                                        <TableRow key={`lead-skel-${i}`} className="border-slate-800">
                                             <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
                                             <TableCell><Skeleton className="h-4 w-48 bg-slate-800"/></TableCell>
                                             <TableCell><Skeleton className="h-6 w-16 bg-slate-800"/></TableCell>

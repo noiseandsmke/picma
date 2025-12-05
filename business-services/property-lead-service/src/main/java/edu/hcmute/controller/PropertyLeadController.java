@@ -87,6 +87,12 @@ public class PropertyLeadController {
         return ResponseEntity.ok(propertyLeadService.findPropertyLeadsOfAgent(agentId));
     }
 
+    @GetMapping("/user/{userId}")
+    @Operation(description = "Get property leads of a user", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<List<PropertyLeadDto>> getLeadsByUser(@PathVariable String userId) {
+        return ResponseEntity.ok(propertyLeadService.findPropertyLeadsByUser(userId));
+    }
+
     @PutMapping("/{leadId}")
     @Operation(description = "Update property lead status", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<Object> updateLeadStatus(@PathVariable Integer leadId, @RequestHeader String leadStatus) {

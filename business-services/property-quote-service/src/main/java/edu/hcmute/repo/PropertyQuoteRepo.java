@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface PropertyQuoteRepo extends JpaRepository<PropertyQuote, Integer> {
     List<PropertyQuote> findByLeadId(Integer leadId);
+
+    List<PropertyQuote> findByAgentId(String agentId);
 }

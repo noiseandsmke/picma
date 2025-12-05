@@ -1,4 +1,5 @@
-import axios from 'axios';
+import apiClient from '@/services/apiClient';
+import {PropertyQuoteDto} from "@/features/admin/services/quoteService";
 
 export interface AgentLeadDto {
     id: number;
@@ -9,16 +10,22 @@ export interface AgentLeadDto {
     agentId: string;
 }
 
-const AGENT_SERVICE_URL = import.meta.env.VITE_AGENT_SERVICE_URL || 'http://localhost:7104';
+const AGENT_BASE_PATH = '/picma/agents';
+const QUOTE_BASE_PATH = '/picma/quotes';
 
 export const fetchAgentLeads = async (agentId: string): Promise<AgentLeadDto[]> => {
-    const response = await axios.get<AgentLeadDto[]>(`${AGENT_SERVICE_URL}/agent/leads`, {
+    const response = await apiClient.get<AgentLeadDto[]>(`${AGENT_BASE_PATH}/agent/leads`, {
         params: {agentId}
     });
     return response.data;
 };
 
+export const fetchAgentQuotes = async (agentId: string): Promise<PropertyQuoteDto[]> => {
+    const response = await apiClient.get<PropertyQuoteDto[]>(`${QUOTE_BASE_PATH}/agent/${agentId}`);
+    return response.data;
+};
+
 export const fetchAgentsByZip = async (zipCode: string): Promise<string[]> => {
-    const response = await axios.get<string[]>(`${AGENT_SERVICE_URL}/agents/zipcode/${zipCode}`);
+    const response = await apiClient.get<string[]>(`${AGENT_BASE_PATH}/agents/zipcode/${zipCode}`);
     return response.data;
 };

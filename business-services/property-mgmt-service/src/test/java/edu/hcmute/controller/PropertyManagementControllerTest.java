@@ -34,6 +34,7 @@ class PropertyManagementControllerTest {
     private PropertyInfoDto createSampleDto() {
         return new PropertyInfoDto(
                 "1",
+                "user1",
                 new PropertyLocationDto("123 Main St", "Ward 1", "Ho Chi Minh", "70000"),
                 new PropertyAttributesDto(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5),
                 new PropertyValuationDto(2500000000L)
@@ -44,6 +45,7 @@ class PropertyManagementControllerTest {
     void savePropertyInfo_shouldReturnCreatedProperty() {
         PropertyInfoDto inputDto = new PropertyInfoDto(
                 null,
+                "user1",
                 new PropertyLocationDto("123 Main St", "Ward 1", "Ho Chi Minh", "70000"),
                 new PropertyAttributesDto(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5),
                 new PropertyValuationDto(2500000000L)

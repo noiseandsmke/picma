@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class PropertyInfo {
     @Id
     private String id;
+    private String userId;
     private PropertyLocation location;
     private PropertyAttributes attributes;
     private PropertyValuation valuation;

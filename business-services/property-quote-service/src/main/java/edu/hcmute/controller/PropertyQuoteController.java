@@ -50,6 +50,13 @@ public class PropertyQuoteController {
         return ResponseEntity.ok(propertyQuoteService.getQuotesByLeadId(leadId));
     }
 
+    @GetMapping("/agent/{agentId}")
+    @Operation(description = "Get all property quotes for an agent", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<List<PropertyQuoteDto>> getQuotesByAgentId(@PathVariable String agentId) {
+        log.info("### Get Property Quotes for agentId = {} ###", agentId);
+        return ResponseEntity.ok(propertyQuoteService.getQuotesByAgentId(agentId));
+    }
+
     @PutMapping("/{quoteId}")
     @Operation(description = "Update property quote", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<PropertyQuoteDto> updatePropertyQuote(@PathVariable Integer quoteId, @RequestBody PropertyQuoteDto propertyQuoteDto) {

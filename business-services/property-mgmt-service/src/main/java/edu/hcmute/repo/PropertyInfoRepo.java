@@ -9,4 +9,6 @@ import java.util.List;
 public interface PropertyInfoRepo extends MongoRepository<PropertyInfo, String> {
     @Query("{'location.zipCode': ?0}")
     List<PropertyInfo> findPropertiesByZipCode(String zipcode);
+
+    List<PropertyInfo> findByUserId(String userId);
 }

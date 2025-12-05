@@ -44,6 +44,12 @@ public class PropertyManagementController {
         return ResponseEntity.ok(propertyInfoService.getPropertiesByZipCode(zipcode));
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<PropertyInfoDto>> getPropertiesByUserId(@PathVariable String userId) {
+        log.info("### Getting Properties by userId = {} ###", userId);
+        return ResponseEntity.ok(propertyInfoService.getPropertiesByUserId(userId));
+    }
+
     @DeleteMapping("/{propertyId}")
     public ResponseEntity<Void> deletePropertyById(@PathVariable String propertyId) {
         log.info("### Deleting PropertyInfo by id = {} ###", propertyId);

@@ -1,23 +1,44 @@
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import OwnerLayout from '../layouts/OwnerLayout';
 import {CheckCircle, FileText, MapPin, MoreHorizontal, Phone, Plus, Search, Shield} from 'lucide-react';
 import {Card, CardContent, CardFooter} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Input} from "@/components/ui/input";
-import {cn} from "@/lib/utils";
+import {cn, formatCurrency} from "@/lib/utils";
 import {useQuery} from '@tanstack/react-query';
 import {fetchAgentsForDirectory, fetchOwnerProperties} from '../services/ownerService';
 import {Skeleton} from '@/components/ui/skeleton';
+import {useAuth} from '@/context/AuthContext';
+import apiClient from '@/services/apiClient';
+
+interface OwnerLead {
+    id: number;
+    status: string;
+    // ... other fields
+}
+
+const fetchOwnerLeads = async (userId: string) => {
+    const response = await apiClient.get<OwnerLead[]>(`/picma/leads/user/${userId}`);
+    return response.data;
+};
 
 const OwnerDashboard: React.FC = () => {
+    const {user} = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState<'properties' | 'agents'>('properties');
-    const [ownerId] = useState('owner123');
+    const ownerId = user?.id || '';
 
     const {data: properties, isLoading: isPropsLoading} = useQuery({
         queryKey: ['owner-properties', ownerId],
-        queryFn: () => fetchOwnerProperties(ownerId)
+        queryFn: () => fetchOwnerProperties(ownerId),
+        enabled: !!ownerId
+    });
+
+    const {data: leads} = useQuery({
+        queryKey: ['owner-leads', ownerId],
+        queryFn: () => fetchOwnerLeads(ownerId),
+        enabled: !!ownerId
     });
 
     const {data: agents, isLoading: isAgentsLoading} = useQuery({
@@ -25,6 +46,21 @@ const OwnerDashboard: React.FC = () => {
         queryFn: () => fetchAgentsForDirectory(searchTerm || '90210'),
         enabled: activeTab === 'agents'
     });
+
+    const totalAssetValue = useMemo(() => {
+        return properties?.reduce((acc, p) => acc + (p.valuation?.marketValue || 0), 0) || 0;
+    }, [properties]);
+
+    const activePoliciesCount = useMemo(() => {
+        // Assuming 'isInsured' means active policy for now
+        return properties?.filter(p => p.isInsured).length || 0;
+    }, [properties]);
+
+    const pendingQuotesCount = useMemo(() => {
+        // Count leads that are IN_REVIEWING, as this implies they have received quotes (or are being worked on)
+        // and are awaiting owner action/review.
+        return leads?.filter(l => l.status === 'IN_REVIEWING').length || 0;
+    }, [leads]);
 
     return (
         <OwnerLayout>
@@ -36,23 +72,32 @@ const OwnerDashboard: React.FC = () => {
                             <h3 className="font-semibold text-lg">Total Asset Value</h3>
                             <Shield className="h-6 w-6 opacity-80"/>
                         </div>
-                        <p className="text-3xl font-bold">$1,250,000</p>
-                        <p className="text-sm opacity-80 mt-1">+5.2% from last year</p>
+                        <p className="text-3xl font-bold">
+                            {isPropsLoading ?
+                                <Skeleton className="h-8 w-32 bg-white/20"/> : formatCurrency(totalAssetValue)}
+                        </p>
+                        <p className="text-sm opacity-80 mt-1">Based on property valuation</p>
                     </div>
                     <div className="bg-[#141124] rounded-2xl p-6 shadow-sm border border-slate-800">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="font-semibold text-lg text-white">Active Policies</h3>
                             <FileText className="h-6 w-6 text-emerald-500"/>
                         </div>
-                        <p className="text-3xl font-bold text-white">1</p>
-                        <p className="text-sm text-slate-400 mt-1">1 property uninsured</p>
+                        <p className="text-3xl font-bold text-white">
+                            {isPropsLoading ? <Skeleton className="h-8 w-12 bg-slate-800"/> : activePoliciesCount}
+                        </p>
+                        <p className="text-sm text-slate-400 mt-1">
+                            {properties && (properties.length - activePoliciesCount)} property uninsured
+                        </p>
                     </div>
                     <div className="bg-[#141124] rounded-2xl p-6 shadow-sm border border-slate-800">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="font-semibold text-lg text-white">Pending Quotes</h3>
                             <FileText className="h-6 w-6 text-blue-500"/>
                         </div>
-                        <p className="text-3xl font-bold text-white">2</p>
+                        <p className="text-3xl font-bold text-white">
+                            {pendingQuotesCount}
+                        </p>
                         <p className="text-sm text-slate-400 mt-1">Review required</p>
                     </div>
                 </div>

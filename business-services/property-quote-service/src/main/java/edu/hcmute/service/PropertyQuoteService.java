@@ -13,6 +13,8 @@ public interface PropertyQuoteService {
 
     List<PropertyQuoteDto> getQuotesByLeadId(Integer leadId);
 
+    List<PropertyQuoteDto> getQuotesByAgentId(String agentId);
+
     PropertyQuoteDto updatePropertyQuote(Integer id, PropertyQuoteDto propertyQuoteDto);
 
     void deletePropertyQuoteById(Integer id);

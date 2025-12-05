@@ -250,6 +250,15 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<PropertyLeadDto> findPropertyLeadsByUser(String userId) {
+        log.info("### Get property leads for user {} ###", userId);
+        List<PropertyLead> leads = propertyLeadRepo.findByUserInfo(userId);
+        log.info("~~> found {} leads for user {}", leads.size(), userId);
+        return leads.stream().map(propertyLeadMapper::toDto).toList();
+    }
+
     private List<AgentLeadDto> getAgentLeadsForAgent(String agentId) {
         try {
             String agentLeadsJson = propertyAgentFeignClient.getAgentLeadsByAgentId(agentId);

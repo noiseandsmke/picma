@@ -39,6 +39,7 @@ public class PropertyInfoServiceImplTest {
     private PropertyInfoDto createSampleDto() {
         return new PropertyInfoDto(
                 "1",
+                "user1",
                 new PropertyLocationDto("123 Main St", "Ward 1", "Ho Chi Minh", "70000"),
                 new PropertyAttributesDto(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5),
                 new PropertyValuationDto(2500000000L)
@@ -48,6 +49,7 @@ public class PropertyInfoServiceImplTest {
     private PropertyInfo createSampleEntity() {
         PropertyInfo entity = new PropertyInfo();
         entity.setId("1");
+        entity.setUserId("user1");
         entity.setLocation(new PropertyLocation("123 Main St", "Ward 1", "Ho Chi Minh", "70000"));
         entity.setAttributes(new PropertyAttributes(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5));
         entity.setValuation(new PropertyValuation(2500000000L));
@@ -58,19 +60,17 @@ public class PropertyInfoServiceImplTest {
     void createPropertyInfo_success() {
         PropertyInfoDto inputDto = new PropertyInfoDto(
                 null,
+                "user1",
                 new PropertyLocationDto("123 Main St", "Ward 1", "Ho Chi Minh", "70000"),
                 new PropertyAttributesDto(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5),
                 new PropertyValuationDto(2500000000L)
         );
         PropertyInfo entity = createSampleEntity();
         PropertyInfoDto resultDto = createSampleDto();
-
         when(propertyMgmtMapper.toEntity(inputDto)).thenReturn(entity);
         when(propertyInfoRepo.save(entity)).thenReturn(entity);
         when(propertyMgmtMapper.toDto(entity)).thenReturn(resultDto);
-
         PropertyInfoDto result = propertyInfoService.createPropertyInfo(inputDto);
-
         assertNotNull(result);
         assertEquals("1", result.id());
         assertEquals(ConstructionType.CONCRETE, result.attributes().constructionType());
@@ -82,12 +82,9 @@ public class PropertyInfoServiceImplTest {
     void getPropertyInfoById_success() {
         PropertyInfo entity = createSampleEntity();
         PropertyInfoDto resultDto = createSampleDto();
-
         when(propertyInfoRepo.findById("1")).thenReturn(Optional.of(entity));
         when(propertyMgmtMapper.toDto(entity)).thenReturn(resultDto);
-
         PropertyInfoDto result = propertyInfoService.getPropertyInfoById("1");
-
         assertNotNull(result);
         assertEquals("1", result.id());
     }
@@ -102,12 +99,9 @@ public class PropertyInfoServiceImplTest {
     void getPropertiesByZipCode_success() {
         PropertyInfo entity = createSampleEntity();
         PropertyInfoDto resultDto = createSampleDto();
-
         when(propertyInfoRepo.findPropertiesByZipCode("70000")).thenReturn(Collections.singletonList(entity));
         when(propertyMgmtMapper.toDto(entity)).thenReturn(resultDto);
-
         List<PropertyInfoDto> result = propertyInfoService.getPropertiesByZipCode("70000");
-
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
     }
@@ -116,7 +110,6 @@ public class PropertyInfoServiceImplTest {
     void deletePropertyById_success() {
         when(propertyInfoRepo.existsById("1")).thenReturn(true);
         doNothing().when(propertyInfoRepo).deleteById("1");
-
         assertDoesNotThrow(() -> propertyInfoService.deletePropertyById("1"));
         verify(propertyInfoRepo).deleteById("1");
     }

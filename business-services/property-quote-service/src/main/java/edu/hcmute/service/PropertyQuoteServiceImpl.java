@@ -21,6 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class PropertyQuoteServiceImpl implements PropertyQuoteService {
+    private static final String QUOTE_NOT_FOUND_MSG = "PropertyQuote not found with id: ";
+
     private final PropertyQuoteRepo propertyQuoteRepo;
     private final PropertyQuoteMapper propertyQuoteMapper;
     private final PropertyLeadFeignClient propertyLeadFeignClient;
@@ -39,7 +41,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
             log.info("~~> validated lead exists: id={}, user={}", leadInfo.id(), leadInfo.userInfo());
         } catch (Exception e) {
             log.error("~~> lead not found with id: {}", leadId);
-            throw new RuntimeException("Lead not found with id: " + leadId);
+            throw new IllegalArgumentException("Lead not found with id: " + leadId);
         }
         try {
             PropertyQuote propertyQuote = propertyQuoteMapper.toEntity(propertyQuoteDto);
@@ -56,7 +58,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
             return propertyQuoteMapper.toDto(propertyQuote);
         } catch (Exception e) {
             log.error("~~> error creating PropertyQuote: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to create PropertyQuote: " + e.getMessage(), e);
+            throw new IllegalArgumentException("Failed to create PropertyQuote: " + e.getMessage(), e);
         }
     }
 
@@ -65,7 +67,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     public PropertyQuoteDto getPropertyQuoteById(Integer id) {
         log.info("### Get PropertyQuote by id = {} ###", id);
         PropertyQuote propertyQuote = propertyQuoteRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("PropertyQuote not found with id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + id));
         return propertyQuoteMapper.toDto(propertyQuote);
     }
 
@@ -90,11 +92,20 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<PropertyQuoteDto> getQuotesByAgentId(String agentId) {
+        log.info("### Get PropertyQuotes by agentId = {} ###", agentId);
+        List<PropertyQuote> quotes = propertyQuoteRepo.findByAgentId(agentId);
+        log.info("~~> found {} quotes for agentId: {}", quotes.size(), agentId);
+        return quotes.stream().map(propertyQuoteMapper::toDto).toList();
+    }
+
+    @Override
     @Transactional
     public PropertyQuoteDto updatePropertyQuote(Integer id, PropertyQuoteDto propertyQuoteDto) {
         log.info("### Update PropertyQuote by id = {} ###", id);
         PropertyQuote existingQuote = propertyQuoteRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("PropertyQuote not found with id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + id));
         PropertyQuote updatedQuote = propertyQuoteMapper.toEntity(propertyQuoteDto);
         updatedQuote.setId(existingQuote.getId());
         updatedQuote.setLeadId(existingQuote.getLeadId());
@@ -108,7 +119,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     public void deletePropertyQuoteById(Integer id) {
         log.info("### Delete PropertyQuote by id = {} ###", id);
         if (!propertyQuoteRepo.existsById(id)) {
-            throw new RuntimeException("PropertyQuote not found with id: " + id);
+            throw new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + id);
         }
         propertyQuoteRepo.deleteById(id);
         log.info("~~> PropertyQuote deleted with id: {}", id);
@@ -119,7 +130,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     public void acceptQuote(Integer quoteId) {
         log.info("### Accept Quote id = {} ###", quoteId);
         PropertyQuote quote = propertyQuoteRepo.findById(quoteId)
-                .orElseThrow(() -> new RuntimeException("PropertyQuote not found with id: " + quoteId));
+                .orElseThrow(() -> new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + quoteId));
         // Update Lead Status to ACCEPTED
         log.info("~~> updating lead status to ACCEPTED for leadId: {}", quote.getLeadId());
         try {
@@ -127,7 +138,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
             log.info("~~> lead status updated successfully");
         } catch (Exception e) {
             log.error("~~> failed to update lead status: {}", e.getMessage());
-            throw new RuntimeException("Failed to update lead status: " + e.getMessage());
+            throw new IllegalArgumentException("Failed to update lead status: " + e.getMessage());
         }
     }
 
@@ -136,7 +147,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     public void rejectQuote(Integer quoteId) {
         log.info("### Reject Quote id = {} ###", quoteId);
         PropertyQuote quote = propertyQuoteRepo.findById(quoteId)
-                .orElseThrow(() -> new RuntimeException("PropertyQuote not found with id: " + quoteId));
+                .orElseThrow(() -> new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + quoteId));
         // Update Agent Lead Action to REJECTED
         log.info("~~> updating agent lead action to REJECTED for agent: {} lead: {}", quote.getAgentId(), quote.getLeadId());
         try {
@@ -145,7 +156,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
             log.info("~~> agent lead action updated successfully");
         } catch (Exception e) {
             log.error("~~> failed to update agent lead action: {}", e.getMessage());
-            throw new RuntimeException("Failed to update agent lead action: " + e.getMessage());
+            throw new IllegalArgumentException("Failed to update agent lead action: " + e.getMessage());
         }
     }
 }

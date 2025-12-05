@@ -1,6 +1,6 @@
 import React, {ReactNode, useState} from 'react';
 import {cn} from '@/lib/utils';
-import {Briefcase, ChevronDown, FileText, HelpCircle, LayoutDashboard, Settings, Users} from 'lucide-react';
+import {ChevronDown, HelpCircle, LayoutDashboard, Settings} from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
 import SidebarNavigation, {NavItem} from '@/components/ui/sidebar-navigation';
@@ -11,21 +11,6 @@ const navItems: NavItem[] = [
         icon: LayoutDashboard,
         href: '/agent/dashboard',
     },
-    {
-        label: 'Workflows',
-        icon: Briefcase,
-        children: [
-            {label: 'Leads', icon: FileText, href: '/agent/leads'},
-            {label: 'Quotes', icon: FileText, href: '/agent/quotes'},
-        ]
-    },
-    {
-        label: 'CRM',
-        icon: Users,
-        children: [
-            {label: 'Clients', icon: Users, href: '/agent/clients'},
-        ]
-    },
 ];
 
 interface AgentLayoutProps {
@@ -34,7 +19,7 @@ interface AgentLayoutProps {
 
 const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
     const {user} = useAuth();
-    const [openMenus, setOpenMenus] = useState<string[]>(['Workflows', 'CRM']);
+    const [openMenus, setOpenMenus] = useState<string[]>([]);
 
     const toggleMenu = (label: string) => {
         setOpenMenus(prev =>

@@ -13,5 +13,7 @@ public interface PropertyInfoService {
 
     List<PropertyInfoDto> getAllProperties(String sort, String direction);
 
+    List<PropertyInfoDto> getPropertiesByUserId(String userId);
+
     void deletePropertyById(String id);
 }
