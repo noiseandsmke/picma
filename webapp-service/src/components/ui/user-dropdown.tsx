@@ -1,0 +1,59 @@
+import React from 'react';
+import {ChevronDown, LogOut, User} from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {useAuth} from '@/context/AuthContext';
+
+interface UserDropdownProps {
+    username?: string;
+    roleLabel?: string;
+}
+
+export const UserDropdown: React.FC<UserDropdownProps> = ({username = 'User', roleLabel = 'User'}) => {
+    const {logout} = useAuth();
+    const initials = username.substring(0, 2).toUpperCase();
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <div
+                    className="flex items-center gap-3 cursor-pointer hover:bg-slate-900 p-2 rounded-lg transition-colors outline-none">
+                    <div
+                        className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white ring-2 ring-slate-800 shadow-sm">
+                        {initials}
+                    </div>
+                    <div className="hidden md:block text-left">
+                        <div className="text-sm font-medium text-slate-300 leading-none">{username}</div>
+                        <div className="text-[10px] text-slate-500 mt-1">{roleLabel}</div>
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-slate-400"/>
+                </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 bg-[#141124] border-slate-800 text-slate-300" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none text-white">{username}</p>
+                        <p className="text-xs leading-none text-slate-500">{roleLabel}</p>
+                    </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-slate-800"/>
+                <DropdownMenuItem className="focus:bg-slate-800 focus:text-white cursor-pointer">
+                    <User className="mr-2 h-4 w-4"/>
+                    <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-slate-800"/>
+                <DropdownMenuItem className="focus:bg-red-900/20 focus:text-red-500 text-red-400 cursor-pointer"
+                                  onClick={logout}>
+                    <LogOut className="mr-2 h-4 w-4"/>
+                    <span>Log out</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+};

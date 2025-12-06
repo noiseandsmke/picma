@@ -1,9 +1,9 @@
 import React, {ReactNode, useState} from 'react';
 import {cn} from '@/lib/utils';
-import {ChevronDown, HelpCircle, LayoutDashboard, Settings} from 'lucide-react';
-import {Link} from 'react-router-dom';
+import {LayoutDashboard} from 'lucide-react';
 import {useAuth} from '@/context/AuthContext';
 import SidebarNavigation, {NavItem} from '@/components/ui/sidebar-navigation';
+import {UserDropdown} from '@/components/ui/user-dropdown';
 
 const navItems: NavItem[] = [
     {
@@ -43,23 +43,6 @@ const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
                 <div className="flex-1 py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar">
                     <SidebarNavigation items={navItems} openMenus={openMenus} toggleMenu={toggleMenu}/>
                 </div>
-
-                <div className="p-3 border-t border-slate-800 space-y-1">
-                    <Link
-                        to="/agent/support"
-                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-900 hover:text-white transition-colors group"
-                    >
-                        <HelpCircle className="mr-3 h-4 w-4 text-slate-500 group-hover:text-white"/>
-                        Support
-                    </Link>
-                    <Link
-                        to="/agent/settings"
-                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-900 hover:text-white transition-colors group"
-                    >
-                        <Settings className="mr-3 h-4 w-4 text-slate-500 group-hover:text-white"/>
-                        Settings
-                    </Link>
-                </div>
             </aside>
 
             <main className="flex-1 flex flex-col overflow-hidden bg-slate-950 relative">
@@ -79,15 +62,7 @@ const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
                             Internal Announcement: Q3 Goals Meeting tomorrow at 10 AM
                         </div>
 
-                        <div
-                            className="flex items-center gap-3 cursor-pointer hover:bg-slate-900 p-2 rounded-lg transition-colors">
-                            <div
-                                className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white ring-2 ring-slate-800 shadow-sm">
-                                {(user?.username || 'AG').substring(0, 2).toUpperCase()}
-                            </div>
-                            <span className="text-sm font-medium text-slate-300">{user?.username}</span>
-                            <ChevronDown className="h-4 w-4 text-slate-400"/>
-                        </div>
+                        <UserDropdown username={user?.username} roleLabel="Agent"/>
                     </div>
                 </header>
 

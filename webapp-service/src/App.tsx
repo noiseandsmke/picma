@@ -4,6 +4,7 @@ import {Toaster} from 'sonner';
 import ProtectedRoute from '@/layouts/ProtectedRoute';
 import AuthLayout from '@/layouts/AuthLayout';
 import LoginView from '@/features/auth/views/LoginView';
+import {SignupView} from '@/features/auth/views/SignupView';
 import AdminDashboard from '@/features/admin/views/AdminDashboard';
 import AdminLeadsView from '@/features/admin/views/AdminLeadsView';
 import AdminQuotesView from '@/features/admin/views/AdminQuotesView';
@@ -19,6 +20,7 @@ const App: React.FC = () => {
             <Routes>
                 <Route element={<AuthLayout/>}>
                     <Route path="/login" element={<LoginView/>}/>
+                    <Route path="/signup" element={<SignupView/>}/>
                 </Route>
                 <Route element={<ProtectedRoute allowedRoles={[UserRole.ADMIN]}/>}>
                     <Route path="/admin">

@@ -88,8 +88,8 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(({
     }, [value]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const raw = e.target.value.replace(/\D/g, '');
-        const num = raw ? parseInt(raw, 10) : 0;
+        const raw = e.target.value.replaceAll(/\D/g, '');
+        const num = raw ? Number.parseInt(raw, 10) : 0;
         setDisplayValue(new Intl.NumberFormat('vi-VN').format(num));
         if (onChange) {
             // @ts-expect-error - onChange typing is incompatible with react-hook-form sometimes
@@ -163,9 +163,30 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
 
     const {data: selectedProperty} = useQuery({
         queryKey: ['property', selectedLead?.propertyInfo],
-        queryFn: () => fetchPropertyById(selectedLead!.propertyInfo),
+        queryFn: () => fetchPropertyById(selectedLead?.propertyInfo || ''),
         enabled: !!selectedLead?.propertyInfo,
     });
+
+    const filteredAgents = React.useMemo(() => {
+        if (!selectedProperty || !agents) return [];
+        const propertyZip = selectedProperty.location.zipCode;
+        if (!propertyZip) return [];
+
+        return agents.filter(agent => agent.zipcode === propertyZip);
+    }, [selectedProperty, agents]);
+
+    useEffect(() => {
+        const currentAgentId = getValues('agentId');
+        if (currentAgentId && filteredAgents.length > 0) {
+            const agentExists = filteredAgents.some(a => a.id === currentAgentId);
+            if (!agentExists) {
+                setValue('agentId', '');
+            }
+        } else if (selectedProperty && filteredAgents.length === 0) {
+            setValue('agentId', '');
+        }
+    }, [selectedProperty, filteredAgents, setValue, getValues]);
+
 
     useEffect(() => {
         if (!initialData && selectedProperty) {
@@ -231,11 +252,11 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         sublabel: `${l.userInfo.split(' - ')[1] || 'No Phone'}`
     })) || [];
 
-    const agentOptions = agents?.map(a => ({
+    const agentOptions = filteredAgents.map(a => ({
         value: a.id || '',
         label: `${a.firstName} ${a.lastName}`,
         sublabel: `@${a.username} - ${a.zipcode || 'No Zip'}`
-    })) || [];
+    }));
 
     const setQuickDuration = (years: number) => {
         if (startDate) {
@@ -280,7 +301,8 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Agent</Label>
+                            <Label
+                                className="text-xs">Agent {selectedProperty && `(Zip: ${selectedProperty.location.zipCode})`}</Label>
                             <Controller
                                 name="agentId"
                                 control={control}
@@ -289,12 +311,17 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                         options={agentOptions}
                                         value={field.value}
                                         onChange={field.onChange}
-                                        placeholder="Search agent..."
+                                        placeholder={selectedProperty ? (agentOptions.length > 0 ? "Select agent..." : "No agents found in this zipcode") : "Select lead first..."}
+                                        disabled={!selectedProperty || agentOptions.length === 0}
                                         isLoading={!agents}
                                     />
                                 )}
                             />
                             {errors.agentId && <p className="text-red-500 text-[10px]">{errors.agentId.message}</p>}
+                            {selectedProperty && agentOptions.length === 0 && (
+                                <p className="text-amber-500 text-[10px]">No agents found for property
+                                    zipcode {selectedProperty.location.zipCode}</p>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-2">
@@ -336,10 +363,22 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                                 <div className="flex justify-between items-center">
                                     <Label className="text-xs">End date</Label>
                                     <div className="flex gap-1">
-                                        <span onClick={() => setQuickDuration(1)}
-                                              className="text-[10px] text-indigo-400 cursor-pointer hover:underline bg-indigo-950/30 px-1 rounded">1Y</span>
-                                        <span onClick={() => setQuickDuration(2)}
-                                              className="text-[10px] text-indigo-400 cursor-pointer hover:underline bg-indigo-950/30 px-1 rounded">2Y</span>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            onClick={() => setQuickDuration(1)}
+                                            className="h-4 px-1 text-[10px] text-indigo-400 hover:underline bg-indigo-950/30 rounded hover:bg-indigo-950/50"
+                                        >
+                                            1Y
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            onClick={() => setQuickDuration(2)}
+                                            className="h-4 px-1 text-[10px] text-indigo-400 hover:underline bg-indigo-950/30 rounded hover:bg-indigo-950/50"
+                                        >
+                                            2Y
+                                        </Button>
                                     </div>
                                 </div>
                                 <Controller

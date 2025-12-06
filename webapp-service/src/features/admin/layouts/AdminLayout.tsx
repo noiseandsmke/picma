@@ -1,7 +1,8 @@
 import React, {ReactNode, useState} from 'react';
-import {Activity, Building2, ChevronDown, FileText, HelpCircle, LayoutDashboard, Settings, Users} from 'lucide-react';
-import {Link} from 'react-router-dom';
+import {Building2, FileText, LayoutDashboard, Settings, Users} from 'lucide-react';
 import SidebarNavigation, {NavItem} from '@/components/ui/sidebar-navigation';
+import {UserDropdown} from '@/components/ui/user-dropdown';
+import {useAuth} from '@/context/AuthContext';
 
 const navItems: NavItem[] = [
     {
@@ -26,9 +27,7 @@ const navItems: NavItem[] = [
     {
         label: 'System configuration',
         icon: Settings,
-        children: [
-            {label: 'Service status', icon: Activity, href: '/admin/config/status'},
-        ]
+        href: '/admin/config',
     },
 ];
 
@@ -37,6 +36,7 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
+    const {user} = useAuth();
     const [openMenus, setOpenMenus] = useState<string[]>(['User management', 'Document management', 'System configuration']);
 
     const toggleMenu = (label: string) => {
@@ -60,23 +60,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
                 <div className="flex-1 py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar">
                     <SidebarNavigation items={navItems} openMenus={openMenus} toggleMenu={toggleMenu}/>
                 </div>
-
-                <div className="p-3 border-t border-slate-800 space-y-1">
-                    <Link
-                        to="/admin/support"
-                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-900 hover:text-white transition-colors group"
-                    >
-                        <HelpCircle className="mr-3 h-4 w-4 text-slate-500 group-hover:text-white"/>
-                        Supports
-                    </Link>
-                    <Link
-                        to="/admin/settings"
-                        className="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-900 hover:text-white transition-colors group"
-                    >
-                        <Settings className="mr-3 h-4 w-4 text-slate-500 group-hover:text-white"/>
-                        Settings
-                    </Link>
-                </div>
             </aside>
 
             <main className="flex-1 flex flex-col overflow-hidden bg-slate-950 relative">
@@ -87,14 +70,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
                         <p className="text-xs text-slate-400">Total system oversight</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div
-                            className="flex items-center gap-3 cursor-pointer hover:bg-slate-900 p-2 rounded-lg transition-colors">
-                            <div
-                                className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white ring-2 ring-slate-800">
-                                AD
-                            </div>
-                            <ChevronDown className="h-4 w-4 text-slate-400"/>
-                        </div>
+                        <UserDropdown username={user?.username} roleLabel="Administrator"/>
                     </div>
                 </header>
 

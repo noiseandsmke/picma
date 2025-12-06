@@ -1,5 +1,16 @@
 import apiClient from '@/services/apiClient';
 
+export interface LeadDto {
+    id: number;
+    userInfo: string;
+    propertyInfo: string;
+    status: string;
+    createDate: string;
+    expiryDate: string;
+    assignedAgents?: string[];
+    valuation?: number;
+}
+
 export interface PropertyLeadDto {
     id: number;
     userInfo: string;

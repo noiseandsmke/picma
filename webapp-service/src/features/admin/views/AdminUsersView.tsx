@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
-import {ArrowLeftRight, MoreVertical, Pencil, PlusCircle, Search} from 'lucide-react';
-import {Input} from "@/components/ui/input";
+import {ArrowLeftRight, MoreVertical, Pencil, PlusCircle} from 'lucide-react';
 import {Button} from "@/components/ui/button";
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from "@/components/ui/shared-table";
@@ -12,18 +11,21 @@ import {createUser, fetchUsers, switchUserGroup, UserDto} from '../services/user
 import {Skeleton} from '@/components/ui/skeleton';
 import AdminLayout from '../layouts/AdminLayout';
 import {CreateUserDialog} from '../components/CreateUserDialog';
+import {EditUserDialog} from '../components/EditUserDialog';
 import {toast} from 'sonner';
 
 const AdminUsersView: React.FC = () => {
     const [activeTab, setActiveTab] = useState('all');
-    const [searchTerm, setSearchTerm] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
 
     const queryClient = useQueryClient();
 
+    // Use empty search term as we removed the search bar
     const {data: users, isLoading, isError, error} = useQuery({
-        queryKey: ['admin-users', activeTab, searchTerm],
-        queryFn: () => fetchUsers(activeTab, searchTerm)
+        queryKey: ['admin-users', activeTab],
+        queryFn: () => fetchUsers(activeTab, '')
     });
 
     const createMutation = useMutation({
@@ -52,6 +54,24 @@ const AdminUsersView: React.FC = () => {
         }
     });
 
+    // Mock update mutation - as backend endpoint might not exist yet for update profile
+    const updateMutation = useMutation({
+        mutationFn: async (data: any) => {
+            // Simulate API call
+            console.log("Updating user:", data);
+            return new Promise((resolve) => setTimeout(resolve, 500));
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({queryKey: ['admin-users']});
+            setIsEditOpen(false);
+            toast.success("User profile updated successfully (Mock)");
+        },
+        onError: (error) => {
+            console.error(error);
+            toast.error("Failed to update user");
+        }
+    });
+
     const getDisplayRole = (user: UserDto) => {
         if (user.role) return user.role;
         if (user.group === 'agents') return 'Agent';
@@ -59,13 +79,29 @@ const AdminUsersView: React.FC = () => {
         return 'User';
     };
 
+    // Filter out ADMINs and apply tab filter
+    const filteredUsers = users?.filter(u => {
+        // Exclude ADMIN role
+        // Note: Check how roles are returned. Usually role='ADMIN' or group='admins'
+        const role = getDisplayRole(u).toUpperCase();
+        if (role === 'ADMIN') return false;
+
+        return true;
+    });
+
     const columns: Column[] = [
-        {header: "User", width: activeTab === 'all' ? "35%" : "50%", className: "text-slate-400"},
-        ...(activeTab === 'all' ? [{header: "Role", width: "15%", className: "text-slate-400"}] : []),
-        {header: "Status", width: "15%", className: "text-slate-400"},
-        {header: "Last active", width: "20%", className: "text-slate-400"},
-        {header: "Actions", width: "15%", className: "text-right text-slate-400"}
+        {header: "Full Name", width: "25%", className: "text-slate-400"},
+        {header: "Username", width: "20%", className: "text-slate-400"},
+        {header: "Group/Role", width: "15%", className: "text-slate-400"},
+        {header: "ZipCode", width: "15%", className: "text-slate-400"},
+        {header: "Email", width: "20%", className: "text-slate-400"},
+        {header: "Actions", width: "5%", className: "text-right text-slate-400"}
     ];
+
+    const handleEditClick = (user: UserDto) => {
+        setSelectedUser(user);
+        setIsEditOpen(true);
+    };
 
     return (
         <AdminLayout>
@@ -109,16 +145,7 @@ const AdminUsersView: React.FC = () => {
                                     </TabsTrigger>
                                 </TabsList>
                             </Tabs>
-
-                            <div className="relative flex-1 max-w-sm w-full md:w-64">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500"/>
-                                <Input
-                                    placeholder="Search users..."
-                                    className="pl-9 bg-slate-900 border-slate-700 focus-visible:ring-indigo-500"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
+                            {/* Search bar removed */}
                         </div>
                     </div>
 
@@ -131,52 +158,42 @@ const AdminUsersView: React.FC = () => {
                         <SharedTable
                             columns={columns}
                             isLoading={isLoading}
-                            isEmpty={!isLoading && !isError && (!users || users.length === 0)}
+                            isEmpty={!isLoading && !isError && (!filteredUsers || filteredUsers.length === 0)}
                             emptyMessage="No users found."
                         >
                             {isLoading ? (
                                 [1, 2, 3, 4].map((id) => (
                                     <TableRow key={`skeleton-${id}`} className="border-slate-800">
-                                        <TableCell><Skeleton
-                                            className="h-8 w-8 rounded-full bg-slate-800"/></TableCell>
-                                        {activeTab === 'all' && (
-                                            <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
-                                        )}
+                                        <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
                                         <TableCell><Skeleton className="h-4 w-16 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-20 bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-16 bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
                                         <TableCell><Skeleton className="h-8 w-8 ml-auto bg-slate-800"/></TableCell>
                                     </TableRow>
                                 ))
-                            ) : users?.map((user) => (
+                            ) : filteredUsers?.map((user) => (
                                 <TableRow key={user.id}
                                           className="border-slate-800 hover:bg-slate-900/50 group transition-colors">
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <div
-                                                className="h-9 w-9 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-500 font-medium border border-indigo-500/20">
-                                                {user.username?.substring(0, 2).toUpperCase() || 'NA'}
-                                            </div>
-                                            <div>
-                                                <div className="font-medium text-slate-200">{user.username}</div>
-                                                <div className="text-xs text-slate-500">{user.email}</div>
-                                            </div>
-                                        </div>
+                                    <TableCell className="font-medium text-slate-200">
+                                        {user.firstName} {user.lastName}
                                     </TableCell>
-                                    {activeTab === 'all' && (
-                                        <TableCell>
-                                            <Badge variant="outline"
-                                                   className="border-slate-800 text-slate-400 bg-slate-900">
-                                                {getDisplayRole(user)}
-                                            </Badge>
-                                        </TableCell>
-                                    )}
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <span className="h-2 w-2 rounded-full bg-emerald-500"/>
-                                            <span className="text-slate-300">Active</span>
-                                        </div>
+                                    <TableCell className="text-slate-400">
+                                        {user.username}
                                     </TableCell>
-                                    <TableCell className="text-slate-400">{user.lastActive || '-'}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline"
+                                               className="border-slate-800 text-slate-400 bg-slate-900">
+                                            {getDisplayRole(user)}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-slate-400">
+                                        {user.zipcode || '-'}
+                                    </TableCell>
+                                    <TableCell className="text-slate-400">
+                                        {user.email}
+                                    </TableCell>
+
                                     <TableCell className="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -188,7 +205,9 @@ const AdminUsersView: React.FC = () => {
                                             <DropdownMenuContent align="end"
                                                                  className="bg-slate-900 border-slate-800 text-slate-200">
                                                 <DropdownMenuItem
-                                                    className="focus:bg-slate-800 focus:text-white cursor-pointer">
+                                                    className="focus:bg-slate-800 focus:text-white cursor-pointer"
+                                                    onClick={() => handleEditClick(user)}
+                                                >
                                                     <Pencil className="mr-2 h-4 w-4"/>
                                                     Edit profile
                                                 </DropdownMenuItem>
@@ -218,6 +237,14 @@ const AdminUsersView: React.FC = () => {
                     onOpenChange={setIsCreateOpen}
                     onSubmit={(data) => createMutation.mutate(data)}
                     isSubmitting={createMutation.isPending}
+                />
+
+                <EditUserDialog
+                    open={isEditOpen}
+                    onOpenChange={setIsEditOpen}
+                    user={selectedUser}
+                    onSubmit={(data) => updateMutation.mutate(data)}
+                    isSubmitting={updateMutation.isPending}
                 />
             </div>
         </AdminLayout>

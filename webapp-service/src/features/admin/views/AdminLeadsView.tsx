@@ -36,9 +36,11 @@ import {LEAD_STATUS_CONFIG} from '../utils/statusMapping';
 import {SearchableSelect} from '@/components/ui/searchable-select';
 import {toast} from 'sonner';
 import {ConfirmDialog} from '@/components/ui/confirm-dialog';
+import {LeadDetailDialog} from '@/features/admin/components/LeadDetailDialog';
 import {City, VN_LOCATIONS} from '@/lib/vn-locations';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {NumberInput} from '@/components/ui/number-input';
+import {LeadDto} from "@/features/admin/services/leadService";
 
 const constructionTypeValues = ['CONCRETE', 'STEEL_FRAME', 'MASONRY', 'WOOD_FRAME'] as const;
 const occupancyTypeValues = ['RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL', 'MIXED_USE'] as const;
@@ -78,6 +80,8 @@ const AdminLeadsView: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [selectedLead, setSelectedLead] = useState<LeadDto | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
 
     const [selectedCity, setSelectedCity] = useState<City | null>(null);
     const [costDisplay, setCostDisplay] = useState('');
@@ -105,7 +109,6 @@ const AdminLeadsView: React.FC = () => {
         register,
         formState: {errors},
     } = useForm<CreateLeadFormData>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(createLeadSchema) as any,
         defaultValues: {
             userId: '',
@@ -217,6 +220,11 @@ const AdminLeadsView: React.FC = () => {
         setDeleteId(id);
     };
 
+    const handleViewDetail = (lead: LeadDto) => {
+        setSelectedLead(lead);
+        setIsDetailOpen(true);
+    };
+
     const handleSort = (key: string) => {
         let direction = 'asc';
         if (sortConfig.key === key && sortConfig.direction === 'asc') {
@@ -280,7 +288,6 @@ const AdminLeadsView: React.FC = () => {
                 );
             }
         } catch {
-
         }
 
         return (
@@ -502,7 +509,9 @@ const AdminLeadsView: React.FC = () => {
                                                  className="bg-slate-900 border-slate-800 text-slate-200">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                 <DropdownMenuItem
-                                    className="focus:bg-slate-800 focus:text-white cursor-pointer">
+                                    className="focus:bg-slate-800 focus:text-white cursor-pointer"
+                                    onClick={() => handleViewDetail(lead)}
+                                >
                                     <Eye className="mr-2 h-4 w-4"/>
                                     View Details
                                 </DropdownMenuItem>
@@ -824,6 +833,12 @@ const AdminLeadsView: React.FC = () => {
                     onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
                     confirmText="Delete"
                     variant="destructive"
+                />
+
+                <LeadDetailDialog
+                    open={isDetailOpen}
+                    onOpenChange={setIsDetailOpen}
+                    lead={selectedLead}
                 />
             </div>
         </AdminLayout>

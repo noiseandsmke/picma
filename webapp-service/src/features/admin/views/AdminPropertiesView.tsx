@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {ArrowUpDown, Building2, Map, MapPin, MoreHorizontal, Trash2} from 'lucide-react';
+import {ArrowUpDown, Building2, Eye, Map, MapPin, MoreHorizontal, Trash2} from 'lucide-react';
 import {Button} from "@/components/ui/button";
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from "@/components/ui/shared-table";
@@ -10,7 +10,9 @@ import {Skeleton} from '@/components/ui/skeleton';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import AdminLayout from '../layouts/AdminLayout';
 import {ConfirmDialog} from '@/components/ui/confirm-dialog';
+import {PropertyDetailDialog} from '@/features/admin/components/PropertyDetailDialog';
 import {toast} from 'sonner';
+import {PropertyInfoDto} from "@/features/admin/services/propertyService";
 
 const formatCurrency = (amount: number) => {
     return amount.toLocaleString() + ' ₫';
@@ -23,6 +25,8 @@ const formatEnum = (val: string) => {
 const AdminPropertiesView: React.FC = () => {
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [selectedProperty, setSelectedProperty] = useState<PropertyInfoDto | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
 
     const queryClient = useQueryClient();
 
@@ -45,6 +49,11 @@ const AdminPropertiesView: React.FC = () => {
 
     const handleDelete = (id: string) => {
         setDeleteId(id);
+    };
+
+    const handleViewDetail = (prop: PropertyInfoDto) => {
+        setSelectedProperty(prop);
+        setIsDetailOpen(true);
     };
 
     const handleSort = (key: string) => {
@@ -176,6 +185,10 @@ const AdminPropertiesView: React.FC = () => {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end"
                                                                  className="bg-slate-900 border-slate-800 text-slate-200">
+                                                <DropdownMenuItem onClick={() => handleViewDetail(prop)}
+                                                                  className="focus:bg-slate-800 focus:text-white cursor-pointer">
+                                                    <Eye className="mr-2 h-4 w-4"/> View Details
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleDelete(prop.id)}
                                                                   className="hover:bg-slate-800 text-red-400 cursor-pointer">
                                                     <Trash2 className="mr-2 h-4 w-4"/> Delete
@@ -197,6 +210,12 @@ const AdminPropertiesView: React.FC = () => {
                     onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
                     confirmText="Delete"
                     variant="destructive"
+                />
+
+                <PropertyDetailDialog
+                    open={isDetailOpen}
+                    onOpenChange={setIsDetailOpen}
+                    property={selectedProperty}
                 />
             </div>
         </AdminLayout>

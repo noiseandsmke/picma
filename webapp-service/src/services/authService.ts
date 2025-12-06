@@ -17,6 +17,10 @@ export const authService = {
 
     logout: async (refreshToken: string): Promise<void> => {
         await apiClient.post(`/auth/logout?refresh_token=${refreshToken}`);
+    },
+
+    register: async (data: any): Promise<void> => {
+        await apiClient.post('/auth/register', data);
     }
 };
 

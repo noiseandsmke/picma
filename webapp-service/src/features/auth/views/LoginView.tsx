@@ -4,7 +4,7 @@ import {useNavigate} from 'react-router-dom';
 import {Controller, useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {Command, Eye, EyeOff, Lock, User} from 'lucide-react';
+import {AlertCircle, Command, Eye, EyeOff, Lock, User} from 'lucide-react';
 import {toast} from 'sonner';
 import {authService} from '@/services/authService';
 import {jwtDecode} from 'jwt-decode';
@@ -14,6 +14,7 @@ import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} 
 import {Input} from '@/components/ui/input';
 import {Checkbox} from '@/components/ui/checkbox';
 import {Label} from '@/components/ui/label';
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 
 const loginSchema = z.object({
     username: z.string().min(1, 'Username is required'),
@@ -28,6 +29,7 @@ const LoginView: React.FC = () => {
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
@@ -41,12 +43,13 @@ const LoginView: React.FC = () => {
     const {
         register,
         handleSubmit,
-        setError,
+        control,
         formState: {errors},
     } = form;
 
     const onSubmit = async (data: LoginFormValues) => {
         setIsLoading(true);
+        setErrorMsg(null);
         try {
             console.log('Sending login request...');
             const response = await authService.login({
@@ -57,12 +60,7 @@ const LoginView: React.FC = () => {
             console.log('Login response received:', response);
 
             if (!response.access_token) {
-                console.error('No access token in response');
-                setError('root', {
-                    type: 'manual',
-                    message: 'Invalid response from server',
-                });
-                toast.error('Login failed. Please check your credentials.');
+                setErrorMsg('Invalid response from server. Please try again.');
                 return;
             }
 
@@ -72,18 +70,12 @@ const LoginView: React.FC = () => {
                 decodedId = jwtDecode(response.id_token);
             }
 
-            console.log('Decoded Access Token:', decodedAccess);
-            console.log('Decoded ID Token:', decodedId);
-
             const roles = decodedAccess.realm_access?.roles || [];
-
-            // Prefer ID token for profile info, Access token for auth info
             const user = {
                 id: decodedAccess.sub,
                 username: decodedAccess.preferred_username,
                 email: decodedAccess.email,
                 roles: roles,
-                // Zipcode is usually in ID token
                 zipcode: decodedId.zipcode || decodedAccess.zipcode,
             };
 
@@ -98,10 +90,10 @@ const LoginView: React.FC = () => {
             login(response.access_token, user);
             toast.success('Logged in successfully');
 
-            const upperRoles = roles.map((r: string) => r.toUpperCase());
-            if (upperRoles.includes('ADMIN')) {
+            const upperRoles = new Set(roles.map((r: string) => r.toUpperCase()));
+            if (upperRoles.has('ADMIN')) {
                 navigate('/admin/dashboard');
-            } else if (upperRoles.includes('AGENT')) {
+            } else if (upperRoles.has('AGENT')) {
                 navigate('/agent/dashboard');
             } else {
                 navigate('/owner/dashboard');
@@ -109,17 +101,15 @@ const LoginView: React.FC = () => {
 
         } catch (error: any) {
             console.error('Login error:', error);
-            console.error('Error details:', {
-                message: error.message,
-                response: error.response,
-                data: error.response?.data
-            });
-            const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Invalid username or password';
-            setError('root', {
-                type: 'manual',
-                message: errorMessage,
-            });
-            toast.error('Login failed. Please check your credentials.');
+
+            const errData = error.response?.data;
+            if (errData?.error === "invalid_grant" && errData?.error_description === "Account disabled") {
+                setErrorMsg("Your account has been disabled. Please contact support.");
+                return;
+            }
+
+            const errorMessage = errData?.error || errData?.message || 'Invalid username or password.';
+            setErrorMsg(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -172,11 +162,16 @@ const LoginView: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    {errors.root && (
-                        <div className="p-3 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-md">
-                            {errors.root.message}
-                        </div>
+                    {errorMsg && (
+                        <Alert variant="destructive" className="bg-red-900/10 border-red-900/20 text-red-500">
+                            <AlertCircle className="h-4 w-4"/>
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>
+                                {errorMsg}
+                            </AlertDescription>
+                        </Alert>
                     )}
+
                     <div className="space-y-2">
                         <Label htmlFor="username" className="text-slate-200">Username</Label>
                         <div className="relative">
@@ -232,7 +227,7 @@ const LoginView: React.FC = () => {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             <Controller
-                                control={form.control}
+                                control={control}
                                 name="rememberMe"
                                 render={({field}) => (
                                     <Checkbox
