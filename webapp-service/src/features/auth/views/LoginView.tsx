@@ -51,13 +51,10 @@ const LoginView: React.FC = () => {
         setIsLoading(true);
         setErrorMsg(null);
         try {
-            console.log('Sending login request...');
             const response = await authService.login({
                 username: data.username,
                 password: data.password,
             });
-
-            console.log('Login response received:', response);
 
             if (!response.access_token) {
                 setErrorMsg('Invalid response from server. Please try again.');
@@ -100,8 +97,6 @@ const LoginView: React.FC = () => {
             }
 
         } catch (error: any) {
-            console.error('Login error:', error);
-
             const errData = error.response?.data;
             if (errData?.error === "invalid_grant" && errData?.error_description === "Account disabled") {
                 setErrorMsg("Your account has been disabled. Please contact support.");
@@ -183,6 +178,11 @@ const LoginView: React.FC = () => {
                                 disabled={isLoading}
                                 className="pl-9 bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-indigo-500"
                                 {...register('username')}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleSubmit(onSubmit)();
+                                    }
+                                }}
                             />
                         </div>
                         {errors.username && (
@@ -200,6 +200,11 @@ const LoginView: React.FC = () => {
                                 disabled={isLoading}
                                 className="pl-9 pr-9 bg-slate-900 border-slate-700 text-slate-200 placeholder:text-slate-500 focus-visible:ring-indigo-500"
                                 {...register('password')}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleSubmit(onSubmit)();
+                                    }
+                                }}
                             />
                             <Button
                                 type="button"
@@ -248,7 +253,6 @@ const LoginView: React.FC = () => {
                                 disabled={isLoading}
                                 onClick={(e) => {
                                     e.preventDefault();
-                                    console.log("Forgot password");
                                 }}>
                             Forgot password?
                         </Button>
