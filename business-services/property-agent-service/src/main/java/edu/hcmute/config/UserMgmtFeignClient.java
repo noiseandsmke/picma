@@ -9,4 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface UserMgmtFeignClient {
     @GetMapping("/users/{userId}")
     UserDto getUserById(@PathVariable String userId);
+
+    @GetMapping("/user/agents/zipcode/{zipcode}")
+    java.util.List<UserDto> getAgentsByZipCode(@PathVariable String zipcode);
 }

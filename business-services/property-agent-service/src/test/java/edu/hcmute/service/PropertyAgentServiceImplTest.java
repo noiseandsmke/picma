@@ -2,16 +2,13 @@ package edu.hcmute.service;
 
 import edu.hcmute.config.PropertyLeadFeignClient;
 import edu.hcmute.config.PropertyMgmtFeignClient;
+import edu.hcmute.config.UserMgmtFeignClient;
 import edu.hcmute.domain.LeadAction;
-import edu.hcmute.dto.AgentLeadDto;
-import edu.hcmute.dto.NotificationRequestDto;
-import edu.hcmute.dto.PropertyAddressDto;
-import edu.hcmute.dto.PropertyMgmtDto;
+import edu.hcmute.dto.*;
 import edu.hcmute.entity.AgentLead;
 import edu.hcmute.event.NotificationProducer;
 import edu.hcmute.mapper.PropertyAgentMapper;
 import edu.hcmute.repo.AgentLeadRepo;
-import edu.hcmute.repo.UserAddressRepo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,9 +33,9 @@ public class PropertyAgentServiceImplTest {
     @Mock
     private PropertyLeadFeignClient propertyLeadFeignClient;
     @Mock
-    private NotificationProducer notificationProducer;
+    private UserMgmtFeignClient userMgmtFeignClient;
     @Mock
-    private UserAddressRepo userAddressRepo;
+    private NotificationProducer notificationProducer;
     @Mock
     private AgentLeadRepo agentLeadRepo;
     @Mock
@@ -111,10 +108,14 @@ public class PropertyAgentServiceImplTest {
     @Test
     void getAgentsByZipCode_success() {
         String zipCode = "12345";
-        List<String> expectedAgents = List.of("agent1", "agent2");
-        when(userAddressRepo.findUserIdsByZipCode(zipCode)).thenReturn(expectedAgents);
+        List<String> expectedAgentIds = List.of("agent1", "agent2");
+        List<UserDto> agentDtos = List.of(
+                new UserDto("agent1", "Agent One", "agent1@example.com", zipCode),
+                new UserDto("agent2", "Agent Two", "agent2@example.com", zipCode)
+        );
+        when(userMgmtFeignClient.getAgentsByZipCode(zipCode)).thenReturn(agentDtos);
         List<String> result = propertyAgentService.getAgentsByZipCode(zipCode);
-        assertEquals(expectedAgents, result);
+        assertEquals(expectedAgentIds, result);
     }
 
     @Test
@@ -141,8 +142,9 @@ public class PropertyAgentServiceImplTest {
         String agentId = "agent1";
         PropertyAddressDto addressDto = new PropertyAddressDto("12345");
         PropertyMgmtDto propertyDto = new PropertyMgmtDto(addressDto);
+        UserDto agentDto = new UserDto(agentId, "Agent One", "agent1@example.com", zipCode);
         when(propertyMgmtFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyDto);
-        when(userAddressRepo.findUserIdsByZipCode(zipCode)).thenReturn(Collections.singletonList(agentId));
+        when(userMgmtFeignClient.getAgentsByZipCode(zipCode)).thenReturn(Collections.singletonList(agentDto));
         List<String> result = propertyAgentService.fetchAgentWithinZipCode(propertyId, leadId);
         verify(notificationProducer).sendNotification(any(NotificationRequestDto.class));
         assertTrue(result.contains(agentId));
