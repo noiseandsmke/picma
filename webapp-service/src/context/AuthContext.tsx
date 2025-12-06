@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useEffect, useState} from 'react';
+import React, {createContext, useContext, useEffect, useMemo, useState} from 'react';
 import {AuthState, User, UserRole} from '@/types/auth.types';
 
 interface AuthContextType extends AuthState {
@@ -29,6 +29,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
                 sessionStorage.clear();
             }
         }
+
+        const handleTokenRefresh = () => {
+            const newToken = sessionStorage.getItem('access_token');
+            const newUserStr = sessionStorage.getItem('user');
+            if (newToken && newUserStr) {
+                try {
+                    const newUser = JSON.parse(newUserStr);
+                    setAuth({isAuthenticated: true, user: newUser, token: newToken});
+                } catch (e) {
+                    console.error("Failed to parse user from session storage during refresh", e);
+                }
+            }
+        };
+
+        globalThis.addEventListener('auth:token-refreshed', handleTokenRefresh);
+        return () => {
+            globalThis.removeEventListener('auth:token-refreshed', handleTokenRefresh);
+        };
     }, []);
 
     const login = (token: string, user: User) => {
@@ -50,18 +68,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
         } finally {
             sessionStorage.clear();
             setAuth({isAuthenticated: false, user: null, token: null});
-            window.location.href = '/login';
+            globalThis.location.href = '/login';
         }
     };
 
     const hasRole = (role: UserRole): boolean => {
-        if (!auth.user || !auth.user.roles) return false;
-        const userRoles = auth.user.roles.map(r => r.toUpperCase());
-        return userRoles.includes(role);
+        if (!auth.user?.roles) return false;
+        const userRoles = new Set(auth.user.roles.map(r => r.toUpperCase()));
+        return userRoles.has(role);
     };
 
     const getPrimaryRole = (): UserRole | null => {
-        if (!auth.user || !auth.user.roles) return null;
+        if (!auth.user?.roles) return null;
         const userRoles = auth.user.roles.map(r => r.toUpperCase());
         if (userRoles.includes(UserRole.ADMIN)) return UserRole.ADMIN;
         if (userRoles.includes(UserRole.AGENT)) return UserRole.AGENT;
@@ -70,8 +88,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
         return null;
     };
 
+    const contextValue = useMemo(() => ({
+        ...auth,
+        login,
+        logout,
+        hasRole,
+        getPrimaryRole
+    }), [auth]);
+
     return (
-        <AuthContext.Provider value={{...auth, login, logout, hasRole, getPrimaryRole}}>
+        <AuthContext.Provider value={contextValue}>
             {children}
         </AuthContext.Provider>
     );
