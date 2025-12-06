@@ -10,11 +10,11 @@ const apiClient = axios.create({
 
 let isRefreshing = false;
 let failedQueue: Array<{
-    resolve: (value?: any) => void;
-    reject: (error?: any) => void;
+    resolve: (value?: unknown) => void;
+    reject: (error?: unknown) => void;
 }> = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
     failedQueue.forEach(prom => {
         if (error) {
             prom.reject(error);
@@ -25,7 +25,8 @@ const processQueue = (error: any, token: string | null = null) => {
     failedQueue = [];
 };
 
-const handleTokenRefresh = async (error: any) => {
+const handleTokenRefresh = async (error: { config: any, response?: { status: number } }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const originalRequest = error.config;
 
     if (originalRequest._retry) {
@@ -60,9 +61,15 @@ const handleTokenRefresh = async (error: any) => {
         const response = await authService.refresh(refreshToken, oldAccessToken || undefined);
 
         const {jwtDecode} = await import('jwt-decode');
-        const decodedAccess: any = jwtDecode(response.access_token);
+        const decodedAccess = jwtDecode<{
+            sub: string,
+            preferred_username: string,
+            email: string,
+            realm_access?: { roles: string[] },
+            zipcode?: string
+        }>(response.access_token);
 
-        let decodedId: any = {};
+        let decodedId: { zipcode?: string } = {};
         if (response.id_token) {
             decodedId = jwtDecode(response.id_token);
         } else {
@@ -93,6 +100,9 @@ const handleTokenRefresh = async (error: any) => {
         sessionStorage.setItem('user', JSON.stringify(user));
 
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${response.access_token}`;
+
+        globalThis.dispatchEvent(new Event('auth:token-refreshed'));
+
         originalRequest.headers.Authorization = `Bearer ${response.access_token}`;
 
         processQueue(null, response.access_token);
@@ -126,7 +136,9 @@ apiClient.interceptors.response.use(
         return response;
     },
     async (error) => {
-        if (error.response?.status === 401) {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
             return handleTokenRefresh(error);
         }
 
