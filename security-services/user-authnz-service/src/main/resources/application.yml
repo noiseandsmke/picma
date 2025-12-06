@@ -14,6 +14,12 @@ keycloak:
   credentials:
     secret: ${IDP_SECRET:IN1s7kAP5qbeKarl8i97WrxYYWxELpZe}
 
+picma:
+  iam:
+    groups:
+      owners: ${OWNERS_GROUP_ID:d41e9d41-afb7-408e-bbd0-970b093268ab}
+      agents: ${AGENTS_GROUP_ID:2a576f8b-ee0d-4c57-be7a-de4a490e298d}
+
 eureka:
   client:
     service-url:
