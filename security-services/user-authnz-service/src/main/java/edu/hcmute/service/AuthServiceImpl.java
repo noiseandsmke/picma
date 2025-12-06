@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,11 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class AuthServiceImpl implements AuthService {
     private static final String USER_SESSION_PREFIX = "user:";
+    private static final String CLIENT_ID = "client_id";
+    private static final String CLIENT_SECRET = "client_secret";
+    private static final String PASSWORD = "password";
+    private static final String GRANT_TYPE = "grant_type";
+    private static final String REFRESH_TOKEN = "refresh_token";
 
     private final KeycloakAuthClient keycloakAuthClient;
     private final RedisTemplate<String, String> redisTemplate;
@@ -41,26 +47,27 @@ public class AuthServiceImpl implements AuthService {
     @Value("${keycloak.credentials.secret}")
     private String clientSecret;
 
+    @Value("${picma.iam.groups.owners}")
+    private String ownersGroupId;
+
+    @Value("${picma.iam.groups.agents}")
+    private String agentsGroupId;
+
     @Override
     public TokenResponse login(LoginRequest request) {
         log.info("Login attempt for user: {}", request.username());
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("client_id", resource);
-        map.add("client_secret", clientSecret);
+        map.add(CLIENT_ID, resource);
+        map.add(CLIENT_SECRET, clientSecret);
         map.add("username", request.username());
-        map.add("password", request.password());
-        map.add("grant_type", "password");
+        map.add(PASSWORD, request.password());
+        map.add(GRANT_TYPE, PASSWORD);
         map.add("scope", "openid");
         TokenResponse tokenResponse = keycloakAuthClient.getToken(realm, map);
         if (tokenResponse == null) {
             throw new AuthException("Failed to obtain token from Keycloak", 401);
         }
-        UserInfo userInfo = JwtUtil.parseJwt(tokenResponse.accessToken());
-        List<String> roles = userInfo.realmAccess() != null && userInfo.realmAccess().roles() != null
-                ? userInfo.realmAccess().roles()
-                : Collections.emptyList();
         saveSessionToRedis(request.username(), tokenResponse);
-        log.info("User {} logged in successfully with roles: {}", request.username(), roles);
         return tokenResponse;
     }
 
@@ -68,17 +75,16 @@ public class AuthServiceImpl implements AuthService {
     public TokenResponse refresh(String refreshToken, String oldAccessToken) {
         log.info("Refreshing token");
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("client_id", resource);
-        map.add("client_secret", clientSecret);
-        map.add("grant_type", "refresh_token");
-        map.add("refresh_token", refreshToken);
+        map.add(CLIENT_ID, resource);
+        map.add(CLIENT_SECRET, clientSecret);
+        map.add(GRANT_TYPE, REFRESH_TOKEN);
+        map.add(REFRESH_TOKEN, refreshToken);
         TokenResponse tokenResponse = keycloakAuthClient.getToken(realm, map);
         if (tokenResponse == null) {
             throw new AuthException("Failed to refresh token", 401);
         }
         UserInfo userInfo = JwtUtil.parseJwt(tokenResponse.accessToken());
         saveSessionToRedis(userInfo.username(), tokenResponse);
-        log.info("Token refreshed successfully for user: {}", userInfo.username());
         return tokenResponse;
     }
 
@@ -96,11 +102,10 @@ public class AuthServiceImpl implements AuthService {
             log.warn("Failed to delete session from Redis: {}", e.getMessage());
         }
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("client_id", resource);
-        map.add("client_secret", clientSecret);
-        map.add("refresh_token", refreshToken);
+        map.add(CLIENT_ID, resource);
+        map.add(CLIENT_SECRET, clientSecret);
+        map.add(REFRESH_TOKEN, refreshToken);
         keycloakAuthClient.logout(realm, map);
-        log.info("User logged out successfully from Keycloak");
     }
 
     @Override
@@ -109,23 +114,41 @@ public class AuthServiceImpl implements AuthService {
         String adminToken = getAdminToken();
         Map<String, Object> user = new HashMap<>();
         user.put("username", request.username());
+        user.put("enabled", true);
+        user.put("emailVerified", true);
         user.put("firstName", request.firstName());
         user.put("lastName", request.lastName());
         user.put("email", request.email());
-        user.put("enabled", true);
-        user.put("emailVerified", true);
-        if (request.zipcode() != null && !request.zipcode().isEmpty()) {
+        boolean isZipcodeEmpty = request.zipcode() != null && !request.zipcode().isEmpty();
+        if (isZipcodeEmpty) {
             Map<String, List<String>> attributes = new HashMap<>();
             attributes.put("zipcode", Collections.singletonList(request.zipcode()));
             user.put("attributes", attributes);
         }
         Map<String, Object> credential = new HashMap<>();
-        credential.put("type", "password");
+        credential.put("type", PASSWORD);
         credential.put("value", request.password());
         credential.put("temporary", false);
         user.put("credentials", Collections.singletonList(credential));
-        keycloakAuthClient.createUser(realm, "Bearer " + adminToken, user);
-        log.info("User {} registered successfully", request.username());
+        org.springframework.http.ResponseEntity<Void> response = keycloakAuthClient.createUser(realm, "Bearer " + adminToken, user);
+        try {
+            if (response.getStatusCode().is2xxSuccessful()) {
+                URI location = response.getHeaders().getLocation();
+                if (location != null) {
+                    String path = location.getPath();
+                    String userId = path.substring(path.lastIndexOf('/') + 1);
+                    String groupId = isZipcodeEmpty ? agentsGroupId : ownersGroupId;
+                    keycloakAuthClient.joinGroup(realm, "Bearer " + adminToken, userId, groupId);
+                    log.info("Assigned user {} (id: {}) to group {}", request.username(), userId, groupId);
+                } else {
+                    log.error("User created but Location header missing for {}", request.username());
+                }
+            } else {
+                log.error("Failed to create user {}. Status: {}", request.username(), response.getStatusCode());
+            }
+        } catch (Exception e) {
+            log.error("Failed to assign group to user {}", request.username(), e);
+        }
     }
 
     private void saveSessionToRedis(String username, TokenResponse tokenResponse) {
@@ -134,9 +157,7 @@ public class AuthServiceImpl implements AuthService {
             String tokenJson = objectMapper.writeValueAsString(tokenResponse);
             long ttl = tokenResponse.expiresIn();
             redisTemplate.opsForValue().set(sessionKey, tokenJson, ttl, TimeUnit.SECONDS);
-            log.info("Saved session for user {} with TTL={} seconds", username, ttl);
         } catch (Exception e) {
-            log.error("Error saving session to Redis for user {}", username, e);
             throw new AuthException("Failed to store session", 500);
         }
     }
@@ -146,16 +167,15 @@ public class AuthServiceImpl implements AuthService {
             UserInfo userInfo = JwtUtil.parseJwt(refreshToken);
             return userInfo.username();
         } catch (Exception e) {
-            log.warn("Failed to extract username from refresh token: {}", e.getMessage());
             return null;
         }
     }
 
     private String getAdminToken() {
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("client_id", resource);
-        map.add("client_secret", clientSecret);
-        map.add("grant_type", "client_credentials");
+        map.add(CLIENT_ID, resource);
+        map.add(CLIENT_SECRET, clientSecret);
+        map.add(GRANT_TYPE, "client_credentials");
         TokenResponse response = keycloakAuthClient.getToken(realm, map);
         if (response != null) {
             return response.accessToken();
