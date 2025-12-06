@@ -18,7 +18,6 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
             const currentValue = value === '' || value === undefined ? 0 : Number(value)
             const stepValue = Number(step)
 
-            // Handle floating point precision issues
             const precision = step.toString().split('.')[1]?.length || 0
             const newValue = Number((currentValue + stepValue).toFixed(precision))
 
@@ -33,7 +32,6 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
             const currentValue = value === '' || value === undefined ? 0 : Number(value)
             const stepValue = Number(step)
 
-            // Handle floating point precision issues
             const precision = step.toString().split('.')[1]?.length || 0
             const newValue = Number((currentValue - stepValue).toFixed(precision))
 
@@ -45,16 +43,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
             const val = e.target.value
 
             if (val === "") {
-                // We can treat empty string as 0 or handle it in parent.
-                // But usually onChange expects number.
-                // Let's coerce to 0 if empty for safety, or we could change signature to allow undefined?
-                // But standard input type="number" returns string.
-                // Our interface says (value: number).
-                // Let's pass 0 if empty, or better:
-                // If the user clears the input, we might want to allow it.
-                // But for this use case, let's assume valid number.
-                // Actually, let's handle NaN.
-                onChange(0) // Default to 0
+                onChange(0)
                 return
             }
 
