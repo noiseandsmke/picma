@@ -1,6 +1,6 @@
-import React, {useMemo} from 'react';
+import React, {useMemo, useState} from 'react';
 import AgentLayout from '../layouts/AgentLayout';
-import {ArrowRight, Bell, Calendar, Clock, DollarSign, FileText, Search, User} from 'lucide-react';
+import {ArrowRight, Bell, Calendar, Clock, DollarSign, FileText, Search} from 'lucide-react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
@@ -11,10 +11,29 @@ import {fetchAgentLeads, fetchAgentQuotes} from '../services/agentService';
 import {Skeleton} from '@/components/ui/skeleton';
 import {useAuth} from '@/context/AuthContext';
 import {formatCurrency} from '@/lib/utils';
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import {Label} from "@/components/ui/label";
+import {Input} from "@/components/ui/input";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {toast} from "sonner";
+import apiClient from '@/services/apiClient';
+
+const createQuoteSchema = z.object({
+    leadId: z.number().min(1, "Lead is required"),
+    sumInsured: z.coerce.number().min(1, "Sum Insured is required"),
+    premium: z.coerce.number().min(1, "Premium is required"),
+});
+
+type CreateQuoteFormValues = z.infer<typeof createQuoteSchema>;
+const SKELETON_IDS = ['skel-1', 'skel-2', 'skel-3'];
 
 const AgentDashboard: React.FC = () => {
     const {user} = useAuth();
     const agentId = user?.id || '';
+    const [isQuoteOpen, setIsQuoteOpen] = useState(false);
+    const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
 
     const {data: leads, isLoading: isLeadsLoading} = useQuery({
         queryKey: ['agent-leads', agentId],
@@ -22,29 +41,67 @@ const AgentDashboard: React.FC = () => {
         enabled: !!agentId
     });
 
-    const {data: quotes, isLoading: isQuotesLoading} = useQuery({
+    const {data: quotes, isLoading: isQuotesLoading, refetch: refetchQuotes} = useQuery({
         queryKey: ['agent-quotes', agentId],
         queryFn: () => fetchAgentQuotes(agentId),
         enabled: !!agentId
     });
 
-    const newLeadsCount = useMemo(() => leads?.filter(l => l.status === 'NEW').length || 0, [leads]);
+    const {
+        register,
+        handleSubmit,
+        reset,
+        setValue,
+        formState: {errors, isSubmitting},
+    } = useForm<CreateQuoteFormValues>({
+        resolver: zodResolver(createQuoteSchema),
+        defaultValues: {
+            leadId: 0,
+            sumInsured: 0,
+            premium: 0
+        },
+    });
 
-    // We assume 'pending quotes' are those not accepted/rejected yet? Or maybe just total quotes?
-    // AgentLeadAction might be relevant here but let's count quotes created this month or valid.
-    // For now, let's use total count of quotes as a proxy or if status logic is available.
-    // Assuming quotes returned are all relevant.
+    const handleCreateQuote = async (data: CreateQuoteFormValues) => {
+        try {
+            await apiClient.post('/picma/quotes', {
+                leadId: data.leadId,
+                agentId: agentId,
+                sumInsured: data.sumInsured,
+                premium: {
+                    total: data.premium,
+                    net: data.premium * 0.9,
+                    tax: data.premium * 0.1
+                },
+                plan: 'BASIC',
+                startDate: new Date().toISOString(),
+                endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+            });
+            toast.success("Quote created successfully");
+            setIsQuoteOpen(false);
+            reset();
+            await refetchQuotes();
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to create quote");
+        }
+    };
+
+    const openQuoteModal = (leadId: number) => {
+        setSelectedLeadId(leadId);
+        setValue('leadId', leadId);
+        setIsQuoteOpen(true);
+    };
+
+    const newLeadsCount = useMemo(() => leads?.filter(l => l.status === 'NEW').length || 0, [leads]);
     const pendingQuotesCount = quotes?.length || 0;
 
-    // Calculate "This Month" revenue or value. Assuming 'premium' is available in quote or sumInsured.
-    // PropertyQuoteDto has 'premium' object with 'total'.
     const thisMonthValue = useMemo(() => {
         if (!quotes) return 0;
         const now = new Date();
         const thisMonth = now.getMonth();
         const thisYear = now.getFullYear();
         return quotes.reduce((acc, q) => {
-            // Assuming startDate indicates when it was quoted/sold
             if (q.startDate) {
                 const d = new Date(q.startDate);
                 if (d.getMonth() === thisMonth && d.getFullYear() === thisYear) {
@@ -55,7 +112,7 @@ const AgentDashboard: React.FC = () => {
         }, 0);
     }, [quotes]);
 
-    const columns: Column[] = [
+    const leadColumns: Column[] = [
         {header: "Client", width: "25%"},
         {header: "Property", width: "35%"},
         {header: "Status", width: "15%"},
@@ -142,7 +199,7 @@ const AgentDashboard: React.FC = () => {
                         </CardHeader>
                         <CardContent className="p-0">
                             <SharedTable
-                                columns={columns}
+                                columns={leadColumns}
                                 isLoading={isLoading}
                                 isEmpty={!isLoading && (!leads || leads.length === 0)}
                                 className="rounded-none border-0"
@@ -151,8 +208,8 @@ const AgentDashboard: React.FC = () => {
                                 emptyMessage="No leads found."
                             >
                                 {isLoading ? (
-                                    Array.from({length: 3}).map((_, i) => (
-                                        <TableRow key={`lead-skel-${i}`} className="border-slate-800">
+                                    SKELETON_IDS.map((skelId) => (
+                                        <TableRow key={skelId} className="border-slate-800">
                                             <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
                                             <TableCell><Skeleton className="h-4 w-48 bg-slate-800"/></TableCell>
                                             <TableCell><Skeleton className="h-6 w-16 bg-slate-800"/></TableCell>
@@ -191,6 +248,7 @@ const AgentDashboard: React.FC = () => {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Button size="sm"
+                                                    onClick={() => openQuoteModal(lead.id)}
                                                     className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-8">
                                                 Quote
                                                 <ArrowRight className="ml-1 h-3 w-3"/>
@@ -199,44 +257,80 @@ const AgentDashboard: React.FC = () => {
                                     </TableRow>
                                 ))}
                             </SharedTable>
-                            <div className="p-4 border-t border-[#2e2c3a] text-center">
-                                <Button variant="ghost" size="sm"
-                                        className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950">
-                                    View All Leads
-                                </Button>
-                            </div>
                         </CardContent>
                     </Card>
 
-                    <div className="space-y-6">
-                        <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm">
-                            <CardHeader className="pb-2 border-b border-[#2e2c3a]">
-                                <CardTitle className="text-lg font-semibold text-white">Tasks</CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-4 space-y-4">
-                                <div
-                                    className="flex items-start gap-3 p-3 rounded-lg bg-amber-950/40 border border-amber-900/50">
-                                    <Clock className="h-5 w-5 text-amber-500 mt-0.5"/>
-                                    <div>
-                                        <p className="text-sm font-medium text-amber-200">Follow up with Clark Kent</p>
-                                        <p className="text-xs text-amber-400 mt-1">Quote sent 2 days ago. No
-                                            response.</p>
-                                    </div>
-                                </div>
-                                <div
-                                    className="flex items-start gap-3 p-3 rounded-lg bg-slate-900 border border-slate-800">
-                                    <User className="h-5 w-5 text-slate-400 mt-0.5"/>
-                                    <div>
-                                        <p className="text-sm font-medium text-slate-200">Update Profile Info</p>
-                                        <p className="text-xs text-slate-400 mt-1">License expires in 30
-                                            days.</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                    <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm">
+                        <CardHeader className="pb-2 border-b border-[#2e2c3a]">
+                            <CardTitle className="text-lg font-semibold text-white">Quote History</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="max-h-[400px] overflow-y-auto">
+                                <SharedTable
+                                    columns={[
+                                        {header: "ID", width: "20%"},
+                                        {header: "Amount", width: "40%"},
+                                        {header: "Status", width: "40%"}
+                                    ]}
+                                    isLoading={isLoading}
+                                    isEmpty={!quotes || quotes.length === 0}
+                                    className="rounded-none border-0"
+                                    headerClassName="bg-slate-900/50 border-slate-800 text-slate-400 text-xs"
+                                    rowClassName="border-slate-800 hover:bg-slate-800/50 text-slate-300 text-sm"
+                                >
+                                    {quotes?.map((quote) => (
+                                        <TableRow key={quote.id} className="border-slate-800">
+                                            <TableCell>{quote.id}</TableCell>
+                                            <TableCell>{formatCurrency(quote.premium?.total || 0)}</TableCell>
+                                            <TableCell>
+                                                {/* @ts-expect-error - Backend DTO pending update */}
+                                                <Badge variant={quote.status === 'ACCEPTED' ? 'default' : 'outline'}
+                                                    // @ts-expect-error - Backend DTO pending update
+                                                       className={quote.status === 'ACCEPTED' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400'}>
+                                                    {/* @ts-expect-error - Backend DTO pending update */}
+                                                    {quote.status || 'DRAFT'}
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </SharedTable>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
+
+            <Dialog open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
+                <DialogContent className="bg-[#141124] border-slate-800 text-white">
+                    <DialogHeader>
+                        <DialogTitle>Create Quote for Lead #{selectedLeadId}</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit(handleCreateQuote)} className="space-y-4 pt-4">
+                        <div className="space-y-2">
+                            <Label>Sum Insured</Label>
+                            <Input
+                                type="number"
+                                {...register("sumInsured")}
+                                className="bg-slate-900 border-slate-700 text-white"
+                            />
+                            {errors.sumInsured && <p className="text-red-500 text-xs">{errors.sumInsured.message}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Premium</Label>
+                            <Input
+                                type="number"
+                                {...register("premium")}
+                                className="bg-slate-900 border-slate-700 text-white"
+                            />
+                            {errors.premium && <p className="text-red-500 text-xs">{errors.premium.message}</p>}
+                        </div>
+                        <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700"
+                                disabled={isSubmitting}>
+                            {isSubmitting ? "Creating..." : "Send Quote"}
+                        </Button>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </AgentLayout>
     );
 };
