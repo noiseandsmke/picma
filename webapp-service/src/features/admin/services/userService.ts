@@ -45,7 +45,3 @@ export const createUser = async (user: UserDto): Promise<UserDto> => {
     const response = await apiClient.post<UserDto>(`${BASE_PATH}`, user);
     return response.data;
 };
-
-export const switchUserGroup = async (userId: string): Promise<void> => {
-    await apiClient.put(`${BASE_PATH}/convert-to-agent`, {userId});
-};

@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {ArrowLeftRight, MoreVertical, Pencil, PlusCircle} from 'lucide-react';
+import {MoreVertical, Pencil, PlusCircle} from 'lucide-react';
 import {Button} from "@/components/ui/button";
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from "@/components/ui/shared-table";
@@ -7,7 +7,7 @@ import {Badge} from "@/components/ui/badge";
 import {Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {createUser, fetchUsers, switchUserGroup, UserDto} from '../services/userService';
+import {createUser, fetchUsers, UserDto} from '../services/userService';
 import {Skeleton} from '@/components/ui/skeleton';
 import AdminLayout from '../layouts/AdminLayout';
 import {CreateUserDialog} from '../components/CreateUserDialog';
@@ -22,7 +22,6 @@ const AdminUsersView: React.FC = () => {
 
     const queryClient = useQueryClient();
 
-    // Use empty search term as we removed the search bar
     const {data: users, isLoading, isError, error} = useQuery({
         queryKey: ['admin-users', activeTab],
         queryFn: () => fetchUsers(activeTab, '')
@@ -41,23 +40,8 @@ const AdminUsersView: React.FC = () => {
         }
     });
 
-    const switchGroupMutation = useMutation({
-        mutationFn: ({userId}: { userId: string }) =>
-            switchUserGroup(userId),
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({queryKey: ['admin-users']});
-            toast.success("User group switched successfully");
-        },
-        onError: (error) => {
-            console.error(error);
-            toast.error("Failed to switch user group");
-        }
-    });
-
-    // Mock update mutation - as backend endpoint might not exist yet for update profile
     const updateMutation = useMutation({
         mutationFn: async (data: any) => {
-            // Simulate API call
             console.log("Updating user:", data);
             return new Promise((resolve) => setTimeout(resolve, 500));
         },
@@ -79,10 +63,7 @@ const AdminUsersView: React.FC = () => {
         return 'User';
     };
 
-    // Filter out ADMINs and apply tab filter
     const filteredUsers = users?.filter(u => {
-        // Exclude ADMIN role
-        // Note: Check how roles are returned. Usually role='ADMIN' or group='admins'
         const role = getDisplayRole(u).toUpperCase();
         if (role === 'ADMIN') return false;
 
@@ -145,7 +126,6 @@ const AdminUsersView: React.FC = () => {
                                     </TabsTrigger>
                                 </TabsList>
                             </Tabs>
-                            {/* Search bar removed */}
                         </div>
                     </div>
 
@@ -212,17 +192,6 @@ const AdminUsersView: React.FC = () => {
                                                     Edit profile
                                                 </DropdownMenuItem>
 
-                                                {(user.group === 'owners') && (
-                                                    <DropdownMenuItem
-                                                        className="focus:bg-slate-800 focus:text-white cursor-pointer text-amber-500"
-                                                        onClick={() => user.id && switchGroupMutation.mutate({
-                                                            userId: user.id
-                                                        })}
-                                                    >
-                                                        <ArrowLeftRight className="mr-2 h-4 w-4"/>
-                                                        Switch to Agent
-                                                    </DropdownMenuItem>
-                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
