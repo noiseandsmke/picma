@@ -127,34 +127,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void convertOwnerToAgent(String userId) {
-        try {
-            List<Map<String, Object>> currentGroups = keycloakAdminClient.getUserGroups(userId);
-            boolean isOwner = false;
-            for (Map<String, Object> group : currentGroups) {
-                String id = (String) group.get("id");
-                if (id.equals(ownersGroupId)) {
-                    isOwner = true;
-                    break;
+    public UserDto updateUser(UserDto userDto) {
+        if (userDto.id() != null) {
+            UserDto existingUser = getUserById(userDto.id());
+            boolean isAgent = GROUP_AGENTS.equals(existingUser.group());
+            if (isAgent) {
+                String oldZip = existingUser.zipcode();
+                String newZip = userDto.zipcode();
+                if (oldZip != null && !oldZip.equals(newZip)) {
+                    throw new IllegalArgumentException("Agents cannot change their registered zipcode.");
                 }
             }
-            if (!isOwner) {
-                log.warn("User {} is not in Owners group. Cannot convert to Agent.", userId);
-                throw new IllegalStateException("User is not a Property Owner. Cannot convert to Agent.");
-            }
-            log.info("Removing user {} from Owners group", userId);
-            keycloakAdminClient.leaveGroup(userId, ownersGroupId);
-            log.info("Adding user {} to Agents group", userId);
-            keycloakAdminClient.joinGroup(userId, agentsGroupId);
-            log.info("Successfully converted user {} from Owner to Agent", userId);
-        } catch (Exception e) {
-            log.error("Failed to convert user {} from Owner to Agent", userId, e);
-            throw new IllegalStateException("Failed to convert user from Owner to Agent: " + e.getMessage(), e);
         }
-    }
-
-    @Override
-    public UserDto updateUser(UserDto userDto) {
         User user = userMapper.toEntity(userDto);
         if (user.getId() != null) {
             keycloakAdminClient.updateUser(user.getId(), user);

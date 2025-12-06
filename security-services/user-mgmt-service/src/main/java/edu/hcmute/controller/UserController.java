@@ -13,9 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @Slf4j
@@ -73,19 +71,6 @@ public class UserController {
         log.info("UserController :: getUserById :: Id = {}", userId);
         UserDto userDto = userService.getUserById(userId);
         return ResponseEntity.ok(userDto);
-    }
-
-    @PutMapping("/user/convert-to-agent")
-    @Operation(description = "convertOwnerToAgent - Convert a Property Owner to Agent (one-way conversion)",
-            security = @SecurityRequirement(name = "bearerAuth"))
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, String>> convertOwnerToAgent(@RequestBody edu.hcmute.dto.UserActionDto userActionDto) {
-        String userId = userActionDto.userId();
-        log.info("UserController :: convertOwnerToAgent :: Id = {}", userId);
-        userService.convertOwnerToAgent(userId);
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "User successfully converted from Owner to Agent");
-        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/user/profile")

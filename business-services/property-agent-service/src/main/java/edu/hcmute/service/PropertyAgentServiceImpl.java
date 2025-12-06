@@ -114,7 +114,6 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
         if (!StringUtils.hasText(zipCode)) {
             return Collections.emptyList();
         }
-        // Fetch agents from user-mgmt-service (Keycloak/User source of truth)
         List<UserDto> agents = userMgmtFeignClient.getAgentsByZipCode(zipCode);
         return agents.stream()
                 .map(UserDto::id)
@@ -145,9 +144,6 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
             String zipCode = propertyInfo.propertyAddressDto().zipCode();
             if (StringUtils.hasText(zipCode)) {
                 log.info("~~> ZipCode = {}", zipCode);
-                // Use the shared method which calls user-mgmt-service
-                // Since getAgentsByZipCode is not transactional, we can call it directly.
-                // Or if we want to be safe with proxy, we can inject self, but it's not needed here as it just calls Feign.
                 List<String> agentIds = getAgentsByZipCode(zipCode);
                 log.info("~~> Found {} agents in zipcode {}", agentIds.size(), zipCode);
                 for (String agentIdStr : agentIds) {

@@ -51,7 +51,6 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
             }
             propertyQuote = propertyQuoteRepo.save(propertyQuote);
             log.info("~~> PropertyQuote saved with id: {}", propertyQuote.getId());
-            // Mark Agent Action as ACCEPTED (meaning Quoted)
             AgentLeadDto agentLeadDto = new AgentLeadDto(0, "ACCEPTED", propertyQuote.getAgentId(), leadId);
             propertyAgentFeignClient.updateLeadAction(agentLeadDto);
             log.info("~~> Agent lead action updated to ACCEPTED for agentId = {} and leadId = {}", propertyQuote.getAgentId(), leadId);
@@ -131,7 +130,6 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
         log.info("### Accept Quote id = {} ###", quoteId);
         PropertyQuote quote = propertyQuoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + quoteId));
-        // Update Lead Status to ACCEPTED
         log.info("~~> updating lead status to ACCEPTED for leadId: {}", quote.getLeadId());
         try {
             propertyLeadFeignClient.updateLeadStatusById(quote.getLeadId(), "ACCEPTED");
@@ -148,7 +146,6 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
         log.info("### Reject Quote id = {} ###", quoteId);
         PropertyQuote quote = propertyQuoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + quoteId));
-        // Update Agent Lead Action to REJECTED
         log.info("~~> updating agent lead action to REJECTED for agent: {} lead: {}", quote.getAgentId(), quote.getLeadId());
         try {
             AgentLeadDto agentLeadDto = new AgentLeadDto(0, "REJECTED", quote.getAgentId(), quote.getLeadId());
