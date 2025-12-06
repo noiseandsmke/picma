@@ -20,5 +20,7 @@ public interface UserService {
 
     List<UserDto> getAllAgents();
 
+    List<UserDto> getAgentsByZipCode(String zipcode);
+
     List<UserDto> getAllPropertyOwners();
 }

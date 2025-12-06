@@ -103,6 +103,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<UserDto> getAgentsByZipCode(String zipcode) {
+        if (!StringUtils.hasText(zipcode)) {
+            return Collections.emptyList();
+        }
+        List<UserDto> allAgents = getAllAgents();
+        return allAgents.stream()
+                .filter(agent -> zipcode.equals(agent.zipcode()))
+                .toList();
+    }
+
+    @Override
     public UserDto getUserById(String userId) {
         try {
             return userMapper.toDto(keycloakAdminClient.getUserById(userId));

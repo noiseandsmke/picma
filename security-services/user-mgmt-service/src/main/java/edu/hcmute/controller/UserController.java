@@ -50,6 +50,14 @@ public class UserController {
         return ResponseEntity.ok(agentsList);
     }
 
+    @GetMapping("/user/agents/zipcode/{zipcode}")
+    @Operation(description = "getAgentsByZipCode", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<List<UserDto>> getAgentsByZipCode(@PathVariable String zipcode) {
+        log.info("UserController :: getAgentsByZipCode :: ZipCode = {}", zipcode);
+        List<UserDto> agentsList = userService.getAgentsByZipCode(zipcode);
+        return ResponseEntity.ok(agentsList);
+    }
+
     @PostMapping("/user")
     @Operation(description = "createUser", security = @SecurityRequirement(name = "bearerAuth"))
     @PreAuthorize("hasRole('ADMIN')")
