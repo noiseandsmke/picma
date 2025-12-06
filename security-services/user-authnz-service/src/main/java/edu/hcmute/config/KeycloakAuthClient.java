@@ -3,11 +3,9 @@ package edu.hcmute.config;
 import edu.hcmute.dto.TokenResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -26,9 +24,17 @@ public interface KeycloakAuthClient {
     );
 
     @PostMapping(value = "/admin/realms/{realm}/users", consumes = MediaType.APPLICATION_JSON_VALUE)
-    void createUser(
+    ResponseEntity<Void> createUser(
             @PathVariable String realm,
             @RequestHeader("Authorization") String token,
             @RequestBody Map<String, Object> userRepresentation
+    );
+
+    @PutMapping(value = "/admin/realms/{realm}/users/{id}/groups/{groupId}")
+    void joinGroup(
+            @PathVariable String realm,
+            @RequestHeader("Authorization") String token,
+            @PathVariable String id,
+            @PathVariable String groupId
     );
 }
