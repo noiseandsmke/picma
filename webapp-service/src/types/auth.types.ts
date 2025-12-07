@@ -36,6 +36,22 @@ export interface User {
     lastName?: string;
     roles?: string[];
     zipcode?: string;
+    exp?: number;
+    iat?: number;
+    jti?: string;
+    iss?: string;
+    aud?: string;
+    sub?: string;
+    typ?: string;
+    azp?: string;
+    sid?: string;
+    at_hash?: string;
+    acr?: string;
+    email_verified?: boolean;
+    name?: string;
+    preferred_username?: string;
+    given_name?: string;
+    family_name?: string;
 }
 
 export interface AuthState {

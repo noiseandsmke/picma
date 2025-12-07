@@ -61,19 +61,41 @@ const LoginView: React.FC = () => {
                 return;
             }
 
-            const decodedAccess: any = jwtDecode(response.access_token);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const decodedAccess = jwtDecode(response.access_token) as any;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let decodedId: any = {};
             if (response.id_token) {
                 decodedId = jwtDecode(response.id_token);
             }
 
             const roles = decodedAccess.realm_access?.roles || [];
+
             const user = {
                 id: decodedAccess.sub,
                 username: decodedAccess.preferred_username,
                 email: decodedAccess.email,
                 roles: roles,
                 zipcode: decodedId.zipcode || decodedAccess.zipcode,
+                firstName: decodedId.given_name || decodedAccess.given_name,
+                lastName: decodedId.family_name || decodedAccess.family_name,
+
+                exp: decodedId.exp,
+                iat: decodedId.iat,
+                jti: decodedId.jti,
+                iss: decodedId.iss,
+                aud: decodedId.aud,
+                sub: decodedId.sub,
+                typ: decodedId.typ,
+                azp: decodedId.azp,
+                sid: decodedId.sid,
+                at_hash: decodedId.at_hash,
+                acr: decodedId.acr,
+                email_verified: decodedId.email_verified,
+                name: decodedId.name,
+                preferred_username: decodedId.preferred_username,
+                given_name: decodedId.given_name,
+                family_name: decodedId.family_name
             };
 
             sessionStorage.setItem('access_token', response.access_token);
@@ -96,7 +118,7 @@ const LoginView: React.FC = () => {
                 navigate('/owner/dashboard');
             }
 
-        } catch (error: any) {
+        } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             const errData = error.response?.data;
             if (errData?.error === "invalid_grant" && errData?.error_description === "Account disabled") {
                 setErrorMsg("Your account has been disabled. Please contact support.");
