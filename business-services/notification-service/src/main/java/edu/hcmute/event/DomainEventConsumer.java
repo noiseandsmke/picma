@@ -1,6 +1,5 @@
 package edu.hcmute.event;
 
-import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.event.schema.LeadCreatedEvent;
 import edu.hcmute.event.schema.LeadStatusChangedEvent;
 import edu.hcmute.event.schema.QuoteGeneratedEvent;

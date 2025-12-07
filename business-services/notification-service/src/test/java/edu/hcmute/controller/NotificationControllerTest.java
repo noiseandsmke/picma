@@ -1,7 +1,6 @@
 package edu.hcmute.controller;
 
 import edu.hcmute.dto.NotificationDto;
-import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.service.NotificationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,11 +31,8 @@ public class NotificationControllerTest {
     void createNotification_shouldReturnCreatedNotification() {
         NotificationRequestDto requestDto = new NotificationRequestDto("rec1", "Title", "Message");
         NotificationDto notificationDto = new NotificationDto(1, "rec1", "Title", "Message", false, null);
-
         when(notificationService.createNotification(any(NotificationRequestDto.class))).thenReturn(notificationDto);
-
         ResponseEntity<NotificationDto> response = notificationController.createNotification(requestDto);
-
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(notificationDto, response.getBody());
@@ -48,11 +44,8 @@ public class NotificationControllerTest {
         String recipientId = "rec1";
         NotificationDto notificationDto = new NotificationDto(1, recipientId, "Title", "Message", false, null);
         List<NotificationDto> notificationList = Collections.singletonList(notificationDto);
-
         when(notificationService.getNotifications(recipientId)).thenReturn(notificationList);
-
         ResponseEntity<List<NotificationDto>> response = notificationController.getNotifications(recipientId);
-
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(notificationList, response.getBody());
@@ -63,11 +56,8 @@ public class NotificationControllerTest {
     void markAsRead_shouldReturnUpdatedNotification() {
         Integer notificationId = 1;
         NotificationDto notificationDto = new NotificationDto(notificationId, "rec1", "Title", "Message", true, null);
-
         when(notificationService.markAsRead(notificationId)).thenReturn(notificationDto);
-
         ResponseEntity<NotificationDto> response = notificationController.markAsRead(notificationId);
-
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(notificationDto, response.getBody());
@@ -78,11 +68,8 @@ public class NotificationControllerTest {
     void getUnreadCount_shouldReturnCount() {
         String recipientId = "rec1";
         Long count = 5L;
-
         when(notificationService.getUnreadCount(recipientId)).thenReturn(count);
-
         ResponseEntity<Long> response = notificationController.getUnreadCount(recipientId);
-
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(count, response.getBody());

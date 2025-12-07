@@ -1,7 +1,6 @@
 package edu.hcmute.service;
 
 import edu.hcmute.dto.NotificationDto;
-import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.entity.Notification;
 import edu.hcmute.mapper.NotificationMapper;
 import edu.hcmute.repo.NotificationRepo;
@@ -30,7 +29,6 @@ public class NotificationServiceImpl implements NotificationService {
                 false,
                 null
         );
-
         Notification notification = notificationMapper.toEntity(notificationDto);
         notification = notificationRepo.save(notification);
         return notificationMapper.toDto(notification);
