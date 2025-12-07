@@ -19,6 +19,14 @@ spring:
       bootstrap-servers: ${BROKER_HOST:localhost}:${BROKER_PORT:9092}
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  cloud:
+    stream:
+      function:
+        definition: handleLeadCreated
+      bindings:
+        handleLeadCreated-in-0:
+          destination: picma.leads.created
+          group: property-agent-service-group
 management:
   endpoints:
     web:

@@ -30,6 +30,20 @@ management:
         include: "*"
 server:
   port: 7105
+  cloud:
+    stream:
+      function:
+        definition: handleLeadStatusChanged;handleQuoteGenerated;handleLeadCreated
+      bindings:
+        handleLeadStatusChanged-in-0:
+          destination: picma.leads.status
+          group: notification-service-group
+        handleQuoteGenerated-in-0:
+          destination: picma.quotes.generated
+          group: notification-service-group
+        handleLeadCreated-in-0:
+          destination: picma.leads.created
+          group: notification-service-group
 eureka:
   client:
     service-url:

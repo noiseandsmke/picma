@@ -95,6 +95,7 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
             propertyLead.setStatus(newStatus);
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> successfully updated PropertyLead status from {} to {}", currentStatus.name(), newStatus.name());
+            propertyLeadProducer.publishLeadStatusChanged(propertyLead.getId(), currentStatus.name(), newStatus.name());
             return propertyLeadMapper.toDto(propertyLead);
         } catch (IllegalArgumentException | IllegalStateException e) {
             log.error("~~> validation error updating lead status: {}", e.getMessage());
