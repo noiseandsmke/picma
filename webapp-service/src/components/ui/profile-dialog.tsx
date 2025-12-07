@@ -51,7 +51,7 @@ export const ProfileDialog: React.FC<ProfileDialogProps> = ({open, onOpenChange}
                                 {renderField("Full Name", user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim())}
                                 {renderField("Username", user.preferred_username || user.username)}
                                 {renderField("Email", user.email, true)}
-                                {renderField("Subject ID (sub)", user.sub, true)}
+                                {renderField("Platform ID", user.sub, true)}
                             </div>
                         </section>
 

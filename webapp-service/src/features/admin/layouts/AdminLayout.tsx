@@ -70,7 +70,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
                         <p className="text-xs text-slate-400">Total system oversight</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <UserDropdown username={user?.username} roleLabel="Administrator"/>
+                        <UserDropdown displayName={user?.name} username={user?.username} roleLabel="Administrator"/>
                     </div>
                 </header>
 

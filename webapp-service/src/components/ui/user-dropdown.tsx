@@ -12,14 +12,17 @@ import {useAuth} from '@/context/AuthContext';
 import {ProfileDialog} from '@/components/ui/profile-dialog';
 
 interface UserDropdownProps {
+    displayName?: string;
     username?: string;
     roleLabel?: string;
 }
 
-export const UserDropdown: React.FC<UserDropdownProps> = ({username = 'User', roleLabel = 'User'}) => {
+export const UserDropdown: React.FC<UserDropdownProps> = ({displayName, username = 'User', roleLabel = 'User'}) => {
     const {logout} = useAuth();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const initials = username.substring(0, 2).toUpperCase();
+
+    const display = displayName || username;
+    const initials = display.substring(0, 2).toUpperCase();
 
     return (
         <>
@@ -33,8 +36,8 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({username = 'User', ro
                             {initials}
                         </div>
                         <div className="hidden md:block text-left">
-                            <div className="text-sm font-medium text-slate-300 leading-none">{username}</div>
-                            <div className="text-[10px] text-slate-500 mt-1">{roleLabel}</div>
+                            <div className="text-sm font-medium text-slate-300 leading-none">{display}</div>
+                            <div className="text-sm text-slate-500 mt-1">{roleLabel}</div>
                         </div>
                         <ChevronDown className="h-4 w-4 text-slate-400"/>
                     </div>
@@ -43,7 +46,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({username = 'User', ro
                                      forceMount>
                     <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none text-white">{username}</p>
+                            <p className="text-sm font-medium leading-none text-white">{display}</p>
                             <p className="text-xs leading-none text-slate-500">{roleLabel}</p>
                         </div>
                     </DropdownMenuLabel>

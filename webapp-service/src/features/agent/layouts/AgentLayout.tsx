@@ -7,7 +7,7 @@ import {UserDropdown} from '@/components/ui/user-dropdown';
 
 const navItems: NavItem[] = [
     {
-        label: 'Dashboard Home',
+        label: 'Dashboard home',
         icon: LayoutDashboard,
         href: '/agent/dashboard',
     },
@@ -49,20 +49,16 @@ const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
                 <header
                     className="h-16 flex items-center justify-between px-8 border-b border-slate-800 bg-slate-950 flex-shrink-0 shadow-sm z-10">
                     <div>
-                        <h1 className="text-xl font-semibold text-white">Agent Dashboard</h1>
+                        <h1 className="text-xl font-semibold text-white">Agent dashboard</h1>
                         <div className="flex items-center gap-2">
                              <span
                                  className={cn("text-xs font-medium px-2 py-0.5 rounded-full", "bg-blue-500/20 text-blue-300")}>
-                                Insurance Agent
+                                Insurance agent
                             </span>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="text-xs text-slate-400 bg-slate-900 px-3 py-1 rounded-full">
-                            Internal Announcement: Q3 Goals Meeting tomorrow at 10 AM
-                        </div>
-
-                        <UserDropdown username={user?.username} roleLabel="Agent"/>
+                        <UserDropdown displayName={user?.name} username={user?.username} roleLabel="Agent"/>
                     </div>
                 </header>
 

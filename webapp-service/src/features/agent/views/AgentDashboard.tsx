@@ -128,7 +128,7 @@ const AgentDashboard: React.FC = () => {
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">New Leads</p>
+                                <p className="text-sm font-medium text-slate-400">New leads</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
                                     {isLoading ? <Skeleton
                                         className="h-8 w-12 bg-slate-800"/> : newLeadsCount}
@@ -143,7 +143,7 @@ const AgentDashboard: React.FC = () => {
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Total Quotes</p>
+                                <p className="text-sm font-medium text-slate-400">Total quotes</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
                                     {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800"/> : pendingQuotesCount}
                                 </h3>
@@ -157,7 +157,7 @@ const AgentDashboard: React.FC = () => {
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">This Month</p>
+                                <p className="text-sm font-medium text-slate-400">This month</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
                                     {isLoading ?
                                         <Skeleton className="h-8 w-24 bg-slate-800"/> : formatCurrency(thisMonthValue)}
@@ -172,7 +172,7 @@ const AgentDashboard: React.FC = () => {
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Tasks Due</p>
+                                <p className="text-sm font-medium text-slate-400">Tasks due</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">0</h3>
                             </div>
                             <div
@@ -188,13 +188,13 @@ const AgentDashboard: React.FC = () => {
                         <CardHeader
                             className="flex flex-row items-center justify-between pb-2 border-b border-[#2e2c3a]">
                             <div>
-                                <CardTitle className="text-lg font-semibold text-white">Recent Leads</CardTitle>
+                                <CardTitle className="text-lg font-semibold text-white">Recent leads</CardTitle>
                                 <p className="text-sm text-slate-400">Prioritize new and high urgency requests</p>
                             </div>
                             <Button variant="outline" size="sm"
                                     className="gap-2 text-white border-slate-700 hover:bg-slate-800 hover:text-white">
                                 <Search className="h-4 w-4"/>
-                                Search Leads
+                                Search leads
                             </Button>
                         </CardHeader>
                         <CardContent className="p-0">
@@ -262,7 +262,7 @@ const AgentDashboard: React.FC = () => {
 
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm">
                         <CardHeader className="pb-2 border-b border-[#2e2c3a]">
-                            <CardTitle className="text-lg font-semibold text-white">Quote History</CardTitle>
+                            <CardTitle className="text-lg font-semibold text-white">Quote history</CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
                             <div className="max-h-[400px] overflow-y-auto">

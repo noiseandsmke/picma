@@ -6,7 +6,7 @@ import {UserDropdown} from '@/components/ui/user-dropdown';
 
 const navItems: NavItem[] = [
     {
-        label: 'Dashboard Home',
+        label: 'Dashboard home',
         icon: LayoutDashboard,
         href: '/owner/dashboard',
     },
@@ -48,11 +48,11 @@ const OwnerLayout: React.FC<OwnerLayoutProps> = ({children}) => {
                 <header
                     className="h-16 flex items-center justify-between px-8 border-b border-slate-800 bg-slate-950 flex-shrink-0 shadow-sm z-10">
                     <div>
-                        <h1 className="text-xl font-semibold text-white">Owner Dashboard</h1>
+                        <h1 className="text-xl font-semibold text-white">Owner dashboard</h1>
                         <p className="text-xs text-slate-400">Manage your property assets</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <UserDropdown username={user?.username} roleLabel="Owner"/>
+                        <UserDropdown displayName={user?.name} username={user?.username} roleLabel="Owner"/>
                     </div>
                 </header>
 
