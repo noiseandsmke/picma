@@ -4,7 +4,10 @@ import edu.hcmute.dto.NotificationDto;
 import edu.hcmute.service.NotificationQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -17,15 +20,5 @@ public class NotificationQueryController {
     @GetMapping("/{recipientId}")
     public ResponseEntity<List<NotificationDto>> getNotifications(@PathVariable String recipientId) {
         return ResponseEntity.ok(notificationQueryService.getNotifications(recipientId));
-    }
-
-    @PutMapping("/{id}/read")
-    public ResponseEntity<NotificationDto> markAsRead(@PathVariable Integer id) {
-        return ResponseEntity.ok(notificationQueryService.markAsRead(id));
-    }
-
-    @GetMapping("/{recipientId}/unread-count")
-    public ResponseEntity<Long> getUnreadCount(@PathVariable String recipientId) {
-        return ResponseEntity.ok(notificationQueryService.getUnreadCount(recipientId));
     }
 }

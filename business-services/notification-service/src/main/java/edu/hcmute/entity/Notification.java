@@ -25,13 +25,10 @@ public class Notification {
     @Column(columnDefinition = "TEXT")
     private String message;
 
-    private boolean isRead;
-
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        isRead = false;
     }
 }

@@ -7,7 +7,6 @@ public record NotificationDto(
         String recipientId,
         String title,
         String message,
-        boolean isRead,
         LocalDateTime createdAt
 ) {
 }
