@@ -3,13 +3,11 @@ package edu.hcmute.event.schema;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public record LeadStatusChangedEvent(
+public record QuoteAcceptedEvent(
+        Integer quoteId,
         Integer leadId,
-        String ownerId,
-        String oldStatus,
-        String newStatus,
         String agentId,
-        String reason,
+        String ownerId,
         LocalDateTime timestamp
 ) implements Serializable {
 }

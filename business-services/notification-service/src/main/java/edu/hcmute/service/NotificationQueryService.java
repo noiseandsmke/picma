@@ -4,9 +4,7 @@ import edu.hcmute.dto.NotificationDto;
 
 import java.util.List;
 
-public interface NotificationService {
-    NotificationDto createNotification(NotificationRequestDto requestDto);
-
+public interface NotificationQueryService {
     List<NotificationDto> getNotifications(String recipientId);
 
     NotificationDto markAsRead(Integer notificationId);

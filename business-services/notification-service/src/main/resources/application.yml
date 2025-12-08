@@ -20,9 +20,32 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  cloud:
+    stream:
+      function:
+        definition: handleLeadCreated;handleLeadStatusChanged;handleQuoteCreated;handleQuoteAccepted;handleQuoteRejected
+      bindings:
+        handleLeadCreated-in-0:
+          destination: picma.leads.created
+          group: notification-service-group
+        handleLeadStatusChanged-in-0:
+          destination: picma.leads.status
+          group: notification-service-group
+        handleQuoteCreated-in-0:
+          destination: picma.quotes.created
+          group: notification-service-group
+        handleQuoteAccepted-in-0:
+          destination: picma.quotes.accepted
+          group: notification-service-group
+        handleQuoteRejected-in-0:
+          destination: picma.quotes.rejected
+          group: notification-service-group
+
 picma:
-  notifications:
-    topic: notification-topic
+  services:
+    user-mgmt-service:
+      url: http://${USER_MGMT_HOST:localhost}:${USER_MGMT_PORT:5051}
+
 management:
   endpoints:
     web:
@@ -30,20 +53,7 @@ management:
         include: "*"
 server:
   port: 7105
-  cloud:
-    stream:
-      function:
-        definition: handleLeadStatusChanged;handleQuoteGenerated;handleLeadCreated
-      bindings:
-        handleLeadStatusChanged-in-0:
-          destination: picma.leads.status
-          group: notification-service-group
-        handleQuoteGenerated-in-0:
-          destination: picma.quotes.generated
-          group: notification-service-group
-        handleLeadCreated-in-0:
-          destination: picma.leads.created
-          group: notification-service-group
+
 eureka:
   client:
     service-url:
