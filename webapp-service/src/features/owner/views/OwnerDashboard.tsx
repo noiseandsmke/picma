@@ -4,7 +4,6 @@ import {FileText, MapPin, MoreHorizontal, Plus, Shield} from 'lucide-react';
 import {Card, CardContent, CardFooter} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
-import {Input} from "@/components/ui/input";
 import {cn, formatCurrency} from "@/lib/utils";
 import {useQuery} from '@tanstack/react-query';
 import {fetchOwnerProperties} from '../services/ownerService';
@@ -12,13 +11,7 @@ import {Skeleton} from '@/components/ui/skeleton';
 import {useAuth} from '@/context/AuthContext';
 import apiClient from '@/services/apiClient';
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
-import {VN_LOCATIONS} from "@/lib/vn-locations";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {Label} from "@/components/ui/label";
-import {toast} from "sonner";
-import {Controller, useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
-import * as z from "zod";
+import {OwnerLeadForm} from '../components/OwnerLeadForm';
 
 interface OwnerLead {
     id: number;
@@ -30,22 +23,11 @@ const fetchOwnerLeads = async (userId: string) => {
     return response.data;
 };
 
-const createLeadSchema = z.object({
-    propertyName: z.string().min(1, "Property Name is required"),
-    city: z.string().min(1, "City is required"),
-    ward: z.string().min(1, "Ward is required"),
-});
-
-type CreateLeadFormValues = z.infer<typeof createLeadSchema>;
-
 const OwnerDashboard: React.FC = () => {
     const {user} = useAuth();
     const [activeTab, setActiveTab] = useState<'properties'>('properties');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const ownerId = user?.id || '';
-
-    const cities = VN_LOCATIONS;
-    const [selectedCityName, setSelectedCityName] = useState<string>("");
 
     const {data: properties, isLoading: isPropsLoading} = useQuery({
         queryKey: ['owner-properties', ownerId],
@@ -71,49 +53,8 @@ const OwnerDashboard: React.FC = () => {
         return leads?.filter(l => l.status === 'IN_REVIEWING').length || 0;
     }, [leads]);
 
-    const {
-        control,
-        handleSubmit,
-        setValue,
-        reset,
-        formState: {errors, isSubmitting},
-    } = useForm<CreateLeadFormValues>({
-        resolver: zodResolver(createLeadSchema),
-        defaultValues: {
-            propertyName: "",
-            city: "",
-            ward: "",
-        },
-    });
-
-    const selectedCity = cities.find(c => c.name === selectedCityName);
-    const wards = selectedCity ? selectedCity.wards : [];
-
-    const handleCreateLead = async (data: CreateLeadFormValues) => {
-        try {
-            let zipcode = "";
-            if (data.ward) {
-                const foundWard = wards.find(w => w.name === data.ward);
-                if (foundWard) {
-                    zipcode = foundWard.zipCode;
-                }
-            }
-
-            await apiClient.post('/picma/leads', {
-                propertyInfo: data.propertyName,
-                userInfo: ownerId,
-                status: 'NEW',
-                propertyAddress: `${data.ward}, ${data.city}`,
-                zipCode: zipcode
-            });
-
-            toast.success("Property Lead Created Successfully");
-            setIsCreateOpen(false);
-            reset();
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to create lead");
-        }
+    const handleCreateSuccess = () => {
+        setIsCreateOpen(false);
     };
 
     return (
@@ -179,91 +120,12 @@ const OwnerDashboard: React.FC = () => {
                                     Create Property Lead
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="bg-[#141124] border-slate-800 text-white">
+                            <DialogContent
+                                className="bg-[#141124] border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
                                 <DialogHeader>
                                     <DialogTitle>Create New Property Lead</DialogTitle>
                                 </DialogHeader>
-                                <form onSubmit={handleSubmit(handleCreateLead)} className="space-y-4 pt-4">
-                                    <div className="space-y-2">
-                                        <Label>Property Name / Address</Label>
-                                        <Controller
-                                            control={control}
-                                            name="propertyName"
-                                            render={({field}) => (
-                                                <Input {...field} className="bg-slate-900 border-slate-700 text-white"/>
-                                            )}
-                                        />
-                                        {errors.propertyName &&
-                                            <p className="text-red-500 text-xs">{errors.propertyName.message}</p>}
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label>City</Label>
-                                            <Controller
-                                                control={control}
-                                                name="city"
-                                                render={({field}) => (
-                                                    <Select
-                                                        onValueChange={(val) => {
-                                                            field.onChange(val);
-                                                            setSelectedCityName(val);
-                                                            setValue("ward", "");
-                                                        }}
-                                                        value={field.value}
-                                                    >
-                                                        <SelectTrigger
-                                                            className="bg-slate-900 border-slate-700 text-white">
-                                                            <SelectValue placeholder="Select City"/>
-                                                        </SelectTrigger>
-                                                        <SelectContent
-                                                            className="bg-[#0b0c15] border-slate-800 text-white">
-                                                            {cities.map((city) => (
-                                                                <SelectItem key={city.name} value={city.name}>
-                                                                    {city.name}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                )}
-                                            />
-                                            {errors.city &&
-                                                <p className="text-red-500 text-xs">{errors.city.message}</p>}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>Ward</Label>
-                                            <Controller
-                                                control={control}
-                                                name="ward"
-                                                render={({field}) => (
-                                                    <Select
-                                                        onValueChange={field.onChange}
-                                                        value={field.value}
-                                                        disabled={!selectedCityName}
-                                                    >
-                                                        <SelectTrigger
-                                                            className="bg-slate-900 border-slate-700 text-white">
-                                                            <SelectValue placeholder="Select Ward"/>
-                                                        </SelectTrigger>
-                                                        <SelectContent
-                                                            className="bg-[#0b0c15] border-slate-800 text-white h-60">
-                                                            {wards.map((ward) => (
-                                                                <SelectItem key={ward.name} value={ward.name}>
-                                                                    {ward.name}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                )}
-                                            />
-                                            {errors.ward &&
-                                                <p className="text-red-500 text-xs">{errors.ward.message}</p>}
-                                        </div>
-                                    </div>
-                                    <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700"
-                                            disabled={isSubmitting}>
-                                        {isSubmitting ? "Creating..." : "Create Lead"}
-                                    </Button>
-                                </form>
+                                <OwnerLeadForm onSuccess={handleCreateSuccess} onCancel={() => setIsCreateOpen(false)}/>
                             </DialogContent>
                         </Dialog>
                     </div>

@@ -42,17 +42,12 @@ export interface PropertyInfoDto {
 const BASE_PATH = '/picma/properties';
 
 export const fetchAllProperties = async (sort?: string, direction?: string): Promise<PropertyInfoDto[]> => {
-    try {
-        const params: Record<string, string> = {};
-        if (sort) params.sort = sort;
-        if (direction) params.direction = direction;
+    const params: Record<string, string> = {};
+    if (sort) params.sort = sort;
+    if (direction) params.direction = direction;
 
-        const response = await apiClient.get<PropertyInfoDto[]>(`${BASE_PATH}`, {params});
-        return response.data;
-    } catch (error) {
-        console.error("Failed to fetch all properties", error);
-        return [];
-    }
+    const response = await apiClient.get<PropertyInfoDto[]>(`${BASE_PATH}`, {params});
+    return response.data;
 };
 
 export const fetchPropertyById = async (id: string): Promise<PropertyInfoDto> => {

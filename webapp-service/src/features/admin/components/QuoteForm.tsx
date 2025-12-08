@@ -9,7 +9,7 @@ import {Label} from '@/components/ui/label';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {DialogFooter} from '@/components/ui/dialog';
 import {SearchableSelect} from '@/components/ui/searchable-select';
-import {fetchAllLeads} from '../services/leadService';
+import {fetchAllLeads, LeadDto} from '../services/leadService';
 import {fetchUsers} from '../services/userService';
 import {fetchPropertyById} from '../services/propertyService';
 import {PropertyQuoteDto} from '../services/quoteService';
@@ -42,6 +42,9 @@ interface QuoteFormProps {
     onSubmit: (data: QuoteFormData & { premium: { net: number; tax: number; total: number } }) => void;
     onCancel: () => void;
     isLoading?: boolean;
+    leads?: LeadDto[];
+    hideAgentSelect?: boolean;
+    agentId?: string;
 }
 
 const getDefaultCoverages = (plan: string, sumInsured: number) => {
@@ -116,7 +119,15 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(({
     );
 });
 
-export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCancel, isLoading}) => {
+export const QuoteForm: React.FC<QuoteFormProps> = ({
+                                                        initialData,
+                                                        onSubmit,
+                                                        onCancel,
+                                                        isLoading,
+                                                        leads: propsLeads,
+                                                        hideAgentSelect,
+                                                        agentId
+                                                    }) => {
     const {
         control,
         handleSubmit,
@@ -128,7 +139,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         resolver: zodResolver(quoteSchema),
         defaultValues: {
             leadId: initialData?.leadId || 0,
-            agentId: initialData?.agentId || '',
+            agentId: initialData?.agentId || agentId || '',
             // @ts-expect-error - enum type mismatch with string
             plan: initialData?.plan || 'BRONZE',
             propertyAddress: initialData?.propertyAddress || '',
@@ -144,14 +155,18 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
         name: "coverages"
     });
 
-    const {data: leads} = useQuery({
+    const {data: fetchedLeads} = useQuery({
         queryKey: ['all-leads-for-select'],
         queryFn: () => fetchAllLeads(),
+        enabled: !propsLeads
     });
+
+    const leads = propsLeads || fetchedLeads;
 
     const {data: agents} = useQuery({
         queryKey: ['all-agents-for-select'],
         queryFn: () => fetchUsers('agent'),
+        enabled: !hideAgentSelect
     });
 
     const selectedLeadId = useWatch({control, name: 'leadId'});
@@ -176,16 +191,18 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
     }, [selectedProperty, agents]);
 
     useEffect(() => {
-        const currentAgentId = getValues('agentId');
-        if (currentAgentId && filteredAgents.length > 0) {
-            const agentExists = filteredAgents.some(a => a.id === currentAgentId);
-            if (!agentExists) {
+        if (!hideAgentSelect) {
+            const currentAgentId = getValues('agentId');
+            if (currentAgentId && filteredAgents.length > 0) {
+                const agentExists = filteredAgents.some(a => a.id === currentAgentId);
+                if (!agentExists) {
+                    setValue('agentId', '');
+                }
+            } else if (selectedProperty && filteredAgents.length === 0) {
                 setValue('agentId', '');
             }
-        } else if (selectedProperty && filteredAgents.length === 0) {
-            setValue('agentId', '');
         }
-    }, [selectedProperty, filteredAgents, setValue, getValues]);
+    }, [selectedProperty, filteredAgents, setValue, getValues, hideAgentSelect]);
 
 
     useEffect(() => {
@@ -300,29 +317,31 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({initialData, onSubmit, onCa
                             {errors.leadId && <p className="text-red-500 text-[10px]">{errors.leadId.message}</p>}
                         </div>
 
-                        <div className="space-y-1.5">
-                            <Label
-                                className="text-xs">Agent {selectedProperty && `(Zip: ${selectedProperty.location.zipCode})`}</Label>
-                            <Controller
-                                name="agentId"
-                                control={control}
-                                render={({field}) => (
-                                    <SearchableSelect
-                                        options={agentOptions}
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                        placeholder={selectedProperty ? (agentOptions.length > 0 ? "Select agent..." : "No agents found in this zipcode") : "Select lead first..."}
-                                        disabled={!selectedProperty || agentOptions.length === 0}
-                                        isLoading={!agents}
-                                    />
+                        {!hideAgentSelect && (
+                            <div className="space-y-1.5">
+                                <Label
+                                    className="text-xs">Agent {selectedProperty && `(Zip: ${selectedProperty.location.zipCode})`}</Label>
+                                <Controller
+                                    name="agentId"
+                                    control={control}
+                                    render={({field}) => (
+                                        <SearchableSelect
+                                            options={agentOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder={selectedProperty ? (agentOptions.length > 0 ? "Select agent..." : "No agents found in this zipcode") : "Select lead first..."}
+                                            disabled={!selectedProperty || agentOptions.length === 0}
+                                            isLoading={!agents}
+                                        />
+                                    )}
+                                />
+                                {errors.agentId && <p className="text-red-500 text-[10px]">{errors.agentId.message}</p>}
+                                {selectedProperty && agentOptions.length === 0 && (
+                                    <p className="text-amber-500 text-[10px]">No agents found for property
+                                        zipcode {selectedProperty.location.zipCode}</p>
                                 )}
-                            />
-                            {errors.agentId && <p className="text-red-500 text-[10px]">{errors.agentId.message}</p>}
-                            {selectedProperty && agentOptions.length === 0 && (
-                                <p className="text-amber-500 text-[10px]">No agents found for property
-                                    zipcode {selectedProperty.location.zipCode}</p>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-2 gap-2">
                             <div className="space-y-1.5">

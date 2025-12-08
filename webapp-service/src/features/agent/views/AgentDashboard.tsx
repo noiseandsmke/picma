@@ -6,31 +6,23 @@ import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from "@/components/ui/shared-table";
-import {useQuery} from '@tanstack/react-query';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {fetchAgentLeads, fetchAgentQuotes} from '../services/agentService';
 import {Skeleton} from '@/components/ui/skeleton';
 import {useAuth} from '@/context/AuthContext';
 import {formatCurrency} from '@/lib/utils';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
-import {Label} from "@/components/ui/label";
-import {Input} from "@/components/ui/input";
-import {useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
-import * as z from "zod";
 import {toast} from "sonner";
-import apiClient from '@/services/apiClient';
+import {QuoteForm} from '@/features/admin/components/QuoteForm';
+import {createQuote, PropertyQuoteDto, updateQuote} from '@/features/admin/services/quoteService';
+import {format} from 'date-fns';
+import {LeadDto} from '@/features/admin/services/leadService';
 
-const createQuoteSchema = z.object({
-    leadId: z.number().min(1, "Lead is required"),
-    sumInsured: z.coerce.number().min(1, "Sum Insured is required"),
-    premium: z.coerce.number().min(1, "Premium is required"),
-});
-
-type CreateQuoteFormValues = z.infer<typeof createQuoteSchema>;
 const SKELETON_IDS = ['skel-1', 'skel-2', 'skel-3'];
 
 const AgentDashboard: React.FC = () => {
     const {user} = useAuth();
+    const queryClient = useQueryClient();
     const agentId = user?.id || '';
     const [isQuoteOpen, setIsQuoteOpen] = useState(false);
     const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
@@ -41,55 +33,47 @@ const AgentDashboard: React.FC = () => {
         enabled: !!agentId
     });
 
-    const {data: quotes, isLoading: isQuotesLoading, refetch: refetchQuotes} = useQuery({
+    const {data: quotes, isLoading: isQuotesLoading} = useQuery({
         queryKey: ['agent-quotes', agentId],
         queryFn: () => fetchAgentQuotes(agentId),
         enabled: !!agentId
     });
 
-    const {
-        register,
-        handleSubmit,
-        reset,
-        setValue,
-        formState: {errors, isSubmitting},
-    } = useForm<CreateQuoteFormValues>({
-        resolver: zodResolver(createQuoteSchema),
-        defaultValues: {
-            leadId: 0,
-            sumInsured: 0,
-            premium: 0
+    const createMutation = useMutation({
+        mutationFn: createQuote,
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({queryKey: ['agent-quotes']});
+            setIsQuoteOpen(false);
+            toast.success("Quote created successfully");
         },
+        onError: () => toast.error("Failed to create quote")
     });
 
-    const handleCreateQuote = async (data: CreateQuoteFormValues) => {
-        try {
-            await apiClient.post('/picma/quotes', {
-                leadId: data.leadId,
-                agentId: agentId,
-                sumInsured: data.sumInsured,
-                premium: {
-                    total: data.premium,
-                    net: data.premium * 0.9,
-                    tax: data.premium * 0.1
-                },
-                plan: 'BASIC',
-                startDate: new Date().toISOString(),
-                endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
-            });
-            toast.success("Quote created successfully");
+    const updateMutation = useMutation({
+        mutationFn: updateQuote,
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({queryKey: ['agent-quotes']});
             setIsQuoteOpen(false);
-            reset();
-            await refetchQuotes();
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to create quote");
-        }
+            toast.success("Quote updated successfully");
+        },
+        onError: () => toast.error("Failed to update quote")
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleFormSubmit = (data: any) => {
+        const payload = {
+            ...data,
+            startDate: data.startDate ? format(data.startDate, 'yyyy-MM-dd') : undefined,
+            endDate: data.endDate ? format(data.endDate, 'yyyy-MM-dd') : undefined,
+        };
+
+        createMutation.mutate({
+            ...payload,
+        } as PropertyQuoteDto);
     };
 
     const openQuoteModal = (leadId: number) => {
         setSelectedLeadId(leadId);
-        setValue('leadId', leadId);
         setIsQuoteOpen(true);
     };
 
@@ -120,6 +104,20 @@ const AgentDashboard: React.FC = () => {
     ];
 
     const isLoading = isLeadsLoading || isQuotesLoading;
+
+    const quoteFormLeads: LeadDto[] = useMemo(() => leads?.map(l => ({
+        id: l.id,
+        userInfo: l.userInfo,
+        propertyInfo: typeof l.propertyInfo === 'string' && l.propertyInfo.startsWith('{')
+            ? JSON.parse(l.propertyInfo).id : l.propertyInfo,
+        status: l.status,
+        createDate: l.createdAt, expiryDate: l.createdAt,
+    })) || [], [leads]);
+
+    const initialQuoteData = useMemo(() => ({
+        leadId: selectedLeadId || 0,
+        agentId: agentId
+    }), [selectedLeadId, agentId]);
 
     return (
         <AgentLayout>
@@ -301,34 +299,21 @@ const AgentDashboard: React.FC = () => {
             </div>
 
             <Dialog open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
-                <DialogContent className="bg-[#141124] border-slate-800 text-white">
+                <DialogContent
+                    className="bg-slate-950 border-slate-800 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Create Quote for Lead #{selectedLeadId}</DialogTitle>
+                        <DialogTitle>Create Quote</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleSubmit(handleCreateQuote)} className="space-y-4 pt-4">
-                        <div className="space-y-2">
-                            <Label>Sum Insured</Label>
-                            <Input
-                                type="number"
-                                {...register("sumInsured")}
-                                className="bg-slate-900 border-slate-700 text-white"
-                            />
-                            {errors.sumInsured && <p className="text-red-500 text-xs">{errors.sumInsured.message}</p>}
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Premium</Label>
-                            <Input
-                                type="number"
-                                {...register("premium")}
-                                className="bg-slate-900 border-slate-700 text-white"
-                            />
-                            {errors.premium && <p className="text-red-500 text-xs">{errors.premium.message}</p>}
-                        </div>
-                        <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700"
-                                disabled={isSubmitting}>
-                            {isSubmitting ? "Creating..." : "Send Quote"}
-                        </Button>
-                    </form>
+                    <QuoteForm
+                        // @ts-expect-error - initialData partial match
+                        initialData={initialQuoteData}
+                        onSubmit={handleFormSubmit}
+                        onCancel={() => setIsQuoteOpen(false)}
+                        isLoading={createMutation.isPending || updateMutation.isPending}
+                        leads={quoteFormLeads}
+                        hideAgentSelect={true}
+                        agentId={agentId}
+                    />
                 </DialogContent>
             </Dialog>
         </AgentLayout>
