@@ -10,7 +10,19 @@ import {
     PropertyInfoDto
 } from '../services/propertyService';
 import {fetchUsers} from '../services/userService';
-import {ArrowUpDown, Clock, Eye, Filter, MoreHorizontal, PlusCircle, Search, Trash2, User} from 'lucide-react';
+import {
+    ArrowUpDown,
+    Building2,
+    Clock,
+    Eye,
+    Filter,
+    MapPin,
+    MoreHorizontal,
+    PlusCircle,
+    Search,
+    Trash2,
+    User
+} from 'lucide-react';
 import {cn} from '@/lib/utils';
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from '@/components/ui/shared-table';
@@ -57,9 +69,9 @@ const createLeadSchema = z.object({
         attributes: z.object({
             constructionType: z.enum(constructionTypeValues),
             occupancyType: z.enum(occupancyTypeValues),
-            yearBuilt: z.coerce.number().int("Must be an integer").nonnegative("Must be non-negative").min(1800, "Year Built must be valid"),
-            noFloors: z.coerce.number().int("Must be an integer").nonnegative("Must be non-negative").min(1, "Number of floors must be at least 1"),
-            squareMeters: z.coerce.number().int("Must be an integer").nonnegative("Must be non-negative").min(1, "Square Meters must be positive"),
+            yearBuilt: z.coerce.number().min(1800, "Year Built must be valid"),
+            noFloors: z.coerce.number().min(1, "Number of floors must be at least 1"),
+            squareMeters: z.coerce.number().min(1, "Square Meters must be positive"),
         }),
         valuation: z.object({
             estimatedConstructionCost: z.coerce.number().min(0, "Cost must be positive"),
@@ -194,9 +206,8 @@ const AdminLeadsView: React.FC = () => {
 
             const createdProperty = await createPropertyMutation.mutateAsync(propertyPayload);
 
-            const userInfo = `${owner.firstName} ${owner.lastName} - ${owner.mobile} - ${owner.email}`;
             const leadPayload: CreateLeadDto = {
-                userInfo,
+                userInfo: data.userId,
                 propertyInfo: createdProperty.id,
                 status: 'ACTIVE',
                 userId: data.userId
@@ -264,14 +275,54 @@ const AdminLeadsView: React.FC = () => {
         return {name: userInfo, details: ''};
     };
 
+    const renderUserCell = (userInfo: string) => {
+        const owner = owners?.find(u => u.id === userInfo);
+        if (owner) {
+            return (
+                <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
+                        <User size={14}/>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="font-bold text-slate-200">{owner.firstName} {owner.lastName}</span>
+                        <span className="text-xs text-slate-500">{owner.email}</span>
+                    </div>
+                </div>
+            );
+        }
+        // Fallback for legacy data or missing owner
+        const {name, details} = parseUserInfo(userInfo);
+        return (
+            <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
+                    <User size={14}/>
+                </div>
+                <div className="flex flex-col">
+                    <span className="font-bold text-slate-200">{name}</span>
+                    <span className="text-xs text-slate-500">{details}</span>
+                </div>
+            </div>
+        );
+    };
+
     const renderPropertyCell = (propertyInfoStr: string) => {
         if (Array.isArray(properties) && properties.length > 0) {
             const matchedProp = properties.find(p => String(p.id) === String(propertyInfoStr));
             if (matchedProp) {
                 return (
-                    <div className="flex flex-col">
-                        <span className="font-medium text-slate-200 truncate">{matchedProp.location.street}</span>
-                        <span className="text-xs text-slate-500 truncate">{matchedProp.location.city}</span>
+                    <div className="flex items-center gap-3">
+                        <div
+                            className="h-8 w-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500">
+                            <Building2 className="h-4 w-4"/>
+                        </div>
+                        <div>
+                            <div
+                                className="font-medium text-slate-200">{matchedProp.location.street}, {matchedProp.location.ward}, {matchedProp.location.city}</div>
+                            <div className="text-xs text-slate-500 flex items-center gap-1">
+                                <MapPin className="h-3 w-3"/>
+                                {matchedProp.location.city}
+                            </div>
+                        </div>
                     </div>
                 );
             }
@@ -313,8 +364,14 @@ const AdminLeadsView: React.FC = () => {
     })) || [];
 
     const filteredLeads = leads?.filter(lead => {
+        let searchableText = lead.userInfo;
+        const owner = owners?.find(u => u.id === lead.userInfo);
+        if (owner) {
+            searchableText = `${owner.firstName} ${owner.lastName} ${owner.email} ${owner.mobile || ''}`;
+        }
+
         const matchesSearch =
-            lead.userInfo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            searchableText.toLowerCase().includes(searchTerm.toLowerCase()) ||
             String(lead.id).includes(searchTerm);
 
         const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(lead.status);
@@ -343,8 +400,8 @@ const AdminLeadsView: React.FC = () => {
         },
         {
             header: (
-                <div className="flex items-center gap-1">
-                    Property {sortConfig.key === 'propertyInfo' && <ArrowUpDown size={14}/>}
+                <div className="flex items-center gap-2">
+                    Property address {sortConfig.key === 'propertyInfo' && <ArrowUpDown size={14}/>}
                 </div>
             ),
             width: "30%",
@@ -458,23 +515,12 @@ const AdminLeadsView: React.FC = () => {
         );
     } else {
         content = filteredLeads?.map((lead) => {
-            const {name, details} = parseUserInfo(lead.userInfo);
-
             return (
                 <TableRow key={lead.id}
                           className="border-slate-800 hover:bg-slate-900/50 transition-colors">
                     <TableCell className="font-medium text-slate-300">{lead.id}</TableCell>
                     <TableCell className="text-slate-300">
-                        <div className="flex items-center gap-3">
-                            <div
-                                className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
-                                <User size={14}/>
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="font-bold text-slate-200">{name}</span>
-                                <span className="text-xs text-slate-500">{details}</span>
-                            </div>
-                        </div>
+                        {renderUserCell(lead.userInfo)}
                     </TableCell>
                     <TableCell className="text-slate-300">
                         {renderPropertyCell(lead.propertyInfo)}
@@ -753,8 +799,6 @@ const AdminLeadsView: React.FC = () => {
                                                     onChange={field.onChange}
                                                     placeholder={new Date().getFullYear().toString()}
                                                     className="bg-slate-900 border-slate-700"
-                                                    min={0}
-                                                    step={1}
                                                 />
                                             )}
                                         />
@@ -772,8 +816,6 @@ const AdminLeadsView: React.FC = () => {
                                                     value={field.value}
                                                     onChange={field.onChange}
                                                     className="bg-slate-900 border-slate-700"
-                                                    min={0}
-                                                    step={1}
                                                 />
                                             )}
                                         />
@@ -788,8 +830,7 @@ const AdminLeadsView: React.FC = () => {
                                             render={({field}) => (
                                                 <NumberInput
                                                     id="squareMeters"
-                                                    step={1}
-                                                    min={0}
+                                                    step="0.01"
                                                     value={field.value}
                                                     onChange={field.onChange}
                                                     placeholder="Enter area..."

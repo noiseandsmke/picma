@@ -163,6 +163,12 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
 
     const leads = propsLeads || fetchedLeads;
 
+    // Fetch owners to resolve names for leads
+    const {data: owners} = useQuery({
+        queryKey: ['all-owners-for-select'],
+        queryFn: () => fetchUsers('owner'),
+    });
+
     const {data: agents} = useQuery({
         queryKey: ['all-agents-for-select'],
         queryFn: () => fetchUsers('agent'),
@@ -263,11 +269,19 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
         });
     };
 
-    const leadOptions = leads?.map(l => ({
-        value: l.id,
-        label: `${l.userInfo.split(' - ')[0]} (Lead #${l.id})`,
-        sublabel: `${l.userInfo.split(' - ')[1] || 'No Phone'}`
-    })) || [];
+    const leadOptions = leads?.map(l => {
+        const userId = l.userInfo.split(' - ')[0];
+        const owner = owners?.find(u => u.id === userId);
+        const label = owner
+            ? `${owner.firstName} ${owner.lastName} (Lead #${l.id})`
+            : `Lead #${l.id}`;
+
+        return {
+            value: l.id,
+            label: label,
+            sublabel: `${l.userInfo.split(' - ')[1] || 'No Phone'}`
+        };
+    }) || [];
 
     const agentOptions = filteredAgents.map(a => ({
         value: a.id || '',
@@ -292,7 +306,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
 
     return (
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
                         <User size={14} className="text-indigo-400"/> General info
@@ -300,7 +314,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
 
                     <div className="space-y-3">
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Customer (Lead)</Label>
+                            <Label className="text-xs">Lead</Label>
                             <Controller
                                 name="leadId"
                                 control={control}
@@ -502,7 +516,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                         </div>
                     </div>
                 </div>
-                <div className="lg:col-span-1 space-y-4">
+                <div className="lg:col-span-2 space-y-4">
                     <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
                         <Shield size={14} className="text-amber-400"/> Coverages & deductibles
                     </h4>
@@ -573,7 +587,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                         </Table>
                     </div>
                 </div>
-                <div className="col-span-1 lg:col-span-3 mt-4">
+                <div className="col-span-1 lg:col-span-2 mt-4">
                     <div className="rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-4">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-3 text-indigo-400">

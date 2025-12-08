@@ -35,9 +35,9 @@ const createLeadSchema = z.object({
         attributes: z.object({
             constructionType: z.enum(constructionTypeValues),
             occupancyType: z.enum(occupancyTypeValues),
-            yearBuilt: z.coerce.number().int("Must be an integer").nonnegative("Must be non-negative").min(1800, "Year Built must be valid"),
-            noFloors: z.coerce.number().int("Must be an integer").nonnegative("Must be non-negative").min(1, "Number of floors must be at least 1"),
-            squareMeters: z.coerce.number().int("Must be an integer").nonnegative("Must be non-negative").min(1, "Square Meters must be positive"),
+            yearBuilt: z.coerce.number().min(1800, "Year Built must be valid"),
+            noFloors: z.coerce.number().min(1, "Number of floors must be at least 1"),
+            squareMeters: z.coerce.number().min(1, "Square Meters must be positive"),
         }),
         valuation: z.object({
             estimatedConstructionCost: z.coerce.number().min(0, "Cost must be positive"),
@@ -131,9 +131,8 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({onSuccess, onCancel
 
             const createdProperty = await createPropertyMutation.mutateAsync(propertyPayload);
 
-            const userInfo = `${user.firstName} ${user.lastName} - ${user.email}`;
             const leadPayload: CreateLeadDto = {
-                userInfo,
+                userInfo: user.id,
                 propertyInfo: createdProperty.id,
                 status: 'ACTIVE',
                 userId: user.id
@@ -298,8 +297,6 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({onSuccess, onCancel
                                     onChange={field.onChange}
                                     placeholder={new Date().getFullYear().toString()}
                                     className="bg-slate-900 border-slate-700"
-                                    min={0}
-                                    step={1}
                                 />
                             )}
                         />
@@ -317,8 +314,6 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({onSuccess, onCancel
                                     value={field.value}
                                     onChange={field.onChange}
                                     className="bg-slate-900 border-slate-700"
-                                    min={0}
-                                    step={1}
                                 />
                             )}
                         />
@@ -333,8 +328,7 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({onSuccess, onCancel
                             render={({field}) => (
                                 <NumberInput
                                     id="squareMeters"
-                                    step={1}
-                                    min={0}
+                                    step="0.01"
                                     value={field.value}
                                     onChange={field.onChange}
                                     placeholder="Enter area..."

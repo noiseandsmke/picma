@@ -3,6 +3,7 @@ import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,} from '@
 import {Button} from '@/components/ui/button';
 import {Label} from '@/components/ui/label';
 import {fetchPropertyById, PropertyInfoDto} from '../services/propertyService';
+import {fetchUserById, UserDto} from '../services/userService';
 import {Skeleton} from '@/components/ui/skeleton';
 import {Building2, MapPin, Ruler, Wallet} from 'lucide-react';
 import {Badge} from '@/components/ui/badge';
@@ -24,6 +25,7 @@ interface LeadDetailDialogProps {
 
 export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenChange, lead}) => {
     const [propertyDetails, setPropertyDetails] = useState<PropertyInfoDto | null>(null);
+    const [userDetails, setUserDetails] = useState<UserDto | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isLegacy, setIsLegacy] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,6 +35,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
         if (!lead || !open) {
             setPropertyDetails(null);
             setLegacyDetails(null);
+            setUserDetails(null);
             return;
         }
 
@@ -57,7 +60,22 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
             }
         };
 
+        const fetchUserDetails = async () => {
+            // Heuristic: If it's a UUID (or at least long enough) and doesn't contain separators like " - "
+            if (lead.userInfo && lead.userInfo.length > 30 && !lead.userInfo.includes(' - ')) {
+                try {
+                    const user = await fetchUserById(lead.userInfo);
+                    setUserDetails(user);
+                } catch {
+                    setUserDetails(null);
+                }
+            } else {
+                setUserDetails(null);
+            }
+        };
+
         fetchDetails();
+        fetchUserDetails();
     }, [lead, open]);
 
     if (!lead) return null;
@@ -218,7 +236,17 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                     <div className="space-y-2">
                         <Label className="text-slate-400 text-xs uppercase tracking-wider">User Info</Label>
                         <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-300">
-                            {lead.userInfo}
+                            {userDetails ? (
+                                <div className="space-y-1">
+                                    <div
+                                        className="font-medium text-slate-200">{userDetails.firstName} {userDetails.lastName}</div>
+                                    <div className="text-xs text-slate-500">{userDetails.email}</div>
+                                    {userDetails.mobile &&
+                                        <div className="text-xs text-slate-500">{userDetails.mobile}</div>}
+                                </div>
+                            ) : (
+                                lead.userInfo
+                            )}
                         </div>
                     </div>
 
