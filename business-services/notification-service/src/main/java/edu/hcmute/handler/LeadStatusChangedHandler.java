@@ -20,29 +20,29 @@ public class LeadStatusChangedHandler {
             case "IN_REVIEWING":
                 notificationPersistenceService.save(
                         event.ownerId(),
-                        "Agent Reviewing Lead",
-                        "Agent is reviewing your request."
+                        "Agent Reviewing Your Request",
+                        String.format("An insurance agent is reviewing your property for Lead #%d. You'll receive a quote soon.", event.leadId())
                 );
                 break;
             case "ACCEPTED":
                 notificationPersistenceService.save(
                         event.ownerId(),
-                        "Lead Accepted",
-                        "Lead has been accepted by owner."
+                        "Lead Successfully Completed",
+                        String.format("Your lead #%d has been accepted. The insurance process is now complete.", event.leadId())
                 );
                 break;
             case "REJECTED":
                 notificationPersistenceService.save(
                         event.ownerId(),
-                        "Lead Rejected",
-                        "No Agent accepted your request."
+                        "Lead Not Accepted",
+                        String.format("Unfortunately, no agents are available for Lead #%d. Please try expanding your search area or adjusting property details.", event.leadId())
                 );
                 break;
             case "EXPIRED":
                 notificationPersistenceService.save(
                         event.ownerId(),
                         "Lead Expired",
-                        "Request expired after 30 days."
+                        String.format("Your insurance request Lead #%d has expired after 30 days of inactivity. Create a new request to continue.", event.leadId())
                 );
                 break;
             default:

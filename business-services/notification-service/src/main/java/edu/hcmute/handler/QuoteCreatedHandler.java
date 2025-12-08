@@ -16,8 +16,8 @@ public class QuoteCreatedHandler {
         log.info("Handling QuoteCreatedEvent for quoteId: {}", event.quoteId());
         notificationPersistenceService.save(
                 event.ownerId(),
-                "New Quote Received",
-                String.format("You received a quote from Agent, Premium: %d", event.premium())
+                "New Quote Available",
+                String.format("Agent sent you a quote for Lead #%d. Premium: %d/year. Review and accept now!", event.leadId(), event.premium())
         );
     }
 }

@@ -16,8 +16,8 @@ public class QuoteAcceptedHandler {
         log.info("Handling QuoteAcceptedEvent for quoteId: {}", event.quoteId());
         notificationPersistenceService.save(
                 event.agentId(),
-                "Quote Accepted",
-                String.format("Owner accepted your quote #%d", event.quoteId())
+                "Congratulations! Quote Accepted",
+                String.format("The property owner has accepted your quote #%d for Lead #%d. Next step: Finalize the policy.", event.quoteId(), event.leadId())
         );
     }
 }

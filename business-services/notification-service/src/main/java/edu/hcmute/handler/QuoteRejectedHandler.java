@@ -16,8 +16,8 @@ public class QuoteRejectedHandler {
         log.info("Handling QuoteRejectedEvent for quoteId: {}", event.quoteId());
         notificationPersistenceService.save(
                 event.agentId(),
-                "Quote Rejected",
-                String.format("Owner rejected your quote. Reason: %s", event.reason())
+                "Quote Declined",
+                String.format("Owner declined your quote #%d for Lead #%d. Reason: %s. Consider revising and resubmitting.", event.quoteId(), event.leadId(), event.reason())
         );
     }
 }
