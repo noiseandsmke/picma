@@ -23,7 +23,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PropertyAgentServiceImplTest {
@@ -46,31 +47,31 @@ public class PropertyAgentServiceImplTest {
 
     @Test
     void updateLeadAction_create_success() {
-        AgentLeadDto inputDto = new AgentLeadDto(0, LeadAction.ACCEPTED, "agent1", 100, null);
+        AgentLeadDto inputDto = new AgentLeadDto(0, LeadAction.INTERESTED, "agent1", 100, null, null, null);
         AgentLead entity = new AgentLead();
         entity.setAgentId("agent1");
         entity.setLeadId(100);
-        entity.setLeadAction(LeadAction.INTERESTED);
+        entity.setLeadAction(null);
         entity.setCreatedAt(LocalDateTime.now());
         when(propertyAgentMapper.toEntity(inputDto)).thenReturn(entity);
         when(agentLeadRepo.save(any(AgentLead.class))).thenReturn(entity);
-        when(propertyAgentMapper.toDto(any(AgentLead.class))).thenReturn(new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null));
+        when(propertyLeadFeignClient.getLeadById(100)).thenReturn(new PropertyLeadDto(100, "user", "prop", "NEW", null, null));
         AgentLeadDto result = propertyAgentService.updateLeadAction(inputDto);
         assertNotNull(result);
-        assertEquals(LeadAction.ACCEPTED, entity.getLeadAction());
-        verify(propertyLeadFeignClient, never()).updateLeadStatusById(100, "ACCEPTED");
+        assertEquals(LeadAction.INTERESTED, entity.getLeadAction());
     }
 
     @Test
     void updateLeadAction_update_existing_success() {
-        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null);
+        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null, null, null);
         AgentLead entity = new AgentLead();
         entity.setId(1);
         entity.setCreatedAt(LocalDateTime.now());
+        entity.setLeadId(100);
         entity.setLeadAction(LeadAction.INTERESTED);
         when(agentLeadRepo.findById(1)).thenReturn(Optional.of(entity));
         when(agentLeadRepo.save(entity)).thenReturn(entity);
-        when(propertyAgentMapper.toDto(entity)).thenReturn(inputDto);
+        when(propertyLeadFeignClient.getLeadById(100)).thenReturn(new PropertyLeadDto(100, "user", "prop", "NEW", null, null));
         AgentLeadDto result = propertyAgentService.updateLeadAction(inputDto);
         assertNotNull(result);
         assertEquals(LeadAction.ACCEPTED, entity.getLeadAction());
@@ -78,9 +79,11 @@ public class PropertyAgentServiceImplTest {
 
     @Test
     void updateLeadAction_expired() {
-        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null);
+        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null, null, null);
         AgentLead entity = new AgentLead();
         entity.setId(1);
+        entity.setLeadId(100);
+        entity.setLeadAction(LeadAction.INTERESTED);
         entity.setCreatedAt(LocalDateTime.now().minusDays(8));
         when(agentLeadRepo.findById(1)).thenReturn(Optional.of(entity));
         assertThrows(IllegalStateException.class, () -> propertyAgentService.updateLeadAction(inputDto));
@@ -88,7 +91,7 @@ public class PropertyAgentServiceImplTest {
 
     @Test
     void updateLeadAction_rejected_allRejected() {
-        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.REJECTED, "agent1", 100, null);
+        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.REJECTED, "agent1", 100, null, null, null);
         AgentLead entity = new AgentLead();
         entity.setId(1);
         entity.setLeadId(100);
@@ -96,7 +99,7 @@ public class PropertyAgentServiceImplTest {
         entity.setLeadAction(LeadAction.INTERESTED);
         when(agentLeadRepo.findById(1)).thenReturn(Optional.of(entity));
         when(agentLeadRepo.save(entity)).thenReturn(entity);
-        when(propertyAgentMapper.toDto(entity)).thenReturn(inputDto);
+        when(propertyLeadFeignClient.getLeadById(100)).thenReturn(new PropertyLeadDto(100, "user", "prop", "NEW", null, null));
         AgentLead al1 = new AgentLead();
         al1.setLeadAction(LeadAction.REJECTED);
         when(agentLeadRepo.findByLeadId(100)).thenReturn(Collections.singletonList(al1));
@@ -128,10 +131,12 @@ public class PropertyAgentServiceImplTest {
     void getAgentLeads_success() {
         String agentId = "agent1";
         AgentLead al = new AgentLead();
+        al.setLeadId(100);
         when(agentLeadRepo.findByAgentId(agentId)).thenReturn(Collections.singletonList(al));
-        when(propertyAgentMapper.toDto(al)).thenReturn(new AgentLeadDto(1, LeadAction.INTERESTED, agentId, 100, null));
+        when(propertyLeadFeignClient.getLeadById(100)).thenReturn(new PropertyLeadDto(100, "user", "prop", "NEW", null, null));
         List<AgentLeadDto> result = propertyAgentService.getAgentLeads(agentId);
         assertEquals(1, result.size());
+        assertEquals("user", result.get(0).userInfo());
     }
 
     @Test

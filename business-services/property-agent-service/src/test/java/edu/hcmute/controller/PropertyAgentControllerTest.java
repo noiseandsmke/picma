@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,12 +29,11 @@ public class PropertyAgentControllerTest {
 
     @Test
     void updateLeadAction_shouldReturnUpdatedAgentLead() {
-        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null);
-        AgentLeadDto returnedDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null);
+        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null, null, null);
+        AgentLeadDto returnedDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null, null, null);
         when(propertyAgentService.updateLeadAction(any(AgentLeadDto.class))).thenReturn(returnedDto);
         ResponseEntity<AgentLeadDto> response = propertyAgentController.updateLeadAction(inputDto);
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCode().value());
+        assertEquals(200, response.getStatusCodeValue());
         assertEquals(returnedDto, response.getBody());
         verify(propertyAgentService).updateLeadAction(inputDto);
     }
@@ -46,8 +44,7 @@ public class PropertyAgentControllerTest {
         List<String> agentIds = List.of("agent1", "agent2");
         when(propertyAgentService.getAgentsByZipCode(zipCode)).thenReturn(agentIds);
         ResponseEntity<List<String>> response = propertyAgentController.getAgentsByZipCode(zipCode);
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCode().value());
+        assertEquals(200, response.getStatusCodeValue());
         assertEquals(agentIds, response.getBody());
         verify(propertyAgentService).getAgentsByZipCode(zipCode);
     }
@@ -55,12 +52,11 @@ public class PropertyAgentControllerTest {
     @Test
     void getAgentLeads_shouldReturnListOfAgentLeads() {
         String agentId = "agent1";
-        AgentLeadDto leadDto = new AgentLeadDto(1, LeadAction.INTERESTED, agentId, 100, null);
+        AgentLeadDto leadDto = new AgentLeadDto(1, LeadAction.INTERESTED, agentId, 100, null, null, null);
         List<AgentLeadDto> leads = Collections.singletonList(leadDto);
         when(propertyAgentService.getAgentLeads(agentId)).thenReturn(leads);
         ResponseEntity<List<AgentLeadDto>> response = propertyAgentController.getAgentLeads(agentId);
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCode().value());
+        assertEquals(200, response.getStatusCodeValue());
         assertEquals(leads, response.getBody());
         verify(propertyAgentService).getAgentLeads(agentId);
     }

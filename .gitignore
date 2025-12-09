@@ -2,7 +2,6 @@
 /shelf
 .idea
 /.picma-storage
-HELP.md
 
 # Editor-based HTTP Client requests
 /httpRequests/

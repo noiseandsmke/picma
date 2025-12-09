@@ -1,13 +1,16 @@
 import apiClient from '@/services/apiClient';
 import {PropertyQuoteDto} from "@/features/admin/services/quoteService";
 
+export type LeadAction = 'INTERESTED' | 'ACCEPTED' | 'REJECTED' | null;
+
 export interface AgentLeadDto {
     id: number;
     userInfo: string;
     propertyInfo: string;
-    status: string;
+    leadAction: LeadAction;
     createdAt: string;
     agentId: string;
+    leadId: number;
 }
 
 const AGENT_BASE_PATH = '/picma/agents';
@@ -17,6 +20,11 @@ export const fetchAgentLeads = async (agentId: string): Promise<AgentLeadDto[]> 
     const response = await apiClient.get<AgentLeadDto[]>(`${AGENT_BASE_PATH}/agent/leads`, {
         params: {agentId}
     });
+    return response.data;
+};
+
+export const updateLeadAction = async (leadData: Partial<AgentLeadDto>): Promise<AgentLeadDto> => {
+    const response = await apiClient.put<AgentLeadDto>(`${AGENT_BASE_PATH}/agent`, leadData);
     return response.data;
 };
 

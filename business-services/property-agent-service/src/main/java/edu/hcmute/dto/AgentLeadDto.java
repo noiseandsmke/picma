@@ -9,6 +9,8 @@ public record AgentLeadDto(
         LeadAction leadAction,
         String agentId,
         int leadId,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String userInfo,
+        String propertyInfo
 ) {
 }

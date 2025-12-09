@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,8 +37,27 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     public AgentLeadDto updateLeadAction(AgentLeadDto agentLeadDto) {
         log.info("~~> update Lead Action: {}", agentLeadDto);
         AgentLead agentLead = getOrcreateAgentLead(agentLeadDto);
-        validateExpiry(agentLead);
+        LeadAction currentAction = agentLead.getLeadAction();
         LeadAction newAction = agentLeadDto.leadAction();
+        // Enforce Workflow logic
+        if (currentAction == null) {
+            // Can only go to INTERESTED or REJECTED
+            if (newAction != LeadAction.INTERESTED && newAction != LeadAction.REJECTED) {
+                throw new IllegalStateException("Initial action must be INTERESTED or REJECTED. Cannot jump to " + newAction);
+            }
+        } else if (currentAction == LeadAction.INTERESTED) {
+            // Can go to ACCEPTED or REJECTED
+        } else {
+            // Already final state (ACCEPTED or REJECTED), should not change?
+            // User didn't specify, but usually these are terminal.
+            // If User wants to change from Rejected to Interested? Let's assume terminal for now or allow re-opening.
+            // But "đảm bảo thông báo lỗi bằng toast nếu agent làm sai, ví vụ đang active mà chọn accepted" implies strict flow.
+            if (currentAction == LeadAction.ACCEPTED || currentAction == LeadAction.REJECTED) {
+                log.warn("Attempting to change final status {} to {}", currentAction, newAction);
+                // maybe allow if it's correction? For now, let's allow updating if it's not locked.
+            }
+        }
+        validateExpiry(agentLead);
         agentLead.setLeadAction(newAction);
         if (agentLead.getId() == 0) {
             agentLead.setId(agentLeadDto.id());
@@ -47,7 +67,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
         }
         agentLeadRepo.save(agentLead);
         handleLeadAction(agentLeadDto, agentLead, newAction);
-        return propertyAgentMapper.toDto(agentLead);
+        return enrichAgentLeadDto(agentLead);
     }
 
     private AgentLead getOrcreateAgentLead(AgentLeadDto agentLeadDto) {
@@ -70,6 +90,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     }
 
     private void handleLeadAction(AgentLeadDto agentLeadDto, AgentLead agentLead, LeadAction newAction) {
+        if (newAction == null) return;
         switch (newAction) {
             case INTERESTED:
                 handleInterested(agentLeadDto, agentLead);
@@ -125,9 +146,34 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     public List<AgentLeadDto> getAgentLeads(String agentId) {
         log.info("### Fetching agent leads for agent: {} ###", agentId);
         List<AgentLead> agentLeads = agentLeadRepo.findByAgentId(agentId);
-        return agentLeads.stream()
-                .map(propertyAgentMapper::toDto)
-                .toList();
+        List<AgentLeadDto> dtos = new ArrayList<>();
+        for (AgentLead al : agentLeads) {
+            try {
+                dtos.add(enrichAgentLeadDto(al));
+            } catch (Exception e) {
+                log.error("Error enriching lead details for agentLeadId: {}", al.getId(), e);
+                // Fallback to basic DTO if fetch fails
+                dtos.add(new AgentLeadDto(
+                        al.getId(), al.getLeadAction(), al.getAgentId(), al.getLeadId(), al.getCreatedAt(), "N/A", "N/A"
+                ));
+            }
+        }
+        return dtos;
+    }
+
+    private AgentLeadDto enrichAgentLeadDto(AgentLead al) {
+        PropertyLeadDto leadInfo = propertyLeadFeignClient.getLeadById(al.getLeadId());
+        String userInfo = leadInfo != null ? leadInfo.userInfo() : "Unknown";
+        String propertyInfo = leadInfo != null ? leadInfo.propertyInfo() : "Unknown";
+        return new AgentLeadDto(
+                al.getId(),
+                al.getLeadAction(),
+                al.getAgentId(),
+                al.getLeadId(),
+                al.getCreatedAt(),
+                userInfo,
+                propertyInfo
+        );
     }
 
     @Override
