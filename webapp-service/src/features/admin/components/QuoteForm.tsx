@@ -163,7 +163,6 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
 
     const leads = propsLeads || fetchedLeads;
 
-    // Fetch owners to resolve names for leads
     const {data: owners} = useQuery({
         queryKey: ['all-owners-for-select'],
         queryFn: () => fetchUsers('owner'),
@@ -230,7 +229,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
 
     useEffect(() => {
         if (sumInsured > 0) {
-            if (initialData && initialData.plan === selectedPlan && initialData.sumInsured === sumInsured && fields.length > 0) {
+            if (initialData?.plan === selectedPlan && initialData.sumInsured === sumInsured && fields.length > 0) {
                 return;
             }
             const defaults = getDefaultCoverages(selectedPlan, sumInsured);
@@ -238,11 +237,24 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
         }
     }, [selectedPlan, sumInsured, replace, initialData, fields.length]);
 
-    const calculatePremium = (plan: string, sum: number) => {
-        let rate = 0.001;
-        if (plan === 'SILVER') rate = 0.0012;
-        if (plan === 'GOLD') rate = 0.0015;
+    const getPremiumRate = (plan: string) => {
+        switch (plan) {
+            case 'SILVER':
+                return 0.02;
+            case 'GOLD':
+                return 0.03;
+            default:
+                return 0.01;
+        }
+    };
 
+    const getRateDisplay = (plan: string) => {
+        const rate = getPremiumRate(plan);
+        return `${Number((rate * 100).toFixed(2))}%`;
+    };
+
+    const calculatePremium = (plan: string, sum: number) => {
+        const rate = getPremiumRate(plan);
         const net = Math.round(sum * rate);
         const tax = Math.round(net * 0.1);
         const total = net + tax;
@@ -278,8 +290,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
 
         return {
             value: l.id,
-            label: label,
-            sublabel: `${l.userInfo.split(' - ')[1] || 'No Phone'}`
+            label: label
         };
     }) || [];
 
@@ -599,16 +610,19 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                     <p className="text-xs text-indigo-400/60">Auto-calculated based on Plan rate</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-6 md:gap-12">
+                            <div className="flex items-center gap-4 md:gap-8">
                                 <div className="text-right">
-                                    <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Net</p>
+                                    <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Net
+                                        ({getRateDisplay(selectedPlan)})</p>
                                     <p className="text-sm font-medium text-slate-300">{formatCurrency(calculatedPremium.net)}</p>
                                 </div>
+                                <div className="text-slate-600 font-bold text-lg pt-3">+</div>
                                 <div className="text-right">
                                     <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">VAT
                                         (10%)</p>
                                     <p className="text-sm font-medium text-slate-300">{formatCurrency(calculatedPremium.tax)}</p>
                                 </div>
+                                <div className="text-slate-600 font-bold text-lg pt-3">=</div>
                                 <div className="text-right">
                                     <p className="text-[10px] uppercase text-emerald-500/80 font-bold tracking-wider">Total</p>
                                     <p className="text-xl font-bold text-emerald-400">{formatCurrency(calculatedPremium.total)}</p>
