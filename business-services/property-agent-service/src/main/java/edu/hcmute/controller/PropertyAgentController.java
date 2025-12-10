@@ -18,8 +18,8 @@ public class PropertyAgentController {
 
     @PutMapping("/agent")
     public ResponseEntity<AgentLeadDto> updateLeadAction(@RequestBody AgentLeadDto agentLeadDto) {
-        log.info("~~> update leadAction");
-        return ResponseEntity.ok(propertyAgentService.updateLeadAction(agentLeadDto));
+        log.info("~~> update leadAction by Agent");
+        return ResponseEntity.ok(propertyAgentService.updateLeadActionByAgent(agentLeadDto));
     }
 
     @GetMapping("/agents/zipcode")

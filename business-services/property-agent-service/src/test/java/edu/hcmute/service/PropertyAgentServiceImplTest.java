@@ -56,7 +56,7 @@ public class PropertyAgentServiceImplTest {
         when(propertyAgentMapper.toEntity(inputDto)).thenReturn(entity);
         when(agentLeadRepo.save(any(AgentLead.class))).thenReturn(entity);
         when(propertyLeadFeignClient.getLeadById(100)).thenReturn(new PropertyLeadDto(100, "user", "prop", "NEW", null, null));
-        AgentLeadDto result = propertyAgentService.updateLeadAction(inputDto);
+        AgentLeadDto result = propertyAgentService.updateLeadActionByAgent(inputDto);
         assertNotNull(result);
         assertEquals(LeadAction.INTERESTED, entity.getLeadAction());
     }
@@ -72,21 +72,27 @@ public class PropertyAgentServiceImplTest {
         when(agentLeadRepo.findById(1)).thenReturn(Optional.of(entity));
         when(agentLeadRepo.save(entity)).thenReturn(entity);
         when(propertyLeadFeignClient.getLeadById(100)).thenReturn(new PropertyLeadDto(100, "user", "prop", "NEW", null, null));
-        AgentLeadDto result = propertyAgentService.updateLeadAction(inputDto);
+        AgentLeadDto result = propertyAgentService.updateLeadActionBySystem(inputDto);
         assertNotNull(result);
         assertEquals(LeadAction.ACCEPTED, entity.getLeadAction());
     }
 
     @Test
-    void updateLeadAction_expired() {
+    void updateLeadAction_manual_accepted_fails() {
         AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null, null, null);
+        assertThrows(IllegalArgumentException.class, () -> propertyAgentService.updateLeadActionByAgent(inputDto));
+    }
+
+    @Test
+    void updateLeadAction_expired() {
+        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.REJECTED, "agent1", 100, null, null, null);
         AgentLead entity = new AgentLead();
         entity.setId(1);
         entity.setLeadId(100);
         entity.setLeadAction(LeadAction.INTERESTED);
         entity.setCreatedAt(LocalDateTime.now().minusDays(8));
         when(agentLeadRepo.findById(1)).thenReturn(Optional.of(entity));
-        assertThrows(IllegalStateException.class, () -> propertyAgentService.updateLeadAction(inputDto));
+        assertThrows(IllegalStateException.class, () -> propertyAgentService.updateLeadActionByAgent(inputDto));
     }
 
     @Test
@@ -103,7 +109,7 @@ public class PropertyAgentServiceImplTest {
         AgentLead al1 = new AgentLead();
         al1.setLeadAction(LeadAction.REJECTED);
         when(agentLeadRepo.findByLeadId(100)).thenReturn(Collections.singletonList(al1));
-        propertyAgentService.updateLeadAction(inputDto);
+        propertyAgentService.updateLeadActionByAgent(inputDto);
         assertEquals(LeadAction.REJECTED, entity.getLeadAction());
         verify(propertyLeadFeignClient).updateLeadStatusById(100, "REJECTED");
     }
@@ -146,9 +152,9 @@ public class PropertyAgentServiceImplTest {
         String zipCode = "12345";
         String agentId = "agent1";
         PropertyAddressDto addressDto = new PropertyAddressDto("12345");
-        PropertyMgmtDto propertyDto = new PropertyMgmtDto(addressDto);
+        PropertyMgmtDto propertyDto = new PropertyMgmtDto(propertyId, addressDto);
         UserDto agentDto = new UserDto(agentId, "Agent One", "agent1@example.com", zipCode);
-        when(propertyMgmtFeignClient.getPropertyInfoById(propertyId)).thenReturn(propertyDto);
+        when(propertyMgmtFeignClient.fetchAllPropertiesByZipCode("")).thenReturn(List.of(propertyDto));
         when(userMgmtFeignClient.getAgentsByZipCode(zipCode)).thenReturn(Collections.singletonList(agentDto));
         List<String> result = propertyAgentService.fetchAgentWithinZipCode(propertyId, leadId);
         verify(notificationProducer).sendNotification(any(NotificationRequestDto.class));

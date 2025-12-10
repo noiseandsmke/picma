@@ -47,7 +47,7 @@ public class QuoteEventConsumer {
     private void updateAgentAction(String agentId, Integer leadId, LeadAction action) {
         try {
             AgentLeadDto agentLeadDto = new AgentLeadDto(0, action, agentId, leadId, LocalDateTime.now(), null, null);
-            propertyAgentService.updateLeadAction(agentLeadDto);
+            propertyAgentService.updateLeadActionBySystem(agentLeadDto);
             log.info("Agent lead action updated to {} for agentId: {}, leadId: {}", action, agentId, leadId);
         } catch (Exception e) {
             log.error("Error updating agent lead action: {}", e.getMessage(), e);

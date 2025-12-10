@@ -29,13 +29,13 @@ public class PropertyAgentControllerTest {
 
     @Test
     void updateLeadAction_shouldReturnUpdatedAgentLead() {
-        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null, null, null);
-        AgentLeadDto returnedDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null, null, null);
-        when(propertyAgentService.updateLeadAction(any(AgentLeadDto.class))).thenReturn(returnedDto);
+        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.INTERESTED, "agent1", 100, null, null, null);
+        AgentLeadDto returnedDto = new AgentLeadDto(1, LeadAction.INTERESTED, "agent1", 100, null, null, null);
+        when(propertyAgentService.updateLeadActionByAgent(any(AgentLeadDto.class))).thenReturn(returnedDto);
         ResponseEntity<AgentLeadDto> response = propertyAgentController.updateLeadAction(inputDto);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(returnedDto, response.getBody());
-        verify(propertyAgentService).updateLeadAction(inputDto);
+        verify(propertyAgentService).updateLeadActionByAgent(inputDto);
     }
 
     @Test
@@ -44,7 +44,7 @@ public class PropertyAgentControllerTest {
         List<String> agentIds = List.of("agent1", "agent2");
         when(propertyAgentService.getAgentsByZipCode(zipCode)).thenReturn(agentIds);
         ResponseEntity<List<String>> response = propertyAgentController.getAgentsByZipCode(zipCode);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(agentIds, response.getBody());
         verify(propertyAgentService).getAgentsByZipCode(zipCode);
     }
@@ -56,7 +56,7 @@ public class PropertyAgentControllerTest {
         List<AgentLeadDto> leads = Collections.singletonList(leadDto);
         when(propertyAgentService.getAgentLeads(agentId)).thenReturn(leads);
         ResponseEntity<List<AgentLeadDto>> response = propertyAgentController.getAgentLeads(agentId);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(leads, response.getBody());
         verify(propertyAgentService).getAgentLeads(agentId);
     }

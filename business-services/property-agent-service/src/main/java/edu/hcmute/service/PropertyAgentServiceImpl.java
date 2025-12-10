@@ -34,27 +34,38 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
 
     @Override
     @Transactional
-    public AgentLeadDto updateLeadAction(AgentLeadDto agentLeadDto) {
+    public AgentLeadDto updateLeadActionByAgent(AgentLeadDto agentLeadDto) {
+        if (agentLeadDto.leadAction() == LeadAction.ACCEPTED) {
+            throw new IllegalArgumentException("Agents cannot manually set status to ACCEPTED. Please send a quote instead.");
+        }
+        return updateLeadActionInternal(agentLeadDto);
+    }
+
+    @Override
+    @Transactional
+    public AgentLeadDto updateLeadActionBySystem(AgentLeadDto agentLeadDto) {
+        return updateLeadActionInternal(agentLeadDto);
+    }
+
+    private AgentLeadDto updateLeadActionInternal(AgentLeadDto agentLeadDto) {
         log.info("~~> update Lead Action: {}", agentLeadDto);
         AgentLead agentLead = getOrcreateAgentLead(agentLeadDto);
         LeadAction currentAction = agentLead.getLeadAction();
         LeadAction newAction = agentLeadDto.leadAction();
-        // Enforce Workflow logic
         if (currentAction == null) {
-            // Can only go to INTERESTED or REJECTED
             if (newAction != LeadAction.INTERESTED && newAction != LeadAction.REJECTED) {
                 throw new IllegalStateException("Initial action must be INTERESTED or REJECTED. Cannot jump to " + newAction);
             }
         } else if (currentAction == LeadAction.INTERESTED) {
-            // Can go to ACCEPTED or REJECTED
         } else {
-            // Already final state (ACCEPTED or REJECTED), should not change?
-            // User didn't specify, but usually these are terminal.
-            // If User wants to change from Rejected to Interested? Let's assume terminal for now or allow re-opening.
-            // But "đảm bảo thông báo lỗi bằng toast nếu agent làm sai, ví vụ đang active mà chọn accepted" implies strict flow.
             if (currentAction == LeadAction.ACCEPTED || currentAction == LeadAction.REJECTED) {
-                log.warn("Attempting to change final status {} to {}", currentAction, newAction);
-                // maybe allow if it's correction? For now, let's allow updating if it's not locked.
+                if (currentAction == LeadAction.ACCEPTED && newAction == LeadAction.REJECTED) {
+                    log.info("Quote rejected, flipping Agent Action from ACCEPTED to REJECTED");
+                } else if (currentAction == newAction) {
+                    log.info("Action already set to {}, ignoring update", currentAction);
+                } else {
+                    log.warn("Attempting to change final status {} to {}", currentAction, newAction);
+                }
             }
         }
         validateExpiry(agentLead);
@@ -152,7 +163,6 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
                 dtos.add(enrichAgentLeadDto(al));
             } catch (Exception e) {
                 log.error("Error enriching lead details for agentLeadId: {}", al.getId(), e);
-                // Fallback to basic DTO if fetch fails
                 dtos.add(new AgentLeadDto(
                         al.getId(), al.getLeadAction(), al.getAgentId(), al.getLeadId(), al.getCreatedAt(), "N/A", "N/A"
                 ));
@@ -181,7 +191,13 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     public List<String> fetchAgentWithinZipCode(String propertyId, int leadId) {
         try {
             log.info("### Fetching agent within zip code for Property ID: {} ###", propertyId);
-            PropertyMgmtDto propertyInfo = propertyMgmtFeignClient.getPropertyInfoById(propertyId);
+            PropertyMgmtDto propertyInfo = propertyMgmtFeignClient.fetchAllPropertiesByZipCode("").stream()
+                    .filter(p -> p.id().equals(propertyId))
+                    .findFirst()
+                    .orElse(null);
+            if (propertyInfo == null) {
+                propertyInfo = propertyMgmtFeignClient.getPropertyInfoById(propertyId);
+            }
             if (propertyInfo == null || propertyInfo.propertyAddressDto() == null) {
                 log.warn("~~> Property info or address is null for Property ID: {}", propertyId);
                 return Collections.emptyList();

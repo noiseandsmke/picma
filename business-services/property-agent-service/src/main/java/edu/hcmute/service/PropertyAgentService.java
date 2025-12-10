@@ -8,7 +8,9 @@ import java.util.List;
 public interface PropertyAgentService {
     List<String> fetchAgentWithinZipCode(String propertyId, int leadId);
 
-    AgentLeadDto updateLeadAction(AgentLeadDto agentLeadDto);
+    AgentLeadDto updateLeadActionByAgent(AgentLeadDto agentLeadDto);
+
+    AgentLeadDto updateLeadActionBySystem(AgentLeadDto agentLeadDto);
 
     List<String> getAgentsByZipCode(String zipCode);
 
