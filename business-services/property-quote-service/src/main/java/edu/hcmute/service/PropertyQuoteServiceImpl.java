@@ -1,20 +1,23 @@
 package edu.hcmute.service;
 
-import edu.hcmute.config.PropertyAgentFeignClient;
 import edu.hcmute.config.PropertyLeadFeignClient;
-import edu.hcmute.dto.AgentLeadDto;
 import edu.hcmute.dto.LeadInfoDto;
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.PropertyQuote;
+import edu.hcmute.event.schema.QuoteAcceptedEvent;
+import edu.hcmute.event.schema.QuoteCreatedEvent;
+import edu.hcmute.event.schema.QuoteRejectedEvent;
 import edu.hcmute.mapper.PropertyQuoteMapper;
 import edu.hcmute.repo.PropertyQuoteRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -22,11 +25,14 @@ import java.util.List;
 @Slf4j
 public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     private static final String QUOTE_NOT_FOUND_MSG = "PropertyQuote not found with id: ";
+    private static final String QUOTE_CREATED_OUT = "quoteCreated-out-0";
+    private static final String QUOTE_ACCEPTED_OUT = "quoteAccepted-out-0";
+    private static final String QUOTE_REJECTED_OUT = "quoteRejected-out-0";
 
     private final PropertyQuoteRepo propertyQuoteRepo;
     private final PropertyQuoteMapper propertyQuoteMapper;
     private final PropertyLeadFeignClient propertyLeadFeignClient;
-    private final PropertyAgentFeignClient propertyAgentFeignClient;
+    private final StreamBridge streamBridge;
 
     @Override
     @Transactional
@@ -51,9 +57,15 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
             }
             propertyQuote = propertyQuoteRepo.save(propertyQuote);
             log.info("~~> PropertyQuote saved with id: {}", propertyQuote.getId());
-            AgentLeadDto agentLeadDto = new AgentLeadDto(0, "ACCEPTED", propertyQuote.getAgentId(), leadId);
-            propertyAgentFeignClient.updateLeadAction(agentLeadDto);
-            log.info("~~> Agent lead action updated to ACCEPTED for agentId = {} and leadId = {}", propertyQuote.getAgentId(), leadId);
+            QuoteCreatedEvent event = new QuoteCreatedEvent(
+                    propertyQuote.getId(),
+                    propertyQuote.getLeadId(),
+                    propertyQuote.getAgentId(),
+                    (double) propertyQuote.getPremium().getTotal(),
+                    LocalDateTime.now()
+            );
+            streamBridge.send(QUOTE_CREATED_OUT, event);
+            log.info("~~> QuoteCreatedEvent published for quoteId: {}", propertyQuote.getId());
             return propertyQuoteMapper.toDto(propertyQuote);
         } catch (Exception e) {
             log.error("~~> error creating PropertyQuote: {}", e.getMessage(), e);
@@ -130,14 +142,14 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
         log.info("### Accept Quote id = {} ###", quoteId);
         PropertyQuote quote = propertyQuoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + quoteId));
-        log.info("~~> updating lead status to ACCEPTED for leadId: {}", quote.getLeadId());
-        try {
-            propertyLeadFeignClient.updateLeadStatusById(quote.getLeadId(), "ACCEPTED");
-            log.info("~~> lead status updated successfully");
-        } catch (Exception e) {
-            log.error("~~> failed to update lead status: {}", e.getMessage());
-            throw new IllegalArgumentException("Failed to update lead status: " + e.getMessage());
-        }
+        QuoteAcceptedEvent event = new QuoteAcceptedEvent(
+                quote.getId(),
+                quote.getLeadId(),
+                quote.getAgentId(),
+                LocalDateTime.now()
+        );
+        streamBridge.send(QUOTE_ACCEPTED_OUT, event);
+        log.info("~~> QuoteAcceptedEvent published for quoteId: {}", quoteId);
     }
 
     @Override
@@ -146,14 +158,13 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
         log.info("### Reject Quote id = {} ###", quoteId);
         PropertyQuote quote = propertyQuoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + quoteId));
-        log.info("~~> updating agent lead action to REJECTED for agent: {} lead: {}", quote.getAgentId(), quote.getLeadId());
-        try {
-            AgentLeadDto agentLeadDto = new AgentLeadDto(0, "REJECTED", quote.getAgentId(), quote.getLeadId());
-            propertyAgentFeignClient.updateLeadAction(agentLeadDto);
-            log.info("~~> agent lead action updated successfully");
-        } catch (Exception e) {
-            log.error("~~> failed to update agent lead action: {}", e.getMessage());
-            throw new IllegalArgumentException("Failed to update agent lead action: " + e.getMessage());
-        }
+        QuoteRejectedEvent event = new QuoteRejectedEvent(
+                quote.getId(),
+                quote.getLeadId(),
+                quote.getAgentId(),
+                LocalDateTime.now()
+        );
+        streamBridge.send(QUOTE_REJECTED_OUT, event);
+        log.info("~~> QuoteRejectedEvent published for quoteId: {}", quoteId);
     }
 }

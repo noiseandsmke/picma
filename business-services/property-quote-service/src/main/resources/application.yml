@@ -10,6 +10,18 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+  cloud:
+    stream:
+      bindings:
+        quoteCreated-out-0:
+          destination: picma.quotes.created
+        quoteAccepted-out-0:
+          destination: picma.quotes.accepted
+        quoteRejected-out-0:
+          destination: picma.quotes.rejected
+      kafka:
+        binder:
+          brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 picma:
   services:
     property-lead-service:

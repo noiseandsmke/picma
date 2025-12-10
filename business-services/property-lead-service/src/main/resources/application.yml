@@ -15,6 +15,14 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  cloud:
+    stream:
+      function:
+        definition: handleQuoteAccepted
+      bindings:
+        handleQuoteAccepted-in-0:
+          destination: picma.quotes.accepted
+          group: property-lead-service-group
 management:
   endpoints:
     web:
