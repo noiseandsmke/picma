@@ -491,7 +491,7 @@ const AdminLeadsView: React.FC = () => {
         {
             header: (
                 <div className="flex items-center gap-1">
-                    Expiry Date
+                    Expires at
                 </div>
             ),
             width: "10%",
@@ -534,6 +534,7 @@ const AdminLeadsView: React.FC = () => {
         );
     } else {
         content = filteredLeads?.map((lead) => {
+            const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
             return (
                 <TableRow key={lead.id}
                           className="border-slate-800 hover:bg-slate-900/50 transition-colors">
@@ -545,15 +546,10 @@ const AdminLeadsView: React.FC = () => {
                         {renderPropertyCell(lead.propertyInfo)}
                     </TableCell>
                     <TableCell>
-                        {(() => {
-                            const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
-                            return (
-                                <Badge variant="outline"
-                                       className={cn("border-0 font-medium", statusConfig.className)}>
-                                    {statusConfig.label}
-                                </Badge>
-                            );
-                        })()}
+                        <Badge variant="outline"
+                               className={cn("border-0 font-medium", statusConfig.className)}>
+                            {statusConfig.label}
+                        </Badge>
                     </TableCell>
                     <TableCell className="text-slate-400 text-sm">
                         <div className="flex items-center gap-2">
@@ -592,7 +588,7 @@ const AdminLeadsView: React.FC = () => {
                                     onClick={() => handleDelete(lead.id)}
                                 >
                                     <Trash2 className="mr-2 h-4 w-4"/>
-                                    Delete Lead
+                                    Delete lead
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -648,15 +644,15 @@ const AdminLeadsView: React.FC = () => {
                     <DialogContent
                         className="bg-slate-950 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Create New Lead</DialogTitle>
+                            <DialogTitle>Create new lead</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
                             <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Owner
-                                    Selection</h4>
+                                    selection</h4>
                                 <div className="grid grid-cols-1 gap-4">
                                     <div>
-                                        <Label htmlFor="userId" className="text-slate-300">Select Owner</Label>
+                                        <Label htmlFor="userId" className="text-slate-300">Select owner</Label>
                                         <Controller
                                             name="userId"
                                             control={control}
@@ -685,7 +681,7 @@ const AdminLeadsView: React.FC = () => {
 
                             <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Create
-                                    Property</h4>
+                                    property</h4>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
@@ -889,7 +885,7 @@ const AdminLeadsView: React.FC = () => {
                                 <Button type="submit"
                                         disabled={createLeadMutation.isPending || createPropertyMutation.isPending}
                                         className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                    {(createLeadMutation.isPending || createPropertyMutation.isPending) ? 'Creating...' : 'Create Lead'}
+                                    {(createLeadMutation.isPending || createPropertyMutation.isPending) ? 'Creating...' : 'Create lead'}
                                 </Button>
                             </DialogFooter>
                         </form>

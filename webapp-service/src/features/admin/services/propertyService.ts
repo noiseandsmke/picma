@@ -67,6 +67,11 @@ export const createProperty = async (property: Omit<PropertyInfoDto, 'id'>): Pro
     return response.data;
 };
 
+export const updateProperty = async (id: string, property: Omit<PropertyInfoDto, 'id'>): Promise<PropertyInfoDto> => {
+    const response = await apiClient.put<PropertyInfoDto>(`${BASE_PATH}/${id}`, property);
+    return response.data;
+};
+
 export const deleteProperty = async (id: string): Promise<void> => {
     const response = await apiClient.delete(`${BASE_PATH}/${id}`);
     return response.data;

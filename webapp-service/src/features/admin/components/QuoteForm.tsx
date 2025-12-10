@@ -50,7 +50,7 @@ interface QuoteFormProps {
 const getDefaultCoverages = (plan: string, sumInsured: number) => {
     const baseFire = {code: 'FIRE', limit: sumInsured, deductible: 2000000};
     const baseTheft = {code: 'THEFT', limit: Math.min(sumInsured * 0.1, 50000000), deductible: 500000};
-    const baseFlood = {code: 'FLOOD', limit: sumInsured, deductible: 5000000};
+    const baseFlood = {code: 'NATURAL_DISASTER', limit: sumInsured, deductible: 5000000};
 
     switch (plan) {
         case 'GOLD':
@@ -203,11 +203,11 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
             if (currentAgentId && filteredAgents.length > 0) {
                 const agentExists = filteredAgents.some(a => a.id === currentAgentId);
                 if (!agentExists) {
-                    if (initialData?.agentId !== currentAgentId) {
-                        setValue('agentId', '');
-                    } else {
+                    if (initialData?.agentId === currentAgentId) {
                         const isInitialAgent = initialData?.agentId === currentAgentId;
                         if (!isInitialAgent) setValue('agentId', '');
+                    } else {
+                        setValue('agentId', '');
                     }
                 }
             } else if (selectedProperty && filteredAgents.length === 0) {
@@ -295,7 +295,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
         const userId = l.userInfo.split(' - ')[0];
         const owner = owners?.find(u => u.id === userId);
         const label = owner
-            ? `${owner.firstName} ${owner.lastName} (${owner.email})`
+            ? `#${l.id} - ${owner.firstName} ${owner.lastName} (${owner.email})`
             : `Lead #${l.id}`;
 
         return {
@@ -320,7 +320,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
         const map: Record<string, string> = {
             'FIRE': 'Fire & Explosion',
             'THEFT': 'Theft & Burglary',
-            'FLOOD': 'Flood & Water Damage'
+            'NATURAL_DISASTER': 'Natural Disaster'
         };
         return map[code] || code;
     };

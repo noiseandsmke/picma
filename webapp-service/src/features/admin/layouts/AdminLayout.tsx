@@ -32,7 +32,7 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
     const {user} = useAuth();
-    const [openMenus, setOpenMenus] = useState<string[]>(['User management', 'Document management', 'System configuration']);
+    const [openMenus, setOpenMenus] = useState<string[]>(['User management', 'Document management']);
 
     const toggleMenu = (label: string) => {
         setOpenMenus(prev =>

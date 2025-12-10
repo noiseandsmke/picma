@@ -78,6 +78,10 @@ const AdminQuotesView: React.FC = () => {
             updateMutation.mutate({
                 ...selectedQuote,
                 ...payload,
+                plan: payload.plan,
+                sumInsured: payload.sumInsured,
+                coverages: payload.coverages,
+                premium: payload.premium
             } as PropertyQuoteDto);
         } else {
             createMutation.mutate({
@@ -223,7 +227,11 @@ const AdminQuotesView: React.FC = () => {
                                     </TableCell>
 
                                     <TableCell>
-                                        <CustomerCell leadId={quote.leadId}/>
+                                        <CustomerCell
+                                            leadId={quote.leadId}
+                                            leadData={leads?.find(l => l.id === quote.leadId)}
+                                            onViewLead={handleViewLead}
+                                        />
                                     </TableCell>
 
                                     <TableCell>

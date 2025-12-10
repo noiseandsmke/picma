@@ -1,6 +1,6 @@
 import React, {useMemo, useState} from 'react';
 import OwnerLayout from '../layouts/OwnerLayout';
-import {FileText, MapPin, Plus, Shield} from 'lucide-react';
+import {Eye, FileText, MapPin, Plus, Shield} from 'lucide-react';
 import {Card, CardContent, CardFooter} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
@@ -15,10 +15,109 @@ import {PropertyLeadDto} from '@/features/admin/services/leadService';
 import {LeadQuotesList} from '@/features/owner/components/LeadQuotesList';
 import {LEAD_STATUS_CONFIG} from '@/features/admin/utils/statusMapping';
 import apiClient from '@/services/apiClient';
+import {fetchPropertyById} from '@/features/admin/services/propertyService';
+import {LeadDetailDialog} from '@/features/admin/components/LeadDetailDialog';
 
 const fetchOwnerLeads = async (userId: string) => {
     const response = await apiClient.get<PropertyLeadDto[]>(`/picma/leads/user/${userId}`);
     return response.data;
+};
+
+const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({lead}) => {
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+    const {data: property, isLoading} = useQuery({
+        queryKey: ['property-details', lead.propertyInfo],
+        queryFn: () => fetchPropertyById(lead.propertyInfo),
+        staleTime: 1000 * 60 * 5,
+    });
+
+    const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
+
+    const handleViewDetails = () => {
+        setIsDetailOpen(true);
+    };
+
+    const leadForDialog = {
+        ...lead,
+        createDate: lead.createDate || new Date().toISOString(),
+    };
+
+    return (
+        <>
+            <Card
+                className="border-none shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-[#141124]">
+                <div className="h-48 bg-slate-800 relative overflow-hidden group">
+                    <div className="w-full h-full flex items-center justify-center bg-slate-800 text-slate-500">
+                        <MapPin className="h-12 w-12 opacity-50"/>
+                    </div>
+
+                    <div className="absolute top-3 right-3">
+                        <Badge variant="outline"
+                               className={cn("border-0 font-medium backdrop-blur-sm shadow-sm", statusConfig.className)}>
+                            {statusConfig.label}
+                        </Badge>
+                    </div>
+
+                    <div
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md"
+                            onClick={handleViewDetails}
+                        >
+                            <Eye className="mr-2 h-4 w-4"/>
+                            View Details
+                        </Button>
+                    </div>
+                </div>
+                <CardContent className="p-5">
+                    {isLoading ? (
+                        <div className="space-y-2">
+                            <Skeleton className="h-6 w-3/4 bg-slate-800"/>
+                            <Skeleton className="h-4 w-1/2 bg-slate-800"/>
+                        </div>
+                    ) : (
+                        <>
+                            <h3 className="font-bold text-lg text-white line-clamp-1"
+                                title={property?.location?.street}>
+                                {property?.location?.street || `Property #${lead.propertyInfo}`}
+                            </h3>
+                            <div className="flex items-center text-slate-400 text-sm mt-1 mb-4">
+                                <MapPin className="h-3 w-3 mr-1"/>
+                                {property?.location?.city || 'Unknown City'}, {property?.location?.zipCode || ''}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                                <div>
+                                    <p className="text-slate-400 text-xs">Type</p>
+                                    <p className="font-medium text-slate-300">
+                                        {property?.attributes?.constructionType
+                                            ? property.attributes.constructionType.replace('_', ' ')
+                                            : 'N/A'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-slate-400 text-xs">Lead ID</p>
+                                    <p className="font-medium text-slate-300">#{lead.id}</p>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </CardContent>
+                <CardFooter className="p-0 flex flex-col">
+                    <LeadQuotesList leadId={lead.id} leadStatus={lead.status}/>
+                </CardFooter>
+            </Card>
+
+            <LeadDetailDialog
+                open={isDetailOpen}
+                onOpenChange={setIsDetailOpen}
+                lead={leadForDialog}
+            />
+        </>
+    );
 };
 
 const OwnerDashboard: React.FC = () => {
@@ -133,59 +232,14 @@ const OwnerDashboard: React.FC = () => {
                             Array.from({length: 3}).map((_, i) => (
                                 <Skeleton key={i} className="h-64 w-full rounded-xl bg-slate-800"/>
                             ))
-                        ) : leads?.map((lead) => {
-                            const property = properties?.find(p => String(p.id) === lead.propertyInfo);
-                            const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
-
-                            return (
-                                <Card key={lead.id}
-                                      className="border-none shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-[#141124]">
-                                    <div className="h-48 bg-slate-800 relative overflow-hidden">
-                                        {property?.imageUrl ? (
-                                            <img
-                                                src={property.imageUrl}
-                                                alt={property.address}
-                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                            />
-                                        ) : (
-                                            <div
-                                                className="w-full h-full flex items-center justify-center bg-slate-800 text-slate-500">
-                                                <MapPin className="h-12 w-12 opacity-50"/>
-                                            </div>
-                                        )}
-                                        <div className="absolute top-3 right-3">
-                                            <Badge variant="outline"
-                                                   className={cn("border-0 font-medium backdrop-blur-sm shadow-sm", statusConfig.className)}>
-                                                {statusConfig.label}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                    <CardContent className="p-5">
-                                        <h3 className="font-bold text-lg text-white line-clamp-1">
-                                            {property?.address || `Property #${lead.propertyInfo}`}
-                                        </h3>
-                                        <div className="flex items-center text-slate-400 text-sm mt-1 mb-4">
-                                            <MapPin className="h-3 w-3 mr-1"/>
-                                            {property?.city || 'Unknown City'}, {property?.zipCode || ''}
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                                            <div>
-                                                <p className="text-slate-400 text-xs">Type</p>
-                                                <p className="font-medium text-slate-300">{property?.type || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-slate-400 text-xs">Lead ID</p>
-                                                <p className="font-medium text-slate-300">#{lead.id}</p>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                    <CardFooter className="p-0 flex flex-col">
-                                        <LeadQuotesList leadId={lead.id} leadStatus={lead.status}/>
-                                    </CardFooter>
-                                </Card>
-                            );
-                        })}
+                        ) : leads?.length === 0 ? (
+                            <div
+                                className="col-span-full py-12 text-center text-slate-500 bg-[#141124] rounded-xl border border-dashed border-slate-800">
+                                <p>No leads found. Create one to get started!</p>
+                            </div>
+                        ) : leads?.map((lead) => (
+                            <LeadCard key={lead.id} lead={lead}/>
+                        ))}
                     </div>
                 </div>
             </div>

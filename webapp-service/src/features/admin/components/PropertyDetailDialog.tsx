@@ -1,11 +1,12 @@
 import React from 'react';
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,} from '@/components/ui/dialog';
 import {Button} from '@/components/ui/button';
-import {Label} from '@/components/ui/label';
 import {PropertyInfoDto} from '../services/propertyService';
 import {useQuery} from '@tanstack/react-query';
 import {fetchUsers} from '../services/userService';
 import {Skeleton} from '@/components/ui/skeleton';
+import {Building2, MapPin, Ruler, Wallet} from 'lucide-react';
+import {Separator} from '@/components/ui/separator';
 
 interface PropertyDetailDialogProps {
     open: boolean;
@@ -53,7 +54,6 @@ export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({open,
                                 </div>
                                 <div><span className="text-slate-500">Username:</span> {owner.username}</div>
                                 <div><span className="text-slate-500">Email:</span> {owner.email}</div>
-                                <div><span className="text-slate-500">Mobile:</span> {owner.mobile || '-'}</div>
                             </div>
                         )}
                         {!isOwnersLoading && !owner && (
@@ -62,69 +62,76 @@ export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({open,
                         )}
                     </div>
 
-                    <div className="border-t border-slate-800"/>
+                    <Separator className="bg-slate-800"/>
 
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Location</h4>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <Label className="text-slate-500 text-xs">Street</Label>
-                                <div className="text-white">{property.location.street}</div>
+                    <div className="space-y-4">
+                        <div className="flex items-start gap-3">
+                            <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-400 mt-1">
+                                <MapPin size={18}/>
                             </div>
-                            <div>
-                                <Label className="text-slate-500 text-xs">Zip Code</Label>
-                                <div className="text-white font-mono">{property.location.zipCode}</div>
+                            <div className="space-y-1 flex-1">
+                                <h4 className="text-sm font-medium text-slate-300">Location</h4>
+                                <p className="text-sm text-white font-medium">{property.location.street}</p>
+                                <p className="text-xs text-slate-500">
+                                    {property.location.ward}, {property.location.city} ({property.location.zipCode})
+                                </p>
                             </div>
-                            <div>
-                                <Label className="text-slate-500 text-xs">Ward</Label>
-                                <div className="text-white">{property.location.ward}</div>
+                        </div>
+
+                        <Separator className="bg-slate-800"/>
+
+                        <div className="flex items-start gap-3">
+                            <div className="bg-emerald-500/10 p-2 rounded-lg text-emerald-400 mt-1">
+                                <Building2 size={18}/>
                             </div>
-                            <div>
-                                <Label className="text-slate-500 text-xs">City</Label>
-                                <div className="text-white">{property.location.city}</div>
+                            <div className="space-y-3 flex-1">
+                                <h4 className="text-sm font-medium text-slate-300">Attributes</h4>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                                    <div>
+                                        <span className="text-slate-500 text-xs">Type:</span> <span
+                                        className="text-white">{formatEnum(property.attributes.constructionType)}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-slate-500 text-xs">Occupancy:</span> <span
+                                        className="text-white">{formatEnum(property.attributes.occupancyType)}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-slate-500 text-xs">Year Built:</span> <span
+                                        className="text-white">{property.attributes.yearBuilt}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-slate-500 text-xs">Floors:</span> <span
+                                        className="text-white">{property.attributes.noFloors}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Separator className="bg-slate-800"/>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex items-start gap-3">
+                                <div className="bg-amber-500/10 p-2 rounded-lg text-amber-400 mt-1">
+                                    <Ruler size={18}/>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-medium text-slate-300">Area</h4>
+                                    <p className="text-sm font-medium text-white">{property.attributes.squareMeters} m²</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <div className="bg-rose-500/10 p-2 rounded-lg text-rose-400 mt-1">
+                                    <Wallet size={18}/>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-medium text-slate-300">Est. Cost</h4>
+                                    <p className="text-sm font-medium text-emerald-400">
+                                        {formatCurrency(property.valuation.estimatedConstructionCost)}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <div className="border-t border-slate-800"/>
-
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Attributes</h4>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <Label className="text-slate-500 text-xs">Construction Type</Label>
-                                <div className="text-white">{formatEnum(property.attributes.constructionType)}</div>
-                            </div>
-                            <div>
-                                <Label className="text-slate-500 text-xs">Occupancy Type</Label>
-                                <div className="text-white">{formatEnum(property.attributes.occupancyType)}</div>
-                            </div>
-                            <div>
-                                <Label className="text-slate-500 text-xs">Year Built</Label>
-                                <div className="text-white">{property.attributes.yearBuilt}</div>
-                            </div>
-                            <div>
-                                <Label className="text-slate-500 text-xs">Number of Floors</Label>
-                                <div className="text-white">{property.attributes.noFloors}</div>
-                            </div>
-                            <div>
-                                <Label className="text-slate-500 text-xs">Square Meters</Label>
-                                <div className="text-white">{property.attributes.squareMeters} m²</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="border-t border-slate-800"/>
-
-                    <div className="space-y-2">
-                        <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Valuation</h4>
-                        <div className="text-sm">
-                            <Label className="text-slate-500 text-xs">Estimated Construction Cost</Label>
-                            <div
-                                className="text-emerald-400 font-mono text-lg">{formatCurrency(property.valuation.estimatedConstructionCost)}</div>
-                        </div>
-                    </div>
-
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}

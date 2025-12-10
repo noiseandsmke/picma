@@ -58,12 +58,12 @@ export function EditUserDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px] bg-[#141124] border-slate-800 text-slate-200">
                 <DialogHeader>
-                    <DialogTitle className="text-white">View User Profile</DialogTitle>
+                    <DialogTitle className="text-white">View user profile</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="firstName" className="text-slate-300">First Name</Label>
+                            <Label htmlFor="firstName" className="text-slate-300">First name</Label>
                             <Input
                                 id="firstName"
                                 {...register("firstName")}
@@ -72,7 +72,7 @@ export function EditUserDialog({
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="lastName" className="text-slate-300">Last Name</Label>
+                            <Label htmlFor="lastName" className="text-slate-300">Last name</Label>
                             <Input
                                 id="lastName"
                                 {...register("lastName")}
@@ -94,7 +94,7 @@ export function EditUserDialog({
 
                     {isAgent && (
                         <div className="space-y-2">
-                            <Label htmlFor="zipcode" className="text-slate-300">ZipCode</Label>
+                            <Label htmlFor="zipcode" className="text-slate-300">Zip code</Label>
                             <Input
                                 id="zipcode"
                                 {...register("zipcode")}

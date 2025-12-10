@@ -61,8 +61,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
         };
 
         const fetchUserDetails = async () => {
-            // Heuristic: If it's a UUID (or at least long enough) and doesn't contain separators like " - "
-            if (lead.userInfo && lead.userInfo.length > 30 && !lead.userInfo.includes(' - ')) {
+            if (lead.userInfo && !lead.userInfo.includes(' - ')) {
                 try {
                     const user = await fetchUserById(lead.userInfo);
                     setUserDetails(user);
@@ -155,7 +154,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                                 </div>
                                 <div>
                                     <span
-                                        className="text-[10px] uppercase text-slate-500 tracking-wider">Year Built</span>
+                                        className="text-[10px] uppercase text-slate-500 tracking-wider">Year built</span>
                                     <p className="text-sm text-slate-300">{propertyDetails.attributes.yearBuilt}</p>
                                 </div>
                                 <div>
@@ -183,7 +182,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                                 <Wallet size={18}/>
                             </div>
                             <div>
-                                <h4 className="text-sm font-medium text-slate-300">Est. Cost</h4>
+                                <h4 className="text-sm font-medium text-slate-300">Est. cost</h4>
                                 <p className="text-sm font-medium text-white">
                                     {new Intl.NumberFormat('vi-VN', {
                                         style: 'currency',
@@ -199,7 +198,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
 
         return (
             <div className="text-slate-500 italic text-sm">
-                Property ID: {lead.propertyInfo} (Details not found)
+                Property details not found or invalid format.
             </div>
         );
     };
@@ -208,7 +207,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[500px] bg-[#141124] border-slate-800 text-slate-200">
                 <DialogHeader>
-                    <DialogTitle className="text-white">Lead Details</DialogTitle>
+                    <DialogTitle className="text-white">Lead details</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6 py-4">
                     <div
@@ -226,23 +225,16 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                                 </Badge>
                             </div>
                         </div>
-                        <div className="text-right space-y-1">
-                            <Label className="text-slate-500 text-[10px] uppercase tracking-wider">Date</Label>
-                            <div
-                                className="text-sm text-slate-300">{new Date(lead.createDate).toLocaleDateString()}</div>
-                        </div>
                     </div>
 
                     <div className="space-y-2">
-                        <Label className="text-slate-400 text-xs uppercase tracking-wider">User Info</Label>
+                        <Label className="text-slate-400 text-xs uppercase tracking-wider">User info</Label>
                         <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-300">
                             {userDetails ? (
                                 <div className="space-y-1">
                                     <div
                                         className="font-medium text-slate-200">{userDetails.firstName} {userDetails.lastName}</div>
                                     <div className="text-xs text-slate-500">{userDetails.email}</div>
-                                    {userDetails.mobile &&
-                                        <div className="text-xs text-slate-500">{userDetails.mobile}</div>}
                                 </div>
                             ) : (
                                 lead.userInfo
@@ -251,7 +243,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                     </div>
 
                     <div className="space-y-2">
-                        <Label className="text-slate-400 text-xs uppercase tracking-wider">Property Info</Label>
+                        <Label className="text-slate-400 text-xs uppercase tracking-wider">Property info</Label>
                         <div className="p-4 rounded-lg bg-slate-900 border border-slate-800">
                             {renderPropertyContent()}
                         </div>

@@ -1,10 +1,10 @@
 import React from 'react';
 import {useQuery} from '@tanstack/react-query';
-import {fetchLeadById} from '../services/leadService';
+import {fetchLeadById, LeadDto} from '../services/leadService';
 import {fetchUserById} from '../services/userService';
 import {Skeleton} from '@/components/ui/skeleton';
 import {Badge} from '@/components/ui/badge';
-import {Building, Copy} from 'lucide-react';
+import {Building, ExternalLink} from 'lucide-react';
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
 import {cn} from "@/lib/utils";
@@ -14,45 +14,48 @@ interface QuoteIdCellProps {
     dateStr?: string;
 }
 
-export const QuoteIdCell: React.FC<QuoteIdCellProps> = ({id, dateStr}) => {
-    const year = dateStr ? new Date(dateStr).getFullYear() : new Date().getFullYear();
-    const formattedId = `Q-${year}-${id.toString().padStart(3, '0')}`;
+export const QuoteIdCell: React.FC<QuoteIdCellProps> = ({id}) => {
+    const formattedId = `#${id}`;
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(formattedId)
-            .then(() => toast.success("Quote ID copied to clipboard"))
+        navigator.clipboard.writeText(id.toString())
+            .then(() => toast.success("Quote ID copied"))
             .catch((err) => console.error("Failed to copy", err));
     };
 
     return (
         <Button
             variant="ghost"
-            className="font-mono text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/30 h-auto p-1 px-2"
+            className="font-mono text-sm text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/30 h-auto p-1 px-2"
             onClick={handleCopy}
             title="Click to copy"
         >
             {formattedId}
-            <Copy size={10} className="ml-2 opacity-50"/>
         </Button>
     );
 };
 
 interface CustomerCellProps {
     leadId: number;
+    leadData?: LeadDto | null;
+    onViewLead?: (id: number) => void;
 }
 
-export const CustomerCell: React.FC<CustomerCellProps> = ({leadId}) => {
-    const {data: lead, isLoading} = useQuery({
+export const CustomerCell: React.FC<CustomerCellProps> = ({leadId, leadData, onViewLead}) => {
+    const {data: fetchedLead, isLoading: isLeadLoading} = useQuery({
         queryKey: ['lead', leadId],
         queryFn: () => fetchLeadById(leadId),
+        enabled: !leadData,
         staleTime: 1000 * 60 * 5,
     });
 
-    const {data: user} = useQuery({
+    const lead = leadData || fetchedLead;
+
+    const {data: user, isLoading: isUserLoading} = useQuery({
         queryKey: ['user', lead?.userInfo],
         queryFn: () => {
-            const userId = lead?.userInfo.split(' - ')[0];
-            if (userId && !userId.includes(' ')) {
+            const userId = lead?.userInfo;
+            if (userId && !userId.includes(' - ')) {
                 return fetchUserById(userId).catch(() => null);
             }
             return null;
@@ -60,32 +63,47 @@ export const CustomerCell: React.FC<CustomerCellProps> = ({leadId}) => {
         enabled: !!lead?.userInfo && !lead.userInfo.includes(' - ')
     });
 
-
-    if (isLoading) return <Skeleton className="h-10 w-32"/>;
+    if (!leadData && isLeadLoading) return <Skeleton className="h-10 w-32 bg-slate-800"/>;
     if (!lead) return <span className="text-slate-500">Unknown Lead</span>;
 
     let name = 'Unknown Name';
-    let contact = 'No contact info';
+    let email = 'No email';
 
     if (user) {
         name = `${user.firstName} ${user.lastName}`;
-        contact = user.email;
+        email = user.email;
     } else {
         const parts = lead.userInfo.split(' - ');
         if (parts.length > 1) {
             name = parts[0];
-            contact = parts[1] || parts[2] || '';
+            email = parts[1] || '';
         } else {
-            name = parts[0];
+            name = `User ${lead.userInfo.substring(0, 8)}...`;
         }
     }
 
     return (
-        <div className="flex flex-col items-start gap-0.5">
-            <span className="font-bold text-slate-200 text-sm truncate max-w-[150px]" title={name}>{name}</span>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                <span className="truncate max-w-[140px]" title={contact}>{contact}</span>
+        <div className="flex items-center gap-2 group">
+            <div className="flex flex-col items-start gap-0.5">
+                <span className="font-bold text-slate-200 text-sm truncate max-w-[150px]" title={name}>{name}</span>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <span className="truncate max-w-[140px]" title={email}>{email}</span>
+                </div>
             </div>
+            {onViewLead && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/30"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onViewLead(leadId);
+                    }}
+                    title="View Lead Details"
+                >
+                    <ExternalLink size={12}/>
+                </Button>
+            )}
         </div>
     );
 };
@@ -99,7 +117,7 @@ export const PropertyCell: React.FC<PropertyCellProps> = ({address, sumInsured})
     let line1 = address;
     let line2 = "";
 
-    if (address && address.includes(',')) {
+    if (address?.includes(',')) {
         const parts = address.split(',');
         line1 = parts[0].trim();
         line2 = parts.slice(1).join(',').trim();
@@ -171,7 +189,7 @@ export const AgentCell: React.FC<AgentCellProps> = ({agentId, agentName}) => {
         enabled: !!agentId,
     });
 
-    if (isLoading) return <Skeleton className="h-8 w-8 rounded-full"/>;
+    if (isLoading) return <Skeleton className="h-8 w-8 rounded-full bg-slate-800"/>;
 
     let displayName = agentName || agentId;
     let username = agentId;

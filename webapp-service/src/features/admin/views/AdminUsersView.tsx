@@ -1,11 +1,10 @@
 import React, {useState} from 'react';
-import {Eye, PlusCircle} from 'lucide-react';
+import {PlusCircle} from 'lucide-react';
 import {Button} from "@/components/ui/button";
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from "@/components/ui/shared-table";
 import {Badge} from "@/components/ui/badge";
 import {Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs";
-import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {createUser, fetchUsers, UserDto} from '../services/userService';
 import {Skeleton} from '@/components/ui/skeleton';
@@ -54,7 +53,7 @@ const AdminUsersView: React.FC = () => {
 
     const getColumns = (): Column[] => {
         const baseColumns: Column[] = [
-            {header: "Full Name", width: "25%", className: "text-slate-400"},
+            {header: "Full name", width: "25%", className: "text-slate-400"},
             {header: "Username", width: "20%", className: "text-slate-400"},
         ];
 
@@ -63,18 +62,12 @@ const AdminUsersView: React.FC = () => {
         }
 
         if (activeTab === 'agent') {
-            baseColumns.push({header: "ZipCode", width: "15%", className: "text-slate-400"});
+            baseColumns.push({header: "Zip code", width: "15%", className: "text-slate-400"});
         }
 
         baseColumns.push({header: "Email", width: "20%", className: "text-slate-400"});
-        baseColumns.push({header: "Actions", width: "5%", className: "text-right text-slate-400"});
 
         return baseColumns;
-    };
-
-    const handleViewClick = (user: UserDto) => {
-        setSelectedUser(user);
-        setIsEditOpen(true);
     };
 
     const renderRoleBadge = (role: string) => {
@@ -189,28 +182,6 @@ const AdminUsersView: React.FC = () => {
                                     )}
                                     <TableCell className="text-slate-400">
                                         {user.email}
-                                    </TableCell>
-
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button size="icon" variant="ghost"
-                                                        className="text-slate-500 hover:text-white hover:bg-indigo-500/20">
-                                                    <Eye className="h-4 w-4"/>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end"
-                                                                 className="bg-slate-900 border-slate-800 text-slate-200">
-                                                <DropdownMenuItem
-                                                    className="focus:bg-slate-800 focus:text-white cursor-pointer"
-                                                    onClick={() => handleViewClick(user)}
-                                                >
-                                                    <Eye className="mr-2 h-4 w-4"/>
-                                                    View user profile
-                                                </DropdownMenuItem>
-
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))}

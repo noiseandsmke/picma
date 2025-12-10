@@ -266,8 +266,7 @@ const AgentDashboard: React.FC = () => {
             if (parts.length > 0) {
                 initials = parts[0].substring(0, 1).toUpperCase();
                 if (parts.length > 1) {
-                    // @ts-ignore
-                    initials += parts.at(-1).substring(0, 1).toUpperCase();
+                    initials += parts[parts.length - 1].substring(0, 1).toUpperCase();
                 }
             }
         }
@@ -371,7 +370,7 @@ const AgentDashboard: React.FC = () => {
                                     className="rounded-none border-0"
                                     headerClassName="bg-slate-900/50 border-slate-800 text-slate-400"
                                     rowClassName="border-slate-800 hover:bg-slate-800/50 group text-slate-300"
-                                    emptyMessage="No leads found."
+                                    emptyMessage="No new leads found in your area."
                                 >
                                     {isLoading ? (
                                         SKELETON_IDS.map((skelId) => (
@@ -501,8 +500,9 @@ const AgentDashboard: React.FC = () => {
                                 >
                                     {quotes?.map((quote) => (
                                         <TableRow key={quote.id} className="border-slate-800">
-                                            <TableCell>{quote.id}</TableCell>
-                                            <TableCell>{formatCurrency(quote.premium?.total || 0)}</TableCell>
+                                            <TableCell className="text-slate-200">#{quote.id}</TableCell>
+                                            <TableCell
+                                                className="text-slate-200">{formatCurrency(quote.premium?.total || 0)}</TableCell>
                                             <TableCell>
                                                 {}
                                                 <Badge variant={quote.status === 'ACCEPTED' ? 'default' : 'outline'}

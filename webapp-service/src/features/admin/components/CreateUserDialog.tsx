@@ -30,7 +30,7 @@ interface CreateUserDialogProps {
     isSubmitting: boolean;
 }
 
-export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: CreateUserDialogProps) {
+export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: Readonly<CreateUserDialogProps>) {
     const form = useForm<z.infer<typeof userSchema>>({
         resolver: zodResolver(userSchema),
         defaultValues: {
@@ -60,7 +60,7 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: C
                 <DialogHeader>
                     <DialogTitle>Add new user</DialogTitle>
                     <DialogDescription className="text-slate-400">
-                        Create a new user account. They will receive an email to verify their account.
+                        Create a new user account.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
