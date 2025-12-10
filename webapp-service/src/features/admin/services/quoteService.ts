@@ -26,12 +26,12 @@ export interface PropertyQuoteDto {
     plan: string;
     coverages: CoverageDto[];
     premium: PremiumDto;
+    status: 'DRAFT' | 'PENDING' | 'ACCEPTED' | 'REJECTED';
 }
 
 export type CreateQuoteDto =
-    Omit<PropertyQuoteDto, 'id' | 'agentName' | 'validUntil' | 'startDate' | 'endDate' | 'propertyAddress'>
+    Omit<PropertyQuoteDto, 'id' | 'agentName' | 'validUntil' | 'startDate' | 'endDate' | 'propertyAddress' | 'status'>
     & {
-    // Optional or computed fields for creation
     coverages: CoverageDto[];
     premium: PremiumDto;
 };
@@ -45,6 +45,12 @@ export const fetchAllQuotes = async (sort = 'id', order = 'asc'): Promise<Proper
     return response.data;
 };
 
+export const fetchQuotesByLeadId = async (leadId: number): Promise<PropertyQuoteDto[]> => {
+    const response = await apiClient.get<PropertyQuoteDto[]>(`${QUOTE_SERVICE_URL}`);
+    return response.data.filter(q => q.leadId === leadId);
+};
+
+
 export const createQuote = async (quote: CreateQuoteDto): Promise<PropertyQuoteDto> => {
     const response = await apiClient.post<PropertyQuoteDto>(`${QUOTE_SERVICE_URL}`, quote);
     return response.data;
@@ -57,4 +63,12 @@ export const updateQuote = async (quote: PropertyQuoteDto): Promise<PropertyQuot
 
 export const deleteQuote = async (id: number): Promise<void> => {
     await apiClient.delete(`${QUOTE_SERVICE_URL}/${id}`);
+};
+
+export const acceptQuote = async (id: number): Promise<void> => {
+    await apiClient.put(`${QUOTE_SERVICE_URL}/${id}/accept`);
+};
+
+export const rejectQuote = async (id: number): Promise<void> => {
+    await apiClient.put(`${QUOTE_SERVICE_URL}/${id}/reject`);
 };

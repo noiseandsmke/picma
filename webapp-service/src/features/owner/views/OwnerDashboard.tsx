@@ -181,7 +181,7 @@ const OwnerDashboard: React.FC = () => {
                                         </div>
                                     </CardContent>
                                     <CardFooter className="p-0 flex flex-col">
-                                        <LeadQuotesList leadId={lead.id}/>
+                                        <LeadQuotesList leadId={lead.id} leadStatus={lead.status}/>
                                     </CardFooter>
                                 </Card>
                             );

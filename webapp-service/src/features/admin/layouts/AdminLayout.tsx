@@ -1,5 +1,5 @@
 import React, {ReactNode, useState} from 'react';
-import {Building2, FileText, LayoutDashboard, Settings, Users} from 'lucide-react';
+import {Building2, FileText, LayoutDashboard, Users} from 'lucide-react';
 import SidebarNavigation, {NavItem} from '@/components/ui/sidebar-navigation';
 import {UserDropdown} from '@/components/ui/user-dropdown';
 import {useAuth} from '@/context/AuthContext';
@@ -23,11 +23,6 @@ const navItems: NavItem[] = [
             {label: 'Quotes', icon: FileText, href: '/admin/quotes'},
             {label: 'Properties info', icon: Building2, href: '/admin/properties'},
         ]
-    },
-    {
-        label: 'System configuration',
-        icon: Settings,
-        href: '/admin/config',
     },
 ];
 

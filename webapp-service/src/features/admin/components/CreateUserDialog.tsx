@@ -17,10 +17,9 @@ import {UserDto} from '../services/userService';
 
 const userSchema = z.object({
     username: z.string().min(3, "Username must be at least 3 characters"),
-    email: z.email("Invalid email address"),
+    email: z.string().email("Invalid email address"),
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
-    mobile: z.string().min(10, "Phone number must be at least 10 digits"),
     role: z.string().min(1, "Role is required"),
 });
 
@@ -39,7 +38,6 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: C
             email: "",
             firstName: "",
             lastName: "",
-            mobile: "",
             role: "agent",
         },
     });
@@ -119,20 +117,6 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: C
                                     <FormLabel>Email</FormLabel>
                                     <FormControl>
                                         <Input placeholder="john@example.com" {...field}
-                                               className="bg-[#141124] border-slate-700 text-slate-200"/>
-                                    </FormControl>
-                                    <FormMessage/>
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="mobile"
-                            render={({field}) => (
-                                <FormItem>
-                                    <FormLabel>Phone</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="+1234567890" {...field}
                                                className="bg-[#141124] border-slate-700 text-slate-200"/>
                                     </FormControl>
                                     <FormMessage/>

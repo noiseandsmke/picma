@@ -3,7 +3,7 @@ import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
 import {createQuote, deleteQuote, fetchAllQuotes, PropertyQuoteDto, updateQuote} from '../services/quoteService';
 import {format} from 'date-fns';
-import {ArrowUpDown, CalendarClock, MoreHorizontal, PlusCircle} from 'lucide-react';
+import {ArrowUpDown, CalendarClock, Eye, MoreHorizontal, PlusCircle} from 'lucide-react';
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from "@/components/ui/shared-table";
 import {Skeleton} from '@/components/ui/skeleton';
@@ -19,12 +19,16 @@ import {
     ValidityCell
 } from '../components/QuoteCells';
 import {QuoteForm} from '../components/QuoteForm';
+import {LeadDetailDialog} from "@/features/admin/components/LeadDetailDialog";
+import {fetchAllLeads} from "@/features/admin/services/leadService";
 
 const AdminQuotesView: React.FC = () => {
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedQuote, setSelectedQuote] = useState<PropertyQuoteDto | null>(null);
     const [sortConfig, setSortConfig] = useState({key: 'id', direction: 'asc'});
+    const [isLeadDetailOpen, setIsLeadDetailOpen] = useState(false);
+    const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
 
     const {
         data: quotes,
@@ -33,6 +37,11 @@ const AdminQuotesView: React.FC = () => {
     } = useQuery({
         queryKey: ['admin-quotes', sortConfig],
         queryFn: () => fetchAllQuotes(sortConfig.key, sortConfig.direction),
+    });
+
+    const {data: leads} = useQuery({
+        queryKey: ['admin-leads-lookup'],
+        queryFn: () => fetchAllLeads()
     });
 
     const createMutation = useMutation({
@@ -85,6 +94,11 @@ const AdminQuotesView: React.FC = () => {
     const handleCreate = () => {
         setSelectedQuote(null);
         setIsModalOpen(true);
+    };
+
+    const handleViewLead = (leadId: number) => {
+        setSelectedLeadId(leadId);
+        setIsLeadDetailOpen(true);
     };
 
     const handleSort = (key: string) => {
@@ -240,6 +254,11 @@ const AdminQuotesView: React.FC = () => {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end"
                                                                  className="bg-slate-900 border-slate-800 text-slate-200">
+                                                <DropdownMenuItem onClick={() => handleViewLead(quote.leadId)}
+                                                                  className="hover:bg-slate-800 cursor-pointer">
+                                                    <Eye className="mr-2 h-4 w-4"/>
+                                                    View lead
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleEdit(quote)}
                                                                   className="hover:bg-slate-800 cursor-pointer">
                                                     Edit quote
@@ -272,6 +291,14 @@ const AdminQuotesView: React.FC = () => {
                         />
                     </DialogContent>
                 </Dialog>
+
+                {selectedLeadId && leads && (
+                    <LeadDetailDialog
+                        open={isLeadDetailOpen}
+                        onOpenChange={setIsLeadDetailOpen}
+                        lead={leads.find(l => l.id === selectedLeadId) || null}
+                    />
+                )}
             </div>
         </AdminLayout>
     );

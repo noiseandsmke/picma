@@ -48,12 +48,37 @@ export const CustomerCell: React.FC<CustomerCellProps> = ({leadId}) => {
         staleTime: 1000 * 60 * 5,
     });
 
+    const {data: user} = useQuery({
+        queryKey: ['user', lead?.userInfo],
+        queryFn: () => {
+            const userId = lead?.userInfo.split(' - ')[0];
+            if (userId && !userId.includes(' ')) {
+                return fetchUserById(userId).catch(() => null);
+            }
+            return null;
+        },
+        enabled: !!lead?.userInfo && !lead.userInfo.includes(' - ')
+    });
+
+
     if (isLoading) return <Skeleton className="h-10 w-32"/>;
     if (!lead) return <span className="text-slate-500">Unknown Lead</span>;
 
-    const parts = lead.userInfo.split(' - ');
-    const name = parts[0] || 'Unknown Name';
-    const contact = parts[1] || parts[2] || 'No contact info';
+    let name = 'Unknown Name';
+    let contact = 'No contact info';
+
+    if (user) {
+        name = `${user.firstName} ${user.lastName}`;
+        contact = user.email;
+    } else {
+        const parts = lead.userInfo.split(' - ');
+        if (parts.length > 1) {
+            name = parts[0];
+            contact = parts[1] || parts[2] || '';
+        } else {
+            name = parts[0];
+        }
+    }
 
     return (
         <div className="flex flex-col items-start gap-0.5">
@@ -61,8 +86,6 @@ export const CustomerCell: React.FC<CustomerCellProps> = ({leadId}) => {
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
                 <span className="truncate max-w-[140px]" title={contact}>{contact}</span>
             </div>
-            <a href={`/admin/leads`} className="text-[10px] text-indigo-500/70 hover:text-indigo-400 mt-0.5">View
-                Lead</a>
         </div>
     );
 };
@@ -73,8 +96,6 @@ interface PropertyCellProps {
 }
 
 export const PropertyCell: React.FC<PropertyCellProps> = ({address, sumInsured}) => {
-    // Expected format: "123 Street, Ward, City" or similar
-    // We try to split to display in 2 lines if possible
     let line1 = address;
     let line2 = "";
 
@@ -193,7 +214,6 @@ export const ValidityCell: React.FC<ValidityCellProps> = ({validUntil}) => {
 
     const endDate = new Date(validUntil);
     const now = new Date();
-    // Normalize to start of day for accurate day diff
     now.setHours(0, 0, 0, 0);
     const checkDate = new Date(endDate);
     checkDate.setHours(0, 0, 0, 0);

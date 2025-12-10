@@ -51,8 +51,15 @@ export const fetchAllProperties = async (sort?: string, direction?: string): Pro
 };
 
 export const fetchPropertyById = async (id: string): Promise<PropertyInfoDto> => {
-    const response = await apiClient.get<PropertyInfoDto>(`${BASE_PATH}/${id}`);
-    return response.data;
+    try {
+        const response = await apiClient.get<PropertyInfoDto>(`${BASE_PATH}/${id}`);
+        return response.data;
+    } catch (error) {
+        if (id.includes('*') || id === 'HIDDEN') {
+            throw new Error("Property ID is masked or hidden");
+        }
+        throw error;
+    }
 };
 
 export const createProperty = async (property: Omit<PropertyInfoDto, 'id'>): Promise<PropertyInfoDto> => {

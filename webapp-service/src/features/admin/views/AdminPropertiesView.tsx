@@ -67,7 +67,7 @@ const AdminPropertiesView: React.FC = () => {
     const columns: Column[] = [
         {
             header: <div className="flex items-center gap-2">Property address <ArrowUpDown className="h-3 w-3"/></div>,
-            width: "30%",
+            width: "35%",
             className: "text-slate-400 cursor-pointer hover:text-indigo-400 transition-colors",
             onClick: () => handleSort('location.street')
         },
@@ -102,7 +102,7 @@ const AdminPropertiesView: React.FC = () => {
         },
         {
             header: "Actions",
-            width: "10%",
+            width: "5%",
             className: "text-right text-slate-400"
         }
     ];

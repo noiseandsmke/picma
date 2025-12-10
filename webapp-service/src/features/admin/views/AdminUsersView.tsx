@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {MoreVertical, Pencil, PlusCircle} from 'lucide-react';
+import {Eye, PlusCircle} from 'lucide-react';
 import {Button} from "@/components/ui/button";
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from "@/components/ui/shared-table";
@@ -40,22 +40,6 @@ const AdminUsersView: React.FC = () => {
         }
     });
 
-    const updateMutation = useMutation({
-        mutationFn: async (data: any) => {
-            console.log("Updating user:", data);
-            return new Promise((resolve) => setTimeout(resolve, 500));
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({queryKey: ['admin-users']});
-            setIsEditOpen(false);
-            toast.success("User profile updated successfully (Mock)");
-        },
-        onError: (error) => {
-            console.error(error);
-            toast.error("Failed to update user");
-        }
-    });
-
     const getDisplayRole = (user: UserDto) => {
         if (user.role) return user.role;
         if (user.group === 'agents') return 'Agent';
@@ -65,23 +49,55 @@ const AdminUsersView: React.FC = () => {
 
     const filteredUsers = users?.filter(u => {
         const role = getDisplayRole(u).toUpperCase();
-        if (role === 'ADMIN') return false;
-
-        return true;
+        return role !== 'ADMIN';
     });
 
-    const columns: Column[] = [
-        {header: "Full Name", width: "25%", className: "text-slate-400"},
-        {header: "Username", width: "20%", className: "text-slate-400"},
-        {header: "Group/Role", width: "15%", className: "text-slate-400"},
-        {header: "ZipCode", width: "15%", className: "text-slate-400"},
-        {header: "Email", width: "20%", className: "text-slate-400"},
-        {header: "Actions", width: "5%", className: "text-right text-slate-400"}
-    ];
+    const getColumns = (): Column[] => {
+        const baseColumns: Column[] = [
+            {header: "Full Name", width: "25%", className: "text-slate-400"},
+            {header: "Username", width: "20%", className: "text-slate-400"},
+        ];
 
-    const handleEditClick = (user: UserDto) => {
+        if (activeTab === 'all') {
+            baseColumns.push({header: "Role", width: "15%", className: "text-slate-400"});
+        }
+
+        if (activeTab === 'agent') {
+            baseColumns.push({header: "ZipCode", width: "15%", className: "text-slate-400"});
+        }
+
+        baseColumns.push({header: "Email", width: "20%", className: "text-slate-400"});
+        baseColumns.push({header: "Actions", width: "5%", className: "text-right text-slate-400"});
+
+        return baseColumns;
+    };
+
+    const handleViewClick = (user: UserDto) => {
         setSelectedUser(user);
         setIsEditOpen(true);
+    };
+
+    const renderRoleBadge = (role: string) => {
+        const upperRole = role.toUpperCase();
+        if (upperRole === 'OWNER') {
+            return (
+                <Badge variant="outline" className="border-purple-800 text-purple-200 bg-purple-900/50">
+                    Owner
+                </Badge>
+            );
+        } else if (upperRole === 'AGENT') {
+            return (
+                <Badge variant="outline" className="border-blue-800 text-blue-200 bg-blue-900/50">
+                    Agent
+                </Badge>
+            );
+        } else {
+            return (
+                <Badge variant="outline" className="border-slate-800 text-slate-400 bg-slate-900">
+                    {role}
+                </Badge>
+            );
+        }
     };
 
     return (
@@ -136,7 +152,7 @@ const AdminUsersView: React.FC = () => {
                             </div>
                         )}
                         <SharedTable
-                            columns={columns}
+                            columns={getColumns()}
                             isLoading={isLoading}
                             isEmpty={!isLoading && !isError && (!filteredUsers || filteredUsers.length === 0)}
                             emptyMessage="No users found."
@@ -161,15 +177,16 @@ const AdminUsersView: React.FC = () => {
                                     <TableCell className="text-slate-400">
                                         {user.username}
                                     </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline"
-                                               className="border-slate-800 text-slate-400 bg-slate-900">
-                                            {getDisplayRole(user)}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-slate-400">
-                                        {user.zipcode || '-'}
-                                    </TableCell>
+                                    {activeTab === 'all' && (
+                                        <TableCell>
+                                            {renderRoleBadge(getDisplayRole(user))}
+                                        </TableCell>
+                                    )}
+                                    {activeTab === 'agent' && (
+                                        <TableCell className="text-slate-400">
+                                            {user.zipcode || '-'}
+                                        </TableCell>
+                                    )}
                                     <TableCell className="text-slate-400">
                                         {user.email}
                                     </TableCell>
@@ -179,17 +196,17 @@ const AdminUsersView: React.FC = () => {
                                             <DropdownMenuTrigger asChild>
                                                 <Button size="icon" variant="ghost"
                                                         className="text-slate-500 hover:text-white hover:bg-indigo-500/20">
-                                                    <MoreVertical className="h-4 w-4"/>
+                                                    <Eye className="h-4 w-4"/>
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end"
                                                                  className="bg-slate-900 border-slate-800 text-slate-200">
                                                 <DropdownMenuItem
                                                     className="focus:bg-slate-800 focus:text-white cursor-pointer"
-                                                    onClick={() => handleEditClick(user)}
+                                                    onClick={() => handleViewClick(user)}
                                                 >
-                                                    <Pencil className="mr-2 h-4 w-4"/>
-                                                    Edit profile
+                                                    <Eye className="mr-2 h-4 w-4"/>
+                                                    View user profile
                                                 </DropdownMenuItem>
 
                                             </DropdownMenuContent>
@@ -212,8 +229,6 @@ const AdminUsersView: React.FC = () => {
                     open={isEditOpen}
                     onOpenChange={setIsEditOpen}
                     user={selectedUser}
-                    onSubmit={(data) => updateMutation.mutate(data)}
-                    isSubmitting={updateMutation.isPending}
                 />
             </div>
         </AdminLayout>

@@ -198,16 +198,23 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
     useEffect(() => {
         if (!hideAgentSelect) {
             const currentAgentId = getValues('agentId');
+
+
             if (currentAgentId && filteredAgents.length > 0) {
                 const agentExists = filteredAgents.some(a => a.id === currentAgentId);
                 if (!agentExists) {
-                    setValue('agentId', '');
+                    if (initialData?.agentId !== currentAgentId) {
+                        setValue('agentId', '');
+                    } else {
+                        const isInitialAgent = initialData?.agentId === currentAgentId;
+                        if (!isInitialAgent) setValue('agentId', '');
+                    }
                 }
             } else if (selectedProperty && filteredAgents.length === 0) {
                 setValue('agentId', '');
             }
         }
-    }, [selectedProperty, filteredAgents, setValue, getValues, hideAgentSelect]);
+    }, [selectedProperty, filteredAgents, setValue, getValues, hideAgentSelect, initialData]);
 
 
     useEffect(() => {
@@ -229,9 +236,12 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
 
     useEffect(() => {
         if (sumInsured > 0) {
-            if (initialData?.plan === selectedPlan && initialData.sumInsured === sumInsured && fields.length > 0) {
+            const isInitialLoad = initialData?.plan === selectedPlan && initialData?.sumInsured === sumInsured;
+
+            if (isInitialLoad && fields.length > 0) {
                 return;
             }
+
             const defaults = getDefaultCoverages(selectedPlan, sumInsured);
             replace(defaults);
         }
@@ -285,7 +295,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
         const userId = l.userInfo.split(' - ')[0];
         const owner = owners?.find(u => u.id === userId);
         const label = owner
-            ? `${owner.firstName} ${owner.lastName} (Lead #${l.id})`
+            ? `${owner.firstName} ${owner.lastName} (${owner.email})`
             : `Lead #${l.id}`;
 
         return {

@@ -13,6 +13,7 @@ import {fetchUsers} from '../services/userService';
 import {
     ArrowUpDown,
     Building2,
+    Calendar,
     Clock,
     Eye,
     Filter,
@@ -262,6 +263,16 @@ const AdminLeadsView: React.FC = () => {
         }
     };
 
+    const calculateExpiry = (createDate: string) => {
+        try {
+            const date = new Date(createDate);
+            date.setDate(date.getDate() + 30);
+            return date.toLocaleDateString();
+        } catch {
+            return '-';
+        }
+    };
+
     const parseUserInfo = (userInfo: string) => {
         if (!userInfo) return {name: 'Unknown', details: ''};
 
@@ -290,7 +301,6 @@ const AdminLeadsView: React.FC = () => {
                 </div>
             );
         }
-        // Fallback for legacy data or missing owner
         const {name, details} = parseUserInfo(userInfo);
         return (
             <div className="flex items-center gap-3">
@@ -395,7 +405,7 @@ const AdminLeadsView: React.FC = () => {
                     User Info {sortConfig.key === 'userInfo' && <ArrowUpDown size={14}/>}
                 </div>
             ),
-            width: "30%",
+            width: "25%",
             onClick: () => handleSort('userInfo'),
         },
         {
@@ -404,7 +414,7 @@ const AdminLeadsView: React.FC = () => {
                     Property address {sortConfig.key === 'propertyInfo' && <ArrowUpDown size={14}/>}
                 </div>
             ),
-            width: "30%",
+            width: "25%",
             onClick: () => handleSort('propertyInfo'),
         },
         {
@@ -481,6 +491,14 @@ const AdminLeadsView: React.FC = () => {
         {
             header: (
                 <div className="flex items-center gap-1">
+                    Expiry Date
+                </div>
+            ),
+            width: "10%",
+        },
+        {
+            header: (
+                <div className="flex items-center gap-1">
                     Created {sortConfig.key === 'createDate' && <ArrowUpDown size={14}/>}
                 </div>
             ),
@@ -501,6 +519,7 @@ const AdminLeadsView: React.FC = () => {
                 <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
                 <TableCell><Skeleton className="h-4 w-48 bg-slate-800"/></TableCell>
                 <TableCell><Skeleton className="h-6 w-20 bg-slate-800"/></TableCell>
+                <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
                 <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
                 <TableCell><Skeleton className="h-8 w-8 bg-slate-800"/></TableCell>
             </TableRow>
@@ -538,6 +557,12 @@ const AdminLeadsView: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-slate-400 text-sm">
                         <div className="flex items-center gap-2">
+                            <Calendar className="h-3 w-3 text-slate-600"/>
+                            {calculateExpiry(lead.createDate)}
+                        </div>
+                    </TableCell>
+                    <TableCell className="text-slate-400 text-sm">
+                        <div className="flex items-center gap-2">
                             <Clock className="h-3 w-3 text-slate-600"/>
                             {formatDate(lead.createDate)}
                         </div>
@@ -559,7 +584,7 @@ const AdminLeadsView: React.FC = () => {
                                     onClick={() => handleViewDetail(lead)}
                                 >
                                     <Eye className="mr-2 h-4 w-4"/>
-                                    View Details
+                                    Edit lead details
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator className="bg-slate-800"/>
                                 <DropdownMenuItem

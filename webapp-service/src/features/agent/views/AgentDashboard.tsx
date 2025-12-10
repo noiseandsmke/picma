@@ -3,14 +3,15 @@ import AgentLayout from '../layouts/AgentLayout';
 import {
     ArrowRight,
     Bell,
-    Calendar,
     Clock,
     DollarSign,
     Eye,
     FileText,
     Info,
+    MapPin,
     Search,
     ThumbsUp,
+    User,
     XCircle
 } from 'lucide-react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
@@ -29,8 +30,65 @@ import {QuoteForm} from '@/features/admin/components/QuoteForm';
 import {createQuote, PropertyQuoteDto, updateQuote} from '@/features/admin/services/quoteService';
 import {format} from 'date-fns';
 import {LeadDto} from '@/features/admin/services/leadService';
+import {fetchPropertyById, PropertyInfoDto} from "@/features/admin/services/propertyService";
 
 const SKELETON_IDS = ['skel-1', 'skel-2', 'skel-3'];
+
+const PropertyCell: React.FC<{ propertyId: string; showFullDetails: boolean }> = ({propertyId, showFullDetails}) => {
+    const {data: property, isLoading} = useQuery({
+        queryKey: ['property', propertyId],
+        queryFn: () => {
+            if (propertyId.startsWith('{')) {
+                try {
+                    return Promise.resolve(JSON.parse(propertyId) as PropertyInfoDto);
+                } catch {
+                    return Promise.resolve(null);
+                }
+            }
+            return fetchPropertyById(propertyId);
+        },
+        enabled: !!propertyId
+    });
+
+    if (isLoading) return <Skeleton className="h-10 w-48 bg-slate-800"/>;
+
+    if (!property) {
+        return <span className="text-sm text-slate-500 truncate max-w-[200px]" title={propertyId}>{propertyId}</span>;
+    }
+
+    if (!property.location) {
+        return <span className="text-sm text-slate-500">{propertyId}</span>;
+    }
+
+    const {location, attributes, valuation} = property;
+
+    return (
+        <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+                <div className="font-medium text-slate-200">
+                    {showFullDetails ? (
+                        <span>{location.street}, {location.ward}, {location.city}</span>
+                    ) : (
+                        <span>{location.zipCode} - {location.city}</span>
+                    )}
+                </div>
+            </div>
+            <div className="text-xs text-slate-500 flex items-center gap-3">
+                <span className="flex items-center gap-1"><MapPin size={10}/> {location.zipCode}</span>
+                {attributes?.constructionType && (
+                    <span className="bg-slate-800 px-1 rounded text-[10px]">
+                         {attributes.constructionType.replace('_', ' ')}
+                     </span>
+                )}
+                {valuation?.estimatedConstructionCost && (
+                    <span className="text-emerald-500/80 font-mono">
+                         {formatCurrency(valuation.estimatedConstructionCost)}
+                     </span>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const AgentDashboard: React.FC = () => {
     const {user} = useAuth();
@@ -143,8 +201,8 @@ const AgentDashboard: React.FC = () => {
     }, [quotes]);
 
     const leadColumns: Column[] = [
-        {header: "Client", width: "30%"},
-        {header: "Property", width: "40%"},
+        {header: "Client", width: "25%"},
+        {header: "Property", width: "45%"},
         {header: "Status", width: "10%"},
         {header: "Action", width: "20%", className: "text-right"}
     ];
@@ -181,6 +239,51 @@ const AgentDashboard: React.FC = () => {
             default:
                 return <Badge variant="outline" className="text-slate-400 border-slate-700">{status}</Badge>;
         }
+    };
+
+    const renderUserInfo = (userInfo: string, isHidden: boolean) => {
+        if (isHidden) {
+            return (
+                <div className="flex items-center gap-3">
+                    <div
+                        className="h-8 w-8 bg-slate-700 rounded-full flex items-center justify-center text-xs font-medium text-slate-300">
+                        <User size={14}/>
+                    </div>
+                    <div>
+                        <div className="font-medium text-white">Anonymous Owner</div>
+                        <div className="text-xs text-slate-500">******</div>
+                    </div>
+                </div>
+            );
+        }
+
+        let initials = "??";
+        let name = userInfo || "N/A";
+
+        if (userInfo && !userInfo.includes('HIDDEN')) {
+            name = userInfo;
+            const parts = userInfo.split(' ');
+            if (parts.length > 0) {
+                initials = parts[0].substring(0, 1).toUpperCase();
+                if (parts.length > 1) {
+                    // @ts-ignore
+                    initials += parts.at(-1).substring(0, 1).toUpperCase();
+                }
+            }
+        }
+
+        return (
+            <div className="flex items-center gap-3">
+                <div
+                    className="h-8 w-8 bg-slate-700 rounded-full flex items-center justify-center text-xs font-medium text-slate-300">
+                    {initials}
+                </div>
+                <div>
+                    <div className="font-medium text-white truncate max-w-[150px]" title={name}>{name}</div>
+                    <div className="text-xs text-slate-400">Verified Owner</div>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -284,24 +387,11 @@ const AgentDashboard: React.FC = () => {
                                         <TableRow key={lead.id}
                                                   className="border-slate-800 hover:bg-slate-800/50 group">
                                             <TableCell>
-                                                <div className="flex items-center gap-3">
-                                                    <div
-                                                        className="h-8 w-8 bg-slate-700 rounded-full flex items-center justify-center text-xs font-medium text-slate-300">
-                                                        {lead.userInfo ? lead.userInfo.substring(0, 2).toUpperCase() : "??"}
-                                                    </div>
-                                                    <div>
-                                                        <div
-                                                            className="font-medium text-white">{lead.userInfo || "N/A"}</div>
-                                                        <div className="text-xs text-slate-400 flex items-center gap-1">
-                                                            <Calendar
-                                                                className="h-3 w-3"/> {new Date(lead.createdAt).toLocaleDateString()}
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                {renderUserInfo(lead.userInfo, lead.userInfo === 'HIDDEN')}
                                             </TableCell>
                                             <TableCell>
-                                                <div className="text-sm text-slate-300 truncate max-w-[200px]"
-                                                     title={lead.propertyInfo}>{lead.propertyInfo}</div>
+                                                <PropertyCell propertyId={lead.propertyInfo}
+                                                              showFullDetails={lead.leadAction === 'INTERESTED' || lead.leadAction === 'ACCEPTED'}/>
                                             </TableCell>
                                             <TableCell>
                                                 {renderLeadStatus(lead.leadAction)}
@@ -325,7 +415,7 @@ const AgentDashboard: React.FC = () => {
                                                                     <div>
                                                                         <h4 className="text-sm font-medium text-slate-400">User
                                                                             Info</h4>
-                                                                        <p>{lead.userInfo}</p>
+                                                                        <p>{lead.userInfo === 'HIDDEN' ? 'Anonymous Owner' : lead.userInfo}</p>
                                                                     </div>
                                                                     <div>
                                                                         <h4 className="text-sm font-medium text-slate-400">Status</h4>
@@ -335,10 +425,11 @@ const AgentDashboard: React.FC = () => {
                                                                 <div>
                                                                     <h4 className="text-sm font-medium text-slate-400">Property
                                                                         Info</h4>
-                                                                    <pre
-                                                                        className="text-xs bg-slate-900 p-2 rounded overflow-auto mt-1 border border-slate-800">
-                                                                     {lead.propertyInfo}
-                                                                 </pre>
+                                                                    <div
+                                                                        className="mt-1 p-2 bg-slate-900 rounded border border-slate-800">
+                                                                        <PropertyCell propertyId={lead.propertyInfo}
+                                                                                      showFullDetails={lead.leadAction === 'INTERESTED' || lead.leadAction === 'ACCEPTED'}/>
+                                                                    </div>
                                                                 </div>
                                                                 <div>
                                                                     <h4 className="text-sm font-medium text-slate-400">Created
@@ -354,8 +445,12 @@ const AgentDashboard: React.FC = () => {
                                                                 onClick={() => handleUpdateStatus(lead, 'INTERESTED')}
                                                                 disabled={leadActionMutation.isPending}
                                                                 className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm h-8 px-2">
-                                                            <ThumbsUp className="h-3 w-3 mr-1"/>
-                                                            Interested
+                                                            {leadActionMutation.isPending ? '...' : (
+                                                                <>
+                                                                    <ThumbsUp className="h-3 w-3 mr-1"/>
+                                                                    Interested
+                                                                </>
+                                                            )}
                                                         </Button>
                                                     )}
 
@@ -363,6 +458,7 @@ const AgentDashboard: React.FC = () => {
                                                         <>
                                                             <Button size="sm"
                                                                     onClick={() => openQuoteModal(lead.leadId)}
+                                                                    disabled={leadActionMutation.isPending}
                                                                     className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-8 px-2">
                                                                 Quote
                                                                 <ArrowRight className="ml-1 h-3 w-3"/>
@@ -408,13 +504,13 @@ const AgentDashboard: React.FC = () => {
                                             <TableCell>{quote.id}</TableCell>
                                             <TableCell>{formatCurrency(quote.premium?.total || 0)}</TableCell>
                                             <TableCell>
-                                                {/* @ts-expect-error - Backend DTO pending update */}
+                                                {}
                                                 <Badge variant={quote.status === 'ACCEPTED' ? 'default' : 'outline'}
-                                                    // @ts-expect-error - Backend DTO pending update
+
                                                        className={quote.status === 'ACCEPTED' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                           // @ts-expect-error - Backend DTO pending update
+
                                                            quote.status === 'REJECTED' ? 'text-red-400 border-red-800 bg-red-900/10' : 'text-slate-400'}>
-                                                    {/* @ts-expect-error - Backend DTO pending update */}
+                                                    {}
                                                     {quote.status || 'DRAFT'}
                                                 </Badge>
                                             </TableCell>
@@ -472,8 +568,7 @@ const AgentDashboard: React.FC = () => {
                         <DialogTitle>Create Quote</DialogTitle>
                     </DialogHeader>
                     <QuoteForm
-                        // @ts-expect-error - initialData partial match
-                        initialData={initialQuoteData}
+                        initialData={initialQuoteData as any}
                         onSubmit={handleFormSubmit}
                         onCancel={() => setIsQuoteOpen(false)}
                         isLoading={createMutation.isPending || updateMutation.isPending}
