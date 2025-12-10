@@ -66,7 +66,7 @@ const AgentDashboard: React.FC = () => {
 
     const createMutation = useMutation({
         mutationFn: createQuote,
-        onSuccess: async (data, variables) => {
+        onSuccess: async (_data, variables) => {
             await queryClient.invalidateQueries({queryKey: ['agent-quotes']});
             setIsQuoteOpen(false);
             toast.success("Quote created successfully");
@@ -153,7 +153,7 @@ const AgentDashboard: React.FC = () => {
 
     const quoteFormLeads: LeadDto[] = useMemo(() => leads?.map(l => ({
         id: l.leadId, userInfo: l.userInfo,
-        propertyInfo: typeof l.propertyInfo === 'string' && l.propertyInfo.startsWith('{')
+        propertyInfo: l.propertyInfo.startsWith('{')
             ? JSON.parse(l.propertyInfo).id : l.propertyInfo,
         status: l.leadAction || 'NEW',
         createDate: l.createdAt, expiryDate: l.createdAt,
