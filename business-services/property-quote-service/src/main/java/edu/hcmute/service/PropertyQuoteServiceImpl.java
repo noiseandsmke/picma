@@ -1,7 +1,5 @@
 package edu.hcmute.service;
 
-import edu.hcmute.config.PropertyLeadFeignClient;
-import edu.hcmute.dto.LeadInfoDto;
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.PropertyQuote;
 import edu.hcmute.event.schema.QuoteAcceptedEvent;
@@ -31,7 +29,6 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
 
     private final PropertyQuoteRepo propertyQuoteRepo;
     private final PropertyQuoteMapper propertyQuoteMapper;
-    private final PropertyLeadFeignClient propertyLeadFeignClient;
     private final StreamBridge streamBridge;
 
     @Override
@@ -41,13 +38,6 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
         Integer leadId = propertyQuoteDto.leadId();
         if (leadId == null) {
             throw new IllegalArgumentException("leadId is required to create a quote");
-        }
-        try {
-            LeadInfoDto leadInfo = propertyLeadFeignClient.getLeadById(leadId);
-            log.info("~~> validated lead exists: id={}, user={}", leadInfo.id(), leadInfo.userInfo());
-        } catch (Exception e) {
-            log.error("~~> lead not found with id: {}", leadId);
-            throw new IllegalArgumentException("Lead not found with id: " + leadId);
         }
         try {
             PropertyQuote propertyQuote = propertyQuoteMapper.toEntity(propertyQuoteDto);

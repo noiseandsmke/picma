@@ -1,11 +1,8 @@
 package edu.hcmute.service;
 
-import edu.hcmute.config.PropertyAgentFeignClient;
-import edu.hcmute.config.PropertyLeadFeignClient;
 import edu.hcmute.domain.CoverageCode;
 import edu.hcmute.domain.PlanType;
 import edu.hcmute.dto.CoverageDto;
-import edu.hcmute.dto.LeadInfoDto;
 import edu.hcmute.dto.PremiumDto;
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.Coverage;
@@ -18,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cloud.stream.function.StreamBridge;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -28,16 +26,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class PropertyQuoteServiceImplTest {
-
+class PropertyQuoteServiceImplTest {
     @Mock
     private PropertyQuoteRepo propertyQuoteRepo;
     @Mock
     private PropertyQuoteMapper propertyQuoteMapper;
     @Mock
-    private PropertyLeadFeignClient propertyLeadFeignClient;
-    @Mock
-    private PropertyAgentFeignClient propertyAgentFeignClient;
+    private StreamBridge streamBridge;
 
     @InjectMocks
     private PropertyQuoteServiceImpl propertyQuoteService;
@@ -77,18 +72,18 @@ public class PropertyQuoteServiceImplTest {
                 "123 Main St", 2500000000L, PlanType.SILVER,
                 List.of(new CoverageDto(null, CoverageCode.FIRE, 2500000000L, 0L)),
                 new PremiumDto(2000000L, 200000L, 2200000L));
-        LeadInfoDto leadInfo = new LeadInfoDto(1, "user1", "prop1", "ACTIVE", LocalDate.now(), LocalDate.now().plusDays(30));
         PropertyQuote entity = createSampleEntity();
         PropertyQuoteDto resultDto = createSampleDto();
-        when(propertyLeadFeignClient.getLeadById(1)).thenReturn(leadInfo);
         when(propertyQuoteMapper.toEntity(inputDto)).thenReturn(entity);
         when(propertyQuoteRepo.save(any(PropertyQuote.class))).thenReturn(entity);
         when(propertyQuoteMapper.toDto(entity)).thenReturn(resultDto);
+        when(streamBridge.send(anyString(), any())).thenReturn(true);
         PropertyQuoteDto result = propertyQuoteService.createPropertyQuote(inputDto);
         assertNotNull(result);
         assertEquals(1, result.id());
         assertEquals(PlanType.SILVER, result.plan());
         verify(propertyQuoteRepo).save(any(PropertyQuote.class));
+        verify(streamBridge).send(eq("quoteCreated-out-0"), any());
     }
 
     @Test
