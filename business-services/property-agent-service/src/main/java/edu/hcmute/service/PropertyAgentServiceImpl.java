@@ -52,22 +52,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
         AgentLead agentLead = getOrcreateAgentLead(agentLeadDto);
         LeadAction currentAction = agentLead.getLeadAction();
         LeadAction newAction = agentLeadDto.leadAction();
-        if (currentAction == null) {
-            if (newAction != LeadAction.INTERESTED && newAction != LeadAction.REJECTED) {
-                throw new IllegalStateException("Initial action must be INTERESTED or REJECTED. Cannot jump to " + newAction);
-            }
-        } else if (currentAction == LeadAction.INTERESTED) {
-        } else {
-            if (currentAction == LeadAction.ACCEPTED || currentAction == LeadAction.REJECTED) {
-                if (currentAction == LeadAction.ACCEPTED && newAction == LeadAction.REJECTED) {
-                    log.info("Quote rejected, flipping Agent Action from ACCEPTED to REJECTED");
-                } else if (currentAction == newAction) {
-                    log.info("Action already set to {}, ignoring update", currentAction);
-                } else {
-                    log.warn("Attempting to change final status {} to {}", currentAction, newAction);
-                }
-            }
-        }
+        validateStateTransition(currentAction, newAction);
         validateExpiry(agentLead);
         agentLead.setLeadAction(newAction);
         if (agentLead.getId() == 0) {
@@ -79,6 +64,22 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
         agentLeadRepo.save(agentLead);
         handleLeadAction(agentLeadDto, agentLead, newAction);
         return enrichAgentLeadDto(agentLead);
+    }
+
+    private void validateStateTransition(LeadAction currentAction, LeadAction newAction) {
+        if (currentAction == null) {
+            if (newAction != LeadAction.INTERESTED && newAction != LeadAction.REJECTED) {
+                throw new IllegalStateException("Initial action must be INTERESTED or REJECTED. Cannot jump to " + newAction);
+            }
+        } else if (currentAction != LeadAction.INTERESTED) {
+            if (currentAction == LeadAction.ACCEPTED && newAction == LeadAction.REJECTED) {
+                log.info("Quote rejected, flipping Agent Action from ACCEPTED to REJECTED");
+            } else if (currentAction == newAction) {
+                log.info("Action already set to {}, ignoring update", currentAction);
+            } else {
+                log.warn("Attempting to change final status {} to {}", currentAction, newAction);
+            }
+        }
     }
 
     private AgentLead getOrcreateAgentLead(AgentLeadDto agentLeadDto) {

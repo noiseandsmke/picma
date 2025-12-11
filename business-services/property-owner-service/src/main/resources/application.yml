@@ -9,10 +9,16 @@ spring:
   cloud:
     stream:
       function:
-        definition: handleLeadStatusChanged
+        definition: handleLeadStatusChanged;handleQuoteAccepted;handleQuoteRejected
       bindings:
         handleLeadStatusChanged-in-0:
           destination: picma.leads.status
+          group: property-owner-service-group
+        handleQuoteAccepted-in-0:
+          destination: picma.quotes.accepted
+          group: property-owner-service-group
+        handleQuoteRejected-in-0:
+          destination: picma.quotes.rejected
           group: property-owner-service-group
 eureka:
   client:

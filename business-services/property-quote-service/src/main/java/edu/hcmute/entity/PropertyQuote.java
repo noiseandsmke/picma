@@ -1,6 +1,7 @@
 package edu.hcmute.entity;
 
 import edu.hcmute.domain.PlanType;
+import edu.hcmute.domain.QuoteStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,6 +33,9 @@ public class PropertyQuote {
 
     @Enumerated(EnumType.STRING)
     private PlanType plan;
+
+    @Enumerated(EnumType.STRING)
+    private QuoteStatus status;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn

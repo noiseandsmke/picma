@@ -13,7 +13,6 @@ import java.util.List;
 
 @Component
 public class PropertyQuoteMapper {
-
     public PropertyQuote toEntity(PropertyQuoteDto dto) {
         if (dto == null) {
             return null;
@@ -28,6 +27,7 @@ public class PropertyQuoteMapper {
                 .propertyAddress(dto.propertyAddress())
                 .sumInsured(dto.sumInsured())
                 .plan(dto.plan())
+                .status(dto.status())
                 .build();
         if (dto.coverages() != null) {
             List<Coverage> coverages = new ArrayList<>();
@@ -79,6 +79,7 @@ public class PropertyQuoteMapper {
                 entity.getPropertyAddress(),
                 entity.getSumInsured(),
                 entity.getPlan(),
+                entity.getStatus(),
                 coverageDtos,
                 premiumDto
         );

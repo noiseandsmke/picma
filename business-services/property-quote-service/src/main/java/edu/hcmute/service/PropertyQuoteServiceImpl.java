@@ -1,5 +1,6 @@
 package edu.hcmute.service;
 
+import edu.hcmute.domain.QuoteStatus;
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.PropertyQuote;
 import edu.hcmute.event.schema.QuoteAcceptedEvent;
@@ -44,6 +45,9 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
             propertyQuote.setLeadId(leadId);
             if (propertyQuote.getValidUntil() == null) {
                 propertyQuote.setValidUntil(LocalDate.now().plusDays(30));
+            }
+            if (propertyQuote.getStatus() == null) {
+                propertyQuote.setStatus(QuoteStatus.PENDING);
             }
             propertyQuote = propertyQuoteRepo.save(propertyQuote);
             log.info("~~> PropertyQuote saved with id: {}", propertyQuote.getId());
@@ -110,6 +114,9 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
         PropertyQuote updatedQuote = propertyQuoteMapper.toEntity(propertyQuoteDto);
         updatedQuote.setId(existingQuote.getId());
         updatedQuote.setLeadId(existingQuote.getLeadId());
+        if (updatedQuote.getStatus() == null) {
+            updatedQuote.setStatus(existingQuote.getStatus());
+        }
         updatedQuote = propertyQuoteRepo.save(updatedQuote);
         log.info("~~> PropertyQuote updated with id: {}", updatedQuote.getId());
         return propertyQuoteMapper.toDto(updatedQuote);
@@ -130,16 +137,37 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     @Transactional
     public void acceptQuote(Integer quoteId) {
         log.info("### Accept Quote id = {} ###", quoteId);
-        PropertyQuote quote = propertyQuoteRepo.findById(quoteId)
+        PropertyQuote targetQuote = propertyQuoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + quoteId));
-        QuoteAcceptedEvent event = new QuoteAcceptedEvent(
-                quote.getId(),
-                quote.getLeadId(),
-                quote.getAgentId(),
+        // Accept the target quote
+        targetQuote.setStatus(QuoteStatus.ACCEPTED);
+        propertyQuoteRepo.save(targetQuote);
+        log.info("~~> Quote status updated to ACCEPTED for quoteId: {}", quoteId);
+        QuoteAcceptedEvent acceptedEvent = new QuoteAcceptedEvent(
+                targetQuote.getId(),
+                targetQuote.getLeadId(),
+                targetQuote.getAgentId(),
                 LocalDateTime.now()
         );
-        streamBridge.send(QUOTE_ACCEPTED_OUT, event);
+        streamBridge.send(QUOTE_ACCEPTED_OUT, acceptedEvent);
         log.info("~~> QuoteAcceptedEvent published for quoteId: {}", quoteId);
+        // Reject other pending quotes for the same lead
+        List<PropertyQuote> allQuotes = propertyQuoteRepo.findByLeadId(targetQuote.getLeadId());
+        for (PropertyQuote quote : allQuotes) {
+            if (!quote.getId().equals(quoteId) && quote.getStatus() == QuoteStatus.PENDING) {
+                quote.setStatus(QuoteStatus.REJECTED);
+                propertyQuoteRepo.save(quote);
+                log.info("~~> Automatically REJECTED other quoteId: {}", quote.getId());
+                QuoteRejectedEvent rejectedEvent = new QuoteRejectedEvent(
+                        quote.getId(),
+                        quote.getLeadId(),
+                        quote.getAgentId(),
+                        LocalDateTime.now()
+                );
+                streamBridge.send(QUOTE_REJECTED_OUT, rejectedEvent);
+                log.info("~~> QuoteRejectedEvent published for auto-rejected quoteId: {}", quote.getId());
+            }
+        }
     }
 
     @Override
@@ -148,6 +176,9 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
         log.info("### Reject Quote id = {} ###", quoteId);
         PropertyQuote quote = propertyQuoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + quoteId));
+        quote.setStatus(QuoteStatus.REJECTED);
+        propertyQuoteRepo.save(quote);
+        log.info("~~> Quote status updated to REJECTED for quoteId: {}", quoteId);
         QuoteRejectedEvent event = new QuoteRejectedEvent(
                 quote.getId(),
                 quote.getLeadId(),

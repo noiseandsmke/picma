@@ -8,5 +8,5 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient(name = "property-lead-service", url = "${picma.services.property-lead.url:http://localhost:7103}")
 public interface PropertyLeadClient {
     @GetMapping("/property-lead/{id}")
-    PropertyLeadDto getLeadById(@PathVariable("id") Integer id);
+    PropertyLeadDto getLeadById(@PathVariable Integer id);
 }
