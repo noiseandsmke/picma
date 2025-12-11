@@ -18,13 +18,13 @@ public record QuoteDto(
         List<CoverageDto> coverages,
         PremiumDto premium
 ) {
-    enum PlanType {
+    public enum PlanType {
         BRONZE,
         SILVER,
         GOLD
     }
 
-    enum QuoteStatus {
+    public enum QuoteStatus {
         PENDING,
         ACCEPTED,
         REJECTED

@@ -7,14 +7,14 @@ public record PropertyAttributesDto(
         Integer noFloors,
         Double squareMeters
 ) {
-    enum ConstructionType {
+    public enum ConstructionType {
         CONCRETE,
         STEEL_FRAME,
         MASONRY,
         WOOD_FRAME
     }
 
-    enum OccupancyType {
+    public enum OccupancyType {
         RESIDENTIAL,
         COMMERCIAL,
         INDUSTRIAL,

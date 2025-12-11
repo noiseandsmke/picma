@@ -10,7 +10,7 @@ public record PropertyLeadDto(
         LocalDate createDate,
         LocalDate expiryDate
 ) {
-    enum LeadStatus {
+    public enum LeadStatus {
         ACTIVE,
         IN_REVIEWING,
         ACCEPTED,

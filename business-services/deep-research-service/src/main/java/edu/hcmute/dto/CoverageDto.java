@@ -6,7 +6,7 @@ public record CoverageDto(
         Long limit,
         Long deductible
 ) {
-    enum CoverageCode {
+    public enum CoverageCode {
         FIRE,
         THEFT,
         NATURAL_DISASTER
