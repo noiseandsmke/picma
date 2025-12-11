@@ -45,6 +45,8 @@ interface QuoteFormProps {
     leads?: LeadDto[];
     hideAgentSelect?: boolean;
     agentId?: string;
+    readOnly?: boolean;
+    hideLeadInfo?: boolean;
 }
 
 const getDefaultCoverages = (plan: string, sumInsured: number) => {
@@ -126,7 +128,8 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                         isLoading,
                                                         leads: propsLeads,
                                                         hideAgentSelect,
-                                                        agentId
+                                                        agentId,
+                                                        ...props
                                                     }) => {
     const {
         control,
@@ -334,23 +337,26 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                     </h4>
 
                     <div className="space-y-3">
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">Lead</Label>
-                            <Controller
-                                name="leadId"
-                                control={control}
-                                render={({field}) => (
-                                    <SearchableSelect
-                                        options={leadOptions}
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                        placeholder="Search client..."
-                                        isLoading={!leads}
-                                    />
-                                )}
-                            />
-                            {errors.leadId && <p className="text-red-500 text-[10px]">{errors.leadId.message}</p>}
-                        </div>
+                        {!props.hideLeadInfo && (
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Lead</Label>
+                                <Controller
+                                    name="leadId"
+                                    control={control}
+                                    render={({field}) => (
+                                        <SearchableSelect
+                                            options={leadOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Search client..."
+                                            isLoading={!leads}
+                                            disabled={props.readOnly}
+                                        />
+                                    )}
+                                />
+                                {errors.leadId && <p className="text-red-500 text-[10px]">{errors.leadId.message}</p>}
+                            </div>
+                        )}
 
                         {!hideAgentSelect && (
                             <div className="space-y-1.5">
@@ -365,7 +371,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                             value={field.value}
                                             onChange={field.onChange}
                                             placeholder={selectedProperty ? (agentOptions.length > 0 ? "Select agent..." : "No agents found in this zipcode") : "Select lead first..."}
-                                            disabled={!selectedProperty || agentOptions.length === 0}
+                                            disabled={!selectedProperty || agentOptions.length === 0 || props.readOnly}
                                             isLoading={!agents}
                                         />
                                     )}
@@ -386,7 +392,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                     control={control}
                                     render={({field}) => (
                                         <Popover>
-                                            <PopoverTrigger asChild>
+                                            <PopoverTrigger asChild disabled={props.readOnly}>
                                                 <Button
                                                     variant={"outline"}
                                                     className={cn(
@@ -417,22 +423,26 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                 <div className="flex justify-between items-center">
                                     <Label className="text-xs">End date</Label>
                                     <div className="flex gap-1">
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            onClick={() => setQuickDuration(1)}
-                                            className="h-4 px-1 text-[10px] text-indigo-400 hover:underline bg-indigo-950/30 rounded hover:bg-indigo-950/50"
-                                        >
-                                            1Y
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            onClick={() => setQuickDuration(2)}
-                                            className="h-4 px-1 text-[10px] text-indigo-400 hover:underline bg-indigo-950/30 rounded hover:bg-indigo-950/50"
-                                        >
-                                            2Y
-                                        </Button>
+                                        {!props.readOnly && (
+                                            <>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    onClick={() => setQuickDuration(1)}
+                                                    className="h-4 px-1 text-[10px] text-indigo-400 hover:underline bg-indigo-950/30 rounded hover:bg-indigo-950/50"
+                                                >
+                                                    1Y
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    onClick={() => setQuickDuration(2)}
+                                                    className="h-4 px-1 text-[10px] text-indigo-400 hover:underline bg-indigo-950/30 rounded hover:bg-indigo-950/50"
+                                                >
+                                                    2Y
+                                                </Button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                                 <Controller
@@ -440,7 +450,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                     control={control}
                                     render={({field}) => (
                                         <Popover>
-                                            <PopoverTrigger asChild>
+                                            <PopoverTrigger asChild disabled={props.readOnly}>
                                                 <Button
                                                     variant={"outline"}
                                                     className={cn(
@@ -482,6 +492,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                 {...control.register('propertyAddress')}
                                 placeholder="Enter full address"
                                 className="bg-slate-950 border-slate-700 h-9 text-xs"
+                                disabled={props.readOnly}
                             />
                             {errors.propertyAddress &&
                                 <p className="text-red-500 text-[10px]">{errors.propertyAddress.message}</p>}
@@ -490,7 +501,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
                                 <Label className="text-xs">Sum insured</Label>
-                                {(selectedProperty || selectedLead?.valuation) && (
+                                {(selectedProperty || selectedLead?.valuation) && !props.readOnly && (
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -509,6 +520,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                     <CurrencyInput
                                         {...field}
                                         className="bg-slate-950 border-slate-700 h-9 text-xs"
+                                        disabled={props.readOnly}
                                     />
                                 )}
                             />
@@ -522,7 +534,8 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                 name="plan"
                                 control={control}
                                 render={({field}) => (
-                                    <Select onValueChange={field.onChange} value={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}
+                                            disabled={props.readOnly}>
                                         <SelectTrigger className="bg-slate-900 border-slate-700 h-9 text-xs">
                                             <SelectValue placeholder="Select plan"/>
                                         </SelectTrigger>
@@ -584,6 +597,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                             {...field}
                                                             compact
                                                             className="h-6 text-[10px] bg-slate-900 border-slate-800 px-1 text-right"
+                                                            disabled={props.readOnly}
                                                         />
                                                     )}
                                                 />
@@ -597,6 +611,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                             {...field}
                                                             compact
                                                             className="h-6 text-[10px] bg-slate-900 border-slate-800 px-1 text-right"
+                                                            disabled={props.readOnly}
                                                         />
                                                     )}
                                                 />
@@ -641,13 +656,15 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                         </div>
                     </div>
 
-                    <DialogFooter className="mt-6 gap-2">
-                        <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
-                        <Button type="submit" disabled={isLoading}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px]">
-                            {initialData ? 'Save changes' : 'Create quote'}
-                        </Button>
-                    </DialogFooter>
+                    {!props.readOnly && (
+                        <DialogFooter className="mt-6 gap-2">
+                            <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
+                            <Button type="submit" disabled={isLoading}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px]">
+                                {initialData ? 'Save changes' : 'Create quote'}
+                            </Button>
+                        </DialogFooter>
+                    )}
                 </div>
             </div>
         </form>

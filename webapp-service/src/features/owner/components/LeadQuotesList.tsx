@@ -1,14 +1,16 @@
 import React from 'react';
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {acceptQuote, fetchQuotesByLeadId, rejectQuote} from '@/features/admin/services/quoteService';
+import {acceptQuote, fetchQuotesByLeadId, PropertyQuoteDto, rejectQuote} from '@/features/admin/services/quoteService';
 import {formatCurrency} from '@/lib/utils';
 import {Skeleton} from '@/components/ui/skeleton';
 import {Badge} from '@/components/ui/badge';
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger,} from "@/components/ui/accordion";
-import {CheckCircle, FileText, XCircle} from 'lucide-react';
+import {FileText} from 'lucide-react';
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
 import {ConfirmDialog} from "@/components/ui/confirm-dialog";
+import {OwnerQuoteDetailDialog} from './OwnerQuoteDetailDialog';
+import {LeadDto} from '@/features/admin/services/leadService';
 
 interface LeadQuotesListProps {
     leadId: number;
@@ -18,6 +20,7 @@ interface LeadQuotesListProps {
 export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({leadId, leadStatus}) => {
     const queryClient = useQueryClient();
     const [actionId, setActionId] = React.useState<{ id: number, type: 'accept' | 'reject' } | null>(null);
+    const [selectedQuote, setSelectedQuote] = React.useState<PropertyQuoteDto | null>(null);
 
     const {data: quotes, isLoading} = useQuery({
         queryKey: ['quotes', leadId],
@@ -31,6 +34,7 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({leadId, leadStatu
             await queryClient.invalidateQueries({queryKey: ['owner-leads']});
             toast.success("Quote accepted successfully");
             setActionId(null);
+            setSelectedQuote(null);
         },
         onError: () => toast.error("Failed to accept quote")
     });
@@ -41,6 +45,7 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({leadId, leadStatu
             await queryClient.invalidateQueries({queryKey: ['quotes']});
             toast.success("Quote rejected successfully");
             setActionId(null);
+            setSelectedQuote(null);
         },
         onError: () => toast.error("Failed to reject quote")
     });
@@ -52,6 +57,12 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({leadId, leadStatu
         } else {
             rejectMutation.mutate(actionId.id);
         }
+    };
+
+    const handleActionFromDetail = (quoteId: number, type: 'accept' | 'reject') => {
+        setActionId({id: quoteId, type});
+        // We close the detail dialog first, then confirm dialog opens
+        setSelectedQuote(null);
     };
 
     if (isLoading) {
@@ -66,16 +77,34 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({leadId, leadStatu
         );
     }
 
-    const canAct = leadStatus === 'IN_REVIEWING';
+    const pendingQuotes = quotes.filter(q => q.status !== 'ACCEPTED' && q.status !== 'REJECTED');
+
+    // Create a minimal lead DTO for the form
+    const leadDto: LeadDto = {
+        id: leadId,
+        userInfo: '', // Hidden anyway
+        propertyInfo: '', // Not used for display in read-only form if disabled
+        status: leadStatus,
+        createDate: new Date().toISOString(),
+        expiryDate: new Date().toISOString() // Dummy date to satisfy type
+    };
 
     return (
         <>
             <Accordion type="single" collapsible className="w-full border-t border-slate-800">
                 <AccordionItem value="quotes" className="border-b-0">
                     <AccordionTrigger className="text-sm py-3 px-1 hover:no-underline text-slate-300 hover:text-white">
-                        <div className="flex items-center gap-2">
-                            <FileText className="h-3 w-3 text-indigo-400"/>
-                            <span>View Received Quotes ({quotes.length})</span>
+                        <div className="flex items-center justify-between w-full pr-2">
+                            <div className="flex items-center gap-2">
+                                <FileText className="h-3 w-3 text-indigo-400"/>
+                                <span>View Received Quotes</span>
+                            </div>
+                            {pendingQuotes.length > 0 && (
+                                <Badge variant="secondary"
+                                       className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30">
+                                    {pendingQuotes.length} Action Required
+                                </Badge>
+                            )}
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -95,40 +124,43 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({leadId, leadStatu
                                             {formatCurrency(quote.premium.total)}
                                         </Badge>
                                     </div>
-                                    <div className="flex items-center justify-between text-xs text-slate-400">
+                                    <div className="flex items-center justify-between text-xs text-slate-400 mt-1">
                                         <span>Plan: {quote.plan}</span>
-                                        <span>Status: {quote.status || 'PENDING'}</span>
+                                        {/* Hide status text if PENDING, as per requirement */}
+                                        {quote.status && quote.status !== 'PENDING' && (
+                                            <Badge variant="secondary" className="text-[10px] h-5">
+                                                {quote.status}
+                                            </Badge>
+                                        )}
                                     </div>
 
-                                    {canAct && quote.status !== 'ACCEPTED' && quote.status !== 'REJECTED' && (
-                                        <div className="flex justify-end gap-2 mt-2 border-t border-slate-800/50 pt-2">
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="h-7 text-xs border-red-900/50 text-red-400 hover:bg-red-950/30 hover:text-red-300"
-                                                onClick={() => setActionId({id: quote.id, type: 'reject'})}
-                                                disabled={rejectMutation.isPending || acceptMutation.isPending}
-                                            >
-                                                <XCircle className="w-3 h-3 mr-1"/>
-                                                Reject
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-                                                onClick={() => setActionId({id: quote.id, type: 'accept'})}
-                                                disabled={rejectMutation.isPending || acceptMutation.isPending}
-                                            >
-                                                <CheckCircle className="w-3 h-3 mr-1"/>
-                                                Accept
-                                            </Button>
-                                        </div>
-                                    )}
+                                    <div className="flex justify-end gap-2 mt-2 border-t border-slate-800/50 pt-2">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 text-xs border-slate-700 text-slate-300 hover:bg-slate-800"
+                                            onClick={() => setSelectedQuote(quote)}
+                                        >
+                                            <FileText className="w-3 h-3 mr-1"/>
+                                            View Details
+                                        </Button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>
+
+            <OwnerQuoteDetailDialog
+                open={!!selectedQuote}
+                onOpenChange={(open) => !open && setSelectedQuote(null)}
+                quote={selectedQuote}
+                lead={leadDto}
+                onAccept={(id) => handleActionFromDetail(id, 'accept')}
+                onReject={(id) => handleActionFromDetail(id, 'reject')}
+                isPendingAction={acceptMutation.isPending || rejectMutation.isPending}
+            />
 
             <ConfirmDialog
                 open={actionId !== null}

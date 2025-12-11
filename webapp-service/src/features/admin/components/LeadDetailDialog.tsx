@@ -21,9 +21,10 @@ interface LeadDetailDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     lead: LeadDto | null;
+    hideUserInfo?: boolean;
 }
 
-export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenChange, lead}) => {
+export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenChange, lead, hideUserInfo}) => {
     const [propertyDetails, setPropertyDetails] = useState<PropertyInfoDto | null>(null);
     const [userDetails, setUserDetails] = useState<UserDto | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -227,20 +228,23 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label className="text-slate-400 text-xs uppercase tracking-wider">User info</Label>
-                        <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-300">
-                            {userDetails ? (
-                                <div className="space-y-1">
-                                    <div
-                                        className="font-medium text-slate-200">{userDetails.firstName} {userDetails.lastName}</div>
-                                    <div className="text-xs text-slate-500">{userDetails.email}</div>
-                                </div>
-                            ) : (
-                                lead.userInfo
-                            )}
+                    {!hideUserInfo && (
+                        <div className="space-y-2">
+                            <Label className="text-slate-400 text-xs uppercase tracking-wider">User info</Label>
+                            <div
+                                className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-300">
+                                {userDetails ? (
+                                    <div className="space-y-1">
+                                        <div
+                                            className="font-medium text-slate-200">{userDetails.firstName} {userDetails.lastName}</div>
+                                        <div className="text-xs text-slate-500">{userDetails.email}</div>
+                                    </div>
+                                ) : (
+                                    lead.userInfo
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="space-y-2">
                         <Label className="text-slate-400 text-xs uppercase tracking-wider">Property info</Label>

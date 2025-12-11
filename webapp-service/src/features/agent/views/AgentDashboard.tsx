@@ -1,101 +1,31 @@
 import React, {useMemo, useState} from 'react';
 import AgentLayout from '../layouts/AgentLayout';
-import {
-    ArrowRight,
-    Bell,
-    Clock,
-    DollarSign,
-    Eye,
-    FileText,
-    Info,
-    MapPin,
-    Search,
-    ThumbsUp,
-    User,
-    XCircle
-} from 'lucide-react';
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Button} from "@/components/ui/button";
-import {Badge} from "@/components/ui/badge";
-import {TableCell, TableRow} from "@/components/ui/table";
-import SharedTable, {Column} from "@/components/ui/shared-table";
+import {Bell, Clock, DollarSign, FileText, Search} from 'lucide-react';
+import {Card, CardContent} from "@/components/ui/card";
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {AgentLeadDto, fetchAgentLeads, fetchAgentQuotes, LeadAction, updateLeadAction} from '../services/agentService';
+import {AgentLeadDto, fetchAgentLeads, fetchAgentQuotes, updateLeadAction} from '../services/agentService';
 import {Skeleton} from '@/components/ui/skeleton';
 import {useAuth} from '@/context/AuthContext';
-import {formatCurrency} from '@/lib/utils';
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
+import {cn, formatCurrency} from '@/lib/utils';
 import {toast} from "sonner";
 import {QuoteForm} from '@/features/admin/components/QuoteForm';
 import {createQuote, PropertyQuoteDto, updateQuote} from '@/features/admin/services/quoteService';
 import {format} from 'date-fns';
 import {LeadDto} from '@/features/admin/services/leadService';
-import {fetchPropertyById, PropertyInfoDto} from "@/features/admin/services/propertyService";
-
-const SKELETON_IDS = ['skel-1', 'skel-2', 'skel-3'];
-
-const PropertyCell: React.FC<{ propertyId: string; showFullDetails: boolean }> = ({propertyId, showFullDetails}) => {
-    const {data: property, isLoading} = useQuery({
-        queryKey: ['property', propertyId],
-        queryFn: () => {
-            if (propertyId.startsWith('{')) {
-                try {
-                    return Promise.resolve(JSON.parse(propertyId) as PropertyInfoDto);
-                } catch {
-                    return Promise.resolve(null);
-                }
-            }
-            return fetchPropertyById(propertyId);
-        },
-        enabled: !!propertyId
-    });
-
-    if (isLoading) return <Skeleton className="h-10 w-48 bg-slate-800"/>;
-
-    if (!property) {
-        return <span className="text-sm text-slate-500 truncate max-w-[200px]" title={propertyId}>{propertyId}</span>;
-    }
-
-    if (!property.location) {
-        return <span className="text-sm text-slate-500">{propertyId}</span>;
-    }
-
-    const {location, attributes, valuation} = property;
-
-    return (
-        <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-                <div className="font-medium text-slate-200">
-                    {showFullDetails ? (
-                        <span>{location.street}, {location.ward}, {location.city}</span>
-                    ) : (
-                        <span>{location.zipCode} - {location.city}</span>
-                    )}
-                </div>
-            </div>
-            <div className="text-xs text-slate-500 flex items-center gap-3">
-                <span className="flex items-center gap-1"><MapPin size={10}/> {location.zipCode}</span>
-                {attributes?.constructionType && (
-                    <span className="bg-slate-800 px-1 rounded text-[10px]">
-                         {attributes.constructionType.replace('_', ' ')}
-                     </span>
-                )}
-                {valuation?.estimatedConstructionCost && (
-                    <span className="text-emerald-500/80 font-mono">
-                         {formatCurrency(valuation.estimatedConstructionCost)}
-                     </span>
-                )}
-            </div>
-        </div>
-    );
-};
+import {AgentLeadCard} from '@/features/agent/components/AgentLeadCard';
+import {AgentActionDialog} from '@/features/agent/components/AgentActionDialog';
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 
 const AgentDashboard: React.FC = () => {
     const {user} = useAuth();
     const queryClient = useQueryClient();
     const agentId = user?.id || '';
-    const [isQuoteOpen, setIsQuoteOpen] = useState(false);
-    const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
+    const [activeTab, setActiveTab] = useState<'new' | 'portfolio'>('new');
+    const [selectedLead, setSelectedLead] = useState<AgentLeadDto | null>(null);
+    const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
+    const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false);
+    const [editingQuote, setEditingQuote] = useState<PropertyQuoteDto | null>(null);
+    const [loadingLeadId, setLoadingLeadId] = useState<number | null>(null);
 
     const {data: leads, isLoading: isLeadsLoading} = useQuery({
         queryKey: ['agent-leads', agentId],
@@ -111,11 +41,21 @@ const AgentDashboard: React.FC = () => {
 
     const leadActionMutation = useMutation({
         mutationFn: updateLeadAction,
-        onSuccess: async () => {
+        onSuccess: async (data, variables) => {
             await queryClient.invalidateQueries({queryKey: ['agent-leads']});
-            toast.success("Lead status updated successfully");
+            setLoadingLeadId(null);
+
+            if (variables.leadAction === 'INTERESTED') {
+                setSelectedLead(data);
+                setIsActionDialogOpen(true);
+                toast.success("You are now interested in this lead");
+            } else if (variables.leadAction === 'REJECTED') {
+                toast.success("Lead rejected");
+                setIsActionDialogOpen(false);
+            }
         },
         onError: (error) => {
+            setLoadingLeadId(null);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const msg = (error as any).response?.data?.message || "Failed to update lead status";
             toast.error(msg);
@@ -126,12 +66,14 @@ const AgentDashboard: React.FC = () => {
         mutationFn: createQuote,
         onSuccess: async (_data, variables) => {
             await queryClient.invalidateQueries({queryKey: ['agent-quotes']});
-            setIsQuoteOpen(false);
-            toast.success("Quote created successfully");
+            await queryClient.invalidateQueries({queryKey: ['agent-leads']});
+            setIsQuoteFormOpen(false);
+            setIsActionDialogOpen(false);
+            toast.success("Quote created & lead accepted successfully");
 
             if (variables.leadId) {
                 const lead = leads?.find(l => l.leadId === variables.leadId);
-                if (lead) {
+                if (lead && lead.leadAction !== 'ACCEPTED') {
                     leadActionMutation.mutate({
                         id: lead.id,
                         leadId: lead.leadId,
@@ -148,7 +90,7 @@ const AgentDashboard: React.FC = () => {
         mutationFn: updateQuote,
         onSuccess: async () => {
             await queryClient.invalidateQueries({queryKey: ['agent-quotes']});
-            setIsQuoteOpen(false);
+            setIsQuoteFormOpen(false);
             toast.success("Quote updated successfully");
         },
         onError: () => toast.error("Failed to update quote")
@@ -162,27 +104,59 @@ const AgentDashboard: React.FC = () => {
             endDate: data.endDate ? format(data.endDate, 'yyyy-MM-dd') : undefined,
         };
 
-        createMutation.mutate({
-            ...payload,
-        } as PropertyQuoteDto);
+        if (editingQuote) {
+            updateMutation.mutate({
+                ...editingQuote,
+                ...payload,
+                id: editingQuote.id
+            } as PropertyQuoteDto);
+        } else {
+            createMutation.mutate({
+                ...payload,
+            } as PropertyQuoteDto);
+        }
     };
 
-    const openQuoteModal = (leadId: number) => {
-        setSelectedLeadId(leadId);
-        setIsQuoteOpen(true);
+    const handleViewDetail = (lead: AgentLeadDto) => {
+        if (lead.leadAction) {
+            setSelectedLead(lead);
+            setIsActionDialogOpen(true);
+        } else {
+            setLoadingLeadId(lead.leadId);
+            leadActionMutation.mutate({
+                id: lead.id,
+                leadId: lead.leadId,
+                agentId: lead.agentId,
+                leadAction: 'INTERESTED'
+            });
+        }
     };
 
-    const handleUpdateStatus = (lead: AgentLeadDto, action: LeadAction) => {
+    const handleCreateQuote = (leadId: number) => {
+        const existingQuote = quotes?.find(q => q.leadId === leadId);
+        if (existingQuote) {
+            setEditingQuote(existingQuote);
+        } else {
+            setEditingQuote(null);
+        }
+        setIsQuoteFormOpen(true);
+        setIsActionDialogOpen(false);
+    };
+
+    const handleRejectLead = (lead: AgentLeadDto) => {
         leadActionMutation.mutate({
             id: lead.id,
             leadId: lead.leadId,
             agentId: lead.agentId,
-            leadAction: action
+            leadAction: 'REJECTED'
         });
-    }
+    };
 
-    const newLeadsCount = useMemo(() => leads?.filter(l => l.leadAction === null).length || 0, [leads]);
-    const pendingQuotesCount = quotes?.length || 0;
+    const newLeads = useMemo(() => leads?.filter(l => !l.leadAction) || [], [leads]);
+    const allInteractedLeads = useMemo(() => leads?.filter(l => l.leadAction) || [], [leads]);
+
+    const newLeadsCount = newLeads.length;
+    const portfolioCount = allInteractedLeads.length;
 
     const thisMonthValue = useMemo(() => {
         if (!quotes) return 0;
@@ -200,15 +174,6 @@ const AgentDashboard: React.FC = () => {
         }, 0);
     }, [quotes]);
 
-    const leadColumns: Column[] = [
-        {header: "Client", width: "25%"},
-        {header: "Property", width: "45%"},
-        {header: "Status", width: "10%"},
-        {header: "Action", width: "20%", className: "text-right"}
-    ];
-
-    const isLoading = isLeadsLoading || isQuotesLoading;
-
     const quoteFormLeads: LeadDto[] = useMemo(() => leads?.map(l => ({
         id: l.leadId, userInfo: l.userInfo,
         propertyInfo: l.propertyInfo.startsWith('{')
@@ -217,73 +182,21 @@ const AgentDashboard: React.FC = () => {
         createDate: l.createdAt, expiryDate: l.createdAt,
     })) || [], [leads]);
 
-    const initialQuoteData = useMemo(() => ({
-        leadId: selectedLeadId || 0,
-        agentId: agentId
-    }), [selectedLeadId, agentId]);
-
-    const renderLeadStatus = (status: LeadAction) => {
-        if (!status) {
-            return <Badge
-                className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border-none shadow-none">Active</Badge>;
+    const initialQuoteData = useMemo(() => {
+        if (editingQuote) return editingQuote;
+        if (selectedLead) {
+            return {
+                leadId: selectedLead.leadId,
+                agentId: agentId
+            };
         }
-        switch (status) {
-            case 'INTERESTED':
-                return <Badge
-                    className="bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border-none shadow-none">Interested</Badge>;
-            case 'ACCEPTED':
-                return <Badge
-                    className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 border-none shadow-none">Accepted</Badge>;
-            case 'REJECTED':
-                return <Badge variant="outline" className="text-red-400 border-red-800 bg-red-900/10">Rejected</Badge>;
-            default:
-                return <Badge variant="outline" className="text-slate-400 border-slate-700">{status}</Badge>;
-        }
-    };
+        return {
+            leadId: 0,
+            agentId: agentId
+        };
+    }, [selectedLead, agentId, editingQuote]);
 
-    const renderUserInfo = (userInfo: string, isHidden: boolean) => {
-        if (isHidden) {
-            return (
-                <div className="flex items-center gap-3">
-                    <div
-                        className="h-8 w-8 bg-slate-700 rounded-full flex items-center justify-center text-xs font-medium text-slate-300">
-                        <User size={14}/>
-                    </div>
-                    <div>
-                        <div className="font-medium text-white">Anonymous Owner</div>
-                        <div className="text-xs text-slate-500">******</div>
-                    </div>
-                </div>
-            );
-        }
-
-        let initials = "??";
-        let name = userInfo || "N/A";
-
-        if (userInfo && !userInfo.includes('HIDDEN')) {
-            name = userInfo;
-            const parts = userInfo.split(' ');
-            if (parts.length > 0) {
-                initials = parts[0].substring(0, 1).toUpperCase();
-                if (parts.length > 1) {
-                    initials += parts[parts.length - 1].substring(0, 1).toUpperCase();
-                }
-            }
-        }
-
-        return (
-            <div className="flex items-center gap-3">
-                <div
-                    className="h-8 w-8 bg-slate-700 rounded-full flex items-center justify-center text-xs font-medium text-slate-300">
-                    {initials}
-                </div>
-                <div>
-                    <div className="font-medium text-white truncate max-w-[150px]" title={name}>{name}</div>
-                    <div className="text-xs text-slate-400">Verified Owner</div>
-                </div>
-            </div>
-        );
-    };
+    const isLoading = isLeadsLoading || isQuotesLoading;
 
     return (
         <AgentLayout>
@@ -292,10 +205,9 @@ const AgentDashboard: React.FC = () => {
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">New leads</p>
+                                <p className="text-sm font-medium text-slate-400">New Opportunities</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
-                                    {isLoading ? <Skeleton
-                                        className="h-8 w-12 bg-slate-800"/> : newLeadsCount}
+                                    {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800"/> : newLeadsCount}
                                 </h3>
                             </div>
                             <div
@@ -307,9 +219,9 @@ const AgentDashboard: React.FC = () => {
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Total quotes</p>
+                                <p className="text-sm font-medium text-slate-400">Active Portfolio</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
-                                    {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800"/> : pendingQuotesCount}
+                                    {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800"/> : portfolioCount}
                                 </h3>
                             </div>
                             <div
@@ -321,7 +233,7 @@ const AgentDashboard: React.FC = () => {
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">This month</p>
+                                <p className="text-sm font-medium text-slate-400">This Month</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
                                     {isLoading ?
                                         <Skeleton className="h-8 w-24 bg-slate-800"/> : formatCurrency(thisMonthValue)}
@@ -336,7 +248,7 @@ const AgentDashboard: React.FC = () => {
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Tasks due</p>
+                                <p className="text-sm font-medium text-slate-400">Tasks Due</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">0</h3>
                             </div>
                             <div
@@ -347,230 +259,110 @@ const AgentDashboard: React.FC = () => {
                     </Card>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm h-full flex flex-col">
-                        <CardHeader
-                            className="flex flex-row items-center justify-between pb-2 border-b border-[#2e2c3a] shrink-0">
-                            <div>
-                                <CardTitle className="text-lg font-semibold text-white">Recent leads</CardTitle>
-                                <p className="text-sm text-slate-400">Prioritize new and high urgency requests</p>
-                            </div>
-                            <Button variant="outline" size="sm"
-                                    className="gap-2 text-white border-slate-700 hover:bg-slate-800 hover:text-white">
-                                <Search className="h-4 w-4"/>
-                                Search leads
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="p-0 flex-1 overflow-auto">
-                            <div className="min-h-[400px]">
-                                <SharedTable
-                                    columns={leadColumns}
-                                    isLoading={isLoading}
-                                    isEmpty={!isLoading && (!leads || leads.length === 0)}
-                                    className="rounded-none border-0"
-                                    headerClassName="bg-slate-900/50 border-slate-800 text-slate-400"
-                                    rowClassName="border-slate-800 hover:bg-slate-800/50 group text-slate-300"
-                                    emptyMessage="No new leads found in your area."
-                                >
-                                    {isLoading ? (
-                                        SKELETON_IDS.map((skelId) => (
-                                            <TableRow key={skelId} className="border-slate-800">
-                                                <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
-                                                <TableCell><Skeleton className="h-4 w-48 bg-slate-800"/></TableCell>
-                                                <TableCell><Skeleton className="h-6 w-16 bg-slate-800"/></TableCell>
-                                                <TableCell><Skeleton
-                                                    className="h-8 w-20 ml-auto bg-slate-800"/></TableCell>
-                                            </TableRow>
+                <div>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex gap-6 border-b border-slate-800">
+                            <button
+                                onClick={() => setActiveTab('new')}
+                                className={cn(
+                                    "pb-3 text-sm font-medium transition-colors relative",
+                                    activeTab === 'new' ? "text-indigo-400" : "text-slate-400 hover:text-slate-200"
+                                )}
+                            >
+                                New Leads
+                                {activeTab === 'new' && <div
+                                    className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full"/>}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('portfolio')}
+                                className={cn(
+                                    "pb-3 text-sm font-medium transition-colors relative",
+                                    activeTab === 'portfolio' ? "text-indigo-400" : "text-slate-400 hover:text-slate-200"
+                                )}
+                            >
+                                Quote History & Portfolio
+                                {activeTab === 'portfolio' && <div
+                                    className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full"/>}
+                            </button>
+                        </div>
+
+                        <div className="relative w-64">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500"/>
+                            <input
+                                type="text"
+                                placeholder="Search leads..."
+                                className="w-full pl-9 h-9 rounded-md bg-slate-900 border border-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {isLoading ? (
+                            Array.from({length: 3}).map((_, i) => (
+                                <Skeleton key={i} className="h-64 w-full rounded-xl bg-slate-800"/>
+                            ))
+                        ) : (
+                            <>
+                                {activeTab === 'new' && (
+                                    newLeads.length === 0 ? (
+                                        <div
+                                            className="col-span-full py-12 text-center text-slate-500 bg-[#141124] rounded-xl border border-dashed border-slate-800">
+                                            <p>No new leads found in your area.</p>
+                                        </div>
+                                    ) : (
+                                        newLeads.map(lead => (
+                                            <AgentLeadCard
+                                                key={lead.id}
+                                                lead={lead}
+                                                onViewDetail={handleViewDetail}
+                                                isLoadingAction={loadingLeadId === lead.leadId}
+                                            />
                                         ))
-                                    ) : leads?.map((lead) => (
-                                        <TableRow key={lead.id}
-                                                  className="border-slate-800 hover:bg-slate-800/50 group">
-                                            <TableCell>
-                                                {renderUserInfo(lead.userInfo, lead.userInfo === 'HIDDEN')}
-                                            </TableCell>
-                                            <TableCell>
-                                                <PropertyCell propertyId={lead.propertyInfo}
-                                                              showFullDetails={lead.leadAction === 'INTERESTED' || lead.leadAction === 'ACCEPTED'}/>
-                                            </TableCell>
-                                            <TableCell>
-                                                {renderLeadStatus(lead.leadAction)}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Dialog>
-                                                        <DialogTrigger asChild>
-                                                            <Button size="icon" variant="ghost"
-                                                                    className="h-8 w-8 text-slate-400 hover:text-white">
-                                                                <Eye className="h-4 w-4"/>
-                                                            </Button>
-                                                        </DialogTrigger>
-                                                        <DialogContent
-                                                            className="bg-slate-950 border-slate-800 text-white">
-                                                            <DialogHeader>
-                                                                <DialogTitle>Lead Details</DialogTitle>
-                                                            </DialogHeader>
-                                                            <div className="space-y-4">
-                                                                <div className="grid grid-cols-2 gap-4">
-                                                                    <div>
-                                                                        <h4 className="text-sm font-medium text-slate-400">User
-                                                                            Info</h4>
-                                                                        <p>{lead.userInfo === 'HIDDEN' ? 'Anonymous Owner' : lead.userInfo}</p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <h4 className="text-sm font-medium text-slate-400">Status</h4>
-                                                                        <p>{lead.leadAction || "Active"}</p>
-                                                                    </div>
-                                                                </div>
-                                                                <div>
-                                                                    <h4 className="text-sm font-medium text-slate-400">Property
-                                                                        Info</h4>
-                                                                    <div
-                                                                        className="mt-1 p-2 bg-slate-900 rounded border border-slate-800">
-                                                                        <PropertyCell propertyId={lead.propertyInfo}
-                                                                                      showFullDetails={lead.leadAction === 'INTERESTED' || lead.leadAction === 'ACCEPTED'}/>
-                                                                    </div>
-                                                                </div>
-                                                                <div>
-                                                                    <h4 className="text-sm font-medium text-slate-400">Created
-                                                                        At</h4>
-                                                                    <p>{new Date(lead.createdAt).toLocaleString()}</p>
-                                                                </div>
-                                                            </div>
-                                                        </DialogContent>
-                                                    </Dialog>
+                                    )
+                                )}
 
-                                                    {!lead.leadAction && (
-                                                        <Button size="sm"
-                                                                onClick={() => handleUpdateStatus(lead, 'INTERESTED')}
-                                                                disabled={leadActionMutation.isPending}
-                                                                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm h-8 px-2">
-                                                            {leadActionMutation.isPending ? '...' : (
-                                                                <>
-                                                                    <ThumbsUp className="h-3 w-3 mr-1"/>
-                                                                    Interested
-                                                                </>
-                                                            )}
-                                                        </Button>
-                                                    )}
-
-                                                    {lead.leadAction === 'INTERESTED' && (
-                                                        <>
-                                                            <Button size="sm"
-                                                                    onClick={() => openQuoteModal(lead.leadId)}
-                                                                    disabled={leadActionMutation.isPending}
-                                                                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-8 px-2">
-                                                                Quote
-                                                                <ArrowRight className="ml-1 h-3 w-3"/>
-                                                            </Button>
-                                                            <Button size="sm" variant="destructive"
-                                                                    onClick={() => handleUpdateStatus(lead, 'REJECTED')}
-                                                                    disabled={leadActionMutation.isPending}
-                                                                    className="h-8 px-2">
-                                                                <XCircle className="h-3 w-3"/>
-                                                            </Button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </SharedTable>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm h-full flex flex-col">
-                        <CardHeader className="pb-2 border-b border-[#2e2c3a] shrink-0">
-                            <CardTitle className="text-lg font-semibold text-white">Quote history</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0 flex-1 overflow-auto">
-                            <div className="min-h-[400px]">
-                                <SharedTable
-                                    columns={[
-                                        {header: "ID", width: "15%"},
-                                        {header: "Amount", width: "30%"},
-                                        {header: "Status", width: "35%"},
-                                        {header: "Detail", width: "20%"}
-                                    ]}
-                                    isLoading={isLoading}
-                                    isEmpty={!quotes || quotes.length === 0}
-                                    className="rounded-none border-0"
-                                    headerClassName="bg-slate-900/50 border-slate-800 text-slate-400 text-xs"
-                                    rowClassName="border-slate-800 hover:bg-slate-800/50 text-slate-300 text-sm"
-                                >
-                                    {quotes?.map((quote) => (
-                                        <TableRow key={quote.id} className="border-slate-800">
-                                            <TableCell className="text-slate-200">#{quote.id}</TableCell>
-                                            <TableCell
-                                                className="text-slate-200">{formatCurrency(quote.premium?.total || 0)}</TableCell>
-                                            <TableCell>
-                                                {}
-                                                <Badge variant={quote.status === 'ACCEPTED' ? 'default' : 'outline'}
-
-                                                       className={quote.status === 'ACCEPTED' ? 'bg-emerald-500/20 text-emerald-400' :
-
-                                                           quote.status === 'REJECTED' ? 'text-red-400 border-red-800 bg-red-900/10' : 'text-slate-400'}>
-                                                    {}
-                                                    {quote.status || 'DRAFT'}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Dialog>
-                                                    <DialogTrigger asChild>
-                                                        <Button size="icon" variant="ghost"
-                                                                className="h-8 w-8 text-slate-400 hover:text-white">
-                                                            <Info className="h-4 w-4"/>
-                                                        </Button>
-                                                    </DialogTrigger>
-                                                    <DialogContent
-                                                        className="bg-slate-950 border-slate-800 text-white max-w-2xl">
-                                                        <DialogHeader>
-                                                            <DialogTitle>Quote Details #{quote.id}</DialogTitle>
-                                                        </DialogHeader>
-                                                        <div className="space-y-4">
-                                                            <div className="grid grid-cols-2 gap-4">
-                                                                <div>
-                                                                    <h4 className="text-sm font-medium text-slate-400">Premium</h4>
-                                                                    <p>{formatCurrency(quote.premium?.total || 0)}</p>
-                                                                </div>
-                                                                <div>
-                                                                    <h4 className="text-sm font-medium text-slate-400">Status</h4>
-                                                                    <p>{(quote as any).status || "DRAFT"}</p>
-                                                                </div>
-                                                                <div>
-                                                                    <h4 className="text-sm font-medium text-slate-400">Start
-                                                                        Date</h4>
-                                                                    <p>{quote.startDate ? new Date(quote.startDate).toLocaleDateString() : "N/A"}</p>
-                                                                </div>
-                                                                <div>
-                                                                    <h4 className="text-sm font-medium text-slate-400">End
-                                                                        Date</h4>
-                                                                    <p>{quote.endDate ? new Date(quote.endDate).toLocaleDateString() : "N/A"}</p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </DialogContent>
-                                                </Dialog>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </SharedTable>
-                            </div>
-                        </CardContent>
-                    </Card>
+                                {activeTab === 'portfolio' && (
+                                    allInteractedLeads.length === 0 ? (
+                                        <div
+                                            className="col-span-full py-12 text-center text-slate-500 bg-[#141124] rounded-xl border border-dashed border-slate-800">
+                                            <p>No active portfolio items yet.</p>
+                                        </div>
+                                    ) : (
+                                        allInteractedLeads.map(lead => (
+                                            <AgentLeadCard
+                                                key={lead.id}
+                                                lead={lead}
+                                                onViewDetail={handleViewDetail}
+                                            />
+                                        ))
+                                    )
+                                )}
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            <Dialog open={isQuoteOpen} onOpenChange={setIsQuoteOpen}>
+            <AgentActionDialog
+                open={isActionDialogOpen}
+                onOpenChange={setIsActionDialogOpen}
+                lead={selectedLead}
+                onCreateQuote={handleCreateQuote}
+                onReject={handleRejectLead}
+                isPending={leadActionMutation.isPending}
+                hasQuote={!!quotes?.find(q => q.leadId === selectedLead?.leadId)}
+            />
+
+            <Dialog open={isQuoteFormOpen} onOpenChange={setIsQuoteFormOpen}>
                 <DialogContent
                     className="bg-slate-950 border-slate-800 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Create Quote</DialogTitle>
+                        <DialogTitle>{editingQuote ? 'Edit Quote' : 'Create New Quote'}</DialogTitle>
                     </DialogHeader>
                     <QuoteForm
                         initialData={initialQuoteData as any}
                         onSubmit={handleFormSubmit}
-                        onCancel={() => setIsQuoteOpen(false)}
+                        onCancel={() => setIsQuoteFormOpen(false)}
                         isLoading={createMutation.isPending || updateMutation.isPending}
                         leads={quoteFormLeads}
                         hideAgentSelect={true}

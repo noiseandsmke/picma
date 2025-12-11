@@ -115,6 +115,7 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({lead}) => {
                 open={isDetailOpen}
                 onOpenChange={setIsDetailOpen}
                 lead={leadForDialog}
+                hideUserInfo={true}
             />
         </>
     );

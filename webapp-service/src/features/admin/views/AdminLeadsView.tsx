@@ -17,6 +17,7 @@ import {
     Clock,
     Eye,
     Filter,
+    Loader2,
     MapPin,
     MoreHorizontal,
     PlusCircle,
@@ -427,6 +428,7 @@ const AdminLeadsView: React.FC = () => {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost"
+                                    aria-label="Filter by status"
                                     className="h-6 w-6 p-0 hover:bg-slate-800 rounded-full relative">
                                 <Filter
                                     className={cn("h-3 w-3", selectedStatuses.length > 0 ? "text-indigo-400" : "text-slate-500")}/>
@@ -885,7 +887,14 @@ const AdminLeadsView: React.FC = () => {
                                 <Button type="submit"
                                         disabled={createLeadMutation.isPending || createPropertyMutation.isPending}
                                         className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                    {(createLeadMutation.isPending || createPropertyMutation.isPending) ? 'Creating...' : 'Create lead'}
+                                    {(createLeadMutation.isPending || createPropertyMutation.isPending) ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                            Creating...
+                                        </>
+                                    ) : (
+                                        'Create lead'
+                                    )}
                                 </Button>
                             </DialogFooter>
                         </form>
