@@ -14,6 +14,7 @@ import edu.hcmute.repo.SystemContextRepository;
 import edu.hcmute.tool.GoogleMapsTools;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.AdvisorParams;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.google.genai.GoogleGenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,6 +77,7 @@ public class ResearchOrchestrator {
             int maxSteps = 10;
             while (step < maxSteps) {
                 NextAction action = chatClient.prompt()
+                        .advisors(AdvisorParams.ENABLE_NATIVE_STRUCTURED_OUTPUT)
                         .system(systemPrompt)
                         .user(context.toPromptString())
                         .call()
