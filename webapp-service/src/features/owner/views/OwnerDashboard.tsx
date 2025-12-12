@@ -17,6 +17,7 @@ import {LEAD_STATUS_CONFIG} from '@/features/admin/utils/statusMapping';
 import apiClient from '@/services/apiClient';
 import {fetchPropertyById} from '@/features/admin/services/propertyService';
 import {LeadDetailDialog} from '@/features/admin/components/LeadDetailDialog';
+import {ResearchButton} from '@/features/research/views/ResearchButton';
 
 const fetchOwnerLeads = async (userId: string) => {
     const response = await apiClient.get<PropertyLeadDto[]>(`/picma/leads/user/${userId}`);
@@ -32,6 +33,7 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({lead}) => {
         staleTime: 1000 * 60 * 5,
     });
 
+    const showStatus = lead.status === 'ACCEPTED' || lead.status === 'REJECTED' || lead.status === 'EXPIRED';
     const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
 
     const handleViewDetails = () => {
@@ -52,15 +54,17 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({lead}) => {
                         <MapPin className="h-12 w-12 opacity-50"/>
                     </div>
 
-                    <div className="absolute top-3 right-3">
-                        <Badge variant="outline"
-                               className={cn("border-0 font-medium backdrop-blur-sm shadow-sm", statusConfig.className)}>
-                            {statusConfig.label}
-                        </Badge>
-                    </div>
+                    {showStatus && (
+                        <div className="absolute top-3 right-3">
+                            <Badge variant="outline"
+                                   className={cn("border-0 font-medium backdrop-blur-sm shadow-sm", statusConfig.className)}>
+                                {statusConfig.label}
+                            </Badge>
+                        </div>
+                    )}
 
                     <div
-                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Button
                             variant="secondary"
                             size="sm"
@@ -80,11 +84,14 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({lead}) => {
                         </div>
                     ) : (
                         <>
-                            <h3 className="font-bold text-lg text-white line-clamp-1"
-                                title={property?.location?.street}>
-                                {property?.location?.street || `Property #${lead.propertyInfo}`}
-                            </h3>
-                            <div className="flex items-center text-slate-400 text-sm mt-1 mb-4">
+                            <div className="flex justify-between items-start mb-2">
+                                <h3 className="font-bold text-lg text-white line-clamp-1 flex-1 mr-2"
+                                    title={property?.location?.street}>
+                                    {property?.location?.street || `Property #${lead.propertyInfo}`}
+                                </h3>
+                                <ResearchButton lead={lead} propertyId={lead.propertyInfo}/>
+                            </div>
+                            <div className="flex items-center text-slate-400 text-sm mb-4">
                                 <MapPin className="h-3 w-3 mr-1"/>
                                 {property?.location?.city || 'Unknown City'}, {property?.location?.zipCode || ''}
                             </div>

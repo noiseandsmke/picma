@@ -17,8 +17,7 @@ const AdminUsersView: React.FC = () => {
     const [activeTab, setActiveTab] = useState('all');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
-
+    const [selectedUser, _setSelectedUser] = useState<UserDto | null>(null);
     const queryClient = useQueryClient();
 
     const {data: users, isLoading, isError, error} = useQuery({

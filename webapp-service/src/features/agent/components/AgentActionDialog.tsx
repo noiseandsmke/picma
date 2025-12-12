@@ -47,28 +47,7 @@ export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
                         </DialogTitle>
                     </DialogHeader>
 
-                    {/* We reuse LeadDetailDialog content but render it directly here would be hard because it's a Dialog itself.
-              However, LeadDetailDialog is designed as a Dialog. We should probably extract the content.
-              Actually, LeadDetailDialog is a Dialog component. We can't nest Dialogs easily.
-              Wait, the plan said "Display LeadDetailDialog content".
-              I should probably create a component that renders the content of LeadDetailDialog, or
-              just render property details similarly here.
-              Let's reuse the LeadDetailDialog by NOT using it as a Dialog but copying its logic?
-              Or better, let's just use the `LeadDetailDialog` *component* if it exports content?
-              It exports `LeadDetailDialog` which includes `Dialog`.
-              So I have to implement the property fetching and display here again, OR refactor LeadDetailDialog.
-              Given constraints, I will implement a simplified property view here or reuse `PropertyCell` logic but expanded.
-              Actually, `LeadDetailDialog` is quite complex (fetches user, property, legacy support).
-              Let's stick to using `PropertyCell` concept but expanded, or just fetch and show.
-           */}
-                    <div className="space-y-6">
-                        {/* We can use the LeadDetailDialog as a controlled component, but we want custom footer actions.
-                LeadDetailDialog has its own footer.
-                Let's try to render the property details using a new helper or just inline.
-                For now, I'll implement a clean property view here.
-            */}
-                        <ExpandedPropertyView lead={lead}/>
-                    </div>
+                    <ExpandedPropertyView lead={lead}/>
                 </div>
 
                 <DialogFooter className="p-6 bg-slate-900/50 border-t border-slate-800 gap-2 sm:justify-between">
@@ -131,7 +110,6 @@ const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({lead}) => {
         queryKey: ['user-detail', lead.userInfo],
         queryFn: () => {
             if (lead.userInfo === 'HIDDEN') return null;
-            // If userInfo is an ID (no spaces), fetch it. Otherwise it's a name string.
             if (!lead.userInfo.includes(' ')) {
                 return fetchUserById(lead.userInfo).catch(() => null);
             }

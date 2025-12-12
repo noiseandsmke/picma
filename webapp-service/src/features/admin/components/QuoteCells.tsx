@@ -51,7 +51,7 @@ export const CustomerCell: React.FC<CustomerCellProps> = ({leadId, leadData, onV
 
     const lead = leadData || fetchedLead;
 
-    const {data: user, isLoading: isUserLoading} = useQuery({
+    const {data: user} = useQuery({
         queryKey: ['user', lead?.userInfo],
         queryFn: () => {
             const userId = lead?.userInfo;

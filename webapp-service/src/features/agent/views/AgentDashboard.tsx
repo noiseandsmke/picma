@@ -30,7 +30,8 @@ const AgentDashboard: React.FC = () => {
     const {data: leads, isLoading: isLeadsLoading} = useQuery({
         queryKey: ['agent-leads', agentId],
         queryFn: () => fetchAgentLeads(agentId),
-        enabled: !!agentId
+        enabled: !!agentId,
+        refetchInterval: 30000
     });
 
     const {data: quotes, isLoading: isQuotesLoading} = useQuery({
@@ -38,6 +39,22 @@ const AgentDashboard: React.FC = () => {
         queryFn: () => fetchAgentQuotes(agentId),
         enabled: !!agentId
     });
+
+    const prevLeadsRef = React.useRef<AgentLeadDto[]>([]);
+    React.useEffect(() => {
+        if (leads && prevLeadsRef.current.length > 0) {
+            const newLeadIds = leads.map(l => l.leadId);
+            const prevLeadIds = prevLeadsRef.current.map(l => l.leadId);
+            const added = newLeadIds.filter(id => !prevLeadIds.includes(id));
+            if (added.length > 0) {
+                toast.info(`You have ${added.length} new lead opportunity!`);
+            }
+        }
+        if (leads) {
+            prevLeadsRef.current = leads;
+        }
+    }, [leads]);
+
 
     const leadActionMutation = useMutation({
         mutationFn: updateLeadAction,

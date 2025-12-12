@@ -1,18 +1,18 @@
 import React from 'react';
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 import {Button} from "@/components/ui/button";
-import {QuoteForm} from '@/features/admin/components/QuoteForm';
+import {CheckCircle, FileText, XCircle} from 'lucide-react';
 import {PropertyQuoteDto} from '@/features/admin/services/quoteService';
 import {LeadDto} from '@/features/admin/services/leadService';
-import {CheckCircle, XCircle} from 'lucide-react';
+import {QuoteForm} from '@/features/admin/components/QuoteForm';
 
 interface OwnerQuoteDetailDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     quote: PropertyQuoteDto | null;
     lead: LeadDto;
-    onAccept: (quoteId: number) => void;
-    onReject: (quoteId: number) => void;
+    onAccept: (id: number) => void;
+    onReject: (id: number) => void;
     isPendingAction: boolean;
 }
 
@@ -27,24 +27,28 @@ export const OwnerQuoteDetailDialog: React.FC<OwnerQuoteDetailDialogProps> = ({
                                                                               }) => {
     if (!quote) return null;
 
-    const canAct = quote.status !== 'ACCEPTED' && quote.status !== 'REJECTED';
+    const canAction = quote.status === 'PENDING';
+    const isActionable = canAction && lead.status === 'IN_REVIEWING';
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="bg-slate-950 border-slate-800 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Quote Details #{quote.id}</DialogTitle>
+                    <DialogTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-indigo-400"/>
+                        Insurance Quote Details
+                    </DialogTitle>
                 </DialogHeader>
 
-                <div className="pointer-events-none">
+                <div className="pointer-events-none opacity-100">
                     <QuoteForm
                         initialData={quote}
                         onSubmit={() => {
-                        }}
-                        onCancel={() => {
-                        }}
+                        }} onCancel={() => {
+                    }}
+                        isLoading={false}
                         leads={[lead]}
-                        hideLeadInfo={true}
+                        hideAgentSelect={true}
                         agentId={quote.agentId}
                         readOnly={true}
                     />
@@ -54,7 +58,7 @@ export const OwnerQuoteDetailDialog: React.FC<OwnerQuoteDetailDialogProps> = ({
                     <Button variant="ghost" onClick={() => onOpenChange(false)}>
                         Close
                     </Button>
-                    {canAct && (
+                    {isActionable && (
                         <div className="flex gap-2">
                             <Button
                                 variant="destructive"
@@ -62,7 +66,7 @@ export const OwnerQuoteDetailDialog: React.FC<OwnerQuoteDetailDialogProps> = ({
                                 disabled={isPendingAction}
                                 className="bg-red-900/20 text-red-400 hover:bg-red-900/40 border border-red-900/50"
                             >
-                                <XCircle className="w-4 h-4 mr-2"/>
+                                <XCircle className="mr-2 h-4 w-4"/>
                                 Reject Quote
                             </Button>
                             <Button
@@ -70,7 +74,7 @@ export const OwnerQuoteDetailDialog: React.FC<OwnerQuoteDetailDialogProps> = ({
                                 disabled={isPendingAction}
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
                             >
-                                <CheckCircle className="w-4 h-4 mr-2"/>
+                                <CheckCircle className="mr-2 h-4 w-4"/>
                                 Accept Quote
                             </Button>
                         </div>
