@@ -16,7 +16,7 @@ public class GoogleMapsTools {
     private static final String PLACES_API_URL = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json";
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
-    @Value("${spring.ai.google.maps.api-key:${GOOGLE_MAPS_API_KEY:mock-key}}")
+    @Value("${spring.ai.google.genai.api-key:mock-key}")
     private String apiKey;
 
     @Tool(description = "Verify address and find places using Google Maps Places API. Returns formatted address, lat/long, and place ID. Use this to verify if an address exists and get its coordinates.")
