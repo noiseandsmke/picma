@@ -23,11 +23,8 @@ spring:
   cloud:
     stream:
       function:
-        definition: handleLeadCreated;handleLeadStatusChanged;handleQuoteCreated;handleQuoteAccepted;handleQuoteRejected;handleNotification
+        definition: handleLeadStatusChanged;handleQuoteCreated;handleQuoteAccepted;handleQuoteRejected;handleNotification
       bindings:
-        handleLeadCreated-in-0:
-          destination: picma.leads.created
-          group: notification-service-group
         handleLeadStatusChanged-in-0:
           destination: picma.leads.status
           group: notification-service-group
@@ -43,11 +40,6 @@ spring:
         handleNotification-in-0:
           destination: picma.notifications
           group: notification-service-group
-
-picma:
-  services:
-    user-mgmt-service:
-      url: http://${USER_MGMT_HOST:localhost}:${USER_MGMT_PORT:5051}
 
 management:
   endpoints:

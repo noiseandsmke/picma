@@ -15,7 +15,7 @@ public class QuoteCreatedHandler {
     public void handle(QuoteCreatedEvent event) {
         log.info("Handling QuoteCreatedEvent for quoteId: {}", event.quoteId());
         String title = "New Quote Available";
-        String message = String.format("Agent sent you a quote for Lead #%d. Premium: %.2f/year. Review and accept now!", event.leadId(), event.premium());
+        String message = String.format("Agent sent you a quote for Lead #%d. Premium: %.2f/year. Review and accept now!", event.leadId(), (double) event.premium());
         
         edu.hcmute.dto.NotificationRequestDto notification = new edu.hcmute.dto.NotificationRequestDto(
                 event.ownerId(),

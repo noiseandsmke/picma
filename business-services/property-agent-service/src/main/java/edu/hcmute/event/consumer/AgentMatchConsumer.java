@@ -65,19 +65,19 @@ public class AgentMatchConsumer {
         log.info("Searching agents in zipcode: {}", zipCode);
         List<UserDto> agents = userMgmtFeignClient.getAgentsByZipCode(zipCode);
         for (UserDto agent : agents) {
-            sendNotification(agent.id(), zipCode, leadId);
+            sendNotification(agent.id(), "New Lead Available", "A new lead matches your zip code: " + zipCode + ". Lead ID: " + leadId);
             createAgentLead(agent.id(), leadId);
         }
     }
 
-    private void sendNotification(String agentId, String zipCode, int leadId) {
+    private void sendNotification(String recipientId, String title, String message) {
         NotificationRequestDto notification = new NotificationRequestDto(
-                agentId,
-                "New Lead Available",
-                "A new lead matches your zip code: " + zipCode + ". Lead ID: " + leadId
+                recipientId,
+                title,
+                message
         );
         notificationProducer.sendNotification(notification);
-        log.info("Notified agent: {}", agentId);
+        log.info("Notified agent: {}", recipientId);
     }
 
     private void createAgentLead(String agentId, int leadId) {
