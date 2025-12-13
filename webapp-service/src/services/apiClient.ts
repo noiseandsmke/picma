@@ -143,6 +143,12 @@ apiClient.interceptors.response.use(
             return handleTokenRefresh(error);
         }
 
+        if (error.response?.status === 401 && originalRequest._retry) {
+            sessionStorage.clear();
+            globalThis.location.href = '/login';
+            throw error;
+        }
+
         if (error.response?.status === 403) {
             console.error("Access Forbidden");
         }

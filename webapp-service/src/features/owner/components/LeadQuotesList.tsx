@@ -32,6 +32,7 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({leadId, leadStatu
         onSuccess: async () => {
             await queryClient.invalidateQueries({queryKey: ['quotes']});
             await queryClient.invalidateQueries({queryKey: ['owner-leads']});
+            await queryClient.invalidateQueries({queryKey: ['lead-stats']});
             toast.success("Quote accepted successfully");
             setActionId(null);
             setSelectedQuote(null);
@@ -61,7 +62,6 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({leadId, leadStatu
 
     const handleActionFromDetail = (quoteId: number, type: 'accept' | 'reject') => {
         setActionId({id: quoteId, type});
-        // We close the detail dialog first, then confirm dialog opens
         setSelectedQuote(null);
     };
 
@@ -79,14 +79,11 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({leadId, leadStatu
 
     const pendingQuotes = quotes.filter(q => q.status !== 'ACCEPTED' && q.status !== 'REJECTED');
 
-    // Create a minimal lead DTO for the form
     const leadDto: LeadDto = {
         id: leadId,
-        userInfo: '', // Hidden anyway
-        propertyInfo: '', // Not used for display in read-only form if disabled
-        status: leadStatus,
+        userInfo: '', propertyInfo: '', status: leadStatus,
         createDate: new Date().toISOString(),
-        expiryDate: new Date().toISOString() // Dummy date to satisfy type
+        expiryDate: new Date().toISOString()
     };
 
     return (
@@ -126,7 +123,6 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({leadId, leadStatu
                                     </div>
                                     <div className="flex items-center justify-between text-xs text-slate-400 mt-1">
                                         <span>Plan: {quote.plan}</span>
-                                        {/* Hide status text if PENDING, as per requirement */}
                                         {quote.status && quote.status !== 'PENDING' && (
                                             <Badge variant="secondary" className="text-[10px] h-5">
                                                 {quote.status}

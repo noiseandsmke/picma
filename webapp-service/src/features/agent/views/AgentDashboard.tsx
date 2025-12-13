@@ -9,7 +9,7 @@ import {useAuth} from '@/context/AuthContext';
 import {cn, formatCurrency} from '@/lib/utils';
 import {toast} from "sonner";
 import {QuoteForm} from '@/features/admin/components/QuoteForm';
-import {createQuote, PropertyQuoteDto, updateQuote} from '@/features/admin/services/quoteService';
+import {createQuote, CreateQuoteDto, PropertyQuoteDto, updateQuote} from '@/features/admin/services/quoteService';
 import {format} from 'date-fns';
 import {LeadDto} from '@/features/admin/services/leadService';
 import {AgentLeadCard} from '@/features/agent/components/AgentLeadCard';
@@ -39,13 +39,13 @@ const AgentDashboard: React.FC = () => {
         queryFn: () => fetchAgentQuotes(agentId),
         enabled: !!agentId
     });
-
+    
     const prevLeadsRef = React.useRef<AgentLeadDto[]>([]);
     React.useEffect(() => {
         if (leads && prevLeadsRef.current.length > 0) {
             const newLeadIds = leads.map(l => l.leadId);
-            const prevLeadIds = prevLeadsRef.current.map(l => l.leadId);
-            const added = newLeadIds.filter(id => !prevLeadIds.includes(id));
+            const prevLeadIds = new Set(prevLeadsRef.current.map(l => l.leadId));
+            const added = newLeadIds.filter(id => !prevLeadIds.has(id));
             if (added.length > 0) {
                 toast.info(`You have ${added.length} new lead opportunity!`);
             }
@@ -130,7 +130,7 @@ const AgentDashboard: React.FC = () => {
         } else {
             createMutation.mutate({
                 ...payload,
-            } as PropertyQuoteDto);
+            } as CreateQuoteDto);
         }
     };
 
@@ -316,7 +316,8 @@ const AgentDashboard: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {isLoading ? (
                             Array.from({length: 3}).map((_, i) => (
-                                <Skeleton key={i} className="h-64 w-full rounded-xl bg-slate-800"/>
+                                // eslint-disable-next-line react/no-array-index-key
+                                <Skeleton key={`skeleton-${i}`} className="h-64 w-full rounded-xl bg-slate-800"/>
                             ))
                         ) : (
                             <>
@@ -377,7 +378,7 @@ const AgentDashboard: React.FC = () => {
                         <DialogTitle>{editingQuote ? 'Edit Quote' : 'Create New Quote'}</DialogTitle>
                     </DialogHeader>
                     <QuoteForm
-                        initialData={initialQuoteData as any}
+                        initialData={initialQuoteData as unknown as PropertyQuoteDto}
                         onSubmit={handleFormSubmit}
                         onCancel={() => setIsQuoteFormOpen(false)}
                         isLoading={createMutation.isPending || updateMutation.isPending}

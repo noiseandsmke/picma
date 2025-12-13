@@ -1,32 +1,25 @@
 import React from 'react';
-import {Navigate, Outlet} from 'react-router-dom';
-import {useAuth} from '@/context/AuthContext';
-import {UserRole} from '@/types/auth.types';
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { UserRole } from '@/types/auth.types';
 
 const AuthLayout: React.FC = () => {
-    const {isAuthenticated, getPrimaryRole} = useAuth();
+    const { isAuthenticated, getPrimaryRole } = useAuth();
 
     if (isAuthenticated) {
         const primaryRole = getPrimaryRole();
         if (primaryRole === UserRole.ADMIN) {
-            return <Navigate to="/admin/dashboard" replace/>;
+            return <Navigate to="/admin/dashboard" replace />;
         }
         if (primaryRole === UserRole.AGENT) {
-            return <Navigate to="/agent/dashboard" replace/>;
+            return <Navigate to="/agent/dashboard" replace />;
         }
         if (primaryRole === UserRole.OWNER) {
-            return <Navigate to="/owner/dashboard" replace/>;
+            return <Navigate to="/owner/dashboard" replace />;
         }
     }
 
-    return (
-        <div
-            className="min-h-screen flex items-center justify-center bg-slate-950 p-4">
-            <div className="w-full max-w-md">
-                <Outlet/>
-            </div>
-        </div>
-    );
+    return <Outlet />;
 };
 
 export default AuthLayout;

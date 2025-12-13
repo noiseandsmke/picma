@@ -1,0 +1,194 @@
+/* Select Reset */
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Toast Animation */
+@keyframes slideUpFade {
+    0% {
+        transform: translateY(10px) scale(0.95);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.toast-enter {
+    animation: slideUpFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slide-in-up {
+    0% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Orbit Animations for Login */
+@keyframes orbit-cw {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes orbit-ccw {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(-360deg);
+    }
+}
+
+@keyframes counter-rot {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(-360deg);
+    }
+}
+
+@keyframes counter-rot-rev {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.orbit-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    border: 1px dashed rgba(56, 189, 248, 0.08);
+    pointer-events: none;
+    will-change: transform;
+}
+
+.orbit-1 {
+    width: 600px;
+    height: 600px;
+    animation: orbit-cw 60s linear infinite;
+}
+
+.orbit-2 {
+    width: 950px;
+    height: 950px;
+    animation: orbit-ccw 80s linear infinite;
+}
+
+.orbit-3 {
+    width: 1400px;
+    height: 1400px;
+    animation: orbit-cw 100s linear infinite;
+}
+
+.planet-icon {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    color: #94a3b8;
+    transition: all 0.3s ease;
+}
+
+.pos-0 {
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.pos-90 {
+    top: 50%;
+    left: 100%;
+    transform: translate(-50%, -50%);
+}
+
+.pos-180 {
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.pos-270 {
+    top: 50%;
+    left: 0%;
+    transform: translate(-50%, -50%);
+}
+
+.pos-45 {
+    top: 14.65%;
+    left: 85.35%;
+    transform: translate(-50%, -50%);
+}
+
+.pos-135 {
+    top: 85.35%;
+    left: 85.35%;
+    transform: translate(-50%, -50%);
+}
+
+.pos-225 {
+    top: 85.35%;
+    left: 14.65%;
+    transform: translate(-50%, -50%);
+}
+
+.pos-315 {
+    top: 14.65%;
+    left: 14.65%;
+    transform: translate(-50%, -50%);
+}
+
+.c-rot-cw {
+    animation: counter-rot 60s linear infinite;
+}
+
+.c-rot-ccw {
+    animation: counter-rot-rev 80s linear infinite;
+}
+
+.c-rot-cw-slow {
+    animation: counter-rot 100s linear infinite;
+}
+
+.planet-icon:hover {
+    border-color: rgba(14, 165, 233, 0.5);
+    color: #e2e8f0;
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.2);
+    z-index: 10;
+}
+
+.bg-grid {
+    background-size: 50px 50px;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+}
