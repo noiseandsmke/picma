@@ -1,7 +1,7 @@
 package edu.hcmute.domain;
 
 public enum QuoteStatus {
-    PENDING,
+    ACTIVE,
     ACCEPTED,
     REJECTED
 }

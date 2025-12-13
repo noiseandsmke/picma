@@ -11,7 +11,7 @@ spring:
       ddl-auto: update
     show-sql: false
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -34,9 +34,7 @@ picma:
       url: http://${PROPERTY_MGMT_HOST:localhost}:${PROPERTY_MGMT_PORT:7101}
     property-agent-service:
       url: http://${PROPERTY_AGENT_HOST:localhost}:${PROPERTY_AGENT_PORT:7104}
-  properties:
-    lead:
-      topic: property-lead-topic
+
 server:
   port: 7103
 eureka:

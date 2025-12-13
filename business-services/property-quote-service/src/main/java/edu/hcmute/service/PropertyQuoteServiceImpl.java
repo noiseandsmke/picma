@@ -47,7 +47,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
                 propertyQuote.setValidUntil(LocalDate.now().plusDays(30));
             }
             if (propertyQuote.getStatus() == null) {
-                propertyQuote.setStatus(QuoteStatus.PENDING);
+                propertyQuote.setStatus(QuoteStatus.ACTIVE);
             }
             propertyQuote = propertyQuoteRepo.save(propertyQuote);
             log.info("~~> PropertyQuote saved with id: {}", propertyQuote.getId());
@@ -154,7 +154,7 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
         // Reject other pending quotes for the same lead
         List<PropertyQuote> allQuotes = propertyQuoteRepo.findByLeadId(targetQuote.getLeadId());
         for (PropertyQuote quote : allQuotes) {
-            if (!quote.getId().equals(quoteId) && quote.getStatus() == QuoteStatus.PENDING) {
+            if (!quote.getId().equals(quoteId) && quote.getStatus() == QuoteStatus.ACTIVE) {
                 quote.setStatus(QuoteStatus.REJECTED);
                 propertyQuoteRepo.save(quote);
                 log.info("~~> Automatically REJECTED other quoteId: {}", quote.getId());
