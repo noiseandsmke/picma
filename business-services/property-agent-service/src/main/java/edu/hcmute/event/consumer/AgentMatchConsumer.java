@@ -109,6 +109,7 @@ public class AgentMatchConsumer {
         return event -> {
             log.info("Received QuoteAcceptedEvent: {}", event);
             log.info("Quote accepted by Owner for lead: {}, agent: {}. Internal status confirmed.", event.leadId(), event.agentId());
+            sendNotification(event.agentId(), "Quote Accepted", "Your quote for Lead ID " + event.leadId() + " has been accepted!");
         };
     }
 

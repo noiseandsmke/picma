@@ -1,7 +1,7 @@
 package edu.hcmute.handler;
 
 import edu.hcmute.event.schema.QuoteRejectedEvent;
-import edu.hcmute.service.NotificationPersistenceService;
+import edu.hcmute.service.SseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -10,14 +10,18 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 public class QuoteRejectedHandler {
-    private final NotificationPersistenceService notificationPersistenceService;
+    private final SseService sseService;
 
     public void handle(QuoteRejectedEvent event) {
         log.info("Handling QuoteRejectedEvent for quoteId: {}", event.quoteId());
-        notificationPersistenceService.save(
+        String title = "Quote Declined";
+        String message = String.format("Owner declined your quote #%d for Lead #%d. Reason: %s. Consider revising and resubmitting.", event.quoteId(), event.leadId(), event.reason());
+        
+        edu.hcmute.dto.NotificationRequestDto notification = new edu.hcmute.dto.NotificationRequestDto(
                 event.agentId(),
-                "Quote Declined",
-                String.format("Owner declined your quote #%d for Lead #%d. Reason: %s. Consider revising and resubmitting.", event.quoteId(), event.leadId(), event.reason())
+                title,
+                message
         );
+        sseService.sendNotification(event.agentId(), notification);
     }
 }

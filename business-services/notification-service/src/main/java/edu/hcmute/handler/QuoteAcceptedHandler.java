@@ -1,7 +1,6 @@
 package edu.hcmute.handler;
 
 import edu.hcmute.event.schema.QuoteAcceptedEvent;
-import edu.hcmute.service.NotificationPersistenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -10,14 +9,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 public class QuoteAcceptedHandler {
-    private final NotificationPersistenceService notificationPersistenceService;
+    // Persistence removed. Logic handled by Property Agent Service (AgentMatchConsumer) via picma.notifications.
 
     public void handle(QuoteAcceptedEvent event) {
         log.info("Handling QuoteAcceptedEvent for quoteId: {}", event.quoteId());
-        notificationPersistenceService.save(
-                event.agentId(),
-                "Congratulations! Quote Accepted",
-                String.format("The property owner has accepted your quote #%d for Lead #%d. Next step: Finalize the policy.", event.quoteId(), event.leadId())
-        );
+        // Duplicate notification avoided.
     }
 }

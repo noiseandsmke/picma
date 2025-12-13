@@ -50,8 +50,7 @@ picma:
     user-mgmt-service:
       url: http://${USER_MGMT_HOST:localhost}:${USER_MGMT_PORT:5051}
   properties:
-    lead:
-      topic: ${LEADS_TOPIC_NAME:property-lead}
+
   notifications:
     topic: notification-topic
 server:

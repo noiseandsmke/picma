@@ -43,6 +43,13 @@ spring:
               filters:
                 - RewritePath=/picma/quotes(?<segment>/?.*), /property-quote${segment}
 
+            - id: property-agent-service
+              uri: lb://PROPERTY-AGENT-SERVICE
+              predicates:
+                - Path=/picma/agents/**
+              filters:
+                - RewritePath=/picma/agents(?<segment>/?.*), /${segment}
+
   security:
     oauth2:
       resourceserver:
