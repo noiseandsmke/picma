@@ -1,14 +1,13 @@
-
-import React, { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React, {useState} from 'react';
+import {useAuth} from '@/context/AuthContext';
+import {Link, useNavigate} from 'react-router-dom';
+import {useForm} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { jwtDecode } from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode';
 
-import { authService } from '@/services/authService';
-import { toast } from "sonner";
+import {authService} from '@/services/authService';
+import {toast} from "sonner";
 import './SigninView.css';
 
 const loginSchema = z.object({
@@ -19,7 +18,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const SigninView: React.FC = () => {
-    const { login } = useAuth();
+    const {login} = useAuth();
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -126,7 +125,6 @@ const SigninView: React.FC = () => {
                 <div
                     className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-bg-dark to-bg-dark"></div>
                 <div className="absolute inset-0 bg-grid"></div>
-                {/* Orbits */}
                 <div className="orbit-container orbit-1">
                     <div className="planet-icon pos-0">
                         <div className="c-rot-cw flex items-center justify-center w-full h-full" title="Property">
@@ -142,13 +140,13 @@ const SigninView: React.FC = () => {
                 <div className="orbit-container orbit-2">
                     <div className="planet-icon pos-45">
                         <div className="c-rot-ccw flex items-center justify-center w-full h-full"
-                            title="Insurance Shield">
+                             title="Insurance Shield">
                             <span className="material-symbols-outlined text-[22px]">shield</span>
                         </div>
                     </div>
                     <div className="planet-icon pos-225">
                         <div className="c-rot-ccw flex items-center justify-center w-full h-full"
-                            title="AI Intelligence">
+                             title="AI Intelligence">
                             <span className="material-symbols-outlined text-[22px]">smart_toy</span>
                         </div>
                     </div>
@@ -161,7 +159,7 @@ const SigninView: React.FC = () => {
                 <div className="orbit-container orbit-3">
                     <div className="planet-icon pos-90">
                         <div className="c-rot-cw-slow flex items-center justify-center w-full h-full"
-                            title="Commercial Property">
+                             title="Commercial Property">
                             <span className="material-symbols-outlined text-[22px]">domain</span>
                         </div>
                     </div>
@@ -172,7 +170,7 @@ const SigninView: React.FC = () => {
                     </div>
                     <div className="planet-icon pos-180">
                         <div className="c-rot-cw-slow flex items-center justify-center w-full h-full"
-                            title="AI Processing">
+                             title="AI Processing">
                             <span className="material-symbols-outlined text-[22px]">psychology</span>
                         </div>
                     </div>
@@ -285,13 +283,13 @@ const SigninView: React.FC = () => {
                         <p className="mt-8 text-center text-sm text-slate-400">
                             New to PICMA?
                             <Link to="/signup"
-                                className="font-semibold leading-6 text-primary-sky hover:text-primary-sky-hover hover:underline transition-colors"> Create
+                                  className="font-semibold leading-6 text-primary-sky hover:text-primary-sky-hover hover:underline transition-colors"> Create
                                 an account</Link>
                         </p>
                     </div>
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 };
 

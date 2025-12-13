@@ -103,7 +103,6 @@ const SignupView: React.FC = () => {
 
     const handleIsAgentToggle = () => {
         setIsAgent(!isAgent);
-        // Clear location data when toggling off
         if (isAgent) {
             setValue("city", "Ho Chi Minh City");
             setValue("ward", "");
@@ -118,8 +117,7 @@ const SignupView: React.FC = () => {
             <div className="flex flex-1 flex-col lg:flex-row w-full">
                 <div
                     className="hidden lg:flex flex-1 relative bg-slate-900 overflow-hidden items-center justify-center p-12 min-w-0">
-                    <div
-                        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+
                     <div
                         className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-900/90 to-slate-900/40"></div>
                     <div className="relative z-10 max-w-lg w-full">
@@ -167,7 +165,8 @@ const SignupView: React.FC = () => {
 
                         <div className="mt-12 pt-6 border-t border-slate-800/60 flex items-center justify-start gap-2">
                             <span className="text-slate-400 text-sm font-medium">Already have an account?</span>
-                            <Link to="/signin" className="w-full sm:w-auto flex items-center justify-center rounded-lg h-11 px-6 bg-primary hover:bg-blue-600 text-white text-sm font-semibold tracking-wide transition-all shadow-[0_4px_14px_0_rgba(59,130,246,0.39)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.23)] active:scale-[0.98]">
+                            <Link to="/signin"
+                                className="w-full sm:w-auto flex items-center justify-center rounded-lg h-11 px-6 bg-primary hover:bg-blue-600 text-white text-sm font-semibold tracking-wide transition-all shadow-[0_4px_14px_0_rgba(59,130,246,0.39)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.23)] active:scale-[0.98]">
                                 Log in
                             </Link>
                         </div>
