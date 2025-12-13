@@ -4,8 +4,8 @@ import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.config.UserMgmtFeignClient;
 import edu.hcmute.domain.LeadAction;
 import edu.hcmute.dto.NotificationRequestDto;
+import edu.hcmute.dto.PropertyAgentDto;
 import edu.hcmute.dto.PropertyMgmtDto;
-import edu.hcmute.dto.UserDto;
 import edu.hcmute.entity.AgentLead;
 import edu.hcmute.event.NotificationProducer;
 import edu.hcmute.event.schema.LeadCreatedEvent;
@@ -63,8 +63,8 @@ public class AgentMatchConsumer {
 
     private void notifyAndCreateAgentLeads(String zipCode, int leadId) {
         log.info("Searching agents in zipcode: {}", zipCode);
-        List<UserDto> agents = userMgmtFeignClient.getAgentsByZipCode(zipCode);
-        for (UserDto agent : agents) {
+        List<PropertyAgentDto> agents = userMgmtFeignClient.getAgentsByZipCode(zipCode);
+        for (PropertyAgentDto agent : agents) {
             sendNotification(agent.id(), "New Lead Available", "A new lead matches your zip code: " + zipCode + ". Lead ID: " + leadId);
             createAgentLead(agent.id(), leadId);
         }

@@ -47,7 +47,7 @@ public class PropertyAgentServiceImplTest {
 
     @Test
     void updateLeadAction_create_success() {
-        AgentLeadDto inputDto = new AgentLeadDto(0, LeadAction.INTERESTED, "agent1", 100, null, null, null);
+        AgentLeadActionDto inputDto = new AgentLeadActionDto(0, LeadAction.INTERESTED, "agent1", 100, null);
         AgentLead entity = new AgentLead();
         entity.setAgentId("agent1");
         entity.setLeadId(100);
@@ -55,15 +55,14 @@ public class PropertyAgentServiceImplTest {
         entity.setCreatedAt(LocalDateTime.now());
         when(propertyAgentMapper.toEntity(inputDto)).thenReturn(entity);
         when(agentLeadRepo.save(any(AgentLead.class))).thenReturn(entity);
-        when(propertyLeadFeignClient.getLeadById(100)).thenReturn(new PropertyLeadDto(100, "user", "prop", "NEW", null, null));
-        AgentLeadDto result = propertyAgentService.updateLeadActionByAgent(inputDto);
+        AgentLeadActionDto result = propertyAgentService.updateLeadActionByAgent(inputDto);
         assertNotNull(result);
         assertEquals(LeadAction.INTERESTED, entity.getLeadAction());
     }
 
     @Test
     void updateLeadAction_update_existing_success() {
-        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null, null, null);
+        AgentLeadActionDto inputDto = new AgentLeadActionDto(1, LeadAction.ACCEPTED, "agent1", 100, null);
         AgentLead entity = new AgentLead();
         entity.setId(1);
         entity.setCreatedAt(LocalDateTime.now());
@@ -71,21 +70,20 @@ public class PropertyAgentServiceImplTest {
         entity.setLeadAction(LeadAction.INTERESTED);
         when(agentLeadRepo.findById(1)).thenReturn(Optional.of(entity));
         when(agentLeadRepo.save(entity)).thenReturn(entity);
-        when(propertyLeadFeignClient.getLeadById(100)).thenReturn(new PropertyLeadDto(100, "user", "prop", "NEW", null, null));
-        AgentLeadDto result = propertyAgentService.updateLeadActionBySystem(inputDto);
+        AgentLeadActionDto result = propertyAgentService.updateLeadActionBySystem(inputDto);
         assertNotNull(result);
         assertEquals(LeadAction.ACCEPTED, entity.getLeadAction());
     }
 
     @Test
     void updateLeadAction_manual_accepted_fails() {
-        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.ACCEPTED, "agent1", 100, null, null, null);
+        AgentLeadActionDto inputDto = new AgentLeadActionDto(1, LeadAction.ACCEPTED, "agent1", 100, null);
         assertThrows(IllegalArgumentException.class, () -> propertyAgentService.updateLeadActionByAgent(inputDto));
     }
 
     @Test
     void updateLeadAction_expired() {
-        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.REJECTED, "agent1", 100, null, null, null);
+        AgentLeadActionDto inputDto = new AgentLeadActionDto(1, LeadAction.REJECTED, "agent1", 100, null);
         AgentLead entity = new AgentLead();
         entity.setId(1);
         entity.setLeadId(100);
@@ -97,7 +95,7 @@ public class PropertyAgentServiceImplTest {
 
     @Test
     void updateLeadAction_rejected_allRejected() {
-        AgentLeadDto inputDto = new AgentLeadDto(1, LeadAction.REJECTED, "agent1", 100, null, null, null);
+        AgentLeadActionDto inputDto = new AgentLeadActionDto(1, LeadAction.REJECTED, "agent1", 100, null);
         AgentLead entity = new AgentLead();
         entity.setId(1);
         entity.setLeadId(100);
@@ -105,7 +103,6 @@ public class PropertyAgentServiceImplTest {
         entity.setLeadAction(LeadAction.INTERESTED);
         when(agentLeadRepo.findById(1)).thenReturn(Optional.of(entity));
         when(agentLeadRepo.save(entity)).thenReturn(entity);
-        when(propertyLeadFeignClient.getLeadById(100)).thenReturn(new PropertyLeadDto(100, "user", "prop", "NEW", null, null));
         AgentLead al1 = new AgentLead();
         al1.setLeadAction(LeadAction.REJECTED);
         when(agentLeadRepo.findByLeadId(100)).thenReturn(Collections.singletonList(al1));
@@ -118,9 +115,9 @@ public class PropertyAgentServiceImplTest {
     void getAgentsByZipCode_success() {
         String zipCode = "12345";
         List<String> expectedAgentIds = List.of("agent1", "agent2");
-        List<UserDto> agentDtos = List.of(
-                new UserDto("agent1", "Agent One", "agent1@example.com", zipCode),
-                new UserDto("agent2", "Agent Two", "agent2@example.com", zipCode)
+        List<PropertyAgentDto> agentDtos = List.of(
+                new PropertyAgentDto("agent1", "Agent One", "agent1@example.com", zipCode),
+                new PropertyAgentDto("agent2", "Agent Two", "agent2@example.com", zipCode)
         );
         when(userMgmtFeignClient.getAgentsByZipCode(zipCode)).thenReturn(agentDtos);
         List<String> result = propertyAgentService.getAgentsByZipCode(zipCode);
@@ -139,10 +136,8 @@ public class PropertyAgentServiceImplTest {
         AgentLead al = new AgentLead();
         al.setLeadId(100);
         when(agentLeadRepo.findByAgentId(agentId)).thenReturn(Collections.singletonList(al));
-        when(propertyLeadFeignClient.getLeadById(100)).thenReturn(new PropertyLeadDto(100, "user", "prop", "NEW", null, null));
-        List<AgentLeadDto> result = propertyAgentService.getAgentLeads(agentId);
+        List<AgentLeadActionDto> result = propertyAgentService.getAgentLeads(agentId);
         assertEquals(1, result.size());
-        assertEquals("user", result.get(0).userInfo());
     }
 
     @Test
@@ -153,7 +148,7 @@ public class PropertyAgentServiceImplTest {
         String agentId = "agent1";
         PropertyAddressDto addressDto = new PropertyAddressDto("12345");
         PropertyMgmtDto propertyDto = new PropertyMgmtDto(propertyId, addressDto);
-        UserDto agentDto = new UserDto(agentId, "Agent One", "agent1@example.com", zipCode);
+        PropertyAgentDto agentDto = new PropertyAgentDto(agentId, "Agent One", "agent1@example.com", zipCode);
         when(propertyMgmtFeignClient.fetchAllPropertiesByZipCode("")).thenReturn(List.of(propertyDto));
         when(userMgmtFeignClient.getAgentsByZipCode(zipCode)).thenReturn(Collections.singletonList(agentDto));
         List<String> result = propertyAgentService.fetchAgentWithinZipCode(propertyId, leadId);

@@ -1,6 +1,6 @@
 package edu.hcmute.dto;
 
-public record AgentDto(
+public record PropertyAgentDto(
         String id,
         String fullName,
         String email,

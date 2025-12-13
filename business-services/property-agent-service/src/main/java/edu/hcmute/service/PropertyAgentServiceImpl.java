@@ -4,7 +4,10 @@ import edu.hcmute.config.PropertyLeadFeignClient;
 import edu.hcmute.config.PropertyMgmtFeignClient;
 import edu.hcmute.config.UserMgmtFeignClient;
 import edu.hcmute.domain.LeadAction;
-import edu.hcmute.dto.*;
+import edu.hcmute.dto.AgentLeadActionDto;
+import edu.hcmute.dto.NotificationRequestDto;
+import edu.hcmute.dto.PropertyAgentDto;
+import edu.hcmute.dto.PropertyMgmtDto;
 import edu.hcmute.entity.AgentLead;
 import edu.hcmute.event.NotificationProducer;
 import edu.hcmute.mapper.PropertyAgentMapper;
@@ -34,35 +37,35 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
 
     @Override
     @Transactional
-    public AgentLeadDto updateLeadActionByAgent(AgentLeadDto agentLeadDto) {
-        if (agentLeadDto.leadAction() == LeadAction.ACCEPTED) {
+    public AgentLeadActionDto updateLeadActionByAgent(AgentLeadActionDto agentLeadActionDto) {
+        if (agentLeadActionDto.leadAction() == LeadAction.ACCEPTED) {
             throw new IllegalArgumentException("Agents cannot manually set status to ACCEPTED. Please send a quote instead.");
         }
-        return updateLeadActionInternal(agentLeadDto);
+        return updateLeadActionInternal(agentLeadActionDto);
     }
 
     @Override
     @Transactional
-    public AgentLeadDto updateLeadActionBySystem(AgentLeadDto agentLeadDto) {
-        return updateLeadActionInternal(agentLeadDto);
+    public AgentLeadActionDto updateLeadActionBySystem(AgentLeadActionDto agentLeadActionDto) {
+        return updateLeadActionInternal(agentLeadActionDto);
     }
 
-    private AgentLeadDto updateLeadActionInternal(AgentLeadDto agentLeadDto) {
-        log.info("~~> update Lead Action: {}", agentLeadDto);
-        AgentLead agentLead = getOrcreateAgentLead(agentLeadDto);
+    private AgentLeadActionDto updateLeadActionInternal(AgentLeadActionDto agentLeadActionDto) {
+        log.info("~~> update Lead Action: {}", agentLeadActionDto);
+        AgentLead agentLead = getOrcreateAgentLead(agentLeadActionDto);
         LeadAction currentAction = agentLead.getLeadAction();
-        LeadAction newAction = agentLeadDto.leadAction();
+        LeadAction newAction = agentLeadActionDto.leadAction();
         validateStateTransition(currentAction, newAction);
         validateExpiry(agentLead);
         agentLead.setLeadAction(newAction);
         if (agentLead.getId() == 0) {
-            agentLead.setId(agentLeadDto.id());
+            agentLead.setId(agentLeadActionDto.id());
         }
         if (agentLead.getCreatedAt() == null) {
             agentLead.setCreatedAt(LocalDateTime.now());
         }
         agentLeadRepo.save(agentLead);
-        handleLeadAction(agentLeadDto, agentLead, newAction);
+        handleLeadAction(agentLeadActionDto, agentLead, newAction);
         return enrichAgentLeadDto(agentLead);
     }
 
@@ -82,12 +85,12 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
         }
     }
 
-    private AgentLead getOrcreateAgentLead(AgentLeadDto agentLeadDto) {
-        if (agentLeadDto.id() > 0) {
-            return agentLeadRepo.findById(agentLeadDto.id())
-                    .orElseGet(() -> propertyAgentMapper.toEntity(agentLeadDto));
+    private AgentLead getOrcreateAgentLead(AgentLeadActionDto agentLeadActionDto) {
+        if (agentLeadActionDto.id() > 0) {
+            return agentLeadRepo.findById(agentLeadActionDto.id())
+                    .orElseGet(() -> propertyAgentMapper.toEntity(agentLeadActionDto));
         } else {
-            return propertyAgentMapper.toEntity(agentLeadDto);
+            return propertyAgentMapper.toEntity(agentLeadActionDto);
         }
     }
 
@@ -101,39 +104,39 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
         }
     }
 
-    private void handleLeadAction(AgentLeadDto agentLeadDto, AgentLead agentLead, LeadAction newAction) {
+    private void handleLeadAction(AgentLeadActionDto agentLeadActionDto, AgentLead agentLead, LeadAction newAction) {
         if (newAction == null) return;
         switch (newAction) {
             case INTERESTED:
-                handleInterested(agentLeadDto, agentLead);
+                handleInterested(agentLeadActionDto, agentLead);
                 break;
             case ACCEPTED:
                 log.info("~~> agent accepted (quoted) lead {}.", agentLead.getLeadId());
                 break;
             case REJECTED:
-                handleRejected(agentLeadDto, agentLead);
+                handleRejected(agentLeadActionDto, agentLead);
                 break;
         }
     }
 
-    private void handleInterested(AgentLeadDto agentLeadDto, AgentLead agentLead) {
+    private void handleInterested(AgentLeadActionDto agentLeadActionDto, AgentLead agentLead) {
         log.info("~~> agent is interested in lead {}.", agentLead.getLeadId());
         try {
-            propertyLeadFeignClient.updateLeadStatusById(agentLeadDto.leadId(), "IN_REVIEWING");
+            propertyLeadFeignClient.updateLeadStatusById(agentLeadActionDto.leadId(), "IN_REVIEWING");
             log.info("~~> lead status updated to IN_REVIEWING");
         } catch (Exception e) {
             log.error("~~> failed to update Lead status to IN_REVIEWING in Lead Service", e);
         }
     }
 
-    private void handleRejected(AgentLeadDto agentLeadDto, AgentLead agentLead) {
+    private void handleRejected(AgentLeadActionDto agentLeadActionDto, AgentLead agentLead) {
         List<AgentLead> allAgentsForLead = agentLeadRepo.findByLeadId(agentLead.getLeadId());
         boolean allRejected = allAgentsForLead.stream()
                 .allMatch(al -> al.getLeadAction() == LeadAction.REJECTED);
         if (allRejected && !allAgentsForLead.isEmpty()) {
             log.info("~~> all agents rejected lead {}.", agentLead.getLeadId());
             try {
-                String updatedLeadAction = propertyLeadFeignClient.updateLeadStatusById(agentLeadDto.leadId(), String.valueOf(LeadAction.REJECTED));
+                String updatedLeadAction = propertyLeadFeignClient.updateLeadStatusById(agentLeadActionDto.leadId(), String.valueOf(LeadAction.REJECTED));
                 log.info("~~> lead status updated to REJECTED: {}", updatedLeadAction);
             } catch (Exception e) {
                 log.error("~~> failed to update Lead status to REJECTED in Lead Service", e);
@@ -147,43 +150,31 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
         if (!StringUtils.hasText(zipCode)) {
             return Collections.emptyList();
         }
-        List<UserDto> agents = userMgmtFeignClient.getAgentsByZipCode(zipCode);
+        List<PropertyAgentDto> agents = userMgmtFeignClient.getAgentsByZipCode(zipCode);
         return agents.stream()
-                .map(UserDto::id)
+                .map(PropertyAgentDto::id)
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<AgentLeadDto> getAgentLeads(String agentId) {
+    public List<AgentLeadActionDto> getAgentLeads(String agentId) {
         log.info("### Fetching agent leads for agent: {} ###", agentId);
         List<AgentLead> agentLeads = agentLeadRepo.findByAgentId(agentId);
-        List<AgentLeadDto> dtos = new ArrayList<>();
+        List<AgentLeadActionDto> dtos = new ArrayList<>();
         for (AgentLead al : agentLeads) {
-            try {
-                dtos.add(enrichAgentLeadDto(al));
-            } catch (Exception e) {
-                log.error("Error enriching lead details for agentLeadId: {}", al.getId(), e);
-                dtos.add(new AgentLeadDto(
-                        al.getId(), al.getLeadAction(), al.getAgentId(), al.getLeadId(), al.getCreatedAt(), "N/A", "N/A"
-                ));
-            }
+            dtos.add(enrichAgentLeadDto(al));
         }
         return dtos;
     }
 
-    private AgentLeadDto enrichAgentLeadDto(AgentLead al) {
-        PropertyLeadDto leadInfo = propertyLeadFeignClient.getLeadById(al.getLeadId());
-        String userInfo = leadInfo != null ? leadInfo.userInfo() : "Unknown";
-        String propertyInfo = leadInfo != null ? leadInfo.propertyInfo() : "Unknown";
-        return new AgentLeadDto(
+    private AgentLeadActionDto enrichAgentLeadDto(AgentLead al) {
+        return new AgentLeadActionDto(
                 al.getId(),
                 al.getLeadAction(),
                 al.getAgentId(),
                 al.getLeadId(),
-                al.getCreatedAt(),
-                userInfo,
-                propertyInfo
+                al.getCreatedAt()
         );
     }
 
@@ -257,9 +248,8 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     }
 
     @Override
-    public AgentDto getAgentById(String agentId) {
+    public PropertyAgentDto getAgentById(String agentId) {
         log.info("### Fetching agent by id: {} ###", agentId);
-        UserDto userDto = userMgmtFeignClient.getUserById(agentId);
-        return propertyAgentMapper.toAgentDto(userDto);
+        return userMgmtFeignClient.getUserById(agentId);
     }
 }

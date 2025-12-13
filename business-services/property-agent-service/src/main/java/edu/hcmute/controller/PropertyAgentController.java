@@ -1,7 +1,7 @@
 package edu.hcmute.controller;
 
-import edu.hcmute.dto.AgentDto;
-import edu.hcmute.dto.AgentLeadDto;
+import edu.hcmute.dto.AgentLeadActionDto;
+import edu.hcmute.dto.PropertyAgentDto;
 import edu.hcmute.service.PropertyAgentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +17,9 @@ public class PropertyAgentController {
     private final PropertyAgentService propertyAgentService;
 
     @PutMapping("/agent")
-    public ResponseEntity<AgentLeadDto> updateLeadAction(@RequestBody AgentLeadDto agentLeadDto) {
+    public ResponseEntity<AgentLeadActionDto> updateLeadAction(@RequestBody AgentLeadActionDto agentLeadActionDto) {
         log.info("~~> update leadAction by Agent");
-        return ResponseEntity.ok(propertyAgentService.updateLeadActionByAgent(agentLeadDto));
+        return ResponseEntity.ok(propertyAgentService.updateLeadActionByAgent(agentLeadActionDto));
     }
 
     @GetMapping("/agents/zipcode")
@@ -29,13 +29,13 @@ public class PropertyAgentController {
     }
 
     @GetMapping("/agent/leads")
-    public ResponseEntity<List<AgentLeadDto>> getAgentLeads(@RequestParam String agentId) {
+    public ResponseEntity<List<AgentLeadActionDto>> getAgentLeads(@RequestParam String agentId) {
         log.info("~~> getting leads for agentId: {}", agentId);
         return ResponseEntity.ok(propertyAgentService.getAgentLeads(agentId));
     }
 
     @GetMapping("/agent/{agentId}")
-    public ResponseEntity<AgentDto> getAgentById(@PathVariable String agentId) {
+    public ResponseEntity<PropertyAgentDto> getAgentById(@PathVariable String agentId) {
         log.info("~~> getting agent by id: {}", agentId);
         return ResponseEntity.ok(propertyAgentService.getAgentById(agentId));
     }

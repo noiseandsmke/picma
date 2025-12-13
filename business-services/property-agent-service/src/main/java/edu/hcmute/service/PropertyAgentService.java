@@ -1,20 +1,20 @@
 package edu.hcmute.service;
 
-import edu.hcmute.dto.AgentDto;
-import edu.hcmute.dto.AgentLeadDto;
+import edu.hcmute.dto.AgentLeadActionDto;
+import edu.hcmute.dto.PropertyAgentDto;
 
 import java.util.List;
 
 public interface PropertyAgentService {
     List<String> fetchAgentWithinZipCode(String propertyId, int leadId);
 
-    AgentLeadDto updateLeadActionByAgent(AgentLeadDto agentLeadDto);
+    AgentLeadActionDto updateLeadActionByAgent(AgentLeadActionDto agentLeadActionDto);
 
-    AgentLeadDto updateLeadActionBySystem(AgentLeadDto agentLeadDto);
+    AgentLeadActionDto updateLeadActionBySystem(AgentLeadActionDto agentLeadActionDto);
 
     List<String> getAgentsByZipCode(String zipCode);
 
-    List<AgentLeadDto> getAgentLeads(String agentId);
+    List<AgentLeadActionDto> getAgentLeads(String agentId);
 
-    AgentDto getAgentById(String agentId);
+    PropertyAgentDto getAgentById(String agentId);
 }
