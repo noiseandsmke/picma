@@ -10,31 +10,32 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RestController
 @Slf4j
 @RequiredArgsConstructor
-@RestController
+@RequestMapping("/agent")
 public class PropertyAgentController {
     private final PropertyAgentService propertyAgentService;
 
-    @PutMapping("/agent")
+    @PutMapping
     public ResponseEntity<AgentLeadActionDto> updateLeadAction(@RequestBody AgentLeadActionDto agentLeadActionDto) {
         log.info("~~> update leadAction by Agent");
         return ResponseEntity.ok(propertyAgentService.updateLeadActionByAgent(agentLeadActionDto));
     }
 
-    @GetMapping("/agents/zipcode")
+    @GetMapping("/zipcode")
     public ResponseEntity<List<String>> getAgentsByZipCode(@RequestHeader String zipCode) {
         log.info("~~> getting agents by zipCode: {}", zipCode);
         return ResponseEntity.ok(propertyAgentService.getAgentsByZipCode(zipCode));
     }
 
-    @GetMapping("/agent/leads")
+    @GetMapping("/leads")
     public ResponseEntity<List<AgentLeadActionDto>> getAgentLeads(@RequestParam String agentId) {
         log.info("~~> getting leads for agentId: {}", agentId);
         return ResponseEntity.ok(propertyAgentService.getAgentLeads(agentId));
     }
 
-    @GetMapping("/agent/{agentId}")
+    @GetMapping("/{agentId}")
     public ResponseEntity<PropertyAgentDto> getAgentById(@PathVariable String agentId) {
         log.info("~~> getting agent by id: {}", agentId);
         return ResponseEntity.ok(propertyAgentService.getAgentById(agentId));
