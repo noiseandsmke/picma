@@ -1,6 +1,8 @@
 package edu.hcmute.controller;
 
+import edu.hcmute.dto.CreatePropertyQuoteDto;
 import edu.hcmute.dto.PropertyQuoteDto;
+import edu.hcmute.dto.UpdatePropertyQuoteDto;
 import edu.hcmute.service.PropertyQuoteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -21,10 +23,10 @@ public class PropertyQuoteController {
 
     @PostMapping
     @Operation(description = "Create a property quote for an existing lead", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<PropertyQuoteDto> createPropertyQuote(@RequestBody PropertyQuoteDto propertyQuoteDto) {
-        log.info("### Create Property Quote for leadId = {} ###", propertyQuoteDto.leadId());
+    public ResponseEntity<PropertyQuoteDto> createPropertyQuote(@RequestBody CreatePropertyQuoteDto createDto) {
+        log.info("### Create Property Quote for leadId = {} ###", createDto.leadId());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(propertyQuoteService.createPropertyQuote(propertyQuoteDto));
+                .body(propertyQuoteService.createPropertyQuote(createDto));
     }
 
     @GetMapping
@@ -59,9 +61,9 @@ public class PropertyQuoteController {
 
     @PutMapping("/{quoteId}")
     @Operation(description = "Update property quote", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<PropertyQuoteDto> updatePropertyQuote(@PathVariable Integer quoteId, @RequestBody PropertyQuoteDto propertyQuoteDto) {
+    public ResponseEntity<PropertyQuoteDto> updatePropertyQuote(@PathVariable Integer quoteId, @RequestBody UpdatePropertyQuoteDto updateDto) {
         log.info("### Update Property Quote by id = {} ###", quoteId);
-        return ResponseEntity.ok(propertyQuoteService.updatePropertyQuote(quoteId, propertyQuoteDto));
+        return ResponseEntity.ok(propertyQuoteService.updatePropertyQuote(quoteId, updateDto));
     }
 
     @DeleteMapping("/{quoteId}")

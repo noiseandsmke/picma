@@ -1,7 +1,10 @@
 package edu.hcmute.service;
 
 import edu.hcmute.domain.QuoteStatus;
+import edu.hcmute.dto.CreatePropertyQuoteDto;
 import edu.hcmute.dto.PropertyQuoteDto;
+import edu.hcmute.dto.UpdatePropertyQuoteDto;
+import edu.hcmute.entity.Premium;
 import edu.hcmute.entity.PropertyQuote;
 import edu.hcmute.event.schema.QuoteAcceptedEvent;
 import edu.hcmute.event.schema.QuoteCreatedEvent;
@@ -31,18 +34,31 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     private final PropertyQuoteRepo propertyQuoteRepo;
     private final PropertyQuoteMapper propertyQuoteMapper;
     private final StreamBridge streamBridge;
+    private final PremiumCalculationService premiumCalculationService;
 
     @Override
     @Transactional
-    public PropertyQuoteDto createPropertyQuote(PropertyQuoteDto propertyQuoteDto) {
-        log.info("### Create PropertyQuote for leadId = {} ###", propertyQuoteDto.leadId());
-        Integer leadId = propertyQuoteDto.leadId();
+    public PropertyQuoteDto createPropertyQuote(CreatePropertyQuoteDto createDto) {
+        log.info("### Create PropertyQuote for leadId = {} ###", createDto.leadId());
+        Integer leadId = createDto.leadId();
         if (leadId == null) {
             throw new IllegalArgumentException("leadId is required to create a quote");
         }
         try {
-            PropertyQuote propertyQuote = propertyQuoteMapper.toEntity(propertyQuoteDto);
+            PropertyQuote propertyQuote = propertyQuoteMapper.toEntity(createDto);
             propertyQuote.setLeadId(leadId);
+            
+            premiumCalculationService.validateCoverages(propertyQuote.getCoverages());
+            
+            Long calculatedSumInsured = premiumCalculationService.calculateSumInsured(propertyQuote.getCoverages());
+            propertyQuote.setSumInsured(calculatedSumInsured);
+            log.info("~~> Auto-calculated sumInsured: {}", calculatedSumInsured);
+            
+            Premium calculatedPremium = premiumCalculationService.calculatePremium(propertyQuote.getCoverages());
+            propertyQuote.setPremium(calculatedPremium);
+            log.info("~~> Auto-calculated premium: net={}, tax={}, total={}",
+                    calculatedPremium.getNet(), calculatedPremium.getTax(), calculatedPremium.getTotal());
+
             if (propertyQuote.getValidUntil() == null) {
                 propertyQuote.setValidUntil(LocalDate.now().plusDays(30));
             }
@@ -107,19 +123,28 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
 
     @Override
     @Transactional
-    public PropertyQuoteDto updatePropertyQuote(Integer id, PropertyQuoteDto propertyQuoteDto) {
+    public PropertyQuoteDto updatePropertyQuote(Integer id, UpdatePropertyQuoteDto updateDto) {
         log.info("### Update PropertyQuote by id = {} ###", id);
+        
         PropertyQuote existingQuote = propertyQuoteRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + id));
-        PropertyQuote updatedQuote = propertyQuoteMapper.toEntity(propertyQuoteDto);
-        updatedQuote.setId(existingQuote.getId());
-        updatedQuote.setLeadId(existingQuote.getLeadId());
-        if (updatedQuote.getStatus() == null) {
-            updatedQuote.setStatus(existingQuote.getStatus());
-        }
-        updatedQuote = propertyQuoteRepo.save(updatedQuote);
-        log.info("~~> PropertyQuote updated with id: {}", updatedQuote.getId());
-        return propertyQuoteMapper.toDto(updatedQuote);
+        
+        propertyQuoteMapper.updateEntity(existingQuote, updateDto);
+        
+        premiumCalculationService.validateCoverages(existingQuote.getCoverages());
+        
+        Long calculatedSumInsured = premiumCalculationService.calculateSumInsured(existingQuote.getCoverages());
+        existingQuote.setSumInsured(calculatedSumInsured);
+        log.info("~~> Recalculated sumInsured: {}", calculatedSumInsured);
+        
+        Premium calculatedPremium = premiumCalculationService.calculatePremium(existingQuote.getCoverages());
+        existingQuote.setPremium(calculatedPremium);
+        log.info("~~> Recalculated premium: total={}", calculatedPremium.getTotal());
+        
+        existingQuote = propertyQuoteRepo.save(existingQuote);
+        log.info("~~> PropertyQuote updated with id: {}", existingQuote.getId());
+        
+        return propertyQuoteMapper.toDto(existingQuote);
     }
 
     @Override
@@ -139,7 +164,6 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
         log.info("### Accept Quote id = {} ###", quoteId);
         PropertyQuote targetQuote = propertyQuoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException(QUOTE_NOT_FOUND_MSG + quoteId));
-        // Accept the target quote
         targetQuote.setStatus(QuoteStatus.ACCEPTED);
         propertyQuoteRepo.save(targetQuote);
         log.info("~~> Quote status updated to ACCEPTED for quoteId: {}", quoteId);
@@ -151,7 +175,6 @@ public class PropertyQuoteServiceImpl implements PropertyQuoteService {
         );
         streamBridge.send(QUOTE_ACCEPTED_OUT, acceptedEvent);
         log.info("~~> QuoteAcceptedEvent published for quoteId: {}", quoteId);
-        // Reject other pending quotes for the same lead
         List<PropertyQuote> allQuotes = propertyQuoteRepo.findByLeadId(targetQuote.getLeadId());
         for (PropertyQuote quote : allQuotes) {
             if (!quote.getId().equals(quoteId) && quote.getStatus() == QuoteStatus.ACTIVE) {

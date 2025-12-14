@@ -1,6 +1,5 @@
 package edu.hcmute.entity;
 
-import edu.hcmute.domain.PlanType;
 import edu.hcmute.domain.QuoteStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -29,9 +28,6 @@ public class PropertyQuote {
     private LocalDate endDate;
     private String propertyAddress;
     private Long sumInsured;
-
-    @Enumerated(EnumType.STRING)
-    private PlanType plan;
 
     @Enumerated(EnumType.STRING)
     private QuoteStatus status;

@@ -1,7 +1,16 @@
 package edu.hcmute.domain;
 
+import lombok.Getter;
+
+@Getter
 public enum CoverageCode {
-    FIRE,
-    THEFT,
-    NATURAL_DISASTER
+    FIRE(true),
+    THEFT(false),
+    NATURAL_DISASTER(false);
+
+    private final boolean mandatory;
+
+    CoverageCode(boolean mandatory) {
+        this.mandatory = mandatory;
+    }
 }

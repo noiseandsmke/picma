@@ -1,9 +1,9 @@
 package edu.hcmute.service;
 
 import edu.hcmute.domain.CoverageCode;
-import edu.hcmute.domain.PlanType;
 import edu.hcmute.domain.QuoteStatus;
 import edu.hcmute.dto.CoverageDto;
+import edu.hcmute.dto.CreatePropertyQuoteDto;
 import edu.hcmute.dto.PremiumDto;
 import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.Coverage;
@@ -36,6 +36,8 @@ class PropertyQuoteServiceImplTest {
     private PropertyQuoteMapper propertyQuoteMapper;
     @Mock
     private StreamBridge streamBridge;
+    @Mock
+    private PremiumCalculationService premiumCalculationService;
 
     @InjectMocks
     private PropertyQuoteServiceImpl propertyQuoteService;
@@ -44,7 +46,7 @@ class PropertyQuoteServiceImplTest {
         return new PropertyQuoteDto(
                 1, 1, "AGT-001", LocalDate.now().plusDays(30),
                 LocalDate.of(2025, 12, 1), LocalDate.of(2026, 12, 1),
-                "123 Main St", 2500000000L, PlanType.SILVER, QuoteStatus.ACTIVE,
+                "123 Main St", 2500000000L, QuoteStatus.ACTIVE,
                 List.of(new CoverageDto(1, CoverageCode.FIRE, 2500000000L, 0L)),
                 new PremiumDto(2000000L, 200000L, 2200000L)
         );
@@ -60,7 +62,6 @@ class PropertyQuoteServiceImplTest {
         entity.setEndDate(LocalDate.of(2026, 12, 1));
         entity.setPropertyAddress("123 Main St");
         entity.setSumInsured(2500000000L);
-        entity.setPlan(PlanType.SILVER);
         entity.setStatus(QuoteStatus.ACTIVE);
         Coverage coverage = new Coverage(1, CoverageCode.FIRE, 2500000000L, 0L);
         entity.setCoverages(List.of(coverage));
@@ -70,22 +71,28 @@ class PropertyQuoteServiceImplTest {
 
     @Test
     void createPropertyQuote_success() {
-        PropertyQuoteDto inputDto = new PropertyQuoteDto(null, 1, "AGT-001", null,
-                LocalDate.of(2025, 12, 1), LocalDate.of(2026, 12, 1),
-                "123 Main St", 2500000000L, PlanType.SILVER, null,
-                List.of(new CoverageDto(null, CoverageCode.FIRE, 2500000000L, 0L)),
-                new PremiumDto(2000000L, 200000L, 2200000L));
+        CreatePropertyQuoteDto inputDto = new CreatePropertyQuoteDto(
+                1, "AGT-001", LocalDate.of(2025, 12, 1), LocalDate.of(2026, 12, 1),
+                "123 Main St", List.of(new CoverageDto(null, CoverageCode.FIRE, 2500000000L, 0L))
+        );
         PropertyQuote entity = createSampleEntity();
         PropertyQuoteDto resultDto = createSampleDto();
+        
         when(propertyQuoteMapper.toEntity(inputDto)).thenReturn(entity);
+        doNothing().when(premiumCalculationService).validateCoverages(any());
+        when(premiumCalculationService.calculatePremium(any())).thenReturn(new Premium(2000000L, 200000L, 2200000L));
+        when(premiumCalculationService.calculateSumInsured(any())).thenReturn(2500000000L);
         when(propertyQuoteRepo.save(any(PropertyQuote.class))).thenReturn(entity);
         when(propertyQuoteMapper.toDto(entity)).thenReturn(resultDto);
         when(streamBridge.send(anyString(), any())).thenReturn(true);
+        
         PropertyQuoteDto result = propertyQuoteService.createPropertyQuote(inputDto);
         assertNotNull(result);
         assertEquals(1, result.id());
-        assertEquals(PlanType.SILVER, result.plan());
         verify(propertyQuoteRepo).save(any(PropertyQuote.class));
+        verify(premiumCalculationService).validateCoverages(any());
+        verify(premiumCalculationService).calculatePremium(any());
+        verify(premiumCalculationService).calculateSumInsured(any());
         verify(streamBridge).send(eq("quoteCreated-out-0"), any());
     }
 

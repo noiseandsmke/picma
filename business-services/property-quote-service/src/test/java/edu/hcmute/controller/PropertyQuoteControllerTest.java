@@ -1,11 +1,8 @@
 package edu.hcmute.controller;
 
 import edu.hcmute.domain.CoverageCode;
-import edu.hcmute.domain.PlanType;
 import edu.hcmute.domain.QuoteStatus;
-import edu.hcmute.dto.CoverageDto;
-import edu.hcmute.dto.PremiumDto;
-import edu.hcmute.dto.PropertyQuoteDto;
+import edu.hcmute.dto.*;
 import edu.hcmute.service.PropertyQuoteService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class PropertyQuoteControllerTest {
+class PropertyQuoteControllerTest {
 
     @Mock
     private PropertyQuoteService propertyQuoteService;
@@ -36,7 +33,7 @@ public class PropertyQuoteControllerTest {
         return new PropertyQuoteDto(
                 1, 1, "AGT-001", LocalDate.now().plusDays(30),
                 LocalDate.of(2025, 12, 1), LocalDate.of(2026, 12, 1),
-                "123 Main St", 2500000000L, PlanType.SILVER, QuoteStatus.ACTIVE,
+                "123 Main St", 2500000000L, QuoteStatus.ACTIVE,
                 List.of(new CoverageDto(1, CoverageCode.FIRE, 2500000000L, 0L)),
                 new PremiumDto(2000000L, 200000L, 2200000L)
         );
@@ -44,17 +41,17 @@ public class PropertyQuoteControllerTest {
 
     @Test
     void createPropertyQuote_shouldReturnCreatedQuote() {
-        PropertyQuoteDto inputDto = new PropertyQuoteDto(null, 1, "AGT-001", null,
-                LocalDate.of(2025, 12, 1), LocalDate.of(2026, 12, 1),
-                "123 Main St", 2500000000L, PlanType.SILVER, null,
-                List.of(new CoverageDto(null, CoverageCode.FIRE, 2500000000L, 0L)),
-                new PremiumDto(2000000L, 200000L, 2200000L));
+        CreatePropertyQuoteDto inputDto = new CreatePropertyQuoteDto(
+                1, "AGT-001", LocalDate.of(2025, 12, 1), LocalDate.of(2026, 12, 1),
+                "123 Main St", List.of(new CoverageDto(null, CoverageCode.FIRE, 2500000000L, 0L))
+        );
         PropertyQuoteDto returnedDto = createSampleDto();
-        when(propertyQuoteService.createPropertyQuote(any(PropertyQuoteDto.class))).thenReturn(returnedDto);
+        when(propertyQuoteService.createPropertyQuote(any(CreatePropertyQuoteDto.class))).thenReturn(returnedDto);
         ResponseEntity<PropertyQuoteDto> response = propertyQuoteController.createPropertyQuote(inputDto);
         assertNotNull(response);
-        assertEquals(201, response.getStatusCodeValue());
-        assertEquals(PlanType.SILVER, response.getBody().plan());
+        assertEquals(201, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().id());
     }
 
     @Test
@@ -63,7 +60,8 @@ public class PropertyQuoteControllerTest {
         when(propertyQuoteService.getAllPropertyQuotes("id", "asc")).thenReturn(quoteList);
         ResponseEntity<List<PropertyQuoteDto>> response = propertyQuoteController.getAllPropertyQuotes("id", "asc");
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
         assertEquals(1, response.getBody().size());
     }
 
@@ -73,7 +71,7 @@ public class PropertyQuoteControllerTest {
         when(propertyQuoteService.getPropertyQuoteById(1)).thenReturn(quoteDto);
         ResponseEntity<PropertyQuoteDto> response = propertyQuoteController.getPropertyQuoteById(1);
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertEquals(quoteDto, response.getBody());
     }
 
@@ -83,17 +81,22 @@ public class PropertyQuoteControllerTest {
         when(propertyQuoteService.getQuotesByLeadId(1)).thenReturn(quoteList);
         ResponseEntity<List<PropertyQuoteDto>> response = propertyQuoteController.getQuotesByLeadId(1);
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
         assertEquals(1, response.getBody().size());
     }
 
     @Test
     void updatePropertyQuote_shouldReturnUpdatedQuote() {
-        PropertyQuoteDto inputDto = createSampleDto();
-        when(propertyQuoteService.updatePropertyQuote(1, inputDto)).thenReturn(inputDto);
+        UpdatePropertyQuoteDto inputDto = new UpdatePropertyQuoteDto(
+                LocalDate.of(2025, 12, 1), LocalDate.of(2026, 12, 1),
+                "123 Main St", List.of(new CoverageDto(null, CoverageCode.FIRE, 2500000000L, 0L))
+        );
+        PropertyQuoteDto returnedDto = createSampleDto();
+        when(propertyQuoteService.updatePropertyQuote(eq(1), any(UpdatePropertyQuoteDto.class))).thenReturn(returnedDto);
         ResponseEntity<PropertyQuoteDto> response = propertyQuoteController.updatePropertyQuote(1, inputDto);
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
     }
 
     @Test
@@ -101,7 +104,7 @@ public class PropertyQuoteControllerTest {
         doNothing().when(propertyQuoteService).deletePropertyQuoteById(1);
         ResponseEntity<Void> response = propertyQuoteController.deletePropertyQuoteById(1);
         assertNotNull(response);
-        assertEquals(204, response.getStatusCodeValue());
+        assertEquals(204, response.getStatusCode().value());
         verify(propertyQuoteService).deletePropertyQuoteById(1);
     }
 }
