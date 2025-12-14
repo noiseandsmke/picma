@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { OwnerQuoteDetailDialog } from './OwnerQuoteDetailDialog';
 import { LeadDto } from '@/features/admin/services/leadService';
+import { COVERAGE_CONFIG, CoverageCode } from '@/types/enums';
 
 interface LeadQuotesListProps {
     leadId: number;
@@ -62,7 +63,6 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({ leadId, leadStat
 
     const handleActionFromDetail = (quoteId: number, type: 'accept' | 'reject') => {
         setActionId({ id: quoteId, type });
-        // We close the detail dialog first, then confirm dialog opens
         setSelectedQuote(null);
     };
 
@@ -80,14 +80,11 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({ leadId, leadStat
 
     const pendingQuotes = quotes.filter(q => q.status !== 'ACCEPTED' && q.status !== 'REJECTED');
 
-    // Create a minimal lead DTO for the form
     const leadDto: LeadDto = {
         id: leadId,
-        userInfo: '', // Hidden anyway
-        propertyInfo: '', // Not used for display in read-only form if disabled
-        status: leadStatus,
+        userInfo: '', propertyInfo: '', status: leadStatus,
         createDate: new Date().toISOString(),
-        expiryDate: new Date().toISOString() // Dummy date to satisfy type
+        expiryDate: new Date().toISOString()
     };
 
     return (
@@ -156,6 +153,12 @@ const LeadQuoteItem = ({ quote, setSelectedQuote }: {
 
     const agentName = agent ? `${agent.firstName} ${agent.lastName}` : quote.agentId;
 
+    const coverages = [...quote.coverages].sort((a, b) => {
+        const confA = COVERAGE_CONFIG[a.code as CoverageCode];
+        const confB = COVERAGE_CONFIG[b.code as CoverageCode];
+        return (confA?.mandatory ? -1 : 1) - (confB?.mandatory ? -1 : 1);
+    });
+
     return (
         <div key={quote.id}
             className="bg-slate-900/50 rounded-lg p-3 border border-slate-800/50 flex flex-col gap-2">
@@ -171,14 +174,28 @@ const LeadQuoteItem = ({ quote, setSelectedQuote }: {
                     {formatCurrency(quote.premium.total)}
                 </Badge>
             </div>
-            <div className="flex items-center justify-between text-xs text-slate-400 mt-1">
-                <span>Plan: {quote.plan}</span>
-                {/* Hide status text if PENDING, as per requirement */}
-                {quote.status && quote.status !== 'PENDING' && (
-                    <Badge variant="secondary" className="text-[10px] h-5">
-                        {quote.status}
-                    </Badge>
-                )}
+
+            <div className="flex flex-col gap-1 mt-1">
+                <div className="flex items-center gap-1 flex-wrap">
+                    {coverages.map(c => {
+                        const config = COVERAGE_CONFIG[c.code as CoverageCode];
+                        return config ? (
+                            <Badge key={c.code} variant="secondary"
+                                className="text-[10px] h-5 bg-slate-800 text-slate-300 border border-slate-700 gap-1 px-1.5">
+                                <span className="">{config.label}</span>
+                            </Badge>
+                        ) : null;
+                    })}
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-400 mt-1">
+                    <span>Sum Insured: <span className="text-slate-300">{formatCurrency(quote.sumInsured)}</span></span>
+                    {quote.status && quote.status !== 'PENDING' && (
+                        <Badge variant="secondary" className="text-[10px] h-5">
+                            {quote.status}
+                        </Badge>
+                    )}
+                </div>
             </div>
 
             <div className="flex justify-end gap-2 mt-2 border-t border-slate-800/50 pt-2">

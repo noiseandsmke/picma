@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import {
     AgentCell,
     CustomerCell,
-    PlanPremiumCell,
+    CoveragesCell,
     PropertyCell,
     QuoteIdCell,
     ValidityCell
@@ -79,7 +79,7 @@ const AdminQuotesView: React.FC = () => {
             className: "text-slate-400",
         },
         {
-            header: "Plan & premium",
+            header: "Coverage & Premium",
             width: "15%",
             className: "text-slate-400",
         },
@@ -144,7 +144,7 @@ const AdminQuotesView: React.FC = () => {
             <TableRow key={quote.id}
                 className="border-slate-800 hover:bg-slate-900/50 transition-colors">
                 <TableCell>
-                    <QuoteIdCell id={quote.id} dateStr={quote.startDate} />
+                    <QuoteIdCell id={quote.id} />
                 </TableCell>
 
                 <TableCell>
@@ -161,7 +161,7 @@ const AdminQuotesView: React.FC = () => {
                 </TableCell>
 
                 <TableCell>
-                    <PlanPremiumCell plan={quote.plan}
+                    <CoveragesCell coverages={quote.coverages}
                         totalPremium={quote.premium?.total || 0} />
                 </TableCell>
 

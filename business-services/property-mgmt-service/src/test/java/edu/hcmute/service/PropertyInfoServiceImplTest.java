@@ -1,7 +1,7 @@
 package edu.hcmute.service;
 
 import edu.hcmute.domain.ConstructionType;
-import edu.hcmute.domain.OccupancyType;
+
 import edu.hcmute.dto.PropertyAttributesDto;
 import edu.hcmute.dto.PropertyInfoDto;
 import edu.hcmute.dto.PropertyLocationDto;
@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class PropertyInfoServiceImplTest {
+class PropertyInfoServiceImplTest {
 
     @Mock
     private PropertyInfoRepo propertyInfoRepo;
@@ -41,7 +41,7 @@ public class PropertyInfoServiceImplTest {
                 "1",
                 "user1",
                 new PropertyLocationDto("123 Main St", "Ward 1", "Ho Chi Minh", "70000"),
-                new PropertyAttributesDto(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5),
+                new PropertyAttributesDto(ConstructionType.CONCRETE, 2020, 3, 85.5),
                 new PropertyValuationDto(2500000000L)
         );
     }
@@ -51,7 +51,7 @@ public class PropertyInfoServiceImplTest {
         entity.setId("1");
         entity.setUserId("user1");
         entity.setLocation(new PropertyLocation("123 Main St", "Ward 1", "Ho Chi Minh", "70000"));
-        entity.setAttributes(new PropertyAttributes(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5));
+        entity.setAttributes(new PropertyAttributes(ConstructionType.CONCRETE, 2020, 3, 85.5));
         entity.setValuation(new PropertyValuation(2500000000L));
         return entity;
     }
@@ -62,7 +62,7 @@ public class PropertyInfoServiceImplTest {
                 null,
                 "user1",
                 new PropertyLocationDto("123 Main St", "Ward 1", "Ho Chi Minh", "70000"),
-                new PropertyAttributesDto(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5),
+                new PropertyAttributesDto(ConstructionType.CONCRETE, 2020, 3, 85.5),
                 new PropertyValuationDto(2500000000L)
         );
         PropertyInfo entity = createSampleEntity();
@@ -74,7 +74,7 @@ public class PropertyInfoServiceImplTest {
         assertNotNull(result);
         assertEquals("1", result.id());
         assertEquals(ConstructionType.CONCRETE, result.attributes().constructionType());
-        assertEquals(OccupancyType.RESIDENTIAL, result.attributes().occupancyType());
+
         verify(propertyInfoRepo).save(entity);
     }
 

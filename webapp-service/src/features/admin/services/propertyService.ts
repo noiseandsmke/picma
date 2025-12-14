@@ -1,16 +1,6 @@
 import apiClient from '@/services/apiClient';
 
-export type ConstructionType =
-    | 'CONCRETE'
-    | 'STEEL_FRAME'
-    | 'MASONRY'
-    | 'WOOD_FRAME';
-
-export type OccupancyType =
-    | 'RESIDENTIAL'
-    | 'COMMERCIAL'
-    | 'INDUSTRIAL'
-    | 'MIXED_USE';
+export type ConstructionType = 'WOOD' | 'CONCRETE' | 'HYBRID';
 
 export interface PropertyLocationDto {
     street: string;
@@ -21,7 +11,6 @@ export interface PropertyLocationDto {
 
 export interface PropertyAttributesDto {
     constructionType: ConstructionType;
-    occupancyType: OccupancyType;
     yearBuilt: number;
     noFloors: number;
     squareMeters: number;
@@ -46,7 +35,7 @@ export const fetchAllProperties = async (sort?: string, direction?: string): Pro
     if (sort) params.sort = sort;
     if (direction) params.direction = direction;
 
-    const response = await apiClient.get<PropertyInfoDto[]>(`${BASE_PATH}`, {params});
+    const response = await apiClient.get<PropertyInfoDto[]>(`${BASE_PATH}`, { params });
     return response.data;
 };
 

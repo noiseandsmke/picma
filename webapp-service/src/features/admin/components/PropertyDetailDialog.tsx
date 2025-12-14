@@ -1,12 +1,12 @@
 import React from 'react';
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,} from '@/components/ui/dialog';
-import {Button} from '@/components/ui/button';
-import {PropertyInfoDto} from '../services/propertyService';
-import {useQuery} from '@tanstack/react-query';
-import {fetchUsers} from '../services/userService';
-import {Skeleton} from '@/components/ui/skeleton';
-import {Building2, MapPin, Ruler, Wallet} from 'lucide-react';
-import {Separator} from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { PropertyInfoDto } from '../services/propertyService';
+import { useQuery } from '@tanstack/react-query';
+import { fetchUsers } from '../services/userService';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Building2, MapPin, Ruler, Wallet } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 interface PropertyDetailDialogProps {
     open: boolean;
@@ -22,8 +22,8 @@ const formatCurrency = (amount: number) => {
     return amount ? amount.toLocaleString() + ' ₫' : '0 ₫';
 };
 
-export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({open, onOpenChange, property}) => {
-    const {data: owners, isLoading: isOwnersLoading} = useQuery({
+export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({ open, onOpenChange, property }) => {
+    const { data: owners, isLoading: isOwnersLoading } = useQuery({
         queryKey: ['admin-owners-lookup'],
         queryFn: () => fetchUsers('owner'),
         enabled: open && !!property?.userId,
@@ -45,7 +45,7 @@ export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({open,
                         <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Owner
                             Information</h4>
                         {isOwnersLoading && (
-                            <Skeleton className="h-16 w-full bg-slate-800"/>
+                            <Skeleton className="h-16 w-full bg-slate-800" />
                         )}
                         {!isOwnersLoading && owner && (
                             <div
@@ -62,12 +62,12 @@ export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({open,
                         )}
                     </div>
 
-                    <Separator className="bg-slate-800"/>
+                    <Separator className="bg-slate-800" />
 
                     <div className="space-y-4">
                         <div className="flex items-start gap-3">
                             <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-400 mt-1">
-                                <MapPin size={18}/>
+                                <MapPin size={18} />
                             </div>
                             <div className="space-y-1 flex-1">
                                 <h4 className="text-sm font-medium text-slate-300">Location</h4>
@@ -78,41 +78,37 @@ export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({open,
                             </div>
                         </div>
 
-                        <Separator className="bg-slate-800"/>
+                        <Separator className="bg-slate-800" />
 
                         <div className="flex items-start gap-3">
                             <div className="bg-emerald-500/10 p-2 rounded-lg text-emerald-400 mt-1">
-                                <Building2 size={18}/>
+                                <Building2 size={18} />
                             </div>
                             <div className="space-y-3 flex-1">
                                 <h4 className="text-sm font-medium text-slate-300">Attributes</h4>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                                     <div>
                                         <span className="text-slate-500 text-xs">Type:</span> <span
-                                        className="text-white">{formatEnum(property.attributes.constructionType)}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-slate-500 text-xs">Occupancy:</span> <span
-                                        className="text-white">{formatEnum(property.attributes.occupancyType)}</span>
+                                            className="text-white">{formatEnum(property.attributes.constructionType)}</span>
                                     </div>
                                     <div>
                                         <span className="text-slate-500 text-xs">Year Built:</span> <span
-                                        className="text-white">{property.attributes.yearBuilt}</span>
+                                            className="text-white">{property.attributes.yearBuilt}</span>
                                     </div>
                                     <div>
                                         <span className="text-slate-500 text-xs">Floors:</span> <span
-                                        className="text-white">{property.attributes.noFloors}</span>
+                                            className="text-white">{property.attributes.noFloors}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <Separator className="bg-slate-800"/>
+                        <Separator className="bg-slate-800" />
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex items-start gap-3">
                                 <div className="bg-amber-500/10 p-2 rounded-lg text-amber-400 mt-1">
-                                    <Ruler size={18}/>
+                                    <Ruler size={18} />
                                 </div>
                                 <div>
                                     <h4 className="text-sm font-medium text-slate-300">Area</h4>
@@ -121,7 +117,7 @@ export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({open,
                             </div>
                             <div className="flex items-start gap-3">
                                 <div className="bg-rose-500/10 p-2 rounded-lg text-rose-400 mt-1">
-                                    <Wallet size={18}/>
+                                    <Wallet size={18} />
                                 </div>
                                 <div>
                                     <h4 className="text-sm font-medium text-slate-300">Est. Cost</h4>
@@ -135,7 +131,7 @@ export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({open,
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}
-                            className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
+                        className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
                         Close
                     </Button>
                 </DialogFooter>

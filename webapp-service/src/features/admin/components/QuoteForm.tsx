@@ -1,24 +1,24 @@
-import React, {useEffect} from 'react';
-import {Controller, SubmitHandler, useFieldArray, useForm, useWatch} from 'react-hook-form';
-import {zodResolver} from '@hookform/resolvers/zod';
+import React, { useEffect } from 'react';
+import { Controller, SubmitHandler, useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {useQuery} from '@tanstack/react-query';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
-import {Label} from '@/components/ui/label';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {DialogFooter} from '@/components/ui/dialog';
-import {SearchableSelect} from '@/components/ui/searchable-select';
-import {fetchAllLeads, LeadDto} from '../services/leadService';
-import {fetchUsers} from '../services/userService';
-import {fetchPropertyById} from '../services/propertyService';
-import {PropertyQuoteDto} from '../services/quoteService';
-import {CalendarIcon, Home, Shield, User, Wallet} from 'lucide-react';
-import {addYears, format} from 'date-fns';
-import {cn} from '@/lib/utils';
-import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
-import {Calendar} from '@/components/ui/calendar';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DialogFooter } from '@/components/ui/dialog';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { fetchAllLeads, LeadDto } from '../services/leadService';
+import { fetchUsers } from '../services/userService';
+import { fetchPropertyById } from '../services/propertyService';
+import { PropertyQuoteDto } from '../services/quoteService';
+import { CalendarIcon, Home, Shield, User, Wallet } from 'lucide-react';
+import { addYears, format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const quoteSchema = z.object({
     leadId: z.coerce.number().min(1, 'Lead is required'),
@@ -50,9 +50,9 @@ interface QuoteFormProps {
 }
 
 const getDefaultCoverages = (plan: string, sumInsured: number) => {
-    const baseFire = {code: 'FIRE', limit: sumInsured, deductible: 2000000};
-    const baseTheft = {code: 'THEFT', limit: Math.min(sumInsured * 0.1, 50000000), deductible: 500000};
-    const baseFlood = {code: 'NATURAL_DISASTER', limit: sumInsured, deductible: 5000000};
+    const baseFire = { code: 'FIRE', limit: sumInsured, deductible: 2000000 };
+    const baseTheft = { code: 'THEFT', limit: Math.min(sumInsured * 0.1, 50000000), deductible: 500000 };
+    const baseFlood = { code: 'NATURAL_DISASTER', limit: sumInsured, deductible: 5000000 };
 
     switch (plan) {
         case 'GOLD':
@@ -78,12 +78,12 @@ interface CurrencyInputProps extends React.InputHTMLAttributes<HTMLInputElement>
 }
 
 const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(({
-                                                                                  value,
-                                                                                  onChange,
-                                                                                  compact,
-                                                                                  className,
-                                                                                  ...props
-                                                                              }, ref) => {
+    value,
+    onChange,
+    compact,
+    className,
+    ...props
+}, ref) => {
     const [displayValue, setDisplayValue] = React.useState('');
 
     React.useEffect(() => {
@@ -122,29 +122,29 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(({
 });
 
 export const QuoteForm: React.FC<QuoteFormProps> = ({
-                                                        initialData,
-                                                        onSubmit,
-                                                        onCancel,
-                                                        isLoading,
-                                                        leads: propsLeads,
-                                                        hideAgentSelect,
-                                                        agentId,
-                                                        ...props
-                                                    }) => {
+    initialData,
+    onSubmit,
+    onCancel,
+    isLoading,
+    leads: propsLeads,
+    hideAgentSelect,
+    agentId,
+    ...props
+}) => {
     const {
         control,
         handleSubmit,
         setValue,
         getValues,
-        formState: {errors},
+        formState: { errors },
     } = useForm<QuoteFormData, any, QuoteFormData>({
         // @ts-expect-error - zodResolver type mismatch
         resolver: zodResolver(quoteSchema),
         defaultValues: {
             leadId: initialData?.leadId || 0,
             agentId: initialData?.agentId || agentId || '',
-            // @ts-expect-error - enum type mismatch with string
-            plan: initialData?.plan || 'BRONZE',
+
+            plan: 'BRONZE',
             propertyAddress: initialData?.propertyAddress || '',
             sumInsured: initialData?.sumInsured || 0,
             startDate: initialData?.startDate ? new Date(initialData.startDate) : new Date(),
@@ -153,12 +153,12 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
         },
     });
 
-    const {fields, replace} = useFieldArray({
+    const { fields, replace } = useFieldArray({
         control,
         name: "coverages"
     });
 
-    const {data: fetchedLeads} = useQuery({
+    const { data: fetchedLeads } = useQuery({
         queryKey: ['all-leads-for-select'],
         queryFn: () => fetchAllLeads(),
         enabled: !propsLeads
@@ -166,25 +166,25 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
 
     const leads = propsLeads || fetchedLeads;
 
-    const {data: owners} = useQuery({
+    const { data: owners } = useQuery({
         queryKey: ['all-owners-for-select'],
         queryFn: () => fetchUsers('owner'),
     });
 
-    const {data: agents} = useQuery({
+    const { data: agents } = useQuery({
         queryKey: ['all-agents-for-select'],
         queryFn: () => fetchUsers('agent'),
         enabled: !hideAgentSelect
     });
 
-    const selectedLeadId = useWatch({control, name: 'leadId'});
-    const selectedPlan = useWatch({control, name: 'plan'});
-    const sumInsured = useWatch({control, name: 'sumInsured'});
-    const startDate = useWatch({control, name: 'startDate'});
+    const selectedLeadId = useWatch({ control, name: 'leadId' });
+    const selectedPlan = useWatch({ control, name: 'plan' });
+    const sumInsured = useWatch({ control, name: 'sumInsured' });
+    const startDate = useWatch({ control, name: 'startDate' });
 
     const selectedLead = leads?.find(l => l.id === selectedLeadId);
 
-    const {data: selectedProperty} = useQuery({
+    const { data: selectedProperty } = useQuery({
         queryKey: ['property', selectedLead?.propertyInfo],
         queryFn: () => fetchPropertyById(selectedLead?.propertyInfo || ''),
         enabled: !!selectedLead?.propertyInfo,
@@ -199,22 +199,24 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
     }, [selectedProperty, agents]);
 
     useEffect(() => {
-        if (!hideAgentSelect) {
-            const currentAgentId = getValues('agentId');
+        if (hideAgentSelect) return;
 
+        const currentAgentId = getValues('agentId');
+        if (!selectedProperty) {
+            if (currentAgentId) setValue('agentId', '');
+            return;
+        }
 
-            if (currentAgentId && filteredAgents.length > 0) {
-                const agentExists = filteredAgents.some(a => a.id === currentAgentId);
-                if (!agentExists) {
-                    if (initialData?.agentId === currentAgentId) {
-                        const isInitialAgent = initialData?.agentId === currentAgentId;
-                        if (!isInitialAgent) setValue('agentId', '');
-                    } else {
-                        setValue('agentId', '');
-                    }
-                }
-            } else if (selectedProperty && filteredAgents.length === 0) {
-                setValue('agentId', '');
+        if (filteredAgents.length === 0) {
+            setValue('agentId', '');
+            return;
+        }
+
+        if (currentAgentId) {
+            const agentExists = filteredAgents.some(a => a.id === currentAgentId);
+            if (!agentExists) {
+                const isInitialAgent = initialData?.agentId === currentAgentId;
+                if (!isInitialAgent) setValue('agentId', '');
             }
         }
     }, [selectedProperty, filteredAgents, setValue, getValues, hideAgentSelect, initialData]);
@@ -239,7 +241,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
 
     useEffect(() => {
         if (sumInsured > 0) {
-            const isInitialLoad = initialData?.plan === selectedPlan && initialData?.sumInsured === sumInsured;
+            const isInitialLoad = initialData?.sumInsured === sumInsured;
 
             if (isInitialLoad && fields.length > 0) {
                 return;
@@ -272,7 +274,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
         const tax = Math.round(net * 0.1);
         const total = net + tax;
 
-        return {net, tax, total};
+        return { net, tax, total };
     };
 
     const calculatedPremium = calculatePremium(selectedPlan, sumInsured);
@@ -333,7 +335,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
-                        <User size={14} className="text-indigo-400"/> General info
+                        <User size={14} className="text-indigo-400" /> General info
                     </h4>
 
                     <div className="space-y-3">
@@ -343,7 +345,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                 <Controller
                                     name="leadId"
                                     control={control}
-                                    render={({field}) => (
+                                    render={({ field }) => (
                                         <SearchableSelect
                                             options={leadOptions}
                                             value={field.value}
@@ -365,12 +367,16 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                 <Controller
                                     name="agentId"
                                     control={control}
-                                    render={({field}) => (
+                                    render={({ field }) => (
                                         <SearchableSelect
                                             options={agentOptions}
                                             value={field.value}
                                             onChange={field.onChange}
-                                            placeholder={selectedProperty ? (agentOptions.length > 0 ? "Select agent..." : "No agents found in this zipcode") : "Select lead first..."}
+                                            placeholder={
+                                                !selectedProperty
+                                                    ? "Select lead first..."
+                                                    : (agentOptions.length > 0 ? "Select agent..." : "No agents found in this zipcode")
+                                            }
                                             disabled={!selectedProperty || agentOptions.length === 0 || props.readOnly}
                                             isLoading={!agents}
                                         />
@@ -390,7 +396,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                 <Controller
                                     name="startDate"
                                     control={control}
-                                    render={({field}) => (
+                                    render={({ field }) => (
                                         <Popover>
                                             <PopoverTrigger asChild disabled={props.readOnly}>
                                                 <Button
@@ -400,13 +406,13 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                         !field.value && "text-slate-500"
                                                     )}
                                                 >
-                                                    <CalendarIcon className="mr-2 h-3 w-3"/>
+                                                    <CalendarIcon className="mr-2 h-3 w-3" />
                                                     {field.value ? format(field.value, "dd/MM/yyyy") :
                                                         <span>Pick date</span>}
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0 bg-slate-950 border-slate-800"
-                                                            align="start">
+                                                align="start">
                                                 <Calendar
                                                     mode="single"
                                                     selected={field.value}
@@ -448,7 +454,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                 <Controller
                                     name="endDate"
                                     control={control}
-                                    render={({field}) => (
+                                    render={({ field }) => (
                                         <Popover>
                                             <PopoverTrigger asChild disabled={props.readOnly}>
                                                 <Button
@@ -458,13 +464,13 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                         !field.value && "text-slate-500"
                                                     )}
                                                 >
-                                                    <CalendarIcon className="mr-2 h-3 w-3"/>
+                                                    <CalendarIcon className="mr-2 h-3 w-3" />
                                                     {field.value ? format(field.value, "dd/MM/yyyy") :
                                                         <span>Pick date</span>}
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0 bg-slate-950 border-slate-800"
-                                                            align="start">
+                                                align="start">
                                                 <Calendar
                                                     mode="single"
                                                     selected={field.value}
@@ -482,7 +488,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                 </div>
                 <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
-                        <Home size={14} className="text-emerald-400"/> Property & plan
+                        <Home size={14} className="text-emerald-400" /> Property & plan
                     </h4>
 
                     <div className="space-y-3">
@@ -516,7 +522,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                             <Controller
                                 name="sumInsured"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <CurrencyInput
                                         {...field}
                                         className="bg-slate-950 border-slate-700 h-9 text-xs"
@@ -533,11 +539,11 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                             <Controller
                                 name="plan"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <Select onValueChange={field.onChange} value={field.value}
-                                            disabled={props.readOnly}>
+                                        disabled={props.readOnly}>
                                         <SelectTrigger className="bg-slate-900 border-slate-700 h-9 text-xs">
-                                            <SelectValue placeholder="Select plan"/>
+                                            <SelectValue placeholder="Select plan" />
                                         </SelectTrigger>
                                         <SelectContent className="bg-slate-900 border-slate-800 text-white">
                                             <SelectItem value="BRONZE">Bronze (Fire only)</SelectItem>
@@ -552,7 +558,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                 </div>
                 <div className="lg:col-span-2 space-y-4">
                     <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
-                        <Shield size={14} className="text-amber-400"/> Coverages & deductibles
+                        <Shield size={14} className="text-amber-400" /> Coverages & deductibles
                     </h4>
 
                     <div className="rounded-md border border-slate-800 bg-slate-950 overflow-hidden">
@@ -579,7 +585,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                     <span
                                                         className="font-semibold text-[10px] text-slate-300">{field.code}</span>
                                                     <span className="text-[9px] text-slate-500 truncate max-w-[70px]"
-                                                          title={getCoverageName(field.code)}>
+                                                        title={getCoverageName(field.code)}>
                                                         {getCoverageName(field.code)}
                                                     </span>
                                                     <input
@@ -592,7 +598,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                 <Controller
                                                     name={`coverages.${index}.limit`}
                                                     control={control}
-                                                    render={({field}) => (
+                                                    render={({ field }) => (
                                                         <CurrencyInput
                                                             {...field}
                                                             compact
@@ -606,7 +612,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                 <Controller
                                                     name={`coverages.${index}.deductible`}
                                                     control={control}
-                                                    render={({field}) => (
+                                                    render={({ field }) => (
                                                         <CurrencyInput
                                                             {...field}
                                                             compact
@@ -628,7 +634,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-3 text-indigo-400">
                                 <div className="p-2 bg-indigo-500/10 rounded-full">
-                                    <Wallet size={20}/>
+                                    <Wallet size={20} />
                                 </div>
                                 <div>
                                     <p className="text-sm font-semibold text-indigo-300">Estimated premium</p>
@@ -660,7 +666,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                         <DialogFooter className="mt-6 gap-2">
                             <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
                             <Button type="submit" disabled={isLoading}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px]">
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px]">
                                 {initialData ? 'Save changes' : 'Create quote'}
                             </Button>
                         </DialogFooter>

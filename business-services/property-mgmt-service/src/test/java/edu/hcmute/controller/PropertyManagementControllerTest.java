@@ -1,7 +1,7 @@
 package edu.hcmute.controller;
 
 import edu.hcmute.domain.ConstructionType;
-import edu.hcmute.domain.OccupancyType;
+
 import edu.hcmute.dto.PropertyAttributesDto;
 import edu.hcmute.dto.PropertyInfoDto;
 import edu.hcmute.dto.PropertyLocationDto;
@@ -36,7 +36,7 @@ class PropertyManagementControllerTest {
                 "1",
                 "user1",
                 new PropertyLocationDto("123 Main St", "Ward 1", "Ho Chi Minh", "70000"),
-                new PropertyAttributesDto(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5),
+                new PropertyAttributesDto(ConstructionType.CONCRETE, 2020, 3, 85.5),
                 new PropertyValuationDto(2500000000L)
         );
     }
@@ -47,7 +47,7 @@ class PropertyManagementControllerTest {
                 null,
                 "user1",
                 new PropertyLocationDto("123 Main St", "Ward 1", "Ho Chi Minh", "70000"),
-                new PropertyAttributesDto(ConstructionType.CONCRETE, OccupancyType.RESIDENTIAL, 2020, 3, 85.5),
+                new PropertyAttributesDto(ConstructionType.CONCRETE, 2020, 3, 85.5),
                 new PropertyValuationDto(2500000000L)
         );
         PropertyInfoDto returnedDto = createSampleDto();

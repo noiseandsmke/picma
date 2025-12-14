@@ -147,7 +147,6 @@ const OwnerDashboard: React.FC = () => {
     });
 
     const totalAssetValue = useMemo(() => {
-        // @ts-ignore
         return properties?.reduce((acc, p) => acc + (p.valuation?.estimatedConstructionCost || 0), 0) || 0;
     }, [properties]);
 

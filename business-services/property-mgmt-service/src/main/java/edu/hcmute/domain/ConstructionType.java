@@ -1,8 +1,7 @@
 package edu.hcmute.domain;
 
 public enum ConstructionType {
+    WOOD,
     CONCRETE,
-    STEEL_FRAME,
-    MASONRY,
-    WOOD_FRAME
+    HYBRID
 }

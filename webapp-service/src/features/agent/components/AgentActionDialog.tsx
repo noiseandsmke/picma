@@ -1,12 +1,12 @@
 import React from 'react';
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
-import {Button} from "@/components/ui/button";
-import {AgentLeadDto} from '../services/agentService';
-import {ArrowRight, Building2, FileText, MapPin, Ruler, User, Wallet, XCircle} from 'lucide-react';
-import {useQuery} from '@tanstack/react-query';
-import {fetchPropertyById} from '@/features/admin/services/propertyService';
-import {fetchUserById} from '@/features/admin/services/userService';
-import {Skeleton} from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { AgentLeadDto } from '../services/agentService';
+import { ArrowRight, Building2, FileText, MapPin, Ruler, User, Wallet, XCircle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchPropertyById } from '@/features/admin/services/propertyService';
+import { fetchUserById } from '@/features/admin/services/userService';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AgentActionDialogProps {
     open: boolean;
@@ -19,14 +19,14 @@ interface AgentActionDialogProps {
 }
 
 export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
-                                                                        open,
-                                                                        onOpenChange,
-                                                                        lead,
-                                                                        onCreateQuote,
-                                                                        onReject,
-                                                                        isPending,
-                                                                        hasQuote
-                                                                    }) => {
+    open,
+    onOpenChange,
+    lead,
+    onCreateQuote,
+    onReject,
+    isPending,
+    hasQuote
+}) => {
     if (!lead) return null;
 
     const isRejected = lead.leadAction === 'REJECTED';
@@ -47,7 +47,7 @@ export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
                         </DialogTitle>
                     </DialogHeader>
 
-                    <ExpandedPropertyView lead={lead}/>
+                    <ExpandedPropertyView lead={lead} />
                 </div>
 
                 <DialogFooter className="p-6 bg-slate-900/50 border-t border-slate-800 gap-2 sm:justify-between">
@@ -64,7 +64,7 @@ export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
                                     disabled={isPending}
                                     className="bg-red-900/20 text-red-400 hover:bg-red-900/40 border border-red-900/50"
                                 >
-                                    <XCircle className="w-4 h-4 mr-2"/>
+                                    <XCircle className="w-4 h-4 mr-2" />
                                     Reject Lead
                                 </Button>
                             )}
@@ -74,7 +74,7 @@ export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
                                     onClick={() => onCreateQuote(lead.leadId)}
                                     className="bg-indigo-600 hover:bg-indigo-700 text-white"
                                 >
-                                    <FileText className="w-4 h-4 mr-2"/>
+                                    <FileText className="w-4 h-4 mr-2" />
                                     View/Edit Quote
                                 </Button>
                             ) : (
@@ -84,7 +84,7 @@ export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
                                     className="bg-indigo-600 hover:bg-indigo-700 text-white"
                                 >
                                     Create Quote
-                                    <ArrowRight className="w-4 h-4 ml-2"/>
+                                    <ArrowRight className="w-4 h-4 ml-2" />
                                 </Button>
                             )}
                         </div>
@@ -95,8 +95,8 @@ export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
     );
 };
 
-const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({lead}) => {
-    const {data: property, isLoading: isPropLoading} = useQuery({
+const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({ lead }) => {
+    const { data: property, isLoading: isPropLoading } = useQuery({
         queryKey: ['property-detail-full', lead.propertyInfo],
         queryFn: () => {
             if (lead.propertyInfo.startsWith('{')) {
@@ -106,7 +106,7 @@ const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({lead}) => {
         },
     });
 
-    const {data: user} = useQuery({
+    const { data: user } = useQuery({
         queryKey: ['user-detail', lead.userInfo],
         queryFn: () => {
             if (lead.userInfo === 'HIDDEN') return null;
@@ -118,11 +118,16 @@ const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({lead}) => {
         enabled: lead.userInfo !== 'HIDDEN' && !lead.userInfo.includes(' ')
     });
 
-    if (isPropLoading) return <Skeleton className="h-48 w-full bg-slate-800"/>;
+    if (isPropLoading) return <Skeleton className="h-48 w-full bg-slate-800" />;
 
     if (!property) return <div className="text-slate-500">Property details unavailable.</div>;
 
-    const displayUser = user ? `${user.firstName} ${user.lastName}` : (lead.userInfo === 'HIDDEN' ? 'Anonymous' : lead.userInfo);
+    let displayUser = lead.userInfo;
+    if (user) {
+        displayUser = `${user.firstName} ${user.lastName}`;
+    } else if (lead.userInfo === 'HIDDEN') {
+        displayUser = 'Anonymous';
+    }
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -132,7 +137,7 @@ const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({lead}) => {
                     <div className="flex items-center gap-3 bg-slate-900 p-3 rounded-lg border border-slate-800">
                         <div
                             className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                            <User size={20}/>
+                            <User size={20} />
                         </div>
                         <div>
                             <div className="font-medium text-white">{displayUser}</div>
@@ -144,7 +149,7 @@ const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({lead}) => {
                 <div>
                     <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">Location</h3>
                     <div className="flex items-start gap-3">
-                        <MapPin className="text-indigo-400 mt-1" size={18}/>
+                        <MapPin className="text-indigo-400 mt-1" size={18} />
                         <div>
                             <div className="font-medium text-white text-lg">{property.location?.street}</div>
                             <div className="text-slate-400">{property.location?.ward}, {property.location?.city}</div>
@@ -162,20 +167,15 @@ const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({lead}) => {
                         <div className="space-y-1">
                             <div className="text-xs text-slate-500">Type</div>
                             <div className="font-medium text-slate-200 flex items-center gap-2">
-                                <Building2 size={14} className="text-emerald-400"/>
+                                <Building2 size={14} className="text-emerald-400" />
                                 {property.attributes?.constructionType?.replace('_', ' ') || 'N/A'}
                             </div>
                         </div>
-                        <div className="space-y-1">
-                            <div className="text-xs text-slate-500">Occupancy</div>
-                            <div className="font-medium text-slate-200">
-                                {property.attributes?.occupancyType || 'N/A'}
-                            </div>
-                        </div>
+
                         <div className="space-y-1">
                             <div className="text-xs text-slate-500">Area</div>
                             <div className="font-medium text-slate-200 flex items-center gap-2">
-                                <Ruler size={14} className="text-amber-400"/>
+                                <Ruler size={14} className="text-amber-400" />
                                 {property.attributes?.squareMeters} m²
                             </div>
                         </div>
@@ -193,7 +193,7 @@ const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({lead}) => {
                     <div className="flex items-center gap-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
                         <div
                             className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                            <Wallet size={20}/>
+                            <Wallet size={20} />
                         </div>
                         <div>
                             <div className="text-xs text-slate-500">Estimated Construction Cost</div>

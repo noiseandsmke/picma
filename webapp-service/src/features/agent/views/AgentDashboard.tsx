@@ -1,23 +1,21 @@
-import React, {useMemo, useState} from 'react';
+import React, { useMemo, useState } from 'react';
 import AgentLayout from '../layouts/AgentLayout';
-import {Bell, Clock, DollarSign, FileText, Search} from 'lucide-react';
-import {Card, CardContent} from "@/components/ui/card";
-import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {AgentLeadDto, fetchAgentLeads, fetchAgentQuotes, updateLeadAction} from '../services/agentService';
-import {Skeleton} from '@/components/ui/skeleton';
-import {useAuth} from '@/context/AuthContext';
-import {cn, formatCurrency} from '@/lib/utils';
-import {toast} from "sonner";
-import {QuoteForm} from '@/features/admin/components/QuoteForm';
-import {createQuote, CreateQuoteDto, PropertyQuoteDto, updateQuote} from '@/features/admin/services/quoteService';
-import {format} from 'date-fns';
-import {LeadDto} from '@/features/admin/services/leadService';
-import {AgentLeadCard} from '@/features/agent/components/AgentLeadCard';
-import {AgentActionDialog} from '@/features/agent/components/AgentActionDialog';
-import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import { Bell, DollarSign, FileText, Search, ShieldCheck } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AgentLeadDto, fetchAgentLeads, fetchAgentQuotes, updateLeadAction } from '../services/agentService';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/context/AuthContext';
+import { cn, formatCurrency } from '@/lib/utils';
+import { toast } from "sonner";
+import { AgentQuoteForm } from '@/features/agent/components/AgentQuoteForm';
+import { createQuote, CreateQuoteDto, PropertyQuoteDto, updateQuote } from '@/features/admin/services/quoteService';
+import { AgentLeadCard } from '@/features/agent/components/AgentLeadCard';
+import { AgentActionDialog } from '@/features/agent/components/AgentActionDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const AgentDashboard: React.FC = () => {
-    const {user} = useAuth();
+    const { user } = useAuth();
     const queryClient = useQueryClient();
     const agentId = user?.id || '';
     const [activeTab, setActiveTab] = useState<'new' | 'portfolio'>('new');
@@ -27,19 +25,19 @@ const AgentDashboard: React.FC = () => {
     const [editingQuote, setEditingQuote] = useState<PropertyQuoteDto | null>(null);
     const [loadingLeadId, setLoadingLeadId] = useState<number | null>(null);
 
-    const {data: leads, isLoading: isLeadsLoading} = useQuery({
+    const { data: leads, isLoading: isLeadsLoading } = useQuery({
         queryKey: ['agent-leads', agentId],
         queryFn: () => fetchAgentLeads(agentId),
         enabled: !!agentId,
         refetchInterval: 30000
     });
 
-    const {data: quotes, isLoading: isQuotesLoading} = useQuery({
+    const { data: quotes, isLoading: isQuotesLoading } = useQuery({
         queryKey: ['agent-quotes', agentId],
         queryFn: () => fetchAgentQuotes(agentId),
         enabled: !!agentId
     });
-    
+
     const prevLeadsRef = React.useRef<AgentLeadDto[]>([]);
     React.useEffect(() => {
         if (leads && prevLeadsRef.current.length > 0) {
@@ -59,7 +57,7 @@ const AgentDashboard: React.FC = () => {
     const leadActionMutation = useMutation({
         mutationFn: updateLeadAction,
         onSuccess: async (data, variables) => {
-            await queryClient.invalidateQueries({queryKey: ['agent-leads']});
+            await queryClient.invalidateQueries({ queryKey: ['agent-leads'] });
             setLoadingLeadId(null);
 
             if (variables.leadAction === 'INTERESTED') {
@@ -82,8 +80,8 @@ const AgentDashboard: React.FC = () => {
     const createMutation = useMutation({
         mutationFn: createQuote,
         onSuccess: async (_data, variables) => {
-            await queryClient.invalidateQueries({queryKey: ['agent-quotes']});
-            await queryClient.invalidateQueries({queryKey: ['agent-leads']});
+            await queryClient.invalidateQueries({ queryKey: ['agent-quotes'] });
+            await queryClient.invalidateQueries({ queryKey: ['agent-leads'] });
             setIsQuoteFormOpen(false);
             setIsActionDialogOpen(false);
             toast.success("Quote created & lead accepted successfully");
@@ -106,7 +104,7 @@ const AgentDashboard: React.FC = () => {
     const updateMutation = useMutation({
         mutationFn: updateQuote,
         onSuccess: async () => {
-            await queryClient.invalidateQueries({queryKey: ['agent-quotes']});
+            await queryClient.invalidateQueries({ queryKey: ['agent-quotes'] });
             setIsQuoteFormOpen(false);
             toast.success("Quote updated successfully");
         },
@@ -115,22 +113,13 @@ const AgentDashboard: React.FC = () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleFormSubmit = (data: any) => {
-        const payload = {
-            ...data,
-            startDate: data.startDate ? format(data.startDate, 'yyyy-MM-dd') : undefined,
-            endDate: data.endDate ? format(data.endDate, 'yyyy-MM-dd') : undefined,
-        };
-
         if (editingQuote) {
             updateMutation.mutate({
                 ...editingQuote,
-                ...payload,
-                id: editingQuote.id
+                ...data, id: editingQuote.id
             } as PropertyQuoteDto);
         } else {
-            createMutation.mutate({
-                ...payload,
-            } as CreateQuoteDto);
+            createMutation.mutate(data as CreateQuoteDto);
         }
     };
 
@@ -173,7 +162,6 @@ const AgentDashboard: React.FC = () => {
     const allInteractedLeads = useMemo(() => leads?.filter(l => l.leadAction) || [], [leads]);
 
     const newLeadsCount = newLeads.length;
-    const portfolioCount = allInteractedLeads.length;
 
     const thisMonthValue = useMemo(() => {
         if (!quotes) return 0;
@@ -191,29 +179,20 @@ const AgentDashboard: React.FC = () => {
         }, 0);
     }, [quotes]);
 
-    const quoteFormLeads: LeadDto[] = useMemo(() => leads?.map(l => ({
-        id: l.leadId, userInfo: l.userInfo,
-        propertyInfo: l.propertyInfo.startsWith('{')
-            ? JSON.parse(l.propertyInfo).id : l.propertyInfo,
-        status: l.leadAction || 'NEW',
-        createDate: l.createdAt, expiryDate: l.createdAt,
-    })) || [], [leads]);
-
-    const initialQuoteData = useMemo(() => {
-        if (editingQuote) return editingQuote;
-        if (selectedLead) {
-            return {
-                leadId: selectedLead.leadId,
-                agentId: agentId
-            };
-        }
-        return {
-            leadId: 0,
-            agentId: agentId
-        };
-    }, [selectedLead, agentId, editingQuote]);
 
     const isLoading = isLeadsLoading || isQuotesLoading;
+
+    const totalCoverageProvided = useMemo(() => {
+        if (!quotes) return 0;
+        return quotes
+            .filter(q => q.status === 'ACCEPTED')
+            .reduce((acc, q) => acc + (q.sumInsured || 0), 0);
+    }, [quotes]);
+
+    const activeQuotesCount = useMemo(() => {
+        if (!quotes) return 0;
+        return quotes.filter(q => q.status === 'ACTIVE' || q.status === 'PENDING').length;
+    }, [quotes]);
 
     return (
         <AgentLayout>
@@ -222,28 +201,29 @@ const AgentDashboard: React.FC = () => {
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">New Opportunities</p>
+                                <p className="text-sm font-medium text-slate-400">Total Coverage Provided</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
-                                    {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800"/> : newLeadsCount}
+                                    {isLoading ? <Skeleton
+                                        className="h-8 w-24 bg-slate-800" /> : formatCurrency(totalCoverageProvided)}
                                 </h3>
                             </div>
                             <div
                                 className="h-10 w-10 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">
-                                <Bell className="h-5 w-5"/>
+                                <ShieldCheck className="h-5 w-5" />
                             </div>
                         </CardContent>
                     </Card>
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Active Portfolio</p>
+                                <p className="text-sm font-medium text-slate-400">Active Quotes</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
-                                    {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800"/> : portfolioCount}
+                                    {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800" /> : activeQuotesCount}
                                 </h3>
                             </div>
                             <div
                                 className="h-10 w-10 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400">
-                                <FileText className="h-5 w-5"/>
+                                <FileText className="h-5 w-5" />
                             </div>
                         </CardContent>
                     </Card>
@@ -253,24 +233,26 @@ const AgentDashboard: React.FC = () => {
                                 <p className="text-sm font-medium text-slate-400">This Month</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
                                     {isLoading ?
-                                        <Skeleton className="h-8 w-24 bg-slate-800"/> : formatCurrency(thisMonthValue)}
+                                        <Skeleton className="h-8 w-24 bg-slate-800" /> : formatCurrency(thisMonthValue)}
                                 </h3>
                             </div>
                             <div
                                 className="h-10 w-10 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400">
-                                <DollarSign className="h-5 w-5"/>
+                                <DollarSign className="h-5 w-5" />
                             </div>
                         </CardContent>
                     </Card>
                     <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Tasks Due</p>
-                                <h3 className="text-2xl font-bold text-white mt-1">0</h3>
+                                <p className="text-sm font-medium text-slate-400">New Opportunities</p>
+                                <h3 className="text-2xl font-bold text-white mt-1">
+                                    {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800" /> : newLeadsCount}
+                                </h3>
                             </div>
                             <div
-                                className="h-10 w-10 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-400">
-                                <Clock className="h-5 w-5"/>
+                                className="h-10 w-10 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">
+                                <Bell className="h-5 w-5" />
                             </div>
                         </CardContent>
                     </Card>
@@ -288,7 +270,7 @@ const AgentDashboard: React.FC = () => {
                             >
                                 New Leads
                                 {activeTab === 'new' && <div
-                                    className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full"/>}
+                                    className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full" />}
                             </button>
                             <button
                                 onClick={() => setActiveTab('portfolio')}
@@ -299,12 +281,12 @@ const AgentDashboard: React.FC = () => {
                             >
                                 Quote History & Portfolio
                                 {activeTab === 'portfolio' && <div
-                                    className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full"/>}
+                                    className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full" />}
                             </button>
                         </div>
 
                         <div className="relative w-64">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500"/>
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
                             <input
                                 type="text"
                                 placeholder="Search leads..."
@@ -315,9 +297,8 @@ const AgentDashboard: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {isLoading ? (
-                            Array.from({length: 3}).map((_, i) => (
-                                // eslint-disable-next-line react/no-array-index-key
-                                <Skeleton key={`skeleton-${i}`} className="h-64 w-full rounded-xl bg-slate-800"/>
+                            [1, 2, 3].map((id) => (
+                                <Skeleton key={`skeleton-${id}`} className="h-64 w-full rounded-xl bg-slate-800" />
                             ))
                         ) : (
                             <>
@@ -377,14 +358,12 @@ const AgentDashboard: React.FC = () => {
                     <DialogHeader>
                         <DialogTitle>{editingQuote ? 'Edit Quote' : 'Create New Quote'}</DialogTitle>
                     </DialogHeader>
-                    <QuoteForm
-                        initialData={initialQuoteData as unknown as PropertyQuoteDto}
+                    <AgentQuoteForm
+                        lead={selectedLead}
+                        agentId={agentId}
                         onSubmit={handleFormSubmit}
                         onCancel={() => setIsQuoteFormOpen(false)}
                         isLoading={createMutation.isPending || updateMutation.isPending}
-                        leads={quoteFormLeads}
-                        hideAgentSelect={true}
-                        agentId={agentId}
                     />
                 </DialogContent>
             </Dialog>

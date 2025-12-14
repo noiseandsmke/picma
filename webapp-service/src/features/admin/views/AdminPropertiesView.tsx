@@ -3,7 +3,6 @@ import { ArrowUpDown, Building2, Eye, Map, MapPin, MoreHorizontal } from 'lucide
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import SharedTable, { Column } from "@/components/ui/shared-table";
-import { Badge } from "@/components/ui/badge";
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProperties } from '../services/propertyService';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -60,12 +59,7 @@ const AdminPropertiesView: React.FC = () => {
             className: "text-slate-400 cursor-pointer hover:text-indigo-400 transition-colors",
             onClick: () => handleSort('location.zipCode')
         },
-        {
-            header: <div className="flex items-center gap-2">Type <ArrowUpDown className="h-3 w-3" /></div>,
-            width: "10%",
-            className: "text-slate-400 cursor-pointer hover:text-indigo-400 transition-colors",
-            onClick: () => handleSort('attributes.occupancyType')
-        },
+
         {
             header: "Construction",
             width: "15%",
@@ -142,12 +136,7 @@ const AdminPropertiesView: React.FC = () => {
                                     <TableCell className="text-slate-300">
                                         {prop.location.zipCode}
                                     </TableCell>
-                                    <TableCell>
-                                        <Badge variant="secondary"
-                                            className="bg-slate-800 text-slate-300 hover:bg-slate-700">
-                                            {formatEnum(prop.attributes.occupancyType)}
-                                        </Badge>
-                                    </TableCell>
+
                                     <TableCell className="text-slate-300">
                                         {formatEnum(prop.attributes.constructionType)}
                                     </TableCell>

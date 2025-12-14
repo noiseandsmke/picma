@@ -1,13 +1,13 @@
-import React, {useEffect, useState} from 'react';
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,} from '@/components/ui/dialog';
-import {Button} from '@/components/ui/button';
-import {Label} from '@/components/ui/label';
-import {fetchPropertyById, PropertyInfoDto} from '../services/propertyService';
-import {fetchUserById, UserDto} from '../services/userService';
-import {Skeleton} from '@/components/ui/skeleton';
-import {Building2, MapPin, Ruler, Wallet} from 'lucide-react';
-import {Badge} from '@/components/ui/badge';
-import {Separator} from '@/components/ui/separator';
+import React, { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { fetchPropertyById, PropertyInfoDto } from '../services/propertyService';
+import { fetchUserById, UserDto } from '../services/userService';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Building2, MapPin, Ruler, Wallet } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 interface LeadDto {
     id: number;
@@ -24,7 +24,7 @@ interface LeadDetailDialogProps {
     hideUserInfo?: boolean;
 }
 
-export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenChange, lead, hideUserInfo}) => {
+export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ open, onOpenChange, lead, hideUserInfo }) => {
     const [propertyDetails, setPropertyDetails] = useState<PropertyInfoDto | null>(null);
     const [userDetails, setUserDetails] = useState<UserDto | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -84,9 +84,9 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
         if (isLoading) {
             return (
                 <div className="space-y-3">
-                    <Skeleton className="h-4 w-3/4 bg-slate-800"/>
-                    <Skeleton className="h-4 w-1/2 bg-slate-800"/>
-                    <Skeleton className="h-24 w-full bg-slate-800"/>
+                    <Skeleton className="h-4 w-3/4 bg-slate-800" />
+                    <Skeleton className="h-4 w-1/2 bg-slate-800" />
+                    <Skeleton className="h-24 w-full bg-slate-800" />
                 </div>
             );
         }
@@ -114,7 +114,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                 <div className="space-y-4">
                     <div className="flex items-start gap-3">
                         <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-400 mt-1">
-                            <MapPin size={18}/>
+                            <MapPin size={18} />
                         </div>
                         <div className="space-y-1 flex-1">
                             <h4 className="text-sm font-medium text-slate-300">Location</h4>
@@ -125,11 +125,11 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                         </div>
                     </div>
 
-                    <Separator className="bg-slate-800"/>
+                    <Separator className="bg-slate-800" />
 
                     <div className="flex items-start gap-3">
                         <div className="bg-emerald-500/10 p-2 rounded-lg text-emerald-400 mt-1">
-                            <Building2 size={18}/>
+                            <Building2 size={18} />
                         </div>
                         <div className="space-y-3 flex-1">
                             <h4 className="text-sm font-medium text-slate-300">Attributes</h4>
@@ -138,18 +138,8 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                                     <span className="text-[10px] uppercase text-slate-500 tracking-wider">Type</span>
                                     <div className="mt-0.5">
                                         <Badge variant="outline"
-                                               className="border-slate-700 text-slate-300 text-[10px] h-5">
+                                            className="border-slate-700 text-slate-300 text-[10px] h-5">
                                             {propertyDetails.attributes.constructionType.replace('_', ' ')}
-                                        </Badge>
-                                    </div>
-                                </div>
-                                <div>
-                                    <span
-                                        className="text-[10px] uppercase text-slate-500 tracking-wider">Occupancy</span>
-                                    <div className="mt-0.5">
-                                        <Badge variant="outline"
-                                               className="border-slate-700 text-slate-300 text-[10px] h-5">
-                                            {propertyDetails.attributes.occupancyType}
                                         </Badge>
                                     </div>
                                 </div>
@@ -166,12 +156,12 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                         </div>
                     </div>
 
-                    <Separator className="bg-slate-800"/>
+                    <Separator className="bg-slate-800" />
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="flex items-start gap-3">
                             <div className="bg-amber-500/10 p-2 rounded-lg text-amber-400 mt-1">
-                                <Ruler size={18}/>
+                                <Ruler size={18} />
                             </div>
                             <div>
                                 <h4 className="text-sm font-medium text-slate-300">Area</h4>
@@ -180,7 +170,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                         </div>
                         <div className="flex items-start gap-3">
                             <div className="bg-rose-500/10 p-2 rounded-lg text-rose-400 mt-1">
-                                <Wallet size={18}/>
+                                <Wallet size={18} />
                             </div>
                             <div>
                                 <h4 className="text-sm font-medium text-slate-300">Est. cost</h4>
@@ -221,7 +211,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                             <Label className="text-slate-500 text-[10px] uppercase tracking-wider">Status</Label>
                             <div>
                                 <Badge variant="secondary"
-                                       className="bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20">
+                                    className="bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20">
                                     {lead.status}
                                 </Badge>
                             </div>
@@ -255,7 +245,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({open, onOpenC
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}
-                            className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
+                        className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
                         Close
                     </Button>
                 </DialogFooter>

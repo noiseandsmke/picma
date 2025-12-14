@@ -1,20 +1,26 @@
 export enum CoverageCode {
     FIRE = "FIRE",
     THEFT = "THEFT",
-    FLOOD = "FLOOD",
-    EARTHQUAKE = "EARTHQUAKE",
-    WINDSTORM = "WINDSTORM",
-    LIABILITY = "LIABILITY"
+    NATURAL_DISASTER = "NATURAL_DISASTER"
 }
 
-export enum PlanType {
-    BASIC = "BASIC",
-    STANDARD = "STANDARD",
-    PREMIUM = "PREMIUM",
-    GOLD = "GOLD",
-    PLATINUM = "PLATINUM",
-    SILVER = "SILVER"
-}
+export const COVERAGE_CONFIG = {
+    FIRE: {
+        label: "Fire & Explosion",
+        mandatory: true,
+        description: "Coverage for fire and explosion damage"
+    },
+    THEFT: {
+        label: "Theft & Burglary",
+        mandatory: false,
+        description: "Protection against theft and burglary"
+    },
+    NATURAL_DISASTER: {
+        label: "Natural Disaster",
+        mandatory: false,
+        description: "Coverage for floods, earthquakes, storms"
+    }
+};
 
 export enum LeadStatus {
     ACTIVE = "ACTIVE",
@@ -25,24 +31,15 @@ export enum LeadStatus {
 }
 
 export enum ConstructionType {
-    WOOD = "WOOD",
-    BRICK = "BRICK",
-    CONCRETE = "CONCRETE",
-    STEEL = "STEEL",
-    STONE = "STONE",
-    OTHER = "OTHER"
-}
-
-export enum OccupancyType {
-    OWNER = "OWNER",
-    TENANT = "TENANT",
-    VACANT = "VACANT",
-    COMMERCIAL = "COMMERCIAL",
-    MIXED = "MIXED"
+    WOOD = 'WOOD',
+    CONCRETE = 'CONCRETE',
+    HYBRID = 'HYBRID'
 }
 
 export const COVERAGE_CODES = Object.values(CoverageCode);
-export const PLAN_TYPES = Object.values(PlanType);
 export const LEAD_STATUSES = Object.values(LeadStatus);
-export const CONSTRUCTION_TYPES = Object.values(ConstructionType);
-export const OCCUPANCY_TYPES = Object.values(OccupancyType);
+export const CONSTRUCTION_TYPES = [
+    { value: ConstructionType.WOOD, label: 'Wood Frame' },
+    { value: ConstructionType.CONCRETE, label: 'Concrete' },
+    { value: ConstructionType.HYBRID, label: 'Hybrid' }
+];

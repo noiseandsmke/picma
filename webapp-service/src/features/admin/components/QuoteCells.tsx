@@ -8,10 +8,12 @@ import { Building, ExternalLink } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { COVERAGE_CONFIG, CoverageCode } from '@/types/enums';
+import { CoverageDto } from '@/features/admin/services/quoteService';
 
 interface QuoteIdCellProps {
     id: number;
-    dateStr?: string;
+
 }
 
 export const QuoteIdCell: React.FC<QuoteIdCellProps> = ({ id }) => {
@@ -66,8 +68,8 @@ export const CustomerCell: React.FC<CustomerCellProps> = ({ leadId, leadData, on
     if (!leadData && isLeadLoading) return <Skeleton className="h-10 w-32 bg-slate-800" />;
     if (!lead) return <span className="text-slate-500">Unknown Lead</span>;
 
-    let name = 'Unknown Name';
-    let email = 'No email';
+    let name;
+    let email;
 
     if (user) {
         name = `${user.firstName} ${user.lastName}`;
@@ -143,24 +145,17 @@ export const PropertyCell: React.FC<PropertyCellProps> = ({ address, sumInsured 
     );
 };
 
-interface PlanPremiumCellProps {
-    plan: string;
+interface CoveragesCellProps {
+    coverages: CoverageDto[];
     totalPremium: number;
 }
 
-export const PlanPremiumCell: React.FC<PlanPremiumCellProps> = ({ plan, totalPremium }) => {
-    const getBadgeStyle = (p: string) => {
-        switch (p) {
-            case 'BRONZE':
-                return "bg-amber-900/30 text-amber-500 border-amber-700/50";
-            case 'SILVER':
-                return "bg-slate-700/30 text-slate-300 border-slate-600/50";
-            case 'GOLD':
-                return "bg-yellow-900/30 text-yellow-500 border-yellow-700/50";
-            default:
-                return "bg-slate-800 text-slate-400";
-        }
-    };
+export const CoveragesCell: React.FC<CoveragesCellProps> = ({ coverages, totalPremium }) => {
+    const sortedCoverages = [...coverages].sort((a, b) => {
+        const confA = COVERAGE_CONFIG[a.code as CoverageCode];
+        const confB = COVERAGE_CONFIG[b.code as CoverageCode];
+        return (confA?.mandatory ? -1 : 1) - (confB?.mandatory ? -1 : 1);
+    });
 
     const formattedPremium = totalPremium > 0
         ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPremium)
@@ -168,9 +163,16 @@ export const PlanPremiumCell: React.FC<PlanPremiumCellProps> = ({ plan, totalPre
 
     return (
         <div className="flex flex-col items-start gap-1">
-            <Badge variant="outline" className={cn("text-[10px] h-5 px-1.5 uppercase", getBadgeStyle(plan))}>
-                {plan}
-            </Badge>
+            <div className="flex items-center gap-1 flex-wrap mb-1">
+                {sortedCoverages.map(c => {
+                    const config = COVERAGE_CONFIG[c.code as CoverageCode];
+                    return config ? (
+                        <div key={c.code} className="text-slate-400" title={config.label}>
+                            <Badge variant="outline" className="text-[10px] h-5 border-slate-700 text-slate-400">{config.label}</Badge>
+                        </div>
+                    ) : null;
+                })}
+            </div>
             <span className="font-bold text-slate-200 text-sm tracking-tight">{formattedPremium}</span>
         </div>
     );
