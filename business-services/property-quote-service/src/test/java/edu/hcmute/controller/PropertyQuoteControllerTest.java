@@ -34,9 +34,9 @@ public class PropertyQuoteControllerTest {
 
     private PropertyQuoteDto createSampleDto() {
         return new PropertyQuoteDto(
-                1, 1, "AGT-001", "Agent Name", LocalDate.now().plusDays(30),
+                1, 1, "AGT-001", LocalDate.now().plusDays(30),
                 LocalDate.of(2025, 12, 1), LocalDate.of(2026, 12, 1),
-                "123 Main St", 2500000000L, PlanType.SILVER, QuoteStatus.PENDING,
+                "123 Main St", 2500000000L, PlanType.SILVER, QuoteStatus.ACTIVE,
                 List.of(new CoverageDto(1, CoverageCode.FIRE, 2500000000L, 0L)),
                 new PremiumDto(2000000L, 200000L, 2200000L)
         );
@@ -44,7 +44,7 @@ public class PropertyQuoteControllerTest {
 
     @Test
     void createPropertyQuote_shouldReturnCreatedQuote() {
-        PropertyQuoteDto inputDto = new PropertyQuoteDto(null, 1, "AGT-001", "Agent Name", null,
+        PropertyQuoteDto inputDto = new PropertyQuoteDto(null, 1, "AGT-001", null,
                 LocalDate.of(2025, 12, 1), LocalDate.of(2026, 12, 1),
                 "123 Main St", 2500000000L, PlanType.SILVER, null,
                 List.of(new CoverageDto(null, CoverageCode.FIRE, 2500000000L, 0L)),

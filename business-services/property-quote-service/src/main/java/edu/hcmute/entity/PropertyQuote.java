@@ -24,7 +24,6 @@ public class PropertyQuote {
 
     private Integer leadId;
     private String agentId;
-    private String agentName;
     private LocalDate validUntil;
     private LocalDate startDate;
     private LocalDate endDate;

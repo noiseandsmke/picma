@@ -20,7 +20,6 @@ public class PropertyQuoteMapper {
         PropertyQuote entity = PropertyQuote.builder()
                 .leadId(dto.leadId())
                 .agentId(dto.agentId())
-                .agentName(dto.agentName())
                 .validUntil(dto.validUntil())
                 .startDate(dto.startDate())
                 .endDate(dto.endDate())
@@ -72,7 +71,6 @@ public class PropertyQuoteMapper {
                 entity.getId(),
                 entity.getLeadId(),
                 entity.getAgentId(),
-                entity.getAgentName(),
                 entity.getValidUntil(),
                 entity.getStartDate(),
                 entity.getEndDate(),

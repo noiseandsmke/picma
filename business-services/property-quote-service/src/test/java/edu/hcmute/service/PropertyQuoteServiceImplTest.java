@@ -42,9 +42,9 @@ class PropertyQuoteServiceImplTest {
 
     private PropertyQuoteDto createSampleDto() {
         return new PropertyQuoteDto(
-                1, 1, "AGT-001", "Agent Name", LocalDate.now().plusDays(30),
+                1, 1, "AGT-001", LocalDate.now().plusDays(30),
                 LocalDate.of(2025, 12, 1), LocalDate.of(2026, 12, 1),
-                "123 Main St", 2500000000L, PlanType.SILVER, QuoteStatus.PENDING,
+                "123 Main St", 2500000000L, PlanType.SILVER, QuoteStatus.ACTIVE,
                 List.of(new CoverageDto(1, CoverageCode.FIRE, 2500000000L, 0L)),
                 new PremiumDto(2000000L, 200000L, 2200000L)
         );
@@ -55,14 +55,13 @@ class PropertyQuoteServiceImplTest {
         entity.setId(1);
         entity.setLeadId(1);
         entity.setAgentId("AGT-001");
-        entity.setAgentName("Agent Name");
         entity.setValidUntil(LocalDate.now().plusDays(30));
         entity.setStartDate(LocalDate.of(2025, 12, 1));
         entity.setEndDate(LocalDate.of(2026, 12, 1));
         entity.setPropertyAddress("123 Main St");
         entity.setSumInsured(2500000000L);
         entity.setPlan(PlanType.SILVER);
-        entity.setStatus(QuoteStatus.PENDING);
+        entity.setStatus(QuoteStatus.ACTIVE);
         Coverage coverage = new Coverage(1, CoverageCode.FIRE, 2500000000L, 0L);
         entity.setCoverages(List.of(coverage));
         entity.setPremium(new Premium(2000000L, 200000L, 2200000L));
@@ -71,7 +70,7 @@ class PropertyQuoteServiceImplTest {
 
     @Test
     void createPropertyQuote_success() {
-        PropertyQuoteDto inputDto = new PropertyQuoteDto(null, 1, "AGT-001", "Agent Name", null,
+        PropertyQuoteDto inputDto = new PropertyQuoteDto(null, 1, "AGT-001", null,
                 LocalDate.of(2025, 12, 1), LocalDate.of(2026, 12, 1),
                 "123 Main St", 2500000000L, PlanType.SILVER, null,
                 List.of(new CoverageDto(null, CoverageCode.FIRE, 2500000000L, 0L)),
@@ -113,11 +112,11 @@ class PropertyQuoteServiceImplTest {
     void acceptQuote_shouldAcceptTargetAndRejectOthers() {
         PropertyQuote targetQuote = createSampleEntity();
         targetQuote.setId(1);
-        targetQuote.setStatus(QuoteStatus.PENDING);
+        targetQuote.setStatus(QuoteStatus.ACTIVE);
         PropertyQuote otherQuote = createSampleEntity();
         otherQuote.setId(2);
         otherQuote.setAgentId("AGT-002");
-        otherQuote.setStatus(QuoteStatus.PENDING);
+        otherQuote.setStatus(QuoteStatus.ACTIVE);
         when(propertyQuoteRepo.findById(1)).thenReturn(Optional.of(targetQuote));
         when(propertyQuoteRepo.findByLeadId(1)).thenReturn(List.of(targetQuote, otherQuote));
         when(streamBridge.send(anyString(), any())).thenReturn(true);

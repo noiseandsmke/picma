@@ -10,7 +10,6 @@ public record PropertyQuoteDto(
         Integer id,
         Integer leadId,
         String agentId,
-        String agentName,
         LocalDate validUntil,
         LocalDate startDate,
         LocalDate endDate,
