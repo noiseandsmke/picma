@@ -1,15 +1,15 @@
-import React, {useState} from 'react';
-import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
-import {createQuote, deleteQuote, fetchAllQuotes, PropertyQuoteDto, updateQuote} from '../services/quoteService';
-import {format} from 'date-fns';
-import {ArrowUpDown, CalendarClock, Eye, MoreHorizontal, PlusCircle} from 'lucide-react';
-import {TableCell, TableRow} from "@/components/ui/table";
-import SharedTable, {Column} from "@/components/ui/shared-table";
-import {Skeleton} from '@/components/ui/skeleton';
-import {Button} from '@/components/ui/button';
-import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '@/components/ui/dropdown-menu';
-import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import { createQuote, deleteQuote, fetchAllQuotes, PropertyQuoteDto, updateQuote } from '../services/quoteService';
+import { format } from 'date-fns';
+import { ArrowUpDown, CalendarClock, Eye, MoreHorizontal, PlusCircle } from 'lucide-react';
+import { TableCell, TableRow } from "@/components/ui/table";
+import SharedTable, { Column } from "@/components/ui/shared-table";
+import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
     AgentCell,
     CustomerCell,
@@ -18,15 +18,15 @@ import {
     QuoteIdCell,
     ValidityCell
 } from '../components/QuoteCells';
-import {QuoteForm} from '../components/QuoteForm';
-import {LeadDetailDialog} from "@/features/admin/components/LeadDetailDialog";
-import {fetchAllLeads} from "@/features/admin/services/leadService";
+import { QuoteForm } from '../components/QuoteForm';
+import { LeadDetailDialog } from "@/features/admin/components/LeadDetailDialog";
+import { fetchAllLeads } from "@/features/admin/services/leadService";
 
 const AdminQuotesView: React.FC = () => {
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedQuote, setSelectedQuote] = useState<PropertyQuoteDto | null>(null);
-    const [sortConfig, setSortConfig] = useState({key: 'id', direction: 'asc'});
+    const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' });
     const [isLeadDetailOpen, setIsLeadDetailOpen] = useState(false);
     const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
 
@@ -39,7 +39,7 @@ const AdminQuotesView: React.FC = () => {
         queryFn: () => fetchAllQuotes(sortConfig.key, sortConfig.direction),
     });
 
-    const {data: leads} = useQuery({
+    const { data: leads } = useQuery({
         queryKey: ['admin-leads-lookup'],
         queryFn: () => fetchAllLeads()
     });
@@ -47,7 +47,7 @@ const AdminQuotesView: React.FC = () => {
     const createMutation = useMutation({
         mutationFn: createQuote,
         onSuccess: async () => {
-            await queryClient.invalidateQueries({queryKey: ['admin-quotes']});
+            await queryClient.invalidateQueries({ queryKey: ['admin-quotes'] });
             setIsModalOpen(false);
         },
     });
@@ -55,7 +55,7 @@ const AdminQuotesView: React.FC = () => {
     const updateMutation = useMutation({
         mutationFn: updateQuote,
         onSuccess: async () => {
-            await queryClient.invalidateQueries({queryKey: ['admin-quotes']});
+            await queryClient.invalidateQueries({ queryKey: ['admin-quotes'] });
             setIsModalOpen(false);
         },
     });
@@ -63,7 +63,7 @@ const AdminQuotesView: React.FC = () => {
     const deleteMutation = useMutation({
         mutationFn: deleteQuote,
         onSuccess: async () => {
-            await queryClient.invalidateQueries({queryKey: ['admin-quotes']});
+            await queryClient.invalidateQueries({ queryKey: ['admin-quotes'] });
         },
     });
 
@@ -110,14 +110,14 @@ const AdminQuotesView: React.FC = () => {
         if (sortConfig.key === key && sortConfig.direction === 'asc') {
             direction = 'desc';
         }
-        setSortConfig({key, direction});
+        setSortConfig({ key, direction });
     };
 
     const columns: Column[] = [
         {
             header: (
                 <div className="flex items-center gap-1 cursor-pointer hover:text-white">
-                    Quote ID {sortConfig.key === 'id' && <ArrowUpDown size={12}/>}
+                    Quote ID {sortConfig.key === 'id' && <ArrowUpDown size={12} />}
                 </div>
             ),
             width: "10%",
@@ -127,7 +127,7 @@ const AdminQuotesView: React.FC = () => {
         {
             header: (
                 <div className="flex items-center gap-1 cursor-pointer hover:text-white">
-                    Customer {sortConfig.key === 'leadId' && <ArrowUpDown size={12}/>}
+                    Customer {sortConfig.key === 'leadId' && <ArrowUpDown size={12} />}
                 </div>
             ),
             width: "15%",
@@ -147,17 +147,17 @@ const AdminQuotesView: React.FC = () => {
         {
             header: (
                 <div className="flex items-center gap-1 cursor-pointer hover:text-white">
-                    Agent {sortConfig.key === 'agentName' && <ArrowUpDown size={12}/>}
+                    Agent {sortConfig.key === 'agentId' && <ArrowUpDown size={12} />}
                 </div>
             ),
             width: "20%",
             className: "text-slate-400",
-            onClick: () => handleSort('agentName'),
+            onClick: () => handleSort('agentId'),
         },
         {
             header: (
                 <div className="flex items-center gap-1">
-                    <CalendarClock size={14}/> Validity
+                    <CalendarClock size={14} /> Validity
                 </div>
             ),
             width: "15%",
@@ -182,8 +182,8 @@ const AdminQuotesView: React.FC = () => {
                         </div>
                         <div className="flex gap-2">
                             <Button onClick={handleCreate} variant="outline"
-                                    className="text-white border-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-white">
-                                <PlusCircle className="h-4 w-4 mr-2"/>
+                                className="text-white border-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-white">
+                                <PlusCircle className="h-4 w-4 mr-2" />
                                 Create quote
                             </Button>
                         </div>
@@ -196,15 +196,15 @@ const AdminQuotesView: React.FC = () => {
                             emptyMessage="No quotes found."
                         >
                             {isQuotesLoading ? (
-                                Array.from({length: 5}).map((_, i) => (
+                                Array.from({ length: 5 }).map((_, i) => (
                                     <TableRow key={i} className="border-slate-800">
-                                        <TableCell><Skeleton className="h-6 w-24 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-10 w-full bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-10 w-full bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-10 w-20 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-10 w-full bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-6 w-24 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-8 w-8 bg-slate-800"/></TableCell>
+                                        <TableCell><Skeleton className="h-6 w-24 bg-slate-800" /></TableCell>
+                                        <TableCell><Skeleton className="h-10 w-full bg-slate-800" /></TableCell>
+                                        <TableCell><Skeleton className="h-10 w-full bg-slate-800" /></TableCell>
+                                        <TableCell><Skeleton className="h-10 w-20 bg-slate-800" /></TableCell>
+                                        <TableCell><Skeleton className="h-10 w-full bg-slate-800" /></TableCell>
+                                        <TableCell><Skeleton className="h-6 w-24 bg-slate-800" /></TableCell>
+                                        <TableCell><Skeleton className="h-8 w-8 bg-slate-800" /></TableCell>
                                     </TableRow>
                                 ))
                             ) : isQuotesError ? (
@@ -213,7 +213,7 @@ const AdminQuotesView: React.FC = () => {
                                         <div className="flex flex-col items-center justify-center gap-2">
                                             <p>Failed to load quotes data.</p>
                                             <Button variant="outline" size="sm"
-                                                    onClick={() => queryClient.invalidateQueries({queryKey: ['admin-quotes']})}>
+                                                onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-quotes'] })}>
                                                 Retry
                                             </Button>
                                         </div>
@@ -221,9 +221,9 @@ const AdminQuotesView: React.FC = () => {
                                 </TableRow>
                             ) : quotes?.map((quote) => (
                                 <TableRow key={quote.id}
-                                          className="border-slate-800 hover:bg-slate-900/50 transition-colors">
+                                    className="border-slate-800 hover:bg-slate-900/50 transition-colors">
                                     <TableCell>
-                                        <QuoteIdCell id={quote.id} dateStr={quote.startDate}/>
+                                        <QuoteIdCell id={quote.id} dateStr={quote.startDate} />
                                     </TableCell>
 
                                     <TableCell>
@@ -236,39 +236,39 @@ const AdminQuotesView: React.FC = () => {
 
                                     <TableCell>
                                         <PropertyCell address={quote.propertyAddress}
-                                                      sumInsured={quote.sumInsured}/>
+                                            sumInsured={quote.sumInsured} />
                                     </TableCell>
 
                                     <TableCell>
                                         <PlanPremiumCell plan={quote.plan}
-                                                         totalPremium={quote.premium?.total || 0}/>
+                                            totalPremium={quote.premium?.total || 0} />
                                     </TableCell>
 
                                     <TableCell>
-                                        <AgentCell agentId={quote.agentId} agentName={quote.agentName}/>
+                                        <AgentCell agentId={quote.agentId} />
                                     </TableCell>
 
                                     <TableCell>
-                                        <ValidityCell validUntil={quote.validUntil}/>
+                                        <ValidityCell validUntil={quote.validUntil} />
                                     </TableCell>
 
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost"
-                                                        className="h-8 w-8 p-0 hover:bg-slate-800 text-slate-400">
-                                                    <MoreHorizontal className="h-4 w-4"/>
+                                                    className="h-8 w-8 p-0 hover:bg-slate-800 text-slate-400">
+                                                    <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end"
-                                                                 className="bg-slate-900 border-slate-800 text-slate-200">
+                                                className="bg-slate-900 border-slate-800 text-slate-200">
                                                 <DropdownMenuItem onClick={() => handleViewLead(quote.leadId)}
-                                                                  className="hover:bg-slate-800 cursor-pointer">
-                                                    <Eye className="mr-2 h-4 w-4"/>
+                                                    className="hover:bg-slate-800 cursor-pointer">
+                                                    <Eye className="mr-2 h-4 w-4" />
                                                     View lead
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleEdit(quote)}
-                                                                  className="hover:bg-slate-800 cursor-pointer">
+                                                    className="hover:bg-slate-800 cursor-pointer">
                                                     Edit quote
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem

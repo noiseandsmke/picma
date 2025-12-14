@@ -17,7 +17,7 @@ export interface PropertyQuoteDto {
     id: number;
     leadId: number;
     agentId: string;
-    agentName: string;
+
     validUntil: string;
     startDate: string;
     endDate: string;
@@ -30,17 +30,17 @@ export interface PropertyQuoteDto {
 }
 
 export type CreateQuoteDto =
-    Omit<PropertyQuoteDto, 'id' | 'agentName' | 'validUntil' | 'startDate' | 'endDate' | 'propertyAddress' | 'status'>
+    Omit<PropertyQuoteDto, 'id' | 'validUntil' | 'startDate' | 'endDate' | 'propertyAddress' | 'status'>
     & {
-    coverages: CoverageDto[];
-    premium: PremiumDto;
-};
+        coverages: CoverageDto[];
+        premium: PremiumDto;
+    };
 
 const QUOTE_SERVICE_URL = '/picma/quotes';
 
 export const fetchAllQuotes = async (sort = 'id', order = 'asc'): Promise<PropertyQuoteDto[]> => {
     const response = await apiClient.get<PropertyQuoteDto[]>(`${QUOTE_SERVICE_URL}`, {
-        params: {sort, order},
+        params: { sort, order },
     });
     return response.data;
 };

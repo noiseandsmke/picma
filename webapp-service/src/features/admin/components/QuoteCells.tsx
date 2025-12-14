@@ -1,20 +1,20 @@
 import React from 'react';
-import {useQuery} from '@tanstack/react-query';
-import {fetchLeadById, LeadDto} from '../services/leadService';
-import {fetchUserById} from '../services/userService';
-import {Skeleton} from '@/components/ui/skeleton';
-import {Badge} from '@/components/ui/badge';
-import {Building, ExternalLink} from 'lucide-react';
-import {Button} from "@/components/ui/button";
-import {toast} from "sonner";
-import {cn} from "@/lib/utils";
+import { useQuery } from '@tanstack/react-query';
+import { fetchLeadById, LeadDto } from '../services/leadService';
+import { fetchUserById } from '../services/userService';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Building, ExternalLink } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface QuoteIdCellProps {
     id: number;
     dateStr?: string;
 }
 
-export const QuoteIdCell: React.FC<QuoteIdCellProps> = ({id}) => {
+export const QuoteIdCell: React.FC<QuoteIdCellProps> = ({ id }) => {
     const formattedId = `#${id}`;
 
     const handleCopy = () => {
@@ -41,8 +41,8 @@ interface CustomerCellProps {
     onViewLead?: (id: number) => void;
 }
 
-export const CustomerCell: React.FC<CustomerCellProps> = ({leadId, leadData, onViewLead}) => {
-    const {data: fetchedLead, isLoading: isLeadLoading} = useQuery({
+export const CustomerCell: React.FC<CustomerCellProps> = ({ leadId, leadData, onViewLead }) => {
+    const { data: fetchedLead, isLoading: isLeadLoading } = useQuery({
         queryKey: ['lead', leadId],
         queryFn: () => fetchLeadById(leadId),
         enabled: !leadData,
@@ -51,7 +51,7 @@ export const CustomerCell: React.FC<CustomerCellProps> = ({leadId, leadData, onV
 
     const lead = leadData || fetchedLead;
 
-    const {data: user} = useQuery({
+    const { data: user } = useQuery({
         queryKey: ['user', lead?.userInfo],
         queryFn: () => {
             const userId = lead?.userInfo;
@@ -63,7 +63,7 @@ export const CustomerCell: React.FC<CustomerCellProps> = ({leadId, leadData, onV
         enabled: !!lead?.userInfo && !lead.userInfo.includes(' - ')
     });
 
-    if (!leadData && isLeadLoading) return <Skeleton className="h-10 w-32 bg-slate-800"/>;
+    if (!leadData && isLeadLoading) return <Skeleton className="h-10 w-32 bg-slate-800" />;
     if (!lead) return <span className="text-slate-500">Unknown Lead</span>;
 
     let name = 'Unknown Name';
@@ -101,7 +101,7 @@ export const CustomerCell: React.FC<CustomerCellProps> = ({leadId, leadData, onV
                     }}
                     title="View Lead Details"
                 >
-                    <ExternalLink size={12}/>
+                    <ExternalLink size={12} />
                 </Button>
             )}
         </div>
@@ -113,7 +113,7 @@ interface PropertyCellProps {
     sumInsured: number;
 }
 
-export const PropertyCell: React.FC<PropertyCellProps> = ({address, sumInsured}) => {
+export const PropertyCell: React.FC<PropertyCellProps> = ({ address, sumInsured }) => {
     let line1 = address;
     let line2 = "";
 
@@ -132,7 +132,7 @@ export const PropertyCell: React.FC<PropertyCellProps> = ({address, sumInsured})
     return (
         <div className="flex flex-col gap-1">
             <div className="flex items-start gap-2 max-w-[200px]" title={address}>
-                <Building className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5"/>
+                <Building className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5" />
                 <div className="flex flex-col leading-tight">
                     <span className="text-sm text-slate-200 font-medium truncate">{line1}</span>
                     {line2 && <span className="text-xs text-slate-500 truncate">{line2}</span>}
@@ -148,7 +148,7 @@ interface PlanPremiumCellProps {
     totalPremium: number;
 }
 
-export const PlanPremiumCell: React.FC<PlanPremiumCellProps> = ({plan, totalPremium}) => {
+export const PlanPremiumCell: React.FC<PlanPremiumCellProps> = ({ plan, totalPremium }) => {
     const getBadgeStyle = (p: string) => {
         switch (p) {
             case 'BRONZE':
@@ -163,7 +163,7 @@ export const PlanPremiumCell: React.FC<PlanPremiumCellProps> = ({plan, totalPrem
     };
 
     const formattedPremium = totalPremium > 0
-        ? new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(totalPremium)
+        ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPremium)
         : '-';
 
     return (
@@ -178,20 +178,21 @@ export const PlanPremiumCell: React.FC<PlanPremiumCellProps> = ({plan, totalPrem
 
 interface AgentCellProps {
     agentId: string;
-    agentName?: string;
 }
 
-export const AgentCell: React.FC<AgentCellProps> = ({agentId, agentName}) => {
-    const {data: agent, isLoading} = useQuery({
+export const AgentCell: React.FC<AgentCellProps> = ({ agentId }) => {
+    const { data: agent, isLoading } = useQuery({
         queryKey: ['user', agentId],
         queryFn: () => fetchUserById(agentId),
         staleTime: 1000 * 60 * 5,
         enabled: !!agentId,
     });
 
-    if (isLoading) return <Skeleton className="h-8 w-8 rounded-full bg-slate-800"/>;
+    if (isLoading) return <Skeleton className="h-8 w-8 rounded-full bg-slate-800" />;
 
-    let displayName = agentName || agentId;
+    if (isLoading) return <Skeleton className="h-8 w-8 rounded-full bg-slate-800" />;
+
+    let displayName = agentId;
     let username = agentId;
 
     if (agent) {
@@ -227,7 +228,7 @@ interface ValidityCellProps {
     validUntil: string;
 }
 
-export const ValidityCell: React.FC<ValidityCellProps> = ({validUntil}) => {
+export const ValidityCell: React.FC<ValidityCellProps> = ({ validUntil }) => {
     if (!validUntil) return <span className="text-slate-500 text-xs">-</span>;
 
     const endDate = new Date(validUntil);
