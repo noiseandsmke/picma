@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-public class AgentLead {
+public class AgentLeadAction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
