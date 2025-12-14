@@ -8,10 +8,10 @@ import edu.hcmute.dto.AgentLeadActionDto;
 import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.dto.PropertyAgentDto;
 import edu.hcmute.dto.PropertyMgmtDto;
-import edu.hcmute.entity.AgentLead;
+import edu.hcmute.entity.AgentLeadAction;
 import edu.hcmute.event.NotificationProducer;
 import edu.hcmute.mapper.PropertyAgentMapper;
-import edu.hcmute.repo.AgentLeadRepo;
+import edu.hcmute.repo.AgentLeadActionRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,7 +31,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     private final PropertyMgmtFeignClient propertyMgmtFeignClient;
     private final PropertyLeadFeignClient propertyLeadFeignClient;
     private final NotificationProducer notificationProducer;
-    private final AgentLeadRepo agentLeadRepo;
+    private final AgentLeadActionRepo agentLeadActionRepo;
     private final PropertyAgentMapper propertyAgentMapper;
 
     @Override
@@ -52,21 +51,21 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
 
     private AgentLeadActionDto updateLeadActionInternal(AgentLeadActionDto agentLeadActionDto) {
         log.info("~~> update Lead Action: {}", agentLeadActionDto);
-        AgentLead agentLead = getOrcreateAgentLead(agentLeadActionDto);
-        LeadAction currentAction = agentLead.getLeadAction();
+        AgentLeadAction agentLeadAction = getOrcreateAgentLead(agentLeadActionDto);
+        LeadAction currentAction = agentLeadAction.getLeadAction();
         LeadAction newAction = agentLeadActionDto.leadAction();
         validateStateTransition(currentAction, newAction);
-        validateExpiry(agentLead);
-        agentLead.setLeadAction(newAction);
-        if (agentLead.getId() == 0) {
-            agentLead.setId(agentLeadActionDto.id());
+        validateExpiry(agentLeadAction);
+        agentLeadAction.setLeadAction(newAction);
+        if (agentLeadAction.getId() == 0) {
+            agentLeadAction.setId(agentLeadActionDto.id());
         }
-        if (agentLead.getCreatedAt() == null) {
-            agentLead.setCreatedAt(LocalDateTime.now());
+        if (agentLeadAction.getCreatedAt() == null) {
+            agentLeadAction.setCreatedAt(LocalDateTime.now());
         }
-        agentLeadRepo.save(agentLead);
-        handleLeadAction(agentLeadActionDto, agentLead, newAction);
-        return enrichAgentLeadDto(agentLead);
+        agentLeadActionRepo.save(agentLeadAction);
+        handleLeadAction(agentLeadActionDto, agentLeadAction, newAction);
+        return propertyAgentMapper.toDto(agentLeadAction);
     }
 
     private void validateStateTransition(LeadAction currentAction, LeadAction newAction) {
@@ -85,42 +84,42 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
         }
     }
 
-    private AgentLead getOrcreateAgentLead(AgentLeadActionDto agentLeadActionDto) {
+    private AgentLeadAction getOrcreateAgentLead(AgentLeadActionDto agentLeadActionDto) {
         if (agentLeadActionDto.id() > 0) {
-            return agentLeadRepo.findById(agentLeadActionDto.id())
+            return agentLeadActionRepo.findById(agentLeadActionDto.id())
                     .orElseGet(() -> propertyAgentMapper.toEntity(agentLeadActionDto));
         } else {
             return propertyAgentMapper.toEntity(agentLeadActionDto);
         }
     }
 
-    private void validateExpiry(AgentLead agentLead) {
-        if (agentLead.getCreatedAt() != null) {
-            LocalDateTime expiry = agentLead.getCreatedAt().plusDays(7);
+    private void validateExpiry(AgentLeadAction agentLeadAction) {
+        if (agentLeadAction.getCreatedAt() != null) {
+            LocalDateTime expiry = agentLeadAction.getCreatedAt().plusDays(7);
             if (LocalDateTime.now().isAfter(expiry)) {
-                log.warn("~~> action attempted after 7 days expiry. LeadId: {}, AgentId: {}", agentLead.getLeadId(), agentLead.getAgentId());
+                log.warn("~~> action attempted after 7 days expiry. LeadId: {}, AgentId: {}", agentLeadAction.getLeadId(), agentLeadAction.getAgentId());
                 throw new IllegalStateException("Lead interaction period has expired (7 days).");
             }
         }
     }
 
-    private void handleLeadAction(AgentLeadActionDto agentLeadActionDto, AgentLead agentLead, LeadAction newAction) {
+    private void handleLeadAction(AgentLeadActionDto agentLeadActionDto, AgentLeadAction agentLeadAction, LeadAction newAction) {
         if (newAction == null) return;
         switch (newAction) {
             case INTERESTED:
-                handleInterested(agentLeadActionDto, agentLead);
+                handleInterested(agentLeadActionDto, agentLeadAction);
                 break;
             case ACCEPTED:
-                log.info("~~> agent accepted (quoted) lead {}.", agentLead.getLeadId());
+                log.info("~~> agent accepted (quoted) lead {}.", agentLeadAction.getLeadId());
                 break;
             case REJECTED:
-                handleRejected(agentLeadActionDto, agentLead);
+                handleRejected(agentLeadActionDto, agentLeadAction);
                 break;
         }
     }
 
-    private void handleInterested(AgentLeadActionDto agentLeadActionDto, AgentLead agentLead) {
-        log.info("~~> agent is interested in lead {}.", agentLead.getLeadId());
+    private void handleInterested(AgentLeadActionDto agentLeadActionDto, AgentLeadAction agentLeadAction) {
+        log.info("~~> agent is interested in lead {}.", agentLeadAction.getLeadId());
         try {
             propertyLeadFeignClient.updateLeadStatusById(agentLeadActionDto.leadId(), "IN_REVIEWING");
             log.info("~~> lead status updated to IN_REVIEWING");
@@ -129,12 +128,12 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
         }
     }
 
-    private void handleRejected(AgentLeadActionDto agentLeadActionDto, AgentLead agentLead) {
-        List<AgentLead> allAgentsForLead = agentLeadRepo.findByLeadId(agentLead.getLeadId());
+    private void handleRejected(AgentLeadActionDto agentLeadActionDto, AgentLeadAction agentLeadAction) {
+        List<AgentLeadAction> allAgentsForLead = agentLeadActionRepo.findByLeadId(agentLeadAction.getLeadId());
         boolean allRejected = allAgentsForLead.stream()
                 .allMatch(al -> al.getLeadAction() == LeadAction.REJECTED);
         if (allRejected && !allAgentsForLead.isEmpty()) {
-            log.info("~~> all agents rejected lead {}.", agentLead.getLeadId());
+            log.info("~~> all agents rejected lead {}.", agentLeadAction.getLeadId());
             try {
                 String updatedLeadAction = propertyLeadFeignClient.updateLeadStatusById(agentLeadActionDto.leadId(), String.valueOf(LeadAction.REJECTED));
                 log.info("~~> lead status updated to REJECTED: {}", updatedLeadAction);
@@ -160,22 +159,9 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     @Transactional(readOnly = true)
     public List<AgentLeadActionDto> getAgentLeads(String agentId) {
         log.info("### Fetching agent leads for agent: {} ###", agentId);
-        List<AgentLead> agentLeads = agentLeadRepo.findByAgentId(agentId);
-        List<AgentLeadActionDto> dtos = new ArrayList<>();
-        for (AgentLead al : agentLeads) {
-            dtos.add(enrichAgentLeadDto(al));
-        }
-        return dtos;
-    }
-
-    private AgentLeadActionDto enrichAgentLeadDto(AgentLead al) {
-        return new AgentLeadActionDto(
-                al.getId(),
-                al.getLeadAction(),
-                al.getAgentId(),
-                al.getLeadId(),
-                al.getCreatedAt()
-        );
+        return agentLeadActionRepo.findByAgentId(agentId).stream()
+                .map(propertyAgentMapper::toDto)
+                .toList();
     }
 
     @Override
@@ -190,17 +176,17 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
             if (propertyInfo == null) {
                 propertyInfo = propertyMgmtFeignClient.getPropertyInfoById(propertyId);
             }
-            if (propertyInfo == null || propertyInfo.propertyAddressDto() == null) {
+            if (propertyInfo == null || propertyInfo.zipCode() == null) {
                 log.warn("~~> Property info or address is null for Property ID: {}", propertyId);
                 return Collections.emptyList();
             }
             log.info("~~> calling property-info-api to get address-info");
-            String zipCode = propertyInfo.propertyAddressDto().zipCode();
+            String zipCode = propertyInfo.zipCode();
             if (StringUtils.hasText(zipCode)) {
                 log.info("~~> ZipCode = {}", zipCode);
                 List<String> agentIds = getAgentsByZipCode(zipCode);
                 log.info("~~> Found {} agents in zipcode {}", agentIds.size(), zipCode);
-                for (String agentIdStr : agentIds) {
+                agentIds.forEach(agentIdStr -> {
                     NotificationRequestDto notification = new NotificationRequestDto(
                             agentIdStr,
                             "New Lead Available",
@@ -208,7 +194,7 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
                     );
                     notificationProducer.sendNotification(notification);
                     log.info("~~> notification sent to agent: {}", agentIdStr);
-                }
+                });
                 return agentIds;
             } else {
                 log.warn("~~> zipCode is null or empty, cannot fetch agents");
@@ -225,17 +211,17 @@ public class PropertyAgentServiceImpl implements PropertyAgentService {
     public void autoRejectExpiredInterests() {
         log.info("~~> running autoRejectExpiredInterests...");
         LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
-        List<AgentLead> expiredLeads = agentLeadRepo.findByLeadActionAndCreatedAtBefore(LeadAction.INTERESTED, sevenDaysAgo);
-        for (AgentLead lead : expiredLeads) {
+        List<AgentLeadAction> expiredLeads = agentLeadActionRepo.findByLeadActionAndCreatedAtBefore(LeadAction.INTERESTED, sevenDaysAgo);
+        expiredLeads.forEach(lead -> {
             log.info("~~> auto-rejecting expired interest for Lead {} Agent {}", lead.getLeadId(), lead.getAgentId());
             lead.setLeadAction(LeadAction.REJECTED);
-            agentLeadRepo.save(lead);
+            agentLeadActionRepo.save(lead);
             checkGlobalReject(lead.getLeadId());
-        }
+        });
     }
 
     private void checkGlobalReject(int leadId) {
-        List<AgentLead> allAgentsForLead = agentLeadRepo.findByLeadId(leadId);
+        List<AgentLeadAction> allAgentsForLead = agentLeadActionRepo.findByLeadId(leadId);
         boolean allRejected = allAgentsForLead.stream()
                 .allMatch(al -> al.getLeadAction() == LeadAction.REJECTED);
         if (allRejected && !allAgentsForLead.isEmpty()) {

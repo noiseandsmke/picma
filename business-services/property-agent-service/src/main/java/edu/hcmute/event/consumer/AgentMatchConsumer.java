@@ -6,13 +6,13 @@ import edu.hcmute.domain.LeadAction;
 import edu.hcmute.dto.NotificationRequestDto;
 import edu.hcmute.dto.PropertyAgentDto;
 import edu.hcmute.dto.PropertyMgmtDto;
-import edu.hcmute.entity.AgentLead;
+import edu.hcmute.entity.AgentLeadAction;
 import edu.hcmute.event.NotificationProducer;
 import edu.hcmute.event.schema.LeadCreatedEvent;
 import edu.hcmute.event.schema.QuoteAcceptedEvent;
 import edu.hcmute.event.schema.QuoteCreatedEvent;
 import edu.hcmute.event.schema.QuoteRejectedEvent;
-import edu.hcmute.repo.AgentLeadRepo;
+import edu.hcmute.repo.AgentLeadActionRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -31,7 +31,7 @@ public class AgentMatchConsumer {
     private final NotificationProducer notificationProducer;
     private final UserMgmtFeignClient userMgmtFeignClient;
     private final PropertyMgmtFeignClient propertyMgmtFeignClient;
-    private final AgentLeadRepo agentLeadRepo;
+    private final AgentLeadActionRepo agentLeadActionRepo;
 
     @Bean
     public Consumer<LeadCreatedEvent> handleLeadCreated() {
@@ -54,8 +54,8 @@ public class AgentMatchConsumer {
         String zipCode = event.zipCode();
         if ("N/A".equals(zipCode) || !StringUtils.hasText(zipCode)) {
             PropertyMgmtDto propertyInfo = propertyMgmtFeignClient.getPropertyInfoById(event.propertyId());
-            if (propertyInfo != null && propertyInfo.propertyAddressDto() != null) {
-                zipCode = propertyInfo.propertyAddressDto().zipCode();
+            if (propertyInfo != null) {
+                zipCode = propertyInfo.zipCode();
             }
         }
         return zipCode;
@@ -64,10 +64,10 @@ public class AgentMatchConsumer {
     private void notifyAndCreateAgentLeads(String zipCode, int leadId) {
         log.info("Searching agents in zipcode: {}", zipCode);
         List<PropertyAgentDto> agents = userMgmtFeignClient.getAgentsByZipCode(zipCode);
-        for (PropertyAgentDto agent : agents) {
+        agents.forEach(agent -> {
             sendNotification(agent.id(), "New Lead Available", "A new lead matches your zip code: " + zipCode + ". Lead ID: " + leadId);
             createAgentLead(agent.id(), leadId);
-        }
+        });
     }
 
     private void sendNotification(String recipientId, String title, String message) {
@@ -82,12 +82,12 @@ public class AgentMatchConsumer {
 
     private void createAgentLead(String agentId, int leadId) {
         try {
-            AgentLead agentLead = new AgentLead();
-            agentLead.setAgentId(agentId);
-            agentLead.setLeadId(leadId);
-            agentLead.setCreatedAt(LocalDateTime.now());
-            agentLead.setLeadAction(LeadAction.INTERESTED);
-            agentLeadRepo.save(agentLead);
+            AgentLeadAction agentLeadAction = new AgentLeadAction();
+            agentLeadAction.setAgentId(agentId);
+            agentLeadAction.setLeadId(leadId);
+            agentLeadAction.setCreatedAt(LocalDateTime.now());
+            agentLeadAction.setLeadAction(LeadAction.INTERESTED);
+            agentLeadActionRepo.save(agentLeadAction);
             log.info("Created AgentLead record for agent: {}, lead: {}", agentId, leadId);
         } catch (Exception ex) {
             log.error("Failed to save AgentLead for agent: {}, lead: {}", agentId, leadId, ex);
@@ -125,11 +125,11 @@ public class AgentMatchConsumer {
 
     private void updateAgentLeadAction(String agentId, int leadId, LeadAction action, String context) {
         try {
-            Optional<AgentLead> optionalAgentLead = agentLeadRepo.findByAgentIdAndLeadId(agentId, leadId);
+            Optional<AgentLeadAction> optionalAgentLead = agentLeadActionRepo.findByAgentIdAndLeadId(agentId, leadId);
             if (optionalAgentLead.isPresent()) {
-                AgentLead agentLead = optionalAgentLead.get();
-                agentLead.setLeadAction(action);
-                agentLeadRepo.save(agentLead);
+                AgentLeadAction agentLeadAction = optionalAgentLead.get();
+                agentLeadAction.setLeadAction(action);
+                agentLeadActionRepo.save(agentLeadAction);
                 log.info("Updated AgentLead action to {} ({}) for agent: {}, lead: {}", action, context, agentId, leadId);
             } else {
                 log.warn("AgentLead record not found for agent: {}, lead: {}", agentId, leadId);
