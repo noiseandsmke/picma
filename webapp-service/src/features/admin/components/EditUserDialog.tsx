@@ -1,12 +1,12 @@
-import {useEffect} from "react";
-import {useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,} from "@/components/ui/dialog";
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
-import {Label} from "@/components/ui/label";
-import {UserDto} from "../services/userService";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { UserDto } from "../services/userService";
 
 const editUserSchema = z.object({
     firstName: z.string().optional(),
@@ -24,10 +24,10 @@ interface EditUserDialogProps {
 }
 
 export function EditUserDialog({
-                                   open,
-                                   onOpenChange,
-                                   user,
-                               }: Readonly<EditUserDialogProps>) {
+    open,
+    onOpenChange,
+    user,
+}: Readonly<EditUserDialogProps>) {
     const {
         register,
         reset,
@@ -56,7 +56,7 @@ export function EditUserDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] bg-[#141124] border-slate-800 text-slate-200">
+            <DialogContent className="sm:max-w-[425px] bg-slate-900 border-slate-800 text-slate-200">
                 <DialogHeader>
                     <DialogTitle className="text-white">View user profile</DialogTitle>
                 </DialogHeader>
@@ -68,7 +68,7 @@ export function EditUserDialog({
                                 id="firstName"
                                 {...register("firstName")}
                                 disabled
-                                className="bg-slate-900 border-slate-700 text-slate-400 cursor-not-allowed"
+                                className="bg-slate-950 border-slate-700 text-slate-400 cursor-not-allowed"
                             />
                         </div>
                         <div className="space-y-2">
@@ -77,7 +77,7 @@ export function EditUserDialog({
                                 id="lastName"
                                 {...register("lastName")}
                                 disabled
-                                className="bg-slate-900 border-slate-700 text-slate-400 cursor-not-allowed"
+                                className="bg-slate-950 border-slate-700 text-slate-400 cursor-not-allowed"
                             />
                         </div>
                     </div>
@@ -88,7 +88,7 @@ export function EditUserDialog({
                             id="email"
                             {...register("email")}
                             disabled
-                            className="bg-slate-900 border-slate-700 text-slate-400 cursor-not-allowed"
+                            className="bg-slate-950 border-slate-700 text-slate-400 cursor-not-allowed"
                         />
                     </div>
 
@@ -99,7 +99,7 @@ export function EditUserDialog({
                                 id="zipcode"
                                 {...register("zipcode")}
                                 disabled
-                                className="bg-slate-900 border-slate-700 text-slate-400 cursor-not-allowed"
+                                className="bg-slate-950 border-slate-700 text-slate-400 cursor-not-allowed"
                             />
                         </div>
                     )}

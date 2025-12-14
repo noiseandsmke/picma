@@ -1,17 +1,17 @@
 import React from 'react';
-import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,} from "@/components/ui/dialog";
-import {Label} from "@/components/ui/label";
-import {useAuth} from '@/context/AuthContext';
-import {ScrollArea} from "@/components/ui/scroll-area";
-import {Badge} from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useAuth } from '@/context/AuthContext';
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 
 interface ProfileDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
 
-export const ProfileDialog: React.FC<ProfileDialogProps> = ({open, onOpenChange}) => {
-    const {user} = useAuth();
+export const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onOpenChange }) => {
+    const { user } = useAuth();
 
     if (!user) return null;
 
@@ -22,7 +22,7 @@ export const ProfileDialog: React.FC<ProfileDialogProps> = ({open, onOpenChange}
             <div className={`space-y-1.5 ${fullWidth ? 'col-span-2' : ''}`}>
                 <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">{label}</Label>
                 <div
-                    className="text-sm font-medium text-slate-200 bg-slate-900/50 p-2.5 rounded-md border border-slate-800 break-all">
+                    className="text-sm font-medium text-slate-200 bg-slate-950 p-2.5 rounded-md border border-slate-800 hover:border-primary/50 transition-colors break-all">
                     {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
                 </div>
             </div>
@@ -32,9 +32,11 @@ export const ProfileDialog: React.FC<ProfileDialogProps> = ({open, onOpenChange}
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className="sm:max-w-[600px] bg-[#141124] border-slate-800 text-slate-100 p-0 overflow-hidden flex flex-col max-h-[85vh]">
-                <DialogHeader className="px-6 py-4 border-b border-slate-800 bg-slate-950">
+                className="sm:max-w-[600px] bg-slate-950 border-slate-800 text-slate-100 p-0 overflow-hidden flex flex-col max-h-[85vh]">
+                <DialogHeader className="px-6 py-4 border-b border-slate-700 bg-slate-950 relative overflow-hidden">
                     <DialogTitle className="text-xl">Profile Details</DialogTitle>
+                    <div className="absolute bottom-0 left-0 w-full h-[1px] bg-slate-700"></div>
+                    <div className="absolute bottom-0 left-6 w-16 h-[2px] bg-primary"></div>
                     <DialogDescription className="text-slate-400">
                         View your account information and security details.
                     </DialogDescription>
@@ -43,8 +45,8 @@ export const ProfileDialog: React.FC<ProfileDialogProps> = ({open, onOpenChange}
                 <ScrollArea className="flex-1 px-6 py-6">
                     <div className="space-y-6">
                         <section>
-                            <h3 className="text-sm font-semibold text-indigo-400 mb-3 flex items-center gap-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
+                            <h3 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
                                 Identity
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
@@ -56,8 +58,8 @@ export const ProfileDialog: React.FC<ProfileDialogProps> = ({open, onOpenChange}
                         </section>
 
                         <section>
-                            <h3 className="text-sm font-semibold text-indigo-400 mb-3 flex items-center gap-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
+                            <h3 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
                                 Contact & Location
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
@@ -68,48 +70,16 @@ export const ProfileDialog: React.FC<ProfileDialogProps> = ({open, onOpenChange}
                             </div>
                         </section>
 
-                        <section>
-                            <h3 className="text-sm font-semibold text-indigo-400 mb-3 flex items-center gap-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
-                                Security Metadata
-                            </h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                {renderField("Issued At (iat)", user.iat ? new Date(user.iat * 1000).toLocaleString() : undefined)}
-                                {renderField("Expires At (exp)", user.exp ? new Date(user.exp * 1000).toLocaleString() : undefined)}
-                                {renderField("Token ID (jti)", user.jti, true)}
-                                {renderField("Issuer (iss)", user.iss, true)}
-                                {renderField("Audience (aud)", user.aud)}
-                                {renderField("Type (typ)", user.typ)}
-                                {renderField("Authorized Party (azp)", user.azp)}
-                                {renderField("Session ID (sid)", user.sid, true)}
-                                {renderField("Access Token Hash (at_hash)", user.at_hash, true)}
-                                {renderField("Auth Context Class (acr)", user.acr)}
-                            </div>
-                        </section>
 
-                        {user.roles && user.roles.length > 0 && (
-                            <section>
-                                <h3 className="text-sm font-semibold text-indigo-400 mb-3 flex items-center gap-2">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
-                                    Roles
-                                </h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {user.roles.map((role) => (
-                                        <Badge key={role} variant="outline"
-                                               className="bg-indigo-500/10 text-indigo-300 border-indigo-500/30">
-                                            {role}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
+
+
                     </div>
                 </ScrollArea>
 
                 <div className="p-4 border-t border-slate-800 bg-slate-950 flex justify-end">
                     <button
                         onClick={() => onOpenChange(false)}
-                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-md border border-slate-700 transition-colors"
+                        className="px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-md shadow-[0_4px_14px_0_rgba(59,130,246,0.39)] transition-colors"
                     >
                         Close
                     </button>

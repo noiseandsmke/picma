@@ -1,11 +1,10 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import {useQuery} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
-import { fetchLeadStats, fetchLeadTrend } from '../services/leadService';
+import {fetchLeadStats, fetchLeadTrend} from '../services/leadService';
 import {
     CartesianGrid,
     Cell,
-    Legend,
     Line,
     LineChart,
     Pie,
@@ -15,293 +14,256 @@ import {
     XAxis,
     YAxis
 } from 'recharts';
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, CheckCircle, FileText, XCircle } from 'lucide-react';
-
-const renderLegendValue = (value: string) => <span className="text-slate-300 ml-1">{value}</span>;
+import {Skeleton} from '@/components/ui/skeleton';
 
 const AdminDashboard: React.FC = () => {
-    const { data: stats, isLoading: isLoadingStats } = useQuery({
+    const {data: stats, isLoading: isLoadingStats} = useQuery({
         queryKey: ['admin-stats'],
         queryFn: fetchLeadStats
     });
 
-    const { data: trendData, isLoading: isLoadingTrend } = useQuery({
+    const {data: trendData, isLoading: isLoadingTrend} = useQuery({
         queryKey: ['lead-trend'],
         queryFn: fetchLeadTrend
     });
 
-    const inReviewCount = stats ? Math.max(0, stats.totalLeads - (stats.acceptedLeads + stats.rejectedLeads + stats.overdueLeads)) : 0;
-
     const statusData = [
-        { name: 'Accepted', value: stats?.acceptedLeads || 0, color: '#32abb9' }, {
+        {name: 'Accepted', value: stats?.acceptedLeads || 0, color: '#3b82f6'}, {
             name: 'In review',
-            value: inReviewCount,
-            color: '#45b1fe'
-        }, { name: 'Rejected', value: stats?.rejectedLeads || 0, color: '#ff692e' }, {
+            value: Math.max(0, (stats?.totalLeads || 0) - ((stats?.acceptedLeads || 0) + (stats?.rejectedLeads || 0) + (stats?.overdueLeads || 0))),
+            color: '#f59e0b'
+        }, {name: 'Rejected', value: stats?.rejectedLeads || 0, color: '#ef4444'}, {
             name: 'Overdue',
             value: stats?.overdueLeads || 0,
-            color: '#ac3cff'
+            color: '#10b981'
         },].filter(item => item.value > 0);
 
     const lineChartData = React.useMemo(() => {
         const weeks = [
-            { name: 'Week 1', thisMonth: 0, lastMonth: 0 },
-            { name: 'Week 2', thisMonth: 0, lastMonth: 0 },
-            { name: 'Week 3', thisMonth: 0, lastMonth: 0 },
-            { name: 'Week 4', thisMonth: 0, lastMonth: 0 },
+            {name: 'Week 1', thisMonth: 0, lastMonth: 0},
+            {name: 'Week 2', thisMonth: 0, lastMonth: 0},
+            {name: 'Week 3', thisMonth: 0, lastMonth: 0},
+            {name: 'Week 4', thisMonth: 0, lastMonth: 0},
         ];
 
         if (!trendData || trendData.length === 0) return weeks;
 
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-
-        const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastMonth = lastMonthDate.getMonth();
-        const lastMonthYear = lastMonthDate.getFullYear();
-
-        trendData.forEach(item => {
-            const d = new Date(item.date);
-            const dMonth = d.getMonth();
-            const dYear = d.getFullYear();
-            const day = d.getDate();
-
-            if (dYear === currentYear && dMonth === currentMonth) {
-                if (day <= 7) weeks[0].thisMonth += item.count;
-                else if (day <= 14) weeks[1].thisMonth += item.count;
-                else if (day <= 21) weeks[2].thisMonth += item.count;
-                else weeks[3].thisMonth += item.count;
-            } else if (dYear === lastMonthYear && dMonth === lastMonth) {
-                if (day <= 7) weeks[0].lastMonth += item.count;
-                else if (day <= 14) weeks[1].lastMonth += item.count;
-                else if (day <= 21) weeks[2].lastMonth += item.count;
-                else weeks[3].lastMonth += item.count;
-            }
-        });
-
         return weeks;
     }, [trendData]);
 
+
+    const StatsCard = ({title, value, colorClass, icon, bgClass, overlayClass}: any) => (
+        <div
+            className="relative overflow-hidden flex flex-col gap-4 rounded-xl p-6 bg-slate-900 border border-slate-800 shadow-sm group hover:border-primary/50 transition-colors">
+            <div className="flex items-start justify-between">
+                <div className={`p-2 rounded-lg ${bgClass} ${colorClass} group-hover:bg-opacity-30 transition-colors`}>
+                    <span className="material-symbols-outlined">{icon}</span>
+                </div>
+            </div>
+            <div>
+                <p className="text-slate-400 text-sm font-medium">{title}</p>
+                <h3 className="text-white text-3xl font-bold mt-1">
+                    {isLoadingStats ? <Skeleton className="h-8 w-16 bg-slate-800"/> : value}
+                </h3>
+            </div>
+            <div
+                className={`absolute -bottom-10 -right-10 w-24 h-24 rounded-full blur-xl group-hover:opacity-20 transition-opacity ${overlayClass} opacity-10`}></div>
+        </div>
+    );
+
     return (
         <AdminLayout>
-            <div className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card className="bg-[#141124] border-[#2e2c3a] text-white overflow-hidden relative">
-                        <CardContent className="p-4 flex flex-col justify-between h-32">
-                            <div className="flex justify-between items-center z-10">
-                                <div className="flex items-center gap-2">
-                                    <div className="p-2 bg-[#593bf2]/20 rounded-lg">
-                                        <FileText className="h-5 w-5 text-[#593bf2]" />
-                                    </div>
-                                    <span className="font-medium text-slate-300">Total leads</span>
-                                </div>
-                            </div>
-                            <div className="z-10 mt-4">
-                                <div className="text-3xl font-bold text-white">
-                                    {isLoadingStats ?
-                                        <Skeleton className="h-8 w-16 bg-slate-800" /> : stats?.totalLeads ?? 0}
-                                </div>
-                            </div>
-                            <div
-                                className="absolute -top-10 -right-10 w-24 h-24 bg-[#593bf2] rounded-full blur-[60px] opacity-20" />
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-[#141124] border-[#2e2c3a] text-white overflow-hidden relative">
-                        <CardContent className="p-4 flex flex-col justify-between h-32">
-                            <div className="flex justify-between items-center z-10">
-                                <div className="flex items-center gap-2">
-                                    <div className="p-2 bg-[#32abb9]/20 rounded-lg">
-                                        <CheckCircle className="h-5 w-5 text-[#32abb9]" />
-                                    </div>
-                                    <span className="font-medium text-slate-300">Accepted</span>
-                                </div>
-                            </div>
-                            <div className="z-10 mt-4">
-                                <div className="text-3xl font-bold text-white">
-                                    {isLoadingStats ?
-                                        <Skeleton className="h-8 w-16 bg-slate-800" /> : stats?.acceptedLeads ?? 0}
-                                </div>
-                            </div>
-                            <div
-                                className="absolute -top-10 -right-10 w-24 h-24 bg-[#32abb9] rounded-full blur-[60px] opacity-20" />
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-[#141124] border-[#2e2c3a] text-white overflow-hidden relative">
-                        <CardContent className="p-4 flex flex-col justify-between h-32">
-                            <div className="flex justify-between items-center z-10">
-                                <div className="flex items-center gap-2">
-                                    <div className="p-2 bg-[#ff692e]/20 rounded-lg">
-                                        <XCircle className="h-5 w-5 text-[#ff692e]" />
-                                    </div>
-                                    <span className="font-medium text-slate-300">Rejected</span>
-                                </div>
-                            </div>
-                            <div className="z-10 mt-4">
-                                <div className="text-3xl font-bold text-white">
-                                    {isLoadingStats ?
-                                        <Skeleton className="h-8 w-16 bg-slate-800" /> : stats?.rejectedLeads ?? 0}
-                                </div>
-                            </div>
-                            <div
-                                className="absolute -top-10 -right-10 w-24 h-24 bg-[#ff692e] rounded-full blur-[60px] opacity-20" />
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-[#141124] border-[#2e2c3a] text-white overflow-hidden relative">
-                        <CardContent className="p-4 flex flex-col justify-between h-32">
-                            <div className="flex justify-between items-center z-10">
-                                <div className="flex items-center gap-2">
-                                    <div className="p-2 bg-[#ac3cff]/20 rounded-lg">
-                                        <AlertTriangle className="h-5 w-5 text-[#ac3cff]" />
-                                    </div>
-                                    <span className="font-medium text-slate-300">Overdue</span>
-                                </div>
-                            </div>
-                            <div className="z-10 mt-4">
-                                <div className="text-3xl font-bold text-white">
-                                    {isLoadingStats ?
-                                        <Skeleton className="h-8 w-16 bg-slate-800" /> : stats?.overdueLeads ?? 0}
-                                </div>
-                            </div>
-                            <div
-                                className="absolute -top-10 -right-10 w-24 h-24 bg-[#ac3cff] rounded-full blur-[60px] opacity-20" />
-                        </CardContent>
-                    </Card>
+            <div className="max-w-[1600px] flex flex-col gap-6 pb-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <StatsCard
+                        title="Total leads"
+                        value={stats?.totalLeads || 0}
+                        icon="description"
+                        colorClass="text-primary"
+                        bgClass="bg-primary/10"
+                        overlayClass="bg-primary"
+                    />
+                    <StatsCard
+                        title="Accepted"
+                        value={stats?.acceptedLeads || 0}
+                        icon="check_circle"
+                        colorClass="text-emerald-500"
+                        bgClass="bg-emerald-500/10"
+                        overlayClass="bg-emerald-500"
+                    />
+                    <StatsCard
+                        title="Rejected"
+                        value={stats?.rejectedLeads || 0}
+                        icon="cancel"
+                        colorClass="text-rose-500"
+                        bgClass="bg-rose-500/10"
+                        overlayClass="bg-rose-500"
+                    />
+                    <StatsCard
+                        title="Overdue"
+                        value={stats?.overdueLeads || 0}
+                        icon="warning"
+                        colorClass="text-amber-500"
+                        bgClass="bg-amber-500/10"
+                        overlayClass="bg-amber-500"
+                    />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-7">
-                    <div className="col-span-4 bg-[#141124] border border-[#2e2c3a] rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-2">
-                                <div className="h-7 w-7 bg-[#593bf2]/20 rounded-md flex items-center justify-center">
-                                    <FileText className="h-4 w-4 text-[#593bf2]" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div
+                        className="lg:col-span-2 flex flex-col rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-sm">
+                        <div className="flex items-center justify-between gap-4 mb-8">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-primary/10 p-1.5 rounded text-primary">
+                                    <span className="material-symbols-outlined text-[20px]">analytics</span>
                                 </div>
-                                <h3 className="font-semibold text-white">Total leads by month</h3>
+                                <h3 className="text-white text-base font-semibold">Total leads by month</h3>
                             </div>
-                        </div>
-
-                        <div className="flex items-center justify-center gap-6 mb-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-sm bg-[#7a62f5]" />
-                                <span className="text-sm font-medium text-slate-300">This month</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-sm bg-[#ffa582]" />
-                                <span className="text-sm font-medium text-slate-300">Last month</span>
-                            </div>
-                        </div>
-
-                        {isLoadingTrend ? (
-                            <Skeleton className="h-[250px] w-full bg-slate-800" />
-                        ) : (
-                            <ResponsiveContainer width="100%" height={250}>
-                                <LineChart data={lineChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2e2c3a" />
-                                    <XAxis
-                                        dataKey="name"
-                                        stroke="#6b7280"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                        dy={10}
-                                    />
-                                    <YAxis
-                                        stroke="#6b7280"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                        tickCount={5}
-                                    />
-                                    <Tooltip
-                                        cursor={{ stroke: '#2e2c3a', strokeWidth: 2 }}
-                                        contentStyle={{
-                                            backgroundColor: '#181624',
-                                            borderColor: '#2e2c3a',
-                                            color: '#fff',
-                                            borderRadius: '8px'
-                                        }}
-                                        itemStyle={{ color: '#fff' }}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="thisMonth"
-                                        stroke="#7a62f5"
-                                        strokeWidth={3}
-                                        dot={false}
-                                        activeDot={{ r: 6, fill: '#7a62f5', stroke: '#141124', strokeWidth: 2 }}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="lastMonth"
-                                        stroke="#ffa582"
-                                        strokeWidth={3}
-                                        dot={false}
-                                        activeDot={{ r: 6, fill: '#ffa582', stroke: '#141124', strokeWidth: 2 }}
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        )}
-                    </div>
-
-                    <div className="col-span-3 bg-[#141124] border border-[#2e2c3a] rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-2">
-                                <div className="h-7 w-7 bg-[#ac3cff]/20 rounded-md flex items-center justify-center">
-                                    <CheckCircle className="h-4 w-4 text-[#ac3cff]" />
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded bg-primary shadow-glow"></div>
+                                    <span className="text-xs text-slate-400">This month</span>
                                 </div>
-                                <h3 className="font-semibold text-white">Leads by status</h3>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded bg-orange-400"></div>
+                                    <span className="text-xs text-slate-400">Last month</span>
+                                </div>
                             </div>
                         </div>
-                        <div className="flex items-center justify-center h-[284px] w-full">
-                            {isLoadingStats ? (
-                                <Skeleton className="h-[200px] w-[200px] rounded-full bg-slate-800" />
+                        <div className="w-full h-[280px] mt-auto">
+                            {isLoadingTrend ? (
+                                <Skeleton className="h-full w-full bg-slate-800 rounded-lg"/>
                             ) : (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={statusData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={65}
-                                            outerRadius={90}
-                                            paddingAngle={4}
-                                            dataKey="value"
-                                            stroke="none"
-                                        >
-                                            {statusData.map((entry) => (
-                                                <Cell key={entry.name} fill={entry.color} />
-                                            ))}
-                                        </Pie>
+                                    <LineChart data={lineChartData} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
+                                        <defs>
+                                            <linearGradient id="colorThisMonth" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155"
+                                                       opacity={0.5}/>
+                                        <XAxis
+                                            dataKey="name"
+                                            stroke="#64748b"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            dy={10}
+                                        />
+                                        <YAxis
+                                            stroke="#64748b"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
                                         <Tooltip
                                             contentStyle={{
-                                                backgroundColor: '#181624',
-                                                borderColor: '#2e2c3a',
-                                                color: '#fff',
-                                                borderRadius: '8px'
+                                                backgroundColor: '#0f172a',
+                                                borderColor: '#334155',
+                                                color: '#f8fafc',
+                                                borderRadius: '8px',
+                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.4)'
                                             }}
-                                            itemStyle={{ color: '#fff' }}
+                                            itemStyle={{color: '#fff'}}
                                         />
-                                        <Legend
-                                            verticalAlign="bottom"
-                                            height={36}
-                                            iconType="circle"
-                                            formatter={renderLegendValue}
+                                        <Line
+                                            type="monotone"
+                                            dataKey="lastMonth"
+                                            stroke="#fb923c" strokeWidth={2}
+                                            dot={false}
+                                            strokeOpacity={0.5}
                                         />
-                                        <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle">
-                                            <tspan x="50%" dy="-10" fontSize="24" fontWeight="bold" fill="#fff">
-                                                {stats?.acceptedLeads ? `${Math.round((stats.acceptedLeads / (stats.totalLeads || 1)) * 100)}%` : '0%'}
-                                            </tspan>
-                                            <tspan x="50%" dy="20" fontSize="12" fill="#94a3b8">Accepted</tspan>
-                                        </text>
-                                    </PieChart>
+                                        <Line
+                                            type="monotone"
+                                            dataKey="thisMonth"
+                                            stroke="#3b82f6" strokeWidth={3}
+                                            dot={{r: 4, fill: '#0f172a', stroke: '#3b82f6', strokeWidth: 2}}
+                                            activeDot={{r: 6, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2}}
+                                            fill="url(#colorThisMonth)"
+                                        />
+                                    </LineChart>
                                 </ResponsiveContainer>
                             )}
                         </div>
+                    </div>
+
+                    <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-sm">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="bg-primary/10 p-1.5 rounded text-primary">
+                                <span className="material-symbols-outlined text-[20px]">donut_large</span>
+                            </div>
+                            <h3 className="text-white text-base font-semibold">Leads by status</h3>
+                        </div>
+                        <div className="flex-1 flex flex-col justify-center items-center relative py-4">
+                            {isLoadingStats ? (
+                                <Skeleton className="h-[200px] w-[200px] rounded-full bg-slate-800"/>
+                            ) : (
+                                <div className="relative w-full h-[220px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={statusData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={65}
+                                                outerRadius={85}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                                stroke="none"
+                                                cornerRadius={4}
+                                            >
+                                                {statusData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color}/>
+                                                ))}
+                                            </Pie>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    <div
+                                        className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                        <span className="text-4xl font-bold text-white tracking-tight">
+                                            {stats?.acceptedLeads ? `${Math.round((stats.acceptedLeads / (stats.totalLeads || 1)) * 100)}%` : '0%'}
+                                        </span>
+                                        <span className="text-xs text-slate-400 font-medium mt-1">Accepted</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden shadow-sm mt-2">
+                    <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+                        <h3 className="text-white text-base font-semibold">Recent activity</h3>
+                        <a href="#"
+                           className="text-sm text-primary hover:text-primary-hover font-medium transition-colors">View
+                            all</a>
+                    </div>
+                    <div>
+                        <table className="w-full text-left border-collapse table-fixed">
+                            <colgroup>
+                                <col style={{width: '25%'}}/>
+                                <col style={{width: '40%'}}/>
+                                <col style={{width: '20%'}}/>
+                                <col style={{width: '15%'}}/>
+                            </colgroup>
+                            <thead className="bg-transparent">
+                            <tr>
+                                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">User</th>
+                                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Action</th>
+                                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</th>
+                                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider text-right">Status</th>
+                            </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-700/50">
+                            <tr>
+                                <td colSpan={4} className="p-8 text-center text-slate-500 text-sm">
+                                    No recent activity to display.
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

@@ -28,7 +28,7 @@ export const QuoteIdCell: React.FC<QuoteIdCellProps> = ({ id }) => {
     return (
         <Button
             variant="ghost"
-            className="font-mono text-sm text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/30 h-auto p-1 px-2"
+            className="font-mono text-sm text-primary hover:text-primary-hover hover:bg-primary/20 h-auto p-1 px-2"
             onClick={handleCopy}
             title="Click to copy"
         >
@@ -96,7 +96,7 @@ export const CustomerCell: React.FC<CustomerCellProps> = ({ leadId, leadData, on
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/30"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-primary hover:text-primary-hover hover:bg-primary/20"
                     onClick={(e) => {
                         e.stopPropagation();
                         onViewLead(leadId);
@@ -208,7 +208,7 @@ export const AgentCell: React.FC<AgentCellProps> = ({ agentId }) => {
     const initial = displayName.charAt(0).toUpperCase();
     const avatarColor = isSystem
         ? "bg-rose-500/20 text-rose-400 border-rose-500/30"
-        : "bg-indigo-500/20 text-indigo-400 border-indigo-500/30";
+        : "bg-primary/20 text-primary border-primary/30";
 
     return (
         <div className="flex items-center gap-3">

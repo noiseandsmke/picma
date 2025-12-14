@@ -1,28 +1,25 @@
-import React, { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React, {useEffect, useState} from 'react';
+import {Controller, useForm} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DialogClose, DialogFooter } from '@/components/ui/dialog';
-import { SearchableSelect } from '@/components/ui/searchable-select';
-import { createLead, CreateLeadDto } from '@/features/admin/services/leadService';
-import {
-    ConstructionType,
-    createProperty,
-    PropertyInfoDto
-} from '@/features/admin/services/propertyService';
-import { toast } from 'sonner';
-import { City, VN_LOCATIONS } from '@/lib/vn-locations';
-import { NumberInput } from '@/components/ui/number-input';
-import { useAuth } from '@/context/AuthContext';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {DialogClose, DialogFooter} from '@/components/ui/dialog';
+import {SearchableSelect} from '@/components/ui/searchable-select';
+import {updateOwnerLead} from '@/features/owner/services/ownerService';
+import {ConstructionType, fetchPropertyById, PropertyInfoDto} from '@/features/admin/services/propertyService';
+import {toast} from 'sonner';
+import {City, VN_LOCATIONS} from '@/lib/vn-locations';
+import {NumberInput} from '@/components/ui/number-input';
+import {PropertyLeadDto} from '@/features/admin/services/leadService';
+import apiClient from '@/services/apiClient';
 
 const constructionTypeValues = ['WOOD', 'CONCRETE', 'HYBRID'] as const;
 
-const createLeadSchema = z.object({
+const updateLeadSchema = z.object({
     property: z.object({
         location: z.object({
             street: z.string().min(1, "Street is required"),
@@ -39,34 +36,37 @@ const createLeadSchema = z.object({
         valuation: z.object({
             estimatedConstructionCost: z.coerce.number().min(1, "Cost must be positive"),
         }),
-    })
+    }),
+    expiryDate: z.string().nullable().optional()
 });
 
-type CreateLeadFormData = z.infer<typeof createLeadSchema>;
+type UpdateLeadFormData = z.infer<typeof updateLeadSchema>;
 
 const formatEnum = (val: string) => {
     return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase().replaceAll('_', ' ');
 };
 
-interface OwnerLeadFormProps {
+interface OwnerLeadUpdateFormProps {
+    lead: PropertyLeadDto;
     onSuccess: () => void;
     onCancel: () => void;
 }
 
-export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCancel }) => {
-    const { user } = useAuth();
+export const OwnerLeadUpdateForm: React.FC<OwnerLeadUpdateFormProps> = ({lead, onSuccess, onCancel}) => {
     const queryClient = useQueryClient();
     const [selectedCity] = useState<City | null>(VN_LOCATIONS.find(c => c.name === 'Ho Chi Minh City') || null);
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     const {
         handleSubmit,
         control,
         setValue,
         register,
-        formState: { errors },
-    } = useForm<CreateLeadFormData, any, CreateLeadFormData>({
-        // @ts-expect-error - zodResolver type mismatch
-        resolver: zodResolver(createLeadSchema),
+        reset,
+        formState: {errors},
+    } = useForm<UpdateLeadFormData, any, UpdateLeadFormData>({
+        // @ts-expect-error - zod resolver type mismatch
+        resolver: zodResolver(updateLeadSchema),
         defaultValues: {
             property: {
                 location: {
@@ -75,70 +75,100 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCance
                     zipCode: '',
                     street: '',
                 },
-                attributes: {
-                    yearBuilt: new Date().getFullYear(),
-                    noFloors: undefined,
-                    squareMeters: undefined,
-                    constructionType: 'CONCRETE',
-                },
-                valuation: {
-                    estimatedConstructionCost: undefined
-                }
+                attributes: {} as any,
+                valuation: {} as any
             }
-        },
+        }
     });
 
-    const createPropertyMutation = useMutation({
-        mutationFn: createProperty,
-    });
+    useEffect(() => {
+        const loadPropertyData = async () => {
+            if (lead.propertyInfo) {
+                try {
+                    let property: PropertyInfoDto | null = null;
+                    if (lead.propertyInfo.startsWith('{')) {
+                        property = JSON.parse(lead.propertyInfo);
+                    } else {
+                        property = await fetchPropertyById(lead.propertyInfo);
+                    }
 
-    const createLeadMutation = useMutation({
-        mutationFn: createLead,
+                    if (property) {
+                        reset({
+                            property: {
+                                location: property.location,
+                                attributes: {
+                                    constructionType: property.attributes.constructionType || 'CONCRETE',
+                                    yearBuilt: property.attributes.yearBuilt || new Date().getFullYear(),
+                                    noFloors: property.attributes.noFloors,
+                                    squareMeters: property.attributes.squareMeters,
+                                },
+                                valuation: {
+                                    estimatedConstructionCost: property.valuation.estimatedConstructionCost
+                                }
+                            },
+                            expiryDate: lead.expiryDate
+                        });
+
+                    }
+                } catch (e) {
+                    console.error("Failed to load property details", e);
+                    toast.error("Failed to load property details");
+                } finally {
+                    setIsLoadingData(false);
+                }
+            } else {
+                setIsLoadingData(false);
+            }
+        };
+        loadPropertyData();
+    }, [lead, reset]);
+
+    const updateLeadMutation = useMutation({
+        mutationFn: (data: any) => updateOwnerLead(lead.id, data),
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['owner-leads'] });
-            await queryClient.invalidateQueries({ queryKey: ['owner-properties'] });
+            await queryClient.invalidateQueries({queryKey: ['owner-leads']});
+            await queryClient.invalidateQueries({queryKey: ['lead-details', lead.id]});
             onSuccess();
-            toast.success("Lead created successfully");
+            toast.success("Lead updated successfully");
         },
         onError: (error) => {
             console.error(error);
-            toast.error("Failed to create lead");
+            toast.error("Failed to update lead");
         }
     });
 
-    const onSubmit = async (data: z.infer<typeof createLeadSchema>) => {
+    const onSubmit = async (data: UpdateLeadFormData) => {
         try {
-            if (!user) {
-                toast.error("User not found");
-                return;
-            }
 
-            const propertyPayload: Omit<PropertyInfoDto, 'id'> = {
-                userId: user.id,
-                location: data.property.location,
+
+            const propertyPayload = {
+                ...data.property,
                 attributes: {
                     ...data.property.attributes,
                     constructionType: data.property.attributes.constructionType as ConstructionType,
-                },
-                valuation: data.property.valuation
+                }
             };
 
-            const createdProperty = await createPropertyMutation.mutateAsync(propertyPayload);
+            const propertyId = lead.propertyInfo;
 
-            const leadPayload: CreateLeadDto = {
-                userInfo: user.id,
-                propertyInfo: createdProperty.id,
-                status: 'ACTIVE',
-                userId: user.id
+            if (!propertyId.startsWith('{')) {
+                await apiClient.put(`/picma/properties/${propertyId}`, propertyPayload);
+            }
+
+            const leadPayload = {
+                id: lead.id,
+                expiryDate: data.expiryDate,
+                propertyInfo: propertyId, status: lead.status,
+                userInfo: lead.userInfo
             };
 
-            createLeadMutation.mutate(leadPayload);
+            updateLeadMutation.mutate(leadPayload);
+
         } catch (error) {
-            console.error("Error in lead creation flow:", error);
-            toast.error("Failed to create property or lead");
+            console.error("Error in lead update flow:", error);
+            toast.error("Failed to update lead");
         }
     };
-
 
 
     const wardOptions = selectedCity?.wards.map(w => ({
@@ -147,6 +177,10 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCance
         sublabel: w.zipCode
     })) || [];
 
+    if (isLoadingData) {
+        return <div className="p-4 text-center">Loading details...</div>;
+    }
+
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
             <div className="space-y-4">
@@ -154,7 +188,7 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCance
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="hidden">
-                        <Input type="hidden" {...register('property.location.city')} value="Ho Chi Minh City" />
+                        <Input type="hidden" {...register('property.location.city')} value="Ho Chi Minh City"/>
                     </div>
 
                     <div className="space-y-2">
@@ -162,7 +196,7 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCance
                         <Controller
                             control={control}
                             name="property.location.ward"
-                            render={({ field }) => (
+                            render={({field}) => (
                                 <SearchableSelect
                                     options={wardOptions}
                                     value={field.value}
@@ -211,10 +245,10 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCance
                         <Controller
                             control={control}
                             name="property.attributes.constructionType"
-                            render={({ field }) => (
+                            render={({field}) => (
                                 <Select onValueChange={field.onChange} value={field.value}>
                                     <SelectTrigger className="bg-surface-dark border-slate-700 hover:bg-slate-800">
-                                        <SelectValue placeholder="Select type" />
+                                        <SelectValue placeholder="Select type"/>
                                     </SelectTrigger>
                                     <SelectContent>
                                         {constructionTypeValues.map((type) => (
@@ -233,7 +267,7 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCance
                         <Controller
                             control={control}
                             name="property.attributes.yearBuilt"
-                            render={({ field }) => (
+                            render={({field}) => (
                                 <NumberInput
                                     id="yearBuilt"
                                     value={field.value}
@@ -252,7 +286,7 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCance
                         <Controller
                             control={control}
                             name="property.attributes.noFloors"
-                            render={({ field }) => (
+                            render={({field}) => (
                                 <NumberInput
                                     id="noFloors"
                                     value={field.value}
@@ -271,7 +305,7 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCance
                         <Controller
                             control={control}
                             name="property.attributes.squareMeters"
-                            render={({ field }) => (
+                            render={({field}) => (
                                 <NumberInput
                                     id="squareMeters"
                                     step="0.01"
@@ -291,7 +325,7 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCance
                         <Controller
                             control={control}
                             name="property.valuation.estimatedConstructionCost"
-                            render={({ field }) => (
+                            render={({field}) => (
                                 <div className="relative">
                                     <NumberInput
                                         id="estimatedConstructionCost"
@@ -304,7 +338,8 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCance
                                         parse={(val) => Number(val.replace(/\./g, ''))}
                                         className="bg-surface-dark border-slate-700 pr-8"
                                     />
-                                    <span className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none font-medium">₫</span>
+                                    <span
+                                        className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none font-medium">₫</span>
                                 </div>
                             )}
                         />
@@ -319,9 +354,9 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCance
                     <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
                 </DialogClose>
                 <Button type="submit"
-                    disabled={createLeadMutation.isPending || createPropertyMutation.isPending}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                    {(createLeadMutation.isPending || createPropertyMutation.isPending) ? 'Creating...' : 'Create Lead'}
+                        disabled={updateLeadMutation.isPending}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    {updateLeadMutation.isPending ? 'Updating...' : 'Update Lead'}
                 </Button>
             </DialogFooter>
         </form>

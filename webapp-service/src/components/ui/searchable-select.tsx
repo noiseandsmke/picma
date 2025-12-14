@@ -1,7 +1,7 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {Check, ChevronDown, Search} from 'lucide-react';
-import {cn} from '@/lib/utils';
-import {Input} from '@/components/ui/input';
+import React, { useEffect, useRef, useState } from 'react';
+import { Check, ChevronDown, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 interface Option {
     value: string | number;
@@ -20,14 +20,14 @@ interface SearchableSelectProps {
 }
 
 export const SearchableSelect: React.FC<SearchableSelectProps> = ({
-                                                                      options,
-                                                                      value,
-                                                                      onChange,
-                                                                      placeholder = "Select...",
-                                                                      className,
-                                                                      isLoading = false,
-                                                                      disabled = false
-                                                                  }) => {
+    options,
+    value,
+    onChange,
+    placeholder = "Select...",
+    className,
+    isLoading = false,
+    disabled = false
+}) => {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState("");
     const containerRef = useRef<HTMLDivElement>(null);
@@ -68,7 +68,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 className={cn(
                     "flex h-10 w-full items-center justify-between rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm ring-offset-slate-950 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 cursor-pointer text-slate-200",
                     isOpen && "ring-2 ring-slate-400 ring-offset-2 border-slate-600",
-                    disabled && "cursor-not-allowed opacity-50"
+                    disabled && "cursor-not-allowed opacity-50",
+                    className
                 )}
                 onClick={toggleOpen}
                 aria-haspopup="listbox"
@@ -84,14 +85,14 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 <span className={cn(!selectedOption && "text-slate-500")}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
-                <ChevronDown className="h-4 w-4 opacity-50"/>
+                <ChevronDown className="h-4 w-4 opacity-50" />
             </button>
 
             {isOpen && !disabled && (
                 <div
-                    className="absolute z-50 mt-1 max-h-[300px] w-full min-w-[300px] overflow-hidden rounded-md border border-slate-700 bg-slate-950 text-slate-50 shadow-md animate-in fade-in-0 zoom-in-95">
+                    className="absolute z-50 mt-1 max-h-[300px] w-full min-w-[300px] overflow-hidden rounded-md border border-slate-700 bg-slate-900 text-slate-50 shadow-md animate-in fade-in-0 zoom-in-95">
                     <div className="flex items-center border-b border-slate-800 px-3">
-                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50"/>
+                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                         <Input
                             className="border-0 bg-transparent px-0 py-3 text-sm placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 h-9"
                             placeholder="Search..."

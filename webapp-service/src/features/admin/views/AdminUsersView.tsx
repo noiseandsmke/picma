@@ -1,10 +1,7 @@
 import React, {useState} from 'react';
-import {PlusCircle} from 'lucide-react';
 import {Button} from "@/components/ui/button";
 import {TableCell, TableRow} from "@/components/ui/table";
 import SharedTable, {Column} from "@/components/ui/shared-table";
-import {Badge} from "@/components/ui/badge";
-import {Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {createUser, fetchUsers, UserDto} from '../services/userService';
 import {Skeleton} from '@/components/ui/skeleton';
@@ -12,17 +9,22 @@ import AdminLayout from '../layouts/AdminLayout';
 import {CreateUserDialog} from '../components/CreateUserDialog';
 import {EditUserDialog} from '../components/EditUserDialog';
 import {toast} from 'sonner';
+import {cn} from '@/lib/utils';
 
 const AdminUsersView: React.FC = () => {
-    const [activeTab, setActiveTab] = useState('all');
+    const [activeFilter, setActiveFilter] = useState<'all' | 'agent' | 'owner'>('all');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
-    const [selectedUser, _setSelectedUser] = useState<UserDto | null>(null);
+    const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
+
     const queryClient = useQueryClient();
 
-    const {data: users, isLoading, isError, error} = useQuery({
-        queryKey: ['admin-users', activeTab],
-        queryFn: () => fetchUsers(activeTab, '')
+    const {data: users, isLoading, isError} = useQuery({
+        queryKey: ['admin-users', activeFilter],
+        queryFn: async () => {
+            const roleArg = activeFilter === 'all' ? undefined : activeFilter;
+            return fetchUsers(roleArg);
+        }
     });
 
     const createMutation = useMutation({
@@ -45,149 +47,154 @@ const AdminUsersView: React.FC = () => {
         return 'User';
     };
 
-    const filteredUsers = users?.filter(u => {
-        const role = getDisplayRole(u).toUpperCase();
-        return role !== 'ADMIN';
-    });
-
-    const getColumns = (): Column[] => {
-        const baseColumns: Column[] = [
-            {header: "Full name", width: "25%", className: "text-slate-400"},
-            {header: "Username", width: "20%", className: "text-slate-400"},
-        ];
-
-        if (activeTab === 'all') {
-            baseColumns.push({header: "Role", width: "15%", className: "text-slate-400"});
-        }
-
-        if (activeTab === 'agent') {
-            baseColumns.push({header: "Zip code", width: "15%", className: "text-slate-400"});
-        }
-
-        baseColumns.push({header: "Email", width: "20%", className: "text-slate-400"});
-
-        return baseColumns;
+    const getInitials = (firstName: string, lastName: string) => {
+        return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
     };
 
-    const renderRoleBadge = (role: string) => {
-        const upperRole = role.toUpperCase();
-        if (upperRole === 'OWNER') {
-            return (
-                <Badge variant="outline" className="border-purple-800 text-purple-200 bg-purple-900/50">
-                    Owner
-                </Badge>
-            );
-        } else if (upperRole === 'AGENT') {
-            return (
-                <Badge variant="outline" className="border-blue-800 text-blue-200 bg-blue-900/50">
-                    Agent
-                </Badge>
-            );
-        } else {
-            return (
-                <Badge variant="outline" className="border-slate-800 text-slate-400 bg-slate-900">
-                    {role}
-                </Badge>
-            );
+    const getRandomColor = (username: string) => {
+        const colors = ['bg-indigo-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-blue-500', 'bg-purple-500'];
+        let hash = 0;
+        for (let i = 0; i < username.length; i++) {
+            hash = username.charCodeAt(i) + ((hash << 5) - hash);
         }
+        return colors[Math.abs(hash) % colors.length];
+    };
+
+    const handleEditUser = (user: UserDto) => {
+        setSelectedUser(user);
+        setIsEditOpen(true);
+    };
+
+    const getColumns = (): Column[] => {
+        const actionCol = {header: "", width: "8%", className: "text-right"};
+
+        if (activeFilter === 'agent') {
+            return [
+                {header: "Member", width: "40%"},
+                {header: "Zipcode", width: "20%"},
+                actionCol,
+            ];
+        }
+        if (activeFilter === 'owner') {
+            return [
+                {header: "Member", width: "40%"},
+                actionCol,
+            ];
+        }
+        return [
+            {header: "Member", width: "35%"},
+            {header: "Role", width: "12%"},
+            actionCol,
+        ];
     };
 
     return (
         <AdminLayout>
-            <div className="space-y-6">
-                <div className="rounded-xl border border-slate-800 bg-slate-950 text-slate-200 shadow-sm">
-                    <div className="p-6 flex flex-col space-y-4 border-b border-slate-800">
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col space-y-1">
-                                <h3 className="font-semibold text-lg text-white">All Users</h3>
-                                <p className="text-sm text-slate-400">Manage and track system users.</p>
-                            </div>
-                            <Button
-                                onClick={() => setIsCreateOpen(true)}
-                                variant="outline"
-                                className="text-white border-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-white"
-                            >
-                                <PlusCircle className="h-4 w-4 mr-2"/>
-                                Create User
-                            </Button>
-                        </div>
-                        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-                                <TabsList className="bg-slate-900 border border-slate-800">
-                                    <TabsTrigger
-                                        value="all"
-                                        className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white text-slate-400"
-                                    >
-                                        All Users
-                                    </TabsTrigger>
-                                    <TabsTrigger
-                                        value="agent"
-                                        className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white text-slate-400"
-                                    >
-                                        Agents
-                                    </TabsTrigger>
-                                    <TabsTrigger
-                                        value="owner"
-                                        className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white text-slate-400"
-                                    >
-                                        Owners
-                                    </TabsTrigger>
-                                </TabsList>
-                            </Tabs>
-                        </div>
-                    </div>
+            <div className="space-y-8 max-w-[1600px] mx-auto pb-10">
 
-                    <div className="p-0">
-                        {isError && (
-                            <div className="p-6 text-center text-red-500 bg-red-500/10 border-b border-red-500/20">
-                                Failed to load users: {error instanceof Error ? error.message : 'Unknown error'}
-                            </div>
-                        )}
-                        <SharedTable
-                            columns={getColumns()}
-                            isLoading={isLoading}
-                            isEmpty={!isLoading && !isError && (!filteredUsers || filteredUsers.length === 0)}
-                            emptyMessage="No users found."
+                <div className="flex flex-col sm:flex-row gap-4 justify-end items-center">
+                    <div
+                        className="flex items-center gap-1 bg-background-dark p-1 rounded-lg border border-slate-700/50">
+                        <button
+                            onClick={() => setActiveFilter('all')}
+                            className={cn(
+                                "px-4 py-1.5 rounded-md text-sm font-medium transition-all",
+                                activeFilter === 'all' ? "bg-primary text-white shadow-sm" : "text-slate-400 hover:text-white hover:bg-slate-800"
+                            )}
                         >
-                            {isLoading ? (
-                                [1, 2, 3, 4].map((id) => (
-                                    <TableRow key={`skeleton-${id}`} className="border-slate-800">
-                                        <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-32 bg-slate-800"/></TableCell>
-                                        <TableCell><Skeleton className="h-8 w-8 ml-auto bg-slate-800"/></TableCell>
-                                    </TableRow>
-                                ))
-                            ) : filteredUsers?.map((user) => (
-                                <TableRow key={user.id}
-                                          className="border-slate-800 hover:bg-slate-900/50 group transition-colors">
-                                    <TableCell className="font-medium text-slate-200">
-                                        {user.firstName} {user.lastName}
-                                    </TableCell>
-                                    <TableCell className="text-slate-400">
-                                        {user.username}
-                                    </TableCell>
-                                    {activeTab === 'all' && (
-                                        <TableCell>
-                                            {renderRoleBadge(getDisplayRole(user))}
-                                        </TableCell>
-                                    )}
-                                    {activeTab === 'agent' && (
-                                        <TableCell className="text-slate-400">
-                                            {user.zipcode || '-'}
-                                        </TableCell>
-                                    )}
-                                    <TableCell className="text-slate-400">
-                                        {user.email}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </SharedTable>
+                            All
+                        </button>
+                        <button
+                            onClick={() => setActiveFilter('agent')}
+                            className={cn(
+                                "px-4 py-1.5 rounded-md text-sm font-medium transition-all",
+                                activeFilter === 'agent' ? "bg-primary text-white shadow-sm" : "text-slate-400 hover:text-white hover:bg-slate-800"
+                            )}
+                        >
+                            Agents
+                        </button>
+                        <button
+                            onClick={() => setActiveFilter('owner')}
+                            className={cn(
+                                "px-4 py-1.5 rounded-md text-sm font-medium transition-all",
+                                activeFilter === 'owner' ? "bg-primary text-white shadow-sm" : "text-slate-400 hover:text-white hover:bg-slate-800"
+                            )}
+                        >
+                            Owners
+                        </button>
                     </div>
                 </div>
 
+                <SharedTable
+                    columns={getColumns()}
+                    isLoading={isLoading}
+                    isEmpty={!isLoading && !isError && (!users || users.length === 0)}
+                    emptyMessage="No members found matching your criteria."
+                    className="border border-slate-800 rounded-xl overflow-hidden shadow-sm bg-slate-900"
+                >
+                    {isLoading ? (
+                        Array.from({length: 5}).map((_, i) => (
+                            <TableRow key={`skeleton-${i}`} className="border-b border-slate-700/50">
+                                <TableCell>
+                                    <div className="flex items-center gap-3"><Skeleton
+                                        className="h-10 w-10 rounded-full bg-slate-800"/>
+                                        <div className="space-y-1"><Skeleton
+                                            className="h-4 w-32 bg-slate-800"/><Skeleton
+                                            className="h-3 w-40 bg-slate-800"/></div>
+                                    </div>
+                                </TableCell>
+                                <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
+                                <TableCell><Skeleton className="h-6 w-16 rounded-full bg-slate-800"/></TableCell>
+                                <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
+                                <TableCell><Skeleton className="h-8 w-8 ml-auto bg-slate-800"/></TableCell>
+                            </TableRow>
+                        ))
+                    ) : (
+                        users?.map((user) => {
+                            const role = getDisplayRole(user);
+
+                            return (
+                                <TableRow key={user.id}
+                                          className="border-b border-slate-800 hover:bg-slate-800/50 transition-colors group">
+                                    <TableCell className="py-4">
+                                        <div className="flex items-center gap-4">
+                                            <div
+                                                className={cn("h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md", getRandomColor(user.username))}>
+                                                {getInitials(user.firstName, user.lastName)}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span
+                                                    className="text-white font-semibold">{user.firstName} {user.lastName}</span>
+                                                <span className="text-slate-400 text-xs">{user.email}</span>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    {activeFilter === 'all' && (
+                                        <TableCell className="py-4">
+                                            <span
+                                                className="text-slate-200 font-medium capitalize">{role.toLowerCase()}</span>
+                                        </TableCell>
+                                    )}
+                                    {activeFilter === 'agent' && (
+                                        <TableCell className="py-4">
+                                            <span className="text-slate-300">{user.zipcode || 'N/A'}</span>
+                                        </TableCell>
+                                    )}
+                                    <TableCell className="py-4 text-right">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleEditUser(user)}
+                                            className="text-slate-400 hover:text-white hover:bg-slate-800"
+                                        >
+                                            <span className="material-symbols-outlined text-[20px]">edit</span>
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })
+                    )}
+                </SharedTable>
                 <CreateUserDialog
                     open={isCreateOpen}
                     onOpenChange={setIsCreateOpen}

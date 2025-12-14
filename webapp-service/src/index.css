@@ -1,27 +1,75 @@
+@import './styles/toast.css';
+@import './styles/radix-overrides.css';
 @import "tailwindcss";
 
 
 @theme {
     --color-primary: #3b82f6;
-    --color-primary-sky: #0ea5e9;
-    --color-primary-sky-hover: #0284c7;
+    --color-primary-hover: #2563eb;
 
-    --color-background-light: #f8fafc;
     --color-background-dark: #0f172a;
     --color-surface-dark: #1e293b;
+    --color-surface-card: #1e293b;
+    --color-border-dark: #334155;
+    --color-border-lighter: #475569;
 
-    --color-bg-dark: #0B1120;
-    --color-card-dark: #151e32;
-    --color-input-dark: #0f172a;
+    --color-text-main: #f8fafc;
+    --color-text-secondary: #94a3b8;
+    --color-text-muted: #64748b;
+
+    --color-accent-emerald: #10b981;
+    --color-accent-amber: #f59e0b;
+    --color-accent-rose: #f43f5e;
+    --color-accent-blue: #3b82f6;
+    --color-accent-purple: #8b5cf6;
 
     --font-display: "Inter", sans-serif;
     --font-sans: "Inter", sans-serif;
 
+    --shadow-glow: 0 0 15px rgba(59, 130, 246, 0.1);
     --shadow-sonner: 0 4px 12px rgba(0, 0, 0, 0.1);
     --shadow-sonner-dark: 0 4px 12px rgba(0, 0, 0, 0.4);
 
-    --animate-spin-slow: spin 12s linear infinite;
+    --animate-pulse-glow: pulse-glow 8s infinite alternate;
+    --animate-float: float 10s ease-in-out infinite;
     --animate-slide-in-up: slide-in-up 0.4s ease-out forwards;
+    --animate-slide-up-fade: slideUpFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+    @keyframes slideUpFade {
+        0% {
+            transform: translateY(10px) scale(0.95);
+            opacity: 0;
+        }
+
+        100% {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+    }
+
+    @keyframes pulse-glow {
+        0% {
+            transform: scale(1);
+            opacity: 0.5;
+        }
+
+        100% {
+            transform: scale(1.2);
+            opacity: 0.8;
+        }
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-20px);
+        }
+    }
 
     @keyframes slide-in-up {
         0% {
@@ -32,6 +80,47 @@
         100% {
             transform: translateY(0);
             opacity: 1;
+        }
+    }
+
+    /* Orbit Animations */
+    @keyframes orbit-cw {
+        0% {
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+
+        100% {
+            transform: translate(-50%, -50%) rotate(360deg);
+        }
+    }
+
+    @keyframes orbit-ccw {
+        0% {
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+
+        100% {
+            transform: translate(-50%, -50%) rotate(-360deg);
+        }
+    }
+
+    @keyframes counter-rot {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(-360deg);
+        }
+    }
+
+    @keyframes counter-rot-rev {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
         }
     }
 }
@@ -59,9 +148,50 @@
         scrollbar-width: thin;
         scrollbar-color: #334155 transparent;
     }
+
+    select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+    }
 }
 
 @layer utilities {
+    .glass-effect {
+        @apply bg-background-dark/80 backdrop-blur-md border border-white/5;
+    }
+
+    .glass-panel {
+        @apply bg-surface-dark/80 backdrop-blur-sm border border-border-dark;
+    }
+
+    .glass-sidebar {
+        background: rgba(11, 17, 32, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .glow-bg {
+        background: radial-gradient(circle at 50% 0%, rgba(79, 70, 229, 0.1) 0%, rgba(2, 4, 10, 0) 50%);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #05050a;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #1f2937;
+        border-radius: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #374151;
+    }
 
     .no-spinner::-webkit-inner-spin-button,
     .no-spinner::-webkit-outer-spin-button {
@@ -72,6 +202,14 @@
     .no-spinner {
         -moz-appearance: textfield;
         appearance: textfield;
+    }
+
+    .bg-grid {
+        background-size: 50px 50px;
+        background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+        -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
     }
 }
 

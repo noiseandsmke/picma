@@ -48,15 +48,15 @@ const AdminPropertiesView: React.FC = () => {
     const columns: Column[] = [
         {
             header: <div className="flex items-center gap-2">Property address <ArrowUpDown className="h-3 w-3" /></div>,
-            width: "35%",
-            className: "text-slate-400 cursor-pointer hover:text-indigo-400 transition-colors",
+            width: "30%",
+            className: "text-slate-400 cursor-pointer hover:text-primary transition-colors",
             onClick: () => handleSort('location.street')
         },
         {
             header: <div className="flex items-center gap-2"><Map className="h-3 w-3" /> Zip code <ArrowUpDown
                 className="h-3 w-3" /></div>,
-            width: "10%",
-            className: "text-slate-400 cursor-pointer hover:text-indigo-400 transition-colors",
+            width: "15%",
+            className: "text-slate-400 cursor-pointer hover:text-primary transition-colors",
             onClick: () => handleSort('location.zipCode')
         },
 
@@ -67,8 +67,8 @@ const AdminPropertiesView: React.FC = () => {
         },
         {
             header: <div className="flex items-center gap-2">Sq. meters <ArrowUpDown className="h-3 w-3" /></div>,
-            width: "10%",
-            className: "text-slate-400 cursor-pointer hover:text-indigo-400 transition-colors",
+            width: "15%",
+            className: "text-slate-400 cursor-pointer hover:text-primary transition-colors",
             onClick: () => handleSort('attributes.squareMeters')
         },
         {
@@ -77,8 +77,8 @@ const AdminPropertiesView: React.FC = () => {
             className: "text-slate-400"
         },
         {
-            header: "Actions",
-            width: "5%",
+            header: "",
+            width: "10%",
             className: "text-right text-slate-400"
         }
     ];
@@ -86,16 +86,10 @@ const AdminPropertiesView: React.FC = () => {
     return (
         <AdminLayout>
             <div className="space-y-6">
-                <div className="rounded-xl border border-slate-800 bg-slate-950 text-slate-200 shadow-sm">
-                    <div className="p-6 flex flex-col space-y-4 border-b border-slate-800">
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col space-y-1">
-                                <h3 className="font-semibold text-lg text-white">All properties</h3>
-                                <p className="text-sm text-slate-400">Search and manage physical assets by address or
-                                    location.</p>
-                            </div>
-                        </div>
-                    </div>
+
+
+
+                <div className="rounded-xl border border-slate-800 bg-slate-900 text-slate-200 shadow-sm">
                     <div className="p-0">
                         <SharedTable
                             columns={columns}
@@ -105,7 +99,7 @@ const AdminPropertiesView: React.FC = () => {
                         >
                             {isLoading ? (
                                 ['skel-1', 'skel-2', 'skel-3', 'skel-4'].map((id) => (
-                                    <TableRow key={id} className="border-slate-800">
+                                    <TableRow key={id} className="border-slate-700/50">
                                         <TableCell><Skeleton className="h-8 w-48 bg-slate-800" /></TableCell>
                                         <TableCell><Skeleton className="h-6 w-16 bg-slate-800" /></TableCell>
                                         <TableCell><Skeleton className="h-6 w-20 bg-slate-800" /></TableCell>
@@ -116,11 +110,11 @@ const AdminPropertiesView: React.FC = () => {
                                     </TableRow>
                                 ))
                             ) : properties?.map((prop) => (
-                                <TableRow key={prop.id} className="border-slate-800 hover:bg-slate-900/50 group">
+                                <TableRow key={prop.id} className="border-b border-slate-700/50 hover:bg-slate-800/50 group transition-colors">
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <div
-                                                className="h-8 w-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500">
+                                                className="h-8 w-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 border border-slate-700/50">
                                                 <Building2 className="h-4 w-4" />
                                             </div>
                                             <div>
@@ -149,9 +143,9 @@ const AdminPropertiesView: React.FC = () => {
                                     <TableCell className="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-slate-800">
                                                     <span className="sr-only">Open menu</span>
-                                                    <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                                                    <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end"

@@ -19,8 +19,8 @@ export const LEAD_STATUS_CONFIG: Record<string, {
     ACCEPTED: {
         label: "Accepted",
         value: "ACCEPTED",
-        className: "bg-blue-500/10 text-blue-500 border-blue-500/20 hover:bg-blue-500/20",
-        dotClass: "bg-blue-500"
+        className: "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20",
+        dotClass: "bg-primary"
     },
     REJECTED: {
         label: "Rejected",

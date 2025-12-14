@@ -35,21 +35,21 @@ export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({ open
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px] bg-[#141124] border-slate-800 text-slate-200">
+            <DialogContent className="sm:max-w-[600px] bg-slate-900 border-slate-800 text-slate-200">
                 <DialogHeader>
                     <DialogTitle className="text-white">Property Details</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6 py-4">
 
                     <div className="space-y-2">
-                        <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Owner
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-primary">Owner
                             Information</h4>
                         {isOwnersLoading && (
                             <Skeleton className="h-16 w-full bg-slate-800" />
                         )}
                         {!isOwnersLoading && owner && (
                             <div
-                                className="bg-slate-900 p-3 rounded-lg border border-slate-800 grid grid-cols-2 gap-2 text-sm">
+                                className="bg-slate-950 p-3 rounded-lg border border-slate-700/50 grid grid-cols-2 gap-2 text-sm">
                                 <div><span className="text-slate-500">Name:</span> {owner.firstName} {owner.lastName}
                                 </div>
                                 <div><span className="text-slate-500">Username:</span> {owner.username}</div>
@@ -62,11 +62,11 @@ export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({ open
                         )}
                     </div>
 
-                    <Separator className="bg-slate-800" />
+                    <Separator className="bg-slate-700/50" />
 
                     <div className="space-y-4">
                         <div className="flex items-start gap-3">
-                            <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-400 mt-1">
+                            <div className="bg-primary/10 p-2 rounded-lg text-primary mt-1">
                                 <MapPin size={18} />
                             </div>
                             <div className="space-y-1 flex-1">
@@ -78,7 +78,7 @@ export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({ open
                             </div>
                         </div>
 
-                        <Separator className="bg-slate-800" />
+                        <Separator className="bg-slate-700/50" />
 
                         <div className="flex items-start gap-3">
                             <div className="bg-emerald-500/10 p-2 rounded-lg text-emerald-400 mt-1">
@@ -103,7 +103,7 @@ export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({ open
                             </div>
                         </div>
 
-                        <Separator className="bg-slate-800" />
+                        <Separator className="bg-slate-700/50" />
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex items-start gap-3">

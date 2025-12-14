@@ -1,0 +1,9 @@
+/* Radix Popper Overrides */
+[data-radix-popper-content-wrapper] {
+    z-index: 9999 !important;
+}
+
+[data-radix-popper-content-wrapper]>* {
+    /* Ensure child popovers inherit correct background if not specified */
+    /* But avoid overriding specific component styles if possible */
+}

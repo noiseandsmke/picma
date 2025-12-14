@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {ENV} from '@/config/env';
+import { ENV } from '@/config/env';
 
 const apiClient = axios.create({
     baseURL: ENV.API_URL,
@@ -36,7 +36,7 @@ const handleTokenRefresh = async (error: { config: any, response?: { status: num
 
     if (isRefreshing) {
         return new Promise((resolve, reject) => {
-            failedQueue.push({resolve, reject});
+            failedQueue.push({ resolve, reject });
         }).then(token => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return apiClient(originalRequest);
@@ -53,15 +53,15 @@ const handleTokenRefresh = async (error: { config: any, response?: { status: num
 
     if (!refreshToken) {
         sessionStorage.clear();
-        globalThis.location.href = '/login';
+        globalThis.location.href = '/signin';
         throw error;
     }
 
     try {
-        const {authService} = await import('./authService');
+        const { authService } = await import('./authService');
         const response = await authService.refresh(refreshToken, oldAccessToken || undefined);
 
-        const {jwtDecode} = await import('jwt-decode');
+        const { jwtDecode } = await import('jwt-decode');
         const decodedAccess = jwtDecode<{
             sub: string,
             preferred_username: string,
@@ -102,7 +102,10 @@ const handleTokenRefresh = async (error: { config: any, response?: { status: num
 
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${response.access_token}`;
 
-        globalThis.dispatchEvent(new Event('auth:token-refreshed'));
+        const expiresAt = Date.now() + response.expires_in * 1000;
+        globalThis.dispatchEvent(new CustomEvent('auth:token-refreshed', {
+            detail: { expiresAt }
+        }));
 
         originalRequest.headers.Authorization = `Bearer ${response.access_token}`;
 
@@ -112,7 +115,7 @@ const handleTokenRefresh = async (error: { config: any, response?: { status: num
     } catch (refreshError) {
         processQueue(refreshError, null);
         sessionStorage.clear();
-        globalThis.location.href = '/login';
+        globalThis.location.href = '/signin';
         throw refreshError;
     } finally {
         isRefreshing = false;
@@ -139,13 +142,17 @@ apiClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        if (originalRequest.url?.includes('/auth/login')) {
+            throw error;
+        }
+
         if (error.response?.status === 401 && !originalRequest._retry) {
             return handleTokenRefresh(error);
         }
 
         if (error.response?.status === 401 && originalRequest._retry) {
             sessionStorage.clear();
-            globalThis.location.href = '/login';
+            globalThis.location.href = '/signin';
             throw error;
         }
 

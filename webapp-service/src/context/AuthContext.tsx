@@ -1,4 +1,5 @@
-import React, {createContext, useContext, useEffect, useMemo, useState} from 'react';
+import React, {createContext, useContext, useEffect, useMemo, useRef, useState} from 'react';
+import {toast} from "sonner";
 import {AuthState, User, UserRole} from '@/types/auth.types';
 
 interface AuthContextType extends AuthState {
@@ -17,6 +18,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
         token: null,
     });
 
+    const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const warningTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const clearTokenExpiryMonitor = () => {
+        if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+        if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+        logoutTimerRef.current = null;
+        warningTimerRef.current = null;
+    };
+
+    const setupTokenExpiryMonitor = (expiresAt: number) => {
+        clearTokenExpiryMonitor();
+
+        const now = Date.now();
+        const timeLeft = expiresAt - now;
+
+        if (timeLeft <= 0) {
+            logout();
+            return;
+        }
+
+        const warningTime = timeLeft - (5 * 60 * 1000);
+        if (warningTime > 0) {
+            warningTimerRef.current = setTimeout(() => {
+                toast.warning("Session Expiring Soon", {
+                    description: "Your session will expire in 5 minutes. Please save your work.",
+                    duration: 60000,
+                    action: {
+                        label: "Refresh Session",
+                        onClick: () => {
+                            globalThis.location.reload();
+                        }
+                    }
+                });
+            }, warningTime);
+        }
+
+        logoutTimerRef.current = setTimeout(() => {
+            toast.error('Session Expired', {
+                description: 'Your session has expired. You will be logged out.',
+                duration: 3000
+            });
+            setTimeout(() => logout(), 3000);
+        }, timeLeft);
+    };
+
     useEffect(() => {
         const token = sessionStorage.getItem('access_token');
         const userStr = sessionStorage.getItem('user');
@@ -24,6 +71,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
             try {
                 const user = JSON.parse(userStr);
                 setAuth({isAuthenticated: true, user, token});
+
+                const expiresAt = sessionStorage.getItem('token_expires_at');
+                if (expiresAt) {
+                    setupTokenExpiryMonitor(parseInt(expiresAt, 10));
+                } else if (user.exp) {
+                    setupTokenExpiryMonitor(user.exp * 1000);
+                }
             } catch (e) {
                 console.error("Failed to parse user from session storage", e);
                 sessionStorage.clear();
@@ -43,9 +97,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
             }
         };
 
-        globalThis.addEventListener('auth:token-refreshed', handleTokenRefresh);
+        const handleTokenRefreshedEvent = (event: Event) => {
+            handleTokenRefresh();
+            const customEvent = event as CustomEvent;
+            if (customEvent.detail?.expiresAt) {
+                setupTokenExpiryMonitor(customEvent.detail.expiresAt);
+            } else {
+                const expiresAt = sessionStorage.getItem('token_expires_at');
+                if (expiresAt) setupTokenExpiryMonitor(parseInt(expiresAt, 10));
+            }
+        };
+
+        globalThis.addEventListener('auth:token-refreshed', handleTokenRefreshedEvent);
         return () => {
-            globalThis.removeEventListener('auth:token-refreshed', handleTokenRefresh);
+            globalThis.removeEventListener('auth:token-refreshed', handleTokenRefreshedEvent);
+            clearTokenExpiryMonitor();
         };
     }, []);
 
@@ -53,9 +119,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
         sessionStorage.setItem('access_token', token);
         sessionStorage.setItem('user', JSON.stringify(user));
         setAuth({isAuthenticated: true, user, token});
+        if (user.exp) {
+            setupTokenExpiryMonitor(user.exp * 1000);
+        } else {
+            const expiresAt = sessionStorage.getItem('token_expires_at');
+            if (expiresAt) setupTokenExpiryMonitor(parseInt(expiresAt, 10));
+        }
     };
 
     const logout = async () => {
+        clearTokenExpiryMonitor();
         const refreshToken = sessionStorage.getItem('refresh_token');
 
         try {
@@ -68,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
         } finally {
             sessionStorage.clear();
             setAuth({isAuthenticated: false, user: null, token: null});
-            globalThis.location.href = '/login';
+            globalThis.location.href = '/signin';
         }
     };
 

@@ -335,7 +335,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
-                        <User size={14} className="text-indigo-400" /> General info
+                        <User size={14} className="text-primary" /> General info
                     </h4>
 
                     <div className="space-y-3">
@@ -435,7 +435,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                     type="button"
                                                     variant="ghost"
                                                     onClick={() => setQuickDuration(1)}
-                                                    className="h-4 px-1 text-[10px] text-indigo-400 hover:underline bg-indigo-950/30 rounded hover:bg-indigo-950/50"
+                                                    className="h-4 px-1 text-[10px] text-primary hover:underline bg-primary/20 rounded hover:bg-primary/40"
                                                 >
                                                     1Y
                                                 </Button>
@@ -443,7 +443,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                     type="button"
                                                     variant="ghost"
                                                     onClick={() => setQuickDuration(2)}
-                                                    className="h-4 px-1 text-[10px] text-indigo-400 hover:underline bg-indigo-950/30 rounded hover:bg-indigo-950/50"
+                                                    className="h-4 px-1 text-[10px] text-primary hover:underline bg-primary/20 rounded hover:bg-primary/40"
                                                 >
                                                     2Y
                                                 </Button>
@@ -512,7 +512,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                         type="button"
                                         variant="ghost"
                                         size="sm"
-                                        className="h-4 text-[10px] text-indigo-400 px-0 hover:bg-transparent hover:text-indigo-300"
+                                        className="h-4 text-[10px] text-primary px-0 hover:bg-transparent hover:text-primary-hover"
                                         onClick={handleUseValuation}
                                     >
                                         Use valuation
@@ -630,15 +630,15 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                     </div>
                 </div>
                 <div className="col-span-1 lg:col-span-2 mt-4">
-                    <div className="rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-4">
+                    <div className="rounded-xl border border-primary/20 bg-primary/10 p-4">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-3 text-indigo-400">
-                                <div className="p-2 bg-indigo-500/10 rounded-full">
+                            <div className="flex items-center gap-3 text-primary">
+                                <div className="p-2 bg-primary/10 rounded-full">
                                     <Wallet size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-indigo-300">Estimated premium</p>
-                                    <p className="text-xs text-indigo-400/60">Auto-calculated based on Plan rate</p>
+                                    <p className="text-sm font-semibold text-sky-200">Estimated premium</p>
+                                    <p className="text-xs text-primary/60">Auto-calculated based on Plan rate</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 md:gap-8">
@@ -666,7 +666,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                         <DialogFooter className="mt-6 gap-2">
                             <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
                             <Button type="submit" disabled={isLoading}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px]">
+                                className="bg-primary hover:bg-primary-hover text-white min-w-[120px]">
                                 {initialData ? 'Save changes' : 'Create quote'}
                             </Button>
                         </DialogFooter>

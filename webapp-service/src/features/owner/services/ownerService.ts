@@ -1,6 +1,6 @@
 import apiClient from '@/services/apiClient';
-import {fetchUserById} from '../../admin/services/userService';
-import {PropertyInfoDto} from "@/features/admin/services/propertyService";
+import { fetchUserById } from '../../admin/services/userService';
+import { PropertyInfoDto } from "@/features/admin/services/propertyService";
 
 export interface AgentDto {
     id: string;
@@ -13,7 +13,12 @@ export interface AgentDto {
 
 const PROPERTY_BASE_PATH = '/picma/properties';
 const AGENT_BASE_PATH = '/picma/agents';
+const LEAD_BASE_PATH = '/picma/leads';
 
+export const updateOwnerLead = async (leadId: number, leadData: object): Promise<object> => {
+    const response = await apiClient.put(`${LEAD_BASE_PATH}/${leadId}/details`, leadData);
+    return response.data;
+};
 
 export const fetchOwnerProperties = async (ownerId: string): Promise<PropertyInfoDto[]> => {
 
@@ -34,7 +39,7 @@ export const fetchAgentsForDirectory = async (zipCode: string): Promise<AgentDto
         if (!agentIds || agentIds.length === 0) {
             return [];
         }
-        
+
         const agentPromises = agentIds.map(async (id) => {
             const user = await fetchUserById(id);
             if (user) {

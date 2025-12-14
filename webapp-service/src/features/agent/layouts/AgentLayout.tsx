@@ -1,9 +1,9 @@
-import React, {ReactNode, useState} from 'react';
-import {cn} from '@/lib/utils';
-import {LayoutDashboard} from 'lucide-react';
-import {useAuth} from '@/context/AuthContext';
-import SidebarNavigation, {NavItem} from '@/components/ui/sidebar-navigation';
-import {UserDropdown} from '@/components/ui/user-dropdown';
+import React, { ReactNode, useState } from 'react';
+import { cn } from '@/lib/utils';
+import { LayoutDashboard } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import SidebarNavigation, { NavItem } from '@/components/ui/sidebar-navigation';
+import { UserDropdown } from '@/components/ui/user-dropdown';
 
 const navItems: NavItem[] = [
     {
@@ -17,8 +17,8 @@ interface AgentLayoutProps {
     children: ReactNode;
 }
 
-const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
-    const {user} = useAuth();
+const AgentLayout: React.FC<AgentLayoutProps> = ({ children }) => {
+    const { user } = useAuth();
     const [openMenus, setOpenMenus] = useState<string[]>([]);
 
     const toggleMenu = (label: string) => {
@@ -34,14 +34,14 @@ const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
                 <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
                     <div className="flex items-center gap-2">
                         <div
-                            className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">P
+                            className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl">P
                         </div>
                         <span className="font-semibold text-white tracking-tight">PICMA Agent</span>
                     </div>
                 </div>
 
                 <div className="flex-1 py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar">
-                    <SidebarNavigation items={navItems} openMenus={openMenus} toggleMenu={toggleMenu}/>
+                    <SidebarNavigation items={navItems} openMenus={openMenus} toggleMenu={toggleMenu} />
                 </div>
             </aside>
 
@@ -51,14 +51,14 @@ const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
                     <div>
                         <h1 className="text-xl font-semibold text-white">Agent dashboard</h1>
                         <div className="flex items-center gap-2">
-                             <span
-                                 className={cn("text-xs font-medium px-2 py-0.5 rounded-full", "bg-blue-500/20 text-blue-300")}>
+                            <span
+                                className={cn("text-xs font-medium px-2 py-0.5 rounded-full", "bg-blue-500/20 text-blue-300")}>
                                 Insurance agent
                             </span>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <UserDropdown displayName={user?.name} username={user?.username} roleLabel="Agent"/>
+                        <UserDropdown displayName={user?.name} username={user?.username} roleLabel="Agent" />
                     </div>
                 </header>
 

@@ -1,28 +1,15 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, {useState} from 'react';
+import {useQuery} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
-import { fetchAllLeads, LeadDto } from '../services/leadService';
-import { fetchAllProperties } from '../services/propertyService';
-import { fetchUsers } from '../services/userService';
-import {
-    ArrowUpDown,
-    Building2,
-    Calendar,
-    Clock,
-    Eye,
-    Filter,
-    MapPin,
-    MoreHorizontal,
-    Search,
-    User
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { TableCell, TableRow } from "@/components/ui/table";
-import SharedTable, { Column } from '@/components/ui/shared-table';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {fetchAllLeads, LeadDto} from '../services/leadService';
+import {fetchAllProperties} from '../services/propertyService';
+import {fetchUsers} from '../services/userService';
+import {cn} from '@/lib/utils';
+import {TableCell, TableRow} from "@/components/ui/table";
+import SharedTable, {Column} from '@/components/ui/shared-table';
+import {Badge} from '@/components/ui/badge';
+import {Skeleton} from '@/components/ui/skeleton';
+import {Button} from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -31,13 +18,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Checkbox } from '@/components/ui/checkbox';
-import { LEAD_STATUS_CONFIG } from '../utils/statusMapping';
-import { LeadDetailDialog } from '@/features/admin/components/LeadDetailDialog';
+import {Checkbox} from '@/components/ui/checkbox';
+import {LEAD_STATUS_CONFIG} from '../utils/statusMapping';
+import {LeadDetailDialog} from '@/features/admin/components/LeadDetailDialog';
 
 const AdminLeadsView: React.FC = () => {
-    const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' });
-    const [searchTerm, setSearchTerm] = useState('');
+    const [sortConfig, setSortConfig] = useState({key: 'id', direction: 'asc'});
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
     const [selectedLead, setSelectedLead] = useState<LeadDto | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -75,7 +61,7 @@ const AdminLeadsView: React.FC = () => {
         if (sortConfig.key === key && sortConfig.direction === 'asc') {
             direction = 'desc';
         }
-        setSortConfig({ key, direction });
+        setSortConfig({key, direction});
     };
 
     const toggleStatus = (status: string) => {
@@ -107,7 +93,7 @@ const AdminLeadsView: React.FC = () => {
     };
 
     const parseUserInfo = (userInfo: string) => {
-        if (!userInfo) return { name: 'Unknown', details: '' };
+        if (!userInfo) return {name: 'Unknown', details: ''};
 
         const parts = userInfo.split(' - ');
         if (parts.length >= 2) {
@@ -116,7 +102,7 @@ const AdminLeadsView: React.FC = () => {
                 details: parts.slice(1).join(' • ')
             };
         }
-        return { name: userInfo, details: '' };
+        return {name: userInfo, details: ''};
     };
 
     const renderUserCell = (userInfo: string) => {
@@ -124,25 +110,27 @@ const AdminLeadsView: React.FC = () => {
         if (owner) {
             return (
                 <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
-                        <User size={14} />
+                    <div
+                        className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-700/50">
+                        <span className="material-symbols-outlined text-[20px]">person</span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="font-bold text-slate-200">{owner.firstName} {owner.lastName}</span>
-                        <span className="text-xs text-slate-500">{owner.email}</span>
+                        <span className="font-semibold text-white">{owner.firstName} {owner.lastName}</span>
+                        <span className="text-xs text-slate-400">{owner.email}</span>
                     </div>
                 </div>
             );
         }
-        const { name, details } = parseUserInfo(userInfo);
+        const {name, details} = parseUserInfo(userInfo);
         return (
             <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
-                    <User size={14} />
+                <div
+                    className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-700/50">
+                    <span className="material-symbols-outlined text-[20px]">person</span>
                 </div>
                 <div className="flex flex-col">
-                    <span className="font-bold text-slate-200">{name}</span>
-                    <span className="text-xs text-slate-500">{details}</span>
+                    <span className="font-semibold text-white">{name}</span>
+                    <span className="text-xs text-slate-400">{details}</span>
                 </div>
             </div>
         );
@@ -155,15 +143,15 @@ const AdminLeadsView: React.FC = () => {
                 return (
                     <div className="flex items-center gap-3">
                         <div
-                            className="h-8 w-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500">
-                            <Building2 className="h-4 w-4" />
+                            className="h-10 w-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 border border-slate-700/50">
+                            <span className="material-symbols-outlined text-[20px]">apartment</span>
                         </div>
-                        <div>
-                            <div
-                                className="font-medium text-slate-200">{matchedProp.location.street}, {matchedProp.location.ward}, {matchedProp.location.city}</div>
+                        <div className="flex flex-col">
+                            <span
+                                className="font-medium text-slate-200 line-clamp-1">{matchedProp.location.street}</span>
                             <div className="text-xs text-slate-500 flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {matchedProp.location.city}
+                                <span className="material-symbols-outlined text-[12px]">location_on</span>
+                                {matchedProp.location.city}, {matchedProp.location.ward}
                             </div>
                         </div>
                     </div>
@@ -186,7 +174,7 @@ const AdminLeadsView: React.FC = () => {
 
         return (
             <div className="flex items-center gap-2">
-                <span className="truncate max-w-[200px]" title={propertyInfoStr}>
+                <span className="truncate max-w-[200px] text-slate-300" title={propertyInfoStr}>
                     {propertyInfoStr}
                 </span>
             </div>
@@ -194,26 +182,18 @@ const AdminLeadsView: React.FC = () => {
     };
 
     const filteredLeads = leads?.filter(lead => {
-        let searchableText = lead.userInfo;
-        const owner = owners?.find(u => u.id === lead.userInfo);
-        if (owner) {
-            searchableText = `${owner.firstName} ${owner.lastName} ${owner.email} ${owner.mobile || ''}`;
-        }
-
-        const matchesSearch =
-            searchableText.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(lead.id).includes(searchTerm);
 
         const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(lead.status);
 
-        return matchesSearch && matchesStatus;
+        return matchesStatus;
     });
 
     const columns: Column[] = [
         {
             header: (
                 <div className="flex items-center gap-1">
-                    ID {sortConfig.key === 'id' && <ArrowUpDown size={14} />}
+                    ID {sortConfig.key === 'id' &&
+                    <span className="material-symbols-outlined text-[16px]">unfold_more</span>}
                 </div>
             ),
             width: "5%",
@@ -222,7 +202,8 @@ const AdminLeadsView: React.FC = () => {
         {
             header: (
                 <div className="flex items-center gap-1">
-                    User Info {sortConfig.key === 'userInfo' && <ArrowUpDown size={14} />}
+                    User Info {sortConfig.key === 'userInfo' &&
+                    <span className="material-symbols-outlined text-[16px]">unfold_more</span>}
                 </div>
             ),
             width: "25%",
@@ -231,7 +212,8 @@ const AdminLeadsView: React.FC = () => {
         {
             header: (
                 <div className="flex items-center gap-2">
-                    Property address {sortConfig.key === 'propertyInfo' && <ArrowUpDown size={14} />}
+                    Property address {sortConfig.key === 'propertyInfo' &&
+                    <span className="material-symbols-outlined text-[16px]">unfold_more</span>}
                 </div>
             ),
             width: "25%",
@@ -241,29 +223,30 @@ const AdminLeadsView: React.FC = () => {
             header: (
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" onClick={() => handleSort('status')}
-                        className="h-auto p-0 font-normal hover:bg-transparent hover:text-inherit">
-                        Status {sortConfig.key === 'status' && <ArrowUpDown size={14} />}
+                            className="h-auto p-0 font-normal hover:bg-transparent hover:text-white text-xs uppercase tracking-wider text-slate-400">
+                        Status {sortConfig.key === 'status' &&
+                        <span className="material-symbols-outlined text-[16px]">unfold_more</span>}
                     </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost"
-                                aria-label="Filter by status"
-                                className="h-6 w-6 p-0 hover:bg-slate-800 rounded-full relative">
-                                <Filter
-                                    className={cn("h-3 w-3", selectedStatuses.length > 0 ? "text-indigo-400" : "text-slate-500")} />
+                                    aria-label="Filter by status"
+                                    className="h-6 w-6 p-0 hover:bg-slate-800 rounded-full relative ml-1">
+                                <span
+                                    className={cn("material-symbols-outlined text-[16px]", selectedStatuses.length > 0 ? "text-primary" : "text-slate-500")}>filter_list</span>
                                 {selectedStatuses.length > 0 && (
                                     <span
-                                        className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-red-500 border border-slate-900" />
+                                        className="absolute top-0 right-0 h-2 w-2 rounded-full bg-primary border-2 border-slate-900"/>
                                 )}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start"
-                            className="bg-slate-900 border-slate-800 text-slate-200 w-56">
+                                             className="bg-slate-900 border-slate-700 text-slate-200 w-56">
                             <DropdownMenuLabel
                                 className="text-xs font-normal text-slate-500 uppercase tracking-wider px-2 py-1.5">
                                 Filter by status
                             </DropdownMenuLabel>
-                            <DropdownMenuSeparator className="bg-slate-800" />
+                            <DropdownMenuSeparator className="bg-white/5"/>
 
                             <DropdownMenuItem
                                 className="focus:bg-slate-800 focus:text-white cursor-pointer py-2 px-2"
@@ -275,7 +258,7 @@ const AdminLeadsView: React.FC = () => {
                                 <div className="flex items-center gap-3 w-full">
                                     <Checkbox
                                         checked={selectedStatuses.length === 0}
-                                        className="border-slate-600 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500 pointer-events-none"
+                                        className="border-slate-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary pointer-events-none"
                                     />
                                     <span className="text-sm">All Statuses</span>
                                 </div>
@@ -293,11 +276,11 @@ const AdminLeadsView: React.FC = () => {
                                     <div className="flex items-center gap-3 w-full">
                                         <Checkbox
                                             checked={selectedStatuses.includes(config.value)}
-                                            className="border-slate-600 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500 pointer-events-none"
+                                            className="border-slate-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary pointer-events-none"
                                         />
                                         <div className="flex items-center gap-2">
                                             <span
-                                                className={cn("h-2 w-2 rounded-full", config.dotClass)} />
+                                                className={cn("h-2 w-2 rounded-full", config.dotClass)}/>
                                             <span className="text-sm">{config.label}</span>
                                         </div>
                                     </div>
@@ -320,36 +303,57 @@ const AdminLeadsView: React.FC = () => {
         {
             header: (
                 <div className="flex items-center gap-1">
-                    Created {sortConfig.key === 'createDate' && <ArrowUpDown size={14} />}
+                    Created {sortConfig.key === 'createDate' &&
+                    <span className="material-symbols-outlined text-[16px]">unfold_more</span>}
                 </div>
             ),
             width: "15%",
             onClick: () => handleSort('createDate'),
         },
         {
-            header: "Actions",
+            header: "",
             width: "5%",
+            className: "text-right"
         }
     ];
 
     let content;
     if (isLeadsLoading) {
         content = [1, 2, 3, 4, 5].map((id) => (
-            <TableRow key={`skeleton-${id}`} className="border-slate-800">
-                <TableCell><Skeleton className="h-4 w-8 bg-slate-800" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-32 bg-slate-800" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-48 bg-slate-800" /></TableCell>
-                <TableCell><Skeleton className="h-6 w-20 bg-slate-800" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-24 bg-slate-800" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-24 bg-slate-800" /></TableCell>
-                <TableCell><Skeleton className="h-8 w-8 bg-slate-800" /></TableCell>
+            <TableRow key={`skeleton-${id}`} className="border-b border-slate-700/50">
+                <TableCell><Skeleton className="h-4 w-8 bg-slate-800"/></TableCell>
+                <TableCell>
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="h-10 w-10 rounded-full bg-slate-800"/>
+                        <div className="space-y-1">
+                            <Skeleton className="h-4 w-24 bg-slate-800"/>
+                            <Skeleton className="h-3 w-32 bg-slate-800"/>
+                        </div>
+                    </div>
+                </TableCell>
+                <TableCell>
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="h-10 w-10 rounded-lg bg-slate-800"/>
+                        <div className="space-y-1">
+                            <Skeleton className="h-4 w-32 bg-slate-800"/>
+                            <Skeleton className="h-3 w-20 bg-slate-800"/>
+                        </div>
+                    </div>
+                </TableCell>
+                <TableCell><Skeleton className="h-6 w-20 bg-slate-800"/></TableCell>
+                <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
+                <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
+                <TableCell><Skeleton className="h-8 w-8 bg-slate-800 ml-auto"/></TableCell>
             </TableRow>
         ));
     } else if (isLeadsError) {
         content = (
-            <TableRow className="border-slate-800">
-                <TableCell colSpan={columns.length} className="h-24 text-center text-red-400">
-                    Failed to load leads data.
+            <TableRow className="border-slate-700/50 hover:bg-transparent">
+                <TableCell colSpan={columns.length} className="h-32 text-center text-red-400">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="material-symbols-outlined text-4xl opacity-50">error</span>
+                        <p>Failed to load leads data.</p>
+                    </div>
                 </TableCell>
             </TableRow>
         );
@@ -358,49 +362,49 @@ const AdminLeadsView: React.FC = () => {
             const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
             return (
                 <TableRow key={lead.id}
-                    className="border-slate-800 hover:bg-slate-900/50 transition-colors">
-                    <TableCell className="font-medium text-slate-300">{lead.id}</TableCell>
-                    <TableCell className="text-slate-300">
+                          className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors group">
+                    <TableCell className="font-medium text-slate-400">#{lead.id}</TableCell>
+                    <TableCell className="py-3">
                         {renderUserCell(lead.userInfo)}
                     </TableCell>
-                    <TableCell className="text-slate-300">
+                    <TableCell className="py-3">
                         {renderPropertyCell(lead.propertyInfo)}
                     </TableCell>
                     <TableCell>
                         <Badge variant="outline"
-                            className={cn("border-0 font-medium", statusConfig.className)}>
+                               className={cn("border-0 font-medium px-2.5 py-0.5", statusConfig.className)}>
                             {statusConfig.label}
                         </Badge>
                     </TableCell>
                     <TableCell className="text-slate-400 text-sm">
-                        <div className="flex items-center gap-2">
-                            <Calendar className="h-3 w-3 text-slate-600" />
+                        <div className="flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-[16px] text-slate-600">event_busy</span>
                             {calculateExpiry(lead.createDate)}
                         </div>
                     </TableCell>
                     <TableCell className="text-slate-400 text-sm">
-                        <div className="flex items-center gap-2">
-                            <Clock className="h-3 w-3 text-slate-600" />
+                        <div className="flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-[16px] text-slate-600">schedule</span>
                             {formatDate(lead.createDate)}
                         </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost"
-                                    className="h-8 w-8 p-0 text-slate-400 hover:text-white">
+                                        className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-slate-800">
                                     <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="material-symbols-outlined">more_horiz</span>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end"
-                                className="bg-slate-900 border-slate-800 text-slate-200">
+                                                 className="bg-slate-900 border-slate-700 text-slate-200">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                 <DropdownMenuItem
                                     className="focus:bg-slate-800 focus:text-white cursor-pointer"
                                     onClick={() => handleViewDetail(lead)}
                                 >
-                                    <Eye className="mr-2 h-4 w-4" />
+                                    <span className="material-symbols-outlined text-[18px] mr-2">visibility</span>
                                     View lead details
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -413,30 +417,7 @@ const AdminLeadsView: React.FC = () => {
 
     return (
         <AdminLayout>
-            <div className="space-y-6">
-                <div className="rounded-xl border border-slate-800 bg-slate-950 text-slate-200 shadow-sm">
-                    <div className="p-6 flex flex-col space-y-4 border-b border-slate-800">
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col space-y-1">
-                                <h3 className="font-semibold text-lg text-white">All Leads</h3>
-                                <p className="text-sm text-slate-400">Manage and track all insurance leads.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex gap-4 p-4">
-                        <div className="relative flex-1 max-w-sm">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
-                            <Input
-                                type="text"
-                                placeholder="Search by name, phone or ID..."
-                                className="pl-9 bg-slate-900 border-slate-700 focus-visible:ring-indigo-500"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                </div>
-
+            <div className="space-y-8 max-w-[1600px] mx-auto pb-10">
                 <div className="p-0">
                     <SharedTable
                         columns={columns}

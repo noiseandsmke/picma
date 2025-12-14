@@ -1,5 +1,5 @@
-import {useForm} from 'react-hook-form';
-import {zodResolver} from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
     Dialog,
@@ -9,11 +9,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
-import {UserDto} from '../services/userService';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
+import { UserDto } from '../services/userService';
 
 const userSchema = z.object({
     username: z.string().min(3, "Username must be at least 3 characters"),
@@ -30,7 +30,7 @@ interface CreateUserDialogProps {
     isSubmitting: boolean;
 }
 
-export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: Readonly<CreateUserDialogProps>) {
+export function CreateUserDialog({ open, onOpenChange, onSubmit, isSubmitting }: Readonly<CreateUserDialogProps>) {
     const form = useForm<z.infer<typeof userSchema>>({
         resolver: zodResolver(userSchema),
         defaultValues: {
@@ -56,7 +56,7 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: R
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] bg-[#1e1c2e] border-slate-800 text-slate-200">
+            <DialogContent className="sm:max-w-[425px] bg-slate-900 border-slate-800 text-slate-200">
                 <DialogHeader>
                     <DialogTitle>Add new user</DialogTitle>
                     <DialogDescription className="text-slate-400">
@@ -68,14 +68,14 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: R
                         <FormField
                             control={form.control}
                             name="username"
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Username</FormLabel>
                                     <FormControl>
                                         <Input placeholder="jdoe" {...field}
-                                               className="bg-[#141124] border-slate-700 text-slate-200"/>
+                                            className="bg-slate-950 border-slate-700 text-slate-200" />
                                     </FormControl>
-                                    <FormMessage/>
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />
@@ -83,28 +83,28 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: R
                             <FormField
                                 control={form.control}
                                 name="firstName"
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>First name</FormLabel>
                                         <FormControl>
                                             <Input placeholder="John" {...field}
-                                                   className="bg-[#141124] border-slate-700 text-slate-200"/>
+                                                className="bg-slate-950 border-slate-700 text-slate-200" />
                                         </FormControl>
-                                        <FormMessage/>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
                             <FormField
                                 control={form.control}
                                 name="lastName"
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Last name</FormLabel>
                                         <FormControl>
                                             <Input placeholder="Doe" {...field}
-                                                   className="bg-[#141124] border-slate-700 text-slate-200"/>
+                                                className="bg-slate-950 border-slate-700 text-slate-200" />
                                         </FormControl>
-                                        <FormMessage/>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
@@ -112,40 +112,40 @@ export function CreateUserDialog({open, onOpenChange, onSubmit, isSubmitting}: R
                         <FormField
                             control={form.control}
                             name="email"
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Email</FormLabel>
                                     <FormControl>
                                         <Input placeholder="john@example.com" {...field}
-                                               className="bg-[#141124] border-slate-700 text-slate-200"/>
+                                            className="bg-slate-950 border-slate-700 text-slate-200" />
                                     </FormControl>
-                                    <FormMessage/>
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />
                         <FormField
                             control={form.control}
                             name="role"
-                            render={({field}) => (
+                            render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Role</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
-                                            <SelectTrigger className="bg-[#141124] border-slate-700 text-slate-200">
-                                                <SelectValue placeholder="Select a role"/>
+                                            <SelectTrigger className="bg-slate-950 border-slate-700 text-slate-200">
+                                                <SelectValue placeholder="Select a role" />
                                             </SelectTrigger>
                                         </FormControl>
-                                        <SelectContent className="bg-[#141124] border-slate-700 text-slate-200">
+                                        <SelectContent>
                                             <SelectItem value="agent">Agent</SelectItem>
                                             <SelectItem value="owner">Owner</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <FormMessage/>
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />
                         <DialogFooter>
-                            <Button type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-700">
+                            <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary-hover">
                                 {isSubmitting ? "Creating..." : "Create user"}
                             </Button>
                         </DialogFooter>

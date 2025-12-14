@@ -5,10 +5,11 @@ export const ENV = {
 
 export const ROUTES = {
     HOME: '/',
-    LOGIN: '/login',
+    SIGNIN: '/signin',
+    SIGNUP: '/signup',
     DASHBOARD: {
         ADMIN: '/admin/dashboard',
         AGENT: '/agent/dashboard',
         OWNER: '/owner/dashboard',
     },
-};
+} as const;

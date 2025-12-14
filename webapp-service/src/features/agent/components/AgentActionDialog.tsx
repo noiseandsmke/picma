@@ -35,14 +35,14 @@ export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className="bg-[#141124] border-slate-800 text-slate-200 max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+                className="bg-slate-900 border-slate-800 text-slate-200 max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0">
                 <div className="p-6">
                     <DialogHeader className="mb-4">
                         <DialogTitle className="text-white flex items-center gap-2">
                             Lead Opportunity #{lead.leadId}
                             {lead.leadAction === 'INTERESTED' && (
                                 <span
-                                    className="text-xs font-normal px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">Interested</span>
+                                    className="text-xs font-normal px-2 py-0.5 rounded bg-primary/10 text-blue-300 border border-primary/30">Interested</span>
                             )}
                         </DialogTitle>
                     </DialogHeader>
@@ -50,7 +50,7 @@ export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
                     <ExpandedPropertyView lead={lead} />
                 </div>
 
-                <DialogFooter className="p-6 bg-slate-900/50 border-t border-slate-800 gap-2 sm:justify-between">
+                <DialogFooter className="p-6 bg-slate-950/50 border-t border-slate-800 gap-2 sm:justify-between">
                     <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-slate-400">
                         Close
                     </Button>
@@ -72,7 +72,7 @@ export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
                             {isAccepted ? (
                                 <Button
                                     onClick={() => onCreateQuote(lead.leadId)}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                    className="bg-primary hover:bg-primary-hover text-white shadow-[0_4px_14px_0_rgba(59,130,246,0.39)]"
                                 >
                                     <FileText className="w-4 h-4 mr-2" />
                                     View/Edit Quote
@@ -81,7 +81,7 @@ export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
                                 <Button
                                     onClick={() => onCreateQuote(lead.leadId)}
                                     disabled={isPending}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                    className="bg-primary hover:bg-primary-hover text-white shadow-[0_4px_14px_0_rgba(59,130,246,0.39)]"
                                 >
                                     Create Quote
                                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -134,9 +134,9 @@ const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({ lead }) => {
             <div className="space-y-6">
                 <div>
                     <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">Client Info</h3>
-                    <div className="flex items-center gap-3 bg-slate-900 p-3 rounded-lg border border-slate-800">
+                    <div className="flex items-center gap-3 bg-slate-950 p-3 rounded-lg border border-slate-700/50">
                         <div
-                            className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                            className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
                             <User size={20} />
                         </div>
                         <div>
@@ -149,7 +149,7 @@ const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({ lead }) => {
                 <div>
                     <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">Location</h3>
                     <div className="flex items-start gap-3">
-                        <MapPin className="text-indigo-400 mt-1" size={18} />
+                        <MapPin className="text-primary mt-1" size={18} />
                         <div>
                             <div className="font-medium text-white text-lg">{property.location?.street}</div>
                             <div className="text-slate-400">{property.location?.ward}, {property.location?.city}</div>
@@ -163,11 +163,11 @@ const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({ lead }) => {
                 <div>
                     <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">Property
                         Details</h3>
-                    <div className="grid grid-cols-2 gap-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                    <div className="grid grid-cols-2 gap-4 bg-slate-950/50 p-4 rounded-xl border border-slate-700/50">
                         <div className="space-y-1">
                             <div className="text-xs text-slate-500">Type</div>
                             <div className="font-medium text-slate-200 flex items-center gap-2">
-                                <Building2 size={14} className="text-emerald-400" />
+                                <Building2 size={14} className="text-primary" />
                                 {property.attributes?.constructionType?.replace('_', ' ') || 'N/A'}
                             </div>
                         </div>
@@ -190,14 +190,14 @@ const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({ lead }) => {
 
                 <div>
                     <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">Valuation</h3>
-                    <div className="flex items-center gap-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                    <div className="flex items-center gap-3 bg-slate-950/50 p-4 rounded-xl border border-slate-700/50">
                         <div
-                            className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                            className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                             <Wallet size={20} />
                         </div>
                         <div>
                             <div className="text-xs text-slate-500">Estimated Construction Cost</div>
-                            <div className="text-xl font-bold text-emerald-400">
+                            <div className="text-xl font-bold text-primary">
                                 {new Intl.NumberFormat('vi-VN', {
                                     style: 'currency',
                                     currency: 'VND'

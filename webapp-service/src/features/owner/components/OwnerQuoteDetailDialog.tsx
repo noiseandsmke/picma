@@ -43,7 +43,7 @@ export const OwnerQuoteDetailDialog: React.FC<OwnerQuoteDetailDialogProps> = ({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className="bg-[#141124] border-slate-800 text-white max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+                className="bg-slate-900 border-slate-800 text-white max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0">
                 <div className="p-6">
                     <DialogHeader className="mb-6">
                         <DialogTitle className="flex items-center gap-2">
@@ -76,10 +76,10 @@ export const OwnerQuoteDetailDialog: React.FC<OwnerQuoteDetailDialogProps> = ({
                                 </div>
                             </div>
 
-                            <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800">
+                            <div className="bg-slate-950 rounded-xl p-4 border border-slate-800">
                                 <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">Policy
                                     Summary</h4>
-                                <div className="flex justify-between items-center py-2 border-b border-slate-800/50">
+                                <div className="flex justify-between items-center py-2 border-b border-slate-700/50">
                                     <span className="text-slate-300">Total Sum Insured</span>
                                     <span
                                         className="font-mono text-lg font-medium text-white">{formatCurrency(quote.sumInsured)}</span>
@@ -97,7 +97,7 @@ export const OwnerQuoteDetailDialog: React.FC<OwnerQuoteDetailDialogProps> = ({
 
                         <div className="space-y-6">
                             <div
-                                className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-xl border border-slate-800 p-5 shadow-lg relative overflow-hidden">
+                                className="bg-gradient-to-br from-slate-950 to-slate-900 rounded-xl border border-slate-800 p-5 shadow-lg relative overflow-hidden">
                                 <div
                                     className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
@@ -113,7 +113,7 @@ export const OwnerQuoteDetailDialog: React.FC<OwnerQuoteDetailDialogProps> = ({
                                         <span className="text-slate-400">Tax (VAT 10%)</span>
                                         <span className="text-slate-200">{formatCurrency(quote.premium.tax)}</span>
                                     </div>
-                                    <div className="h-px bg-slate-800 my-2" />
+                                    <div className="h-px bg-slate-700 my-2" />
                                     <div className="flex justify-between items-end">
                                         <span className="text-slate-300 font-medium">Total Premium</span>
                                         <span
@@ -127,7 +127,7 @@ export const OwnerQuoteDetailDialog: React.FC<OwnerQuoteDetailDialogProps> = ({
                                     <User className="w-4 h-4" /> Agent Information
                                 </h4>
                                 <div
-                                    className="bg-slate-900/50 rounded-xl p-4 border border-slate-800 flex items-center gap-4">
+                                    className="bg-slate-950 rounded-xl p-4 border border-slate-800 flex items-center gap-4">
                                     {isAgentLoading ? (
                                         <Skeleton className="h-12 w-12 rounded-full bg-slate-800" />
                                     ) : (
@@ -152,7 +152,7 @@ export const OwnerQuoteDetailDialog: React.FC<OwnerQuoteDetailDialogProps> = ({
                     </div>
                 </div>
 
-                <DialogFooter className="p-6 bg-slate-900/50 border-t border-slate-800 gap-2 sm:justify-between">
+                <DialogFooter className="p-6 bg-slate-950/50 border-t border-slate-800 gap-2 sm:justify-between">
                     <Button variant="ghost" onClick={() => onOpenChange(false)}
                         className="text-slate-400 hover:text-white">
                         Close

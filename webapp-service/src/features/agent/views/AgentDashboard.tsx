@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import AgentLayout from '../layouts/AgentLayout';
-import { Bell, DollarSign, FileText, Search, ShieldCheck } from 'lucide-react';
+import { Bell, DollarSign, FileText, Search, ShieldCheck, Settings } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AgentLeadDto, fetchAgentLeads, fetchAgentQuotes, updateLeadAction } from '../services/agentService';
@@ -13,12 +13,13 @@ import { createQuote, CreateQuoteDto, PropertyQuoteDto, updateQuote } from '@/fe
 import { AgentLeadCard } from '@/features/agent/components/AgentLeadCard';
 import { AgentActionDialog } from '@/features/agent/components/AgentActionDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AgentProfileSettings } from '@/features/agent/components/AgentProfileSettings';
 
 const AgentDashboard: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const agentId = user?.id || '';
-    const [activeTab, setActiveTab] = useState<'new' | 'portfolio'>('new');
+    const [activeTab, setActiveTab] = useState<'new' | 'portfolio' | 'settings'>('new');
     const [selectedLead, setSelectedLead] = useState<AgentLeadDto | null>(null);
     const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
     const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false);
@@ -198,61 +199,61 @@ const AgentDashboard: React.FC = () => {
         <AgentLayout>
             <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
+                    <Card className="bg-slate-900 border border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 group hover:border-primary/50">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Total Coverage Provided</p>
+                                <p className="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">Total Coverage Provided</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
                                     {isLoading ? <Skeleton
                                         className="h-8 w-24 bg-slate-800" /> : formatCurrency(totalCoverageProvided)}
                                 </h3>
                             </div>
                             <div
-                                className="h-10 w-10 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">
-                                <ShieldCheck className="h-5 w-5" />
+                                className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors border border-primary/20">
+                                <ShieldCheck className="h-6 w-6" />
                             </div>
                         </CardContent>
                     </Card>
-                    <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
+                    <Card className="bg-slate-900 border border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 group hover:border-primary/50">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Active Quotes</p>
+                                <p className="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">Active Quotes</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
                                     {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800" /> : activeQuotesCount}
                                 </h3>
                             </div>
                             <div
-                                className="h-10 w-10 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400">
-                                <FileText className="h-5 w-5" />
+                                className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors border border-primary/20">
+                                <FileText className="h-6 w-6" />
                             </div>
                         </CardContent>
                     </Card>
-                    <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
+                    <Card className="bg-slate-900 border border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 group hover:border-primary/50">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">This Month</p>
+                                <p className="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">This Month</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
                                     {isLoading ?
                                         <Skeleton className="h-8 w-24 bg-slate-800" /> : formatCurrency(thisMonthValue)}
                                 </h3>
                             </div>
                             <div
-                                className="h-10 w-10 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400">
-                                <DollarSign className="h-5 w-5" />
+                                className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors border border-primary/20">
+                                <DollarSign className="h-6 w-6" />
                             </div>
                         </CardContent>
                     </Card>
-                    <Card className="bg-[#141124] border border-[#2e2c3a] shadow-sm hover:shadow-md transition-shadow">
+                    <Card className="bg-slate-900 border border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 group hover:border-primary/50">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">New Opportunities</p>
+                                <p className="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">New Opportunities</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
                                     {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800" /> : newLeadsCount}
                                 </h3>
                             </div>
                             <div
-                                className="h-10 w-10 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">
-                                <Bell className="h-5 w-5" />
+                                className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors border border-primary/20">
+                                <Bell className="h-6 w-6" />
                             </div>
                         </CardContent>
                     </Card>
@@ -265,34 +266,42 @@ const AgentDashboard: React.FC = () => {
                                 onClick={() => setActiveTab('new')}
                                 className={cn(
                                     "pb-3 text-sm font-medium transition-colors relative",
-                                    activeTab === 'new' ? "text-indigo-400" : "text-slate-400 hover:text-slate-200"
+                                    activeTab === 'new' ? "text-primary border-b-2 border-primary" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-md px-2"
                                 )}
                             >
                                 New Leads
-                                {activeTab === 'new' && <div
-                                    className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full" />}
                             </button>
                             <button
                                 onClick={() => setActiveTab('portfolio')}
                                 className={cn(
                                     "pb-3 text-sm font-medium transition-colors relative",
-                                    activeTab === 'portfolio' ? "text-indigo-400" : "text-slate-400 hover:text-slate-200"
+                                    activeTab === 'portfolio' ? "text-primary border-b-2 border-primary" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-md px-2"
                                 )}
                             >
                                 Quote History & Portfolio
-                                {activeTab === 'portfolio' && <div
-                                    className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full" />}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('settings')}
+                                className={cn(
+                                    "pb-3 text-sm font-medium transition-colors relative flex items-center gap-2",
+                                    activeTab === 'settings' ? "text-primary border-b-2 border-primary" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-md px-2"
+                                )}
+                            >
+                                <Settings className="w-4 h-4" />
+                                Profile
                             </button>
                         </div>
 
-                        <div className="relative w-64">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
-                            <input
-                                type="text"
-                                placeholder="Search leads..."
-                                className="w-full pl-9 h-9 rounded-md bg-slate-900 border border-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                            />
-                        </div>
+                        {activeTab !== 'settings' && (
+                            <div className="relative w-64">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                                <input
+                                    type="text"
+                                    placeholder="Search leads..."
+                                    className="w-full pl-9 h-9 rounded-md bg-slate-900 border border-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-500"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -305,7 +314,7 @@ const AgentDashboard: React.FC = () => {
                                 {activeTab === 'new' && (
                                     newLeads.length === 0 ? (
                                         <div
-                                            className="col-span-full py-12 text-center text-slate-500 bg-[#141124] rounded-xl border border-dashed border-slate-800">
+                                            className="col-span-full py-12 text-center text-slate-500 bg-slate-900 rounded-xl border border-dashed border-slate-800">
                                             <p>No new leads found in your area.</p>
                                         </div>
                                     ) : (
@@ -323,7 +332,7 @@ const AgentDashboard: React.FC = () => {
                                 {activeTab === 'portfolio' && (
                                     allInteractedLeads.length === 0 ? (
                                         <div
-                                            className="col-span-full py-12 text-center text-slate-500 bg-[#141124] rounded-xl border border-dashed border-slate-800">
+                                            className="col-span-full py-12 text-center text-slate-500 bg-slate-900 rounded-xl border border-dashed border-slate-800">
                                             <p>No active portfolio items yet.</p>
                                         </div>
                                     ) : (
@@ -336,11 +345,17 @@ const AgentDashboard: React.FC = () => {
                                         ))
                                     )
                                 )}
+
+                                {activeTab === 'settings' && (
+                                    <div className="col-span-full">
+                                        <AgentProfileSettings />
+                                    </div>
+                                )}
                             </>
                         )}
                     </div>
                 </div>
-            </div>
+            </div >
 
             <AgentActionDialog
                 open={isActionDialogOpen}
@@ -367,7 +382,7 @@ const AgentDashboard: React.FC = () => {
                     />
                 </DialogContent>
             </Dialog>
-        </AgentLayout>
+        </AgentLayout >
     );
 };
 

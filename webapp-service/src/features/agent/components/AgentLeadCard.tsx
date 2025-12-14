@@ -16,10 +16,10 @@ interface AgentLeadCardProps {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-    'INTERESTED': { label: 'Prospect', className: 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30' },
-    'ACCEPTED': { label: 'Policy Active', className: 'bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30' },
-    'REJECTED': { label: 'Rejected', className: 'bg-red-900/20 text-red-400 hover:bg-red-900/30 border-red-900/50' },
-    'NEW': { label: 'New Lead', className: 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' }
+    'INTERESTED': { label: 'Prospect', className: 'bg-primary/10 text-blue-300 border-primary/30' },
+    'ACCEPTED': { label: 'Policy Active', className: 'bg-primary/20 text-blue-400 border-primary/40' },
+    'REJECTED': { label: 'Rejected', className: 'bg-red-500/10 text-red-400 border-red-900/20' },
+    'NEW': { label: 'New Lead', className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' }
 };
 
 export const AgentLeadCard: React.FC<AgentLeadCardProps> = ({ lead, onViewDetail, isLoadingAction }) => {
@@ -43,15 +43,15 @@ export const AgentLeadCard: React.FC<AgentLeadCardProps> = ({ lead, onViewDetail
 
     return (
         <Card
-            className="border-none shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-[#141124] h-full flex flex-col">
-            <div className="h-40 bg-slate-800 relative overflow-hidden group shrink-0">
-                <div className="w-full h-full flex items-center justify-center bg-slate-800 text-slate-500">
-                    <MapPin className="h-10 w-10 opacity-50" />
+            className="border border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-slate-900 h-full flex flex-col hover:border-primary/30">
+            <div className="h-40 bg-slate-950/50 relative overflow-hidden group shrink-0 border-b border-slate-800">
+                <div className="w-full h-full flex items-center justify-center bg-slate-950/50 text-slate-600">
+                    <MapPin className="h-10 w-10 opacity-30" />
                 </div>
 
                 <div className="absolute top-3 right-3">
                     <Badge variant="outline"
-                        className={cn("border-0 font-medium backdrop-blur-sm shadow-sm", config.className)}>
+                        className={cn("font-medium backdrop-blur-sm shadow-sm border", config.className)}>
                         {config.label}
                     </Badge>
                 </div>
@@ -61,7 +61,7 @@ export const AgentLeadCard: React.FC<AgentLeadCardProps> = ({ lead, onViewDetail
                     <Button
                         variant="secondary"
                         size="sm"
-                        className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md"
+                        className="bg-primary hover:bg-primary-hover text-white shadow-[0_4px_14px_0_rgba(59,130,246,0.39)] transition-colors"
                         onClick={() => onViewDetail(lead)}
                         disabled={isLoadingAction}
                     >
@@ -106,7 +106,7 @@ export const AgentLeadCard: React.FC<AgentLeadCardProps> = ({ lead, onViewDetail
                     </>
                 )}
             </CardContent>
-            <CardFooter className="p-3 border-t border-slate-800/50 bg-slate-900/20">
+            <CardFooter className="p-3 border-t border-slate-800 bg-slate-950/30">
                 <div className="w-full text-xs text-center text-slate-500">
                     Lead ID: #{lead.leadId} • {new Date(lead.createdAt).toLocaleDateString()}
                 </div>

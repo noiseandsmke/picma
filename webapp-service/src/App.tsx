@@ -41,7 +41,20 @@ const App: React.FC = () => {
 
                 <Route path="/" element={<Navigate to="/signup" replace />} />
             </Routes>
-            <Toaster position="top-right" theme="dark" />
+            <Toaster
+                position="top-right"
+                theme="dark"
+                richColors={false}
+                toastOptions={{
+                    className: 'custom-toast',
+                    duration: 4000,
+                    style: {
+                        background: '#0b0c15',
+                        border: '1px solid #1e293b',
+                        color: '#e2e8f0',
+                    }
+                }}
+            />
         </Router>
     );
 };

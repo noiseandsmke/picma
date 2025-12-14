@@ -113,7 +113,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ open, onOpen
             return (
                 <div className="space-y-4">
                     <div className="flex items-start gap-3">
-                        <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-400 mt-1">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary mt-1">
                             <MapPin size={18} />
                         </div>
                         <div className="space-y-1 flex-1">
@@ -196,13 +196,13 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ open, onOpen
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px] bg-[#141124] border-slate-800 text-slate-200">
+            <DialogContent className="sm:max-w-[500px] bg-slate-900 border-slate-800 text-slate-200">
                 <DialogHeader>
                     <DialogTitle className="text-white">Lead details</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6 py-4">
                     <div
-                        className="flex items-center justify-between bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                        className="flex items-center justify-between bg-slate-950/50 p-3 rounded-lg border border-slate-700/50">
                         <div className="space-y-1">
                             <Label className="text-slate-500 text-[10px] uppercase tracking-wider">Lead ID</Label>
                             <div className="font-mono text-sm font-medium text-white">#{lead.id}</div>
@@ -211,7 +211,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ open, onOpen
                             <Label className="text-slate-500 text-[10px] uppercase tracking-wider">Status</Label>
                             <div>
                                 <Badge variant="secondary"
-                                    className="bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20">
+                                    className="bg-primary/10 text-primary hover:bg-primary/20">
                                     {lead.status}
                                 </Badge>
                             </div>
@@ -222,7 +222,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ open, onOpen
                         <div className="space-y-2">
                             <Label className="text-slate-400 text-xs uppercase tracking-wider">User info</Label>
                             <div
-                                className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-sm text-slate-300">
+                                className="p-3 rounded-lg bg-slate-950 border border-slate-700/50 text-sm text-slate-300">
                                 {userDetails ? (
                                     <div className="space-y-1">
                                         <div
@@ -238,7 +238,7 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ open, onOpen
 
                     <div className="space-y-2">
                         <Label className="text-slate-400 text-xs uppercase tracking-wider">Property info</Label>
-                        <div className="p-4 rounded-lg bg-slate-900 border border-slate-800">
+                        <div className="p-4 rounded-lg bg-slate-950 border border-slate-700/50">
                             {renderPropertyContent()}
                         </div>
                     </div>

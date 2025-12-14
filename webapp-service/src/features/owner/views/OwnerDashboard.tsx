@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import OwnerLayout from '../layouts/OwnerLayout';
-import { Eye, FileText, MapPin, Plus, Shield } from 'lucide-react';
+
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,8 @@ import apiClient from '@/services/apiClient';
 import { fetchPropertyById } from '@/features/admin/services/propertyService';
 import { LeadDetailDialog } from '@/features/admin/components/LeadDetailDialog';
 import { ResearchButton } from '@/features/research/views/ResearchButton';
+import { Calendar, Eye, FileText, MapPin, Plus, Shield, Pencil } from 'lucide-react';
+import { OwnerLeadUpdateForm } from '../components/OwnerLeadUpdateForm';
 
 const fetchOwnerLeads = async (userId: string) => {
     const response = await apiClient.get<PropertyLeadDto[]>(`/picma/leads/user/${userId}`);
@@ -26,6 +28,7 @@ const fetchOwnerLeads = async (userId: string) => {
 
 const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({ lead }) => {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
 
     const { data: property, isLoading } = useQuery({
         queryKey: ['property-details', lead.propertyInfo],
@@ -34,10 +37,15 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({ lead }) => {
     });
 
     const showStatus = lead.status === 'ACCEPTED' || lead.status === 'REJECTED' || lead.status === 'EXPIRED';
+    const canEdit = lead.status === 'ACTIVE' || lead.status === 'IN_REVIEWING';
     const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
 
     const handleViewDetails = () => {
         setIsDetailOpen(true);
+    };
+
+    const handleEditSuccess = () => {
+        setIsEditOpen(false);
     };
 
     const leadForDialog = {
@@ -48,16 +56,16 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({ lead }) => {
     return (
         <>
             <Card
-                className="border-none shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-[#141124]">
-                <div className="h-48 bg-slate-800 relative overflow-hidden group">
-                    <div className="w-full h-full flex items-center justify-center bg-slate-800 text-slate-500">
-                        <MapPin className="h-12 w-12 opacity-50" />
+                className="border border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group bg-slate-900 group hover:border-primary/30">
+                <div className="h-48 bg-slate-950/50 relative overflow-hidden group border-b border-slate-800">
+                    <div className="w-full h-full flex items-center justify-center bg-slate-950/50 text-slate-600">
+                        <MapPin className="h-12 w-12 opacity-30" />
                     </div>
 
                     {showStatus && (
                         <div className="absolute top-3 right-3">
                             <Badge variant="outline"
-                                className={cn("border-0 font-medium backdrop-blur-sm shadow-sm", statusConfig.className)}>
+                                className={cn("font-medium backdrop-blur-sm shadow-sm border", statusConfig.className)}>
                                 {statusConfig.label}
                             </Badge>
                         </div>
@@ -68,12 +76,23 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({ lead }) => {
                         <Button
                             variant="secondary"
                             size="sm"
-                            className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md"
+                            className="bg-primary/20 hover:bg-primary/30 text-white border border-primary/30 backdrop-blur-md transition-colors"
                             onClick={handleViewDetails}
                         >
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                         </Button>
+                        {canEdit && (
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                className="bg-slate-800/80 hover:bg-slate-700 text-white border border-slate-700 backdrop-blur-md transition-colors"
+                                onClick={() => setIsEditOpen(true)}
+                            >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit
+                            </Button>
+                        )}
                     </div>
                 </div>
                 <CardContent className="p-5">
@@ -124,6 +143,19 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({ lead }) => {
                 lead={leadForDialog}
                 hideUserInfo={true}
             />
+
+            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Update Lead Details</DialogTitle>
+                    </DialogHeader>
+                    <OwnerLeadUpdateForm
+                        lead={lead}
+                        onSuccess={handleEditSuccess}
+                        onCancel={() => setIsEditOpen(false)}
+                    />
+                </DialogContent>
+            </Dialog>
         </>
     );
 };
@@ -167,10 +199,10 @@ const OwnerDashboard: React.FC = () => {
             <div className="space-y-10">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div
-                        className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
+                        className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm hover:border-primary/30 transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="font-semibold text-lg">Total Asset Value</h3>
-                            <Shield className="h-6 w-6 opacity-80" />
+                            <Shield className="h-6 w-6 text-primary" />
                         </div>
                         <p className="text-3xl font-bold">
                             {isPropsLoading ?
@@ -178,10 +210,10 @@ const OwnerDashboard: React.FC = () => {
                         </p>
                         <p className="text-sm opacity-80 mt-1">Based on property construction cost</p>
                     </div>
-                    <div className="bg-[#141124] rounded-2xl p-6 shadow-sm border border-slate-800">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm hover:border-primary/30 transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="font-semibold text-lg text-white">My Active Policies</h3>
-                            <FileText className="h-6 w-6 text-emerald-500" />
+                            <FileText className="h-6 w-6 text-primary" />
                         </div>
                         <p className="text-3xl font-bold text-white">
                             {isLeadsLoading ? <Skeleton className="h-8 w-12 bg-slate-800" /> : activePoliciesCount}
@@ -190,10 +222,10 @@ const OwnerDashboard: React.FC = () => {
                             Accepted Quotes
                         </p>
                     </div>
-                    <div className="bg-[#141124] rounded-2xl p-6 shadow-sm border border-slate-800">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm hover:border-primary/30 transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="font-semibold text-lg text-white">Pending Quotes</h3>
-                            <FileText className="h-6 w-6 text-blue-500" />
+                            <FileText className="h-6 w-6 text-primary" />
                         </div>
                         <p className="text-3xl font-bold text-white">
                             {isLeadsLoading ? <Skeleton className="h-8 w-12 bg-slate-800" /> : pendingQuotesCount}
@@ -209,24 +241,22 @@ const OwnerDashboard: React.FC = () => {
                                 onClick={() => setActiveTab('leads')}
                                 className={cn(
                                     "pb-3 text-sm font-medium transition-colors relative",
-                                    activeTab === 'leads' ? "text-indigo-400" : "text-slate-400 hover:text-slate-200"
+                                    activeTab === 'leads' ? "text-primary border-b-2 border-primary" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-md px-2"
                                 )}
                             >
                                 My leads
-                                {activeTab === 'leads' && <div
-                                    className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full" />}
                             </button>
                         </div>
 
                         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                             <DialogTrigger asChild>
-                                <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2 rounded-lg text-white">
+                                <Button className="bg-primary hover:bg-primary-hover gap-2 rounded-lg text-white shadow-[0_4px_14px_0_rgba(59,130,246,0.39)] transition-all">
                                     <Plus className="h-4 w-4" />
                                     Create Property Lead
                                 </Button>
                             </DialogTrigger>
                             <DialogContent
-                                className="bg-[#141124] border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+                                className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
                                 <DialogHeader>
                                     <DialogTitle>Create New Property Lead</DialogTitle>
                                 </DialogHeader>
@@ -244,7 +274,7 @@ const OwnerDashboard: React.FC = () => {
                             <>
                                 {leads?.length === 0 ? (
                                     <div
-                                        className="col-span-full py-12 text-center text-slate-500 bg-[#141124] rounded-xl border border-dashed border-slate-800">
+                                        className="col-span-full py-12 text-center text-slate-500 bg-slate-900 rounded-xl border border-dashed border-slate-800">
                                         <p>No leads found. Create one to get started!</p>
                                     </div>
                                 ) : (
@@ -257,7 +287,7 @@ const OwnerDashboard: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </OwnerLayout>
+        </OwnerLayout >
     );
 };
 

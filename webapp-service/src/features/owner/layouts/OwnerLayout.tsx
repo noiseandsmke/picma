@@ -1,8 +1,8 @@
-import React, {ReactNode, useState} from 'react';
-import {LayoutDashboard} from 'lucide-react';
-import {useAuth} from '@/context/AuthContext';
-import SidebarNavigation, {NavItem} from '@/components/ui/sidebar-navigation';
-import {UserDropdown} from '@/components/ui/user-dropdown';
+import React, { ReactNode, useState } from 'react';
+import { LayoutDashboard } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import SidebarNavigation, { NavItem } from '@/components/ui/sidebar-navigation';
+import { UserDropdown } from '@/components/ui/user-dropdown';
 
 const navItems: NavItem[] = [
     {
@@ -16,8 +16,8 @@ interface OwnerLayoutProps {
     children: ReactNode;
 }
 
-const OwnerLayout: React.FC<OwnerLayoutProps> = ({children}) => {
-    const {user} = useAuth();
+const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
+    const { user } = useAuth();
     const [openMenus, setOpenMenus] = useState<string[]>([]);
 
     const toggleMenu = (label: string) => {
@@ -33,14 +33,14 @@ const OwnerLayout: React.FC<OwnerLayoutProps> = ({children}) => {
                 <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
                     <div className="flex items-center gap-2">
                         <div
-                            className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">P
+                            className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl">P
                         </div>
                         <span className="font-semibold text-white tracking-tight">PICMA Owner</span>
                     </div>
                 </div>
 
                 <div className="flex-1 py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar">
-                    <SidebarNavigation items={navItems} openMenus={openMenus} toggleMenu={toggleMenu}/>
+                    <SidebarNavigation items={navItems} openMenus={openMenus} toggleMenu={toggleMenu} />
                 </div>
             </aside>
 
@@ -52,7 +52,7 @@ const OwnerLayout: React.FC<OwnerLayoutProps> = ({children}) => {
                         <p className="text-xs text-slate-400">Manage your property assets</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <UserDropdown displayName={user?.name} username={user?.username} roleLabel="Owner"/>
+                        <UserDropdown displayName={user?.name} username={user?.username} roleLabel="Owner" />
                     </div>
                 </header>
 

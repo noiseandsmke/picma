@@ -161,7 +161,7 @@ const LeadQuoteItem = ({ quote, setSelectedQuote }: {
 
     return (
         <div key={quote.id}
-            className="bg-slate-900/50 rounded-lg p-3 border border-slate-800/50 flex flex-col gap-2">
+            className="bg-slate-950 rounded-lg p-3 border border-slate-700/50 flex flex-col gap-2 transition-colors hover:border-indigo-500/30">
             <div className="flex justify-between items-start">
                 <div className="flex flex-col">
                     <span className="text-sm font-medium text-white">{agentName}</span>
@@ -198,11 +198,11 @@ const LeadQuoteItem = ({ quote, setSelectedQuote }: {
                 </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-2 border-t border-slate-800/50 pt-2">
+            <div className="flex justify-end gap-2 mt-2 border-t border-slate-700/50 pt-2">
                 <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs border-slate-700 text-slate-300 hover:bg-slate-800"
+                    className="h-7 text-xs border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
                     onClick={() => setSelectedQuote(quote)}
                 >
                     <FileText className="w-3 h-3 mr-1" />
