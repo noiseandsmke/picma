@@ -1,12 +1,12 @@
 package edu.hcmute.mapper;
 
 import edu.hcmute.dto.AgentLeadActionDto;
-import edu.hcmute.entity.AgentLead;
+import edu.hcmute.entity.AgentLeadAction;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface PropertyAgentMapper {
-    @Mapping(target = "leadAction", source = "leadAction")
-    AgentLead toEntity(AgentLeadActionDto agentLeadActionDto);
+    AgentLeadActionDto toDto(AgentLeadAction entity);
+
+    AgentLeadAction toEntity(AgentLeadActionDto dto);
 }
