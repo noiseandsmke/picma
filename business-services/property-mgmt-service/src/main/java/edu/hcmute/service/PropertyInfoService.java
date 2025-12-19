@@ -9,11 +9,11 @@ public interface PropertyInfoService {
 
     PropertyInfoDto getPropertyInfoById(String id);
 
-    List<PropertyInfoDto> getPropertiesByZipCode(String zipcode);
-
-    List<PropertyInfoDto> getAllProperties(String sort, String direction);
+    List<PropertyInfoDto> getAllProperties(String sortBy, String sortDirection);
 
     List<PropertyInfoDto> getPropertiesByUserId(String userId);
+
+    PropertyInfoDto updatePropertyInfo(String id, PropertyInfoDto propertyInfoDto);
 
     void deletePropertyById(String id);
 }

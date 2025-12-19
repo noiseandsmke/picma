@@ -3,7 +3,7 @@ package edu.hcmute.controller;
 import edu.hcmute.dto.PropertyInfoDto;
 import edu.hcmute.service.PropertyInfoService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,48 +11,42 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/propertyInfo")
-@Slf4j
+@RequestMapping("/property-info")
 @RequiredArgsConstructor
 public class PropertyManagementController {
-
     private final PropertyInfoService propertyInfoService;
 
     @PostMapping
     public ResponseEntity<PropertyInfoDto> savePropertyInfo(@RequestBody PropertyInfoDto propertyInfoDto) {
-        log.info("### Saving PropertyInfo ###");
         PropertyInfoDto result = propertyInfoService.createPropertyInfo(propertyInfoDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @GetMapping
-    public ResponseEntity<List<PropertyInfoDto>> getAllPropertiesInfo(@RequestParam(required = false) String sort,
-                                                                      @RequestParam(defaultValue = "asc") String direction) {
-        log.info("### Getting all PropertiesInfo with sort: {}, direction: {} ###", sort, direction);
-        return ResponseEntity.ok(propertyInfoService.getAllProperties(sort, direction));
+    public ResponseEntity<List<PropertyInfoDto>> getAllPropertiesInfo(
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection
+    ) {
+        return ResponseEntity.ok(propertyInfoService.getAllProperties(sortBy, sortDirection));
     }
 
     @GetMapping("/{propertyId}")
     public ResponseEntity<PropertyInfoDto> getPropertyById(@PathVariable String propertyId) {
-        log.info("### Getting PropertyInfo by id = {} ###", propertyId);
         return ResponseEntity.ok(propertyInfoService.getPropertyInfoById(propertyId));
-    }
-
-    @GetMapping("/zipcode/{zipcode}")
-    public ResponseEntity<List<PropertyInfoDto>> getPropertyByZipCode(@PathVariable String zipcode) {
-        log.info("### Getting PropertyInfo by ZipCode = {} ###", zipcode);
-        return ResponseEntity.ok(propertyInfoService.getPropertiesByZipCode(zipcode));
     }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<PropertyInfoDto>> getPropertiesByUserId(@PathVariable String userId) {
-        log.info("### Getting Properties by userId = {} ###", userId);
         return ResponseEntity.ok(propertyInfoService.getPropertiesByUserId(userId));
+    }
+
+    @PutMapping("/{propertyId}")
+    public ResponseEntity<PropertyInfoDto> updateProperty(@PathVariable String propertyId, @RequestBody PropertyInfoDto propertyInfoDto) {
+        return ResponseEntity.ok(propertyInfoService.updatePropertyInfo(propertyId, propertyInfoDto));
     }
 
     @DeleteMapping("/{propertyId}")
     public ResponseEntity<Void> deletePropertyById(@PathVariable String propertyId) {
-        log.info("### Deleting PropertyInfo by id = {} ###", propertyId);
         propertyInfoService.deletePropertyById(propertyId);
         return ResponseEntity.noContent().build();
     }

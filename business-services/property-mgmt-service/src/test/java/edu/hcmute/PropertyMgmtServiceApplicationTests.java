@@ -9,5 +9,4 @@ class PropertyMgmtServiceApplicationTests {
     @Test
     void contextLoads() {
     }
-
 }

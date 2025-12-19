@@ -11,5 +11,4 @@ public class PropertyLocation {
     private String street;
     private String ward;
     private String city;
-    private String zipCode;
 }

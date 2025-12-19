@@ -12,10 +12,6 @@ management:
     web:
       exposure:
         include: "*"
-picma:
-  data:
-    mongodb:
-      collection: ${COLLECTION_NAME:property_management}
 server:
   port: 7101
 eureka:
