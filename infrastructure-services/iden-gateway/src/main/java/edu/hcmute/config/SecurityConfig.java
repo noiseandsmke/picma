@@ -27,12 +27,11 @@ import java.util.stream.Collectors;
 @EnableWebFluxSecurity
 @Slf4j
 public class SecurityConfig {
-
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         log.info("### Configuring Security Web Filter Chain ###");
         return http
-                .cors(ServerHttpSecurity.CorsSpec::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
@@ -42,7 +41,7 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/picma/properties/**").permitAll()
                         .pathMatchers("/picma/leads/**").authenticated()
                         .pathMatchers("/picma/quotes/**").authenticated()
-                        .pathMatchers("/picma/users/**").authenticated()
+                        .pathMatchers("/picma/users/**").hasAnyRole("ADMIN", "AGENT", "OWNER")
                         .pathMatchers("/picma/admin/**").hasRole("ADMIN")
                         .pathMatchers("/picma/agent/**").hasRole("AGENT")
                         .pathMatchers("/picma/owner/**").hasRole("OWNER")
@@ -55,6 +54,17 @@ public class SecurityConfig {
                         )
                 )
                 .build();
+    }
+
+    @Bean
+    public org.springframework.web.cors.reactive.CorsConfigurationSource corsConfigurationSource() {
+        org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
+        configuration.setAllowedOrigins(java.util.List.of("*"));
+        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+        configuration.setAllowedHeaders(java.util.List.of("*"));
+        org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     @Bean
@@ -73,6 +83,7 @@ public class SecurityConfig {
                 return Collections.emptyList();
             }
             return ((List<String>) realmAccess.get("roles")).stream()
+                    .filter(roleName -> !roleName.contains("default-roles"))
                     .map(roleName -> "ROLE_" + roleName.toUpperCase())
                     .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toList());

@@ -21,13 +21,15 @@ spring:
                 - Path=/picma/users/**
               filters:
                 - RewritePath=/picma/users(?<segment>/?.*), /user${segment}
+                - TokenRelay=
 
             - id: property-mgmt-service
               uri: lb://PROPERTY-MGMT-SERVICE
               predicates:
                 - Path=/picma/properties/**
               filters:
-                - RewritePath=/picma/properties(?<segment>/?.*), /propertyInfo${segment}
+                - RewritePath=/picma/properties(?<segment>/?.*), /property-info${segment}
+                - TokenRelay=
 
             - id: property-lead-service
               uri: lb://PROPERTY-LEAD-SERVICE
@@ -35,6 +37,7 @@ spring:
                 - Path=/picma/leads/**
               filters:
                 - RewritePath=/picma/leads(?<segment>/?.*), /property-lead${segment}
+                - TokenRelay=
 
             - id: property-quote-service
               uri: lb://PROPERTY-QUOTE-SERVICE
@@ -42,13 +45,15 @@ spring:
                 - Path=/picma/quotes/**
               filters:
                 - RewritePath=/picma/quotes(?<segment>/?.*), /property-quote${segment}
+                - TokenRelay=
 
-            - id: property-agent-service
-              uri: lb://PROPERTY-AGENT-SERVICE
+            - id: deep-research-service
+              uri: lb://DEEP-RESEARCH-SERVICE
               predicates:
-                - Path=/picma/agents/**
+                - Path=/picma/research/**
               filters:
-                - RewritePath=/picma/agents(?<segment>/?.*), /${segment}
+                - RewritePath=/picma/research(?<segment>/?.*), /deep-research${segment}
+                - TokenRelay=
 
   security:
     oauth2:
