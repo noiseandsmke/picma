@@ -1,18 +1,15 @@
 package edu.hcmute.service;
 
 import edu.hcmute.dto.UserDto;
-import edu.hcmute.exception.UserException;
 
 import java.util.List;
 
-public interface UserService {
-    UserDto createUser(UserDto userDto);
-
+public interface UserMgmtService {
     UserDto getUserById(String userId);
 
     UserDto updateUser(UserDto userDto);
 
-    List<UserDto> getAllUsers(String search) throws UserException;
+    List<UserDto> getAllUsers(String search);
 
     List<UserDto> getAllMembersOfGroup(String groupId);
 

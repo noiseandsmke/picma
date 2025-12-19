@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+
 public record UserDto(
         String id,
 
@@ -26,6 +28,8 @@ public record UserDto(
         String email,
 
         boolean emailVerified,
+
+        java.util.Map<String, List<String>> attributes,
 
         String zipcode,
 

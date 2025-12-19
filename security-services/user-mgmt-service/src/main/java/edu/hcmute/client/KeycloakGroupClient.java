@@ -1,7 +1,7 @@
-package edu.hcmute.outbound;
+package edu.hcmute.client;
 
 import edu.hcmute.config.KeycloakClientConfig;
-import edu.hcmute.entity.User;
+import edu.hcmute.dto.User;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

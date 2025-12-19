@@ -1,29 +1,24 @@
 package edu.hcmute.mapper;
 
+import edu.hcmute.dto.User;
 import edu.hcmute.dto.UserDto;
-import edu.hcmute.entity.User;
-import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
-
     @Mapping(target = "zipcode", source = "attributes", qualifiedByName = "mapZipcode")
+    @Mapping(target = "attributes", source = "attributes")
     @Mapping(target = "group", ignore = true)
+    @Mapping(target = "password", ignore = true)
     UserDto toDto(User user);
 
-    @Mapping(target = "zipcode", source = "attributes", qualifiedByName = "mapZipcode")
-    @Mapping(target = "group", expression = "java(determineGroup(groupName))")
-    UserDto toDtoWithGroup(User user, @Context String groupName);
-
-    @Mapping(target = "attributes", source = "zipcode", qualifiedByName = "mapAttributes")
+    @Mapping(target = "attributes", source = "attributes")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "enabled", ignore = true)
     @Mapping(target = "totp", constant = "false")
@@ -37,26 +32,15 @@ public interface UserMapper {
 
     @Named("mapZipcode")
     default String mapZipcode(Map<String, List<String>> attributes) {
-        if (attributes != null && attributes.containsKey("zipcode")) {
-            List<String> zipcodes = attributes.get("zipcode");
-            if (zipcodes != null && !zipcodes.isEmpty()) {
-                return zipcodes.get(0);
-            }
-        }
-        return null;
+        if (attributes == null) return null;
+        List<String> zips = attributes.get("zipcode");
+        return (zips != null && !zips.isEmpty()) ? zips.get(0) : null;
     }
 
     @Named("mapAttributes")
     default Map<String, List<String>> mapAttributes(String zipcode) {
-        if (zipcode == null || zipcode.isEmpty()) {
-            return null;
-        }
-        Map<String, List<String>> attributes = new HashMap<>();
-        attributes.put("zipcode", Collections.singletonList(zipcode));
-        return attributes;
-    }
-
-    default String determineGroup(String groupName) {
-        return groupName;
+        return (zipcode == null || zipcode.isEmpty())
+                ? Collections.emptyMap()
+                : Map.of("zipcode", List.of(zipcode));
     }
 }
