@@ -48,43 +48,36 @@ export const CoverageDetailCard: React.FC<CoverageDetailCardProps> = ({
             styles.bg, styles.border,
             className
         )}>
-            <div className="p-4 flex items-start justify-between gap-4">
-                <div className="flex items-start gap-4">
+            <div className="p-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
                     <div className={cn(
-                        "h-10 w-10 rounded-lg flex items-center justify-center text-xl shrink-0 bg-slate-950/50",
+                        "h-8 w-8 rounded-lg flex items-center justify-center text-sm shrink-0 bg-slate-950/50",
                         styles.border
                     )}>
-                        <span className={cn("text-lg", styles.text)}>#{code.substring(0, 1)}</span>
+                        <span className={cn("font-bold", styles.text)}>#{code.substring(0, 1)}</span>
                     </div>
                     <div>
-                        <h4 className={cn("font-medium flex items-center gap-2", styles.text)}>
+                        <h4 className={cn("text-sm font-medium flex items-center gap-2", styles.text)}>
                             {config.label}
                             {config.mandatory && (
                                 <Badge variant="secondary"
-                                       className="h-5 text-[10px] bg-slate-900/50 text-slate-400 border-0">
-                                    Mandatory
+                                       className="h-4 text-[9px] px-1.5 bg-slate-900/50 text-slate-400 border-0">
+                                    Required
                                 </Badge>
                             )}
                         </h4>
-                        <p className="text-xs text-slate-400 mt-1 line-clamp-1">
-                            {config.description}
-                        </p>
                     </div>
                 </div>
-            </div>
 
-            <div className="px-4 pb-4 grid grid-cols-2 gap-4 mt-2">
-                <div className="space-y-1">
-                    <p className="text-[10px] uppercase tracking-wider text-slate-500">Limit</p>
-                    <p className="font-mono text-sm font-medium text-slate-200">
-                        {formatCurrency(coverage.limit)}
-                    </p>
-                </div>
-                <div className="space-y-1">
-                    <p className="text-[10px] uppercase tracking-wider text-slate-500">Deductible</p>
-                    <p className="font-mono text-sm font-medium text-slate-200">
-                        {formatCurrency(coverage.deductible)}
-                    </p>
+                <div className="flex items-center gap-4 text-xs">
+                     <div className="text-right">
+                        <p className="text-[9px] uppercase tracking-wider text-slate-500 mb-0.5">Limit</p>
+                        <p className="font-mono font-medium text-slate-200">{formatCurrency(coverage.limit)}</p>
+                    </div>
+                    <div className="text-right pl-4 border-l border-slate-700/50">
+                        <p className="text-[9px] uppercase tracking-wider text-slate-500 mb-0.5">Deductible</p>
+                        <p className="font-mono font-medium text-slate-200">{(coverage.deductible * 100).toFixed(1)}%</p>
+                    </div>
                 </div>
             </div>
         </Card>

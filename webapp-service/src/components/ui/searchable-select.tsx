@@ -102,7 +102,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                             onClick={(e) => e.stopPropagation()}
                         />
                     </div>
-                    {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+
                     <div
                         className="max-h-[200px] overflow-y-auto p-1"
                         id="searchable-struct-listbox"

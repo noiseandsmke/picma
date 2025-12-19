@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Building, ExternalLink } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, getUserInitials } from "@/lib/utils";
 import { COVERAGE_CONFIG, CoverageCode } from '@/types/enums';
 import { CoverageDto } from '@/features/admin/services/quoteService';
 
@@ -112,10 +112,9 @@ export const CustomerCell: React.FC<CustomerCellProps> = ({ leadId, leadData, on
 
 interface PropertyCellProps {
     address: string;
-    sumInsured: number;
 }
 
-export const PropertyCell: React.FC<PropertyCellProps> = ({ address, sumInsured }) => {
+export const PropertyCell: React.FC<PropertyCellProps> = ({ address }) => {
     let line1 = address;
     let line2 = "";
 
@@ -125,11 +124,6 @@ export const PropertyCell: React.FC<PropertyCellProps> = ({ address, sumInsured 
         line2 = parts.slice(1).join(',').trim();
     }
 
-    const formattedSum = new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-        maximumFractionDigits: 0
-    }).format(sumInsured);
 
     return (
         <div className="flex flex-col gap-1">
@@ -140,7 +134,7 @@ export const PropertyCell: React.FC<PropertyCellProps> = ({ address, sumInsured 
                     {line2 && <span className="text-xs text-slate-500 truncate">{line2}</span>}
                 </div>
             </div>
-            <span className="text-xs font-medium text-emerald-500/90 pl-5.5">{formattedSum}</span>
+
         </div>
     );
 };
@@ -205,7 +199,7 @@ export const AgentCell: React.FC<AgentCellProps> = ({ agentId }) => {
 
     const isSystem = agentId === 'admin' || displayName.toLowerCase().includes('admin');
 
-    const initial = displayName.charAt(0).toUpperCase();
+    const initial = getUserInitials(displayName);
     const avatarColor = isSystem
         ? "bg-rose-500/20 text-rose-400 border-rose-500/30"
         : "bg-primary/20 text-primary border-primary/30";
@@ -222,41 +216,6 @@ export const AgentCell: React.FC<AgentCellProps> = ({ agentId }) => {
                 </span>
                 {!isSystem && <span className="text-[10px] text-slate-500">@{username}</span>}
             </div>
-        </div>
-    );
-};
-
-interface ValidityCellProps {
-    validUntil: string;
-}
-
-export const ValidityCell: React.FC<ValidityCellProps> = ({ validUntil }) => {
-    if (!validUntil) return <span className="text-slate-500 text-xs">-</span>;
-
-    const endDate = new Date(validUntil);
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    const checkDate = new Date(endDate);
-    checkDate.setHours(0, 0, 0, 0);
-
-    const isExpired = checkDate < now;
-
-    return (
-        <div className="flex flex-col items-start gap-1">
-            <Badge
-                variant="outline"
-                className={cn(
-                    "text-[10px] h-5 px-1.5 uppercase border",
-                    isExpired
-                        ? "bg-red-900/20 text-red-400 border-red-800/50"
-                        : "bg-emerald-900/20 text-emerald-400 border-emerald-800/50"
-                )}
-            >
-                {isExpired ? "Expired" : "Active"}
-            </Badge>
-            <span className="text-[10px] text-slate-500 font-medium">
-                Until: {new Date(validUntil).toLocaleDateString('vi-VN')}
-            </span>
         </div>
     );
 };

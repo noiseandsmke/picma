@@ -73,7 +73,7 @@ export const PropertyDetailDialog: React.FC<PropertyDetailDialogProps> = ({ open
                                 <h4 className="text-sm font-medium text-slate-300">Location</h4>
                                 <p className="text-sm text-white font-medium">{property.location.street}</p>
                                 <p className="text-xs text-slate-500">
-                                    {property.location.ward}, {property.location.city} ({property.location.zipCode})
+                                    {property.location.ward}, {property.location.city}
                                 </p>
                             </div>
                         </div>

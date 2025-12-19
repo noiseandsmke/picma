@@ -1,25 +1,24 @@
 import React, { useMemo, useState } from 'react';
 import OwnerLayout from '../layouts/OwnerLayout';
-
+import { Eye, FileText, MapPin, Plus, Shield } from 'lucide-react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatCurrency } from "@/lib/utils";
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchOwnerProperties } from '../services/ownerService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { OwnerLeadForm } from '../components/OwnerLeadForm';
-import { PropertyLeadDto } from '@/features/admin/services/leadService';
+import { deleteLead, PropertyLeadDto } from '@/features/admin/services/leadService';
 import { LeadQuotesList } from '@/features/owner/components/LeadQuotesList';
 import { LEAD_STATUS_CONFIG } from '@/features/admin/utils/statusMapping';
 import apiClient from '@/services/apiClient';
-import { fetchPropertyById } from '@/features/admin/services/propertyService';
-import { LeadDetailDialog } from '@/features/admin/components/LeadDetailDialog';
+import { deleteProperty, fetchPropertyById } from '@/features/admin/services/propertyService';
+import { toast } from 'sonner';
+
 import { ResearchButton } from '@/features/research/views/ResearchButton';
-import { Calendar, Eye, FileText, MapPin, Plus, Shield, Pencil } from 'lucide-react';
-import { OwnerLeadUpdateForm } from '../components/OwnerLeadUpdateForm';
 
 const fetchOwnerLeads = async (userId: string) => {
     const response = await apiClient.get<PropertyLeadDto[]>(`/picma/leads/user/${userId}`);
@@ -27,8 +26,29 @@ const fetchOwnerLeads = async (userId: string) => {
 };
 
 const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({ lead }) => {
-    const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const queryClient = useQueryClient();
+
+    const deleteMutation = useMutation({
+        mutationFn: async () => {
+
+            await deleteLead(lead.id);
+            if (lead.propertyInfo) {
+                await deleteProperty(lead.propertyInfo);
+            }
+        },
+        onSuccess: () => {
+             queryClient.invalidateQueries({ queryKey: ["owner-leads"] });
+             queryClient.invalidateQueries({ queryKey: ["owner-properties"] });
+             toast.success("Lead and property deleted successfully");
+             setIsDeleteOpen(false);
+        },
+        onError: (error) => {
+             console.error("Failed to delete", error);
+             toast.error("Failed to delete lead");
+        }
+    });
 
     const { data: property, isLoading } = useQuery({
         queryKey: ['property-details', lead.propertyInfo],
@@ -36,21 +56,10 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({ lead }) => {
         staleTime: 1000 * 60 * 5,
     });
 
-    const showStatus = lead.status === 'ACCEPTED' || lead.status === 'REJECTED' || lead.status === 'EXPIRED';
-    const canEdit = lead.status === 'ACTIVE' || lead.status === 'IN_REVIEWING';
-    const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
+    const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.NEW;
 
-    const handleViewDetails = () => {
-        setIsDetailOpen(true);
-    };
-
-    const handleEditSuccess = () => {
-        setIsEditOpen(false);
-    };
-
-    const leadForDialog = {
-        ...lead,
-        createDate: lead.createDate || new Date().toISOString(),
+    const handleEdit = () => {
+        setIsEditOpen(true);
     };
 
     return (
@@ -62,14 +71,12 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({ lead }) => {
                         <MapPin className="h-12 w-12 opacity-30" />
                     </div>
 
-                    {showStatus && (
-                        <div className="absolute top-3 right-3">
-                            <Badge variant="outline"
-                                className={cn("font-medium backdrop-blur-sm shadow-sm border", statusConfig.className)}>
-                                {statusConfig.label}
-                            </Badge>
-                        </div>
-                    )}
+                    <div className="absolute top-3 right-3">
+                        <Badge variant="outline"
+                            className={cn("font-medium backdrop-blur-sm shadow-sm border", statusConfig.className)}>
+                            {statusConfig.label}
+                        </Badge>
+                    </div>
 
                     <div
                         className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -77,22 +84,11 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({ lead }) => {
                             variant="secondary"
                             size="sm"
                             className="bg-primary/20 hover:bg-primary/30 text-white border border-primary/30 backdrop-blur-md transition-colors"
-                            onClick={handleViewDetails}
+                            onClick={handleEdit}
                         >
                             <Eye className="mr-2 h-4 w-4" />
-                            View Details
+                            View
                         </Button>
-                        {canEdit && (
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                className="bg-slate-800/80 hover:bg-slate-700 text-white border border-slate-700 backdrop-blur-md transition-colors"
-                                onClick={() => setIsEditOpen(true)}
-                            >
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit
-                            </Button>
-                        )}
                     </div>
                 </div>
                 <CardContent className="p-5">
@@ -112,7 +108,9 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({ lead }) => {
                             </div>
                             <div className="flex items-center text-slate-400 text-sm mb-4">
                                 <MapPin className="h-3 w-3 mr-1" />
-                                {property?.location?.city || 'Unknown City'}, {property?.location?.zipCode || ''}
+                                <div className="flex gap-2">
+                                   <span>{property?.location?.city || 'Unknown City'}, {lead.zipCode || ''}</span>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 text-sm mb-4">
@@ -137,23 +135,42 @@ const LeadCard: React.FC<{ lead: PropertyLeadDto }> = ({ lead }) => {
                 </CardFooter>
             </Card>
 
-            <LeadDetailDialog
-                open={isDetailOpen}
-                onOpenChange={setIsDetailOpen}
-                lead={leadForDialog}
-                hideUserInfo={true}
-            />
-
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+
+                    {property && (
+                        <OwnerLeadForm
+                            initialLead={lead}
+                            initialProperty={property}
+                            onSuccess={() => setIsEditOpen(false)}
+                            onCancel={() => setIsEditOpen(false)}
+                            onDelete={() => setIsDeleteOpen(true)}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+            
+            <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-sm">
                     <DialogHeader>
-                        <DialogTitle>Update Lead Details</DialogTitle>
+                        <DialogTitle>Delete Lead & Property</DialogTitle>
                     </DialogHeader>
-                    <OwnerLeadUpdateForm
-                        lead={lead}
-                        onSuccess={handleEditSuccess}
-                        onCancel={() => setIsEditOpen(false)}
-                    />
+                    <div className="py-4">
+                        <p className="text-slate-400">
+                            Are you sure you want to delete this lead? <br />
+                            <span className="text-red-400 font-medium">This will also delete the associated property data permanently.</span>
+                        </p>
+                    </div>
+                    <div className="flex justify-end gap-3">
+                        <Button variant="ghost" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
+                        <Button 
+                            variant="destructive" 
+                            disabled={deleteMutation.isPending}
+                            onClick={() => deleteMutation.mutate()}
+                        >
+                            {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
         </>
@@ -182,12 +199,12 @@ const OwnerDashboard: React.FC = () => {
         return properties?.reduce((acc, p) => acc + (p.valuation?.estimatedConstructionCost || 0), 0) || 0;
     }, [properties]);
 
-    const activePoliciesCount = useMemo(() => {
-        return leads?.filter(l => l.status === 'ACCEPTED').length || 0;
+    const newLeadsCount = useMemo(() => {
+        return leads?.filter(l => l.status === 'NEW').length || 0;
     }, [leads]);
 
-    const pendingQuotesCount = useMemo(() => {
-        return leads?.filter(l => l.status === 'IN_REVIEWING').length || 0;
+    const inReviewLeadsCount = useMemo(() => {
+        return leads?.filter(l => l.status === 'IN_REVIEW').length || 0;
     }, [leads]);
 
     const handleCreateSuccess = () => {
@@ -201,36 +218,36 @@ const OwnerDashboard: React.FC = () => {
                     <div
                         className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm hover:border-primary/30 transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-lg">Total Asset Value</h3>
+                            <h3 className="font-semibold text-lg text-white">Total Asset Value</h3>
                             <Shield className="h-6 w-6 text-primary" />
                         </div>
-                        <p className="text-3xl font-bold">
+                        <p className="text-3xl font-bold text-white">
                             {isPropsLoading ?
                                 <Skeleton className="h-8 w-32 bg-white/20" /> : formatCurrency(totalAssetValue)}
                         </p>
-                        <p className="text-sm opacity-80 mt-1">Based on property construction cost</p>
+                        <p className="text-sm text-slate-400 mt-1">Based on property construction cost</p>
                     </div>
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm hover:border-primary/30 transition-all duration-300">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm hover:border-emerald-500/30 transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-lg text-white">My Active Policies</h3>
-                            <FileText className="h-6 w-6 text-primary" />
+                            <h3 className="font-semibold text-lg text-white">New Leads</h3>
+                            <FileText className="h-6 w-6 text-emerald-500" />
                         </div>
                         <p className="text-3xl font-bold text-white">
-                            {isLeadsLoading ? <Skeleton className="h-8 w-12 bg-slate-800" /> : activePoliciesCount}
+                            {isLeadsLoading ? <Skeleton className="h-8 w-12 bg-slate-800" /> : newLeadsCount}
                         </p>
                         <p className="text-sm text-slate-400 mt-1">
-                            Accepted Quotes
+                            Recently created
                         </p>
                     </div>
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm hover:border-primary/30 transition-all duration-300">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm hover:border-amber-500/30 transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-lg text-white">Pending Quotes</h3>
-                            <FileText className="h-6 w-6 text-primary" />
+                            <h3 className="font-semibold text-lg text-white">In Review</h3>
+                            <FileText className="h-6 w-6 text-amber-500" />
                         </div>
                         <p className="text-3xl font-bold text-white">
-                            {isLeadsLoading ? <Skeleton className="h-8 w-12 bg-slate-800" /> : pendingQuotesCount}
+                            {isLeadsLoading ? <Skeleton className="h-8 w-12 bg-slate-800" /> : inReviewLeadsCount}
                         </p>
-                        <p className="text-sm text-slate-400 mt-1">Review required</p>
+                        <p className="text-sm text-slate-400 mt-1">Under agent review</p>
                     </div>
                 </div>
 

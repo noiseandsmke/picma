@@ -48,10 +48,10 @@ const LoginForm: React.FC = () => {
                 return;
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const decodedAccess = jwtDecode<any>(response.access_token);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             let decodedId: any = {};
+
             if (response.id_token) {
                 decodedId = jwtDecode(response.id_token);
             }

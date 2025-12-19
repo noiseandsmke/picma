@@ -9,7 +9,7 @@ import AdminLayout from '../layouts/AdminLayout';
 import {CreateUserDialog} from '../components/CreateUserDialog';
 import {EditUserDialog} from '../components/EditUserDialog';
 import {toast} from 'sonner';
-import {cn} from '@/lib/utils';
+import {cn, getUserInitials} from '@/lib/utils';
 
 const AdminUsersView: React.FC = () => {
     const [activeFilter, setActiveFilter] = useState<'all' | 'agent' | 'owner'>('all');
@@ -40,16 +40,9 @@ const AdminUsersView: React.FC = () => {
         }
     });
 
-    const getDisplayRole = (user: UserDto) => {
-        if (user.role) return user.role;
-        if (user.group === 'agents') return 'Agent';
-        if (user.group === 'owners') return 'Owner';
-        return 'User';
-    };
 
-    const getInitials = (firstName: string, lastName: string) => {
-        return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-    };
+
+
 
     const getRandomColor = (username: string) => {
         const colors = ['bg-indigo-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-blue-500', 'bg-purple-500'];
@@ -82,8 +75,7 @@ const AdminUsersView: React.FC = () => {
             ];
         }
         return [
-            {header: "Member", width: "35%"},
-            {header: "Role", width: "12%"},
+            {header: "Member", width: "40%"},
             actionCol,
         ];
     };
@@ -151,7 +143,7 @@ const AdminUsersView: React.FC = () => {
                         ))
                     ) : (
                         users?.map((user) => {
-                            const role = getDisplayRole(user);
+
 
                             return (
                                 <TableRow key={user.id}
@@ -160,7 +152,7 @@ const AdminUsersView: React.FC = () => {
                                         <div className="flex items-center gap-4">
                                             <div
                                                 className={cn("h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md", getRandomColor(user.username))}>
-                                                {getInitials(user.firstName, user.lastName)}
+                                                {getUserInitials(user.firstName, user.lastName)}
                                             </div>
                                             <div className="flex flex-col">
                                                 <span
@@ -169,12 +161,7 @@ const AdminUsersView: React.FC = () => {
                                             </div>
                                         </div>
                                     </TableCell>
-                                    {activeFilter === 'all' && (
-                                        <TableCell className="py-4">
-                                            <span
-                                                className="text-slate-200 font-medium capitalize">{role.toLowerCase()}</span>
-                                        </TableCell>
-                                    )}
+
                                     {activeFilter === 'agent' && (
                                         <TableCell className="py-4">
                                             <span className="text-slate-300">{user.zipcode || 'N/A'}</span>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowUpDown, Building2, Eye, Map, MapPin, MoreHorizontal } from 'lucide-react';
+import { ArrowUpDown, Building2, Eye, MapPin, MoreHorizontal } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import SharedTable, { Column } from "@/components/ui/shared-table";
@@ -52,13 +52,7 @@ const AdminPropertiesView: React.FC = () => {
             className: "text-slate-400 cursor-pointer hover:text-primary transition-colors",
             onClick: () => handleSort('location.street')
         },
-        {
-            header: <div className="flex items-center gap-2"><Map className="h-3 w-3" /> Zip code <ArrowUpDown
-                className="h-3 w-3" /></div>,
-            width: "15%",
-            className: "text-slate-400 cursor-pointer hover:text-primary transition-colors",
-            onClick: () => handleSort('location.zipCode')
-        },
+
 
         {
             header: "Construction",
@@ -127,9 +121,7 @@ const AdminPropertiesView: React.FC = () => {
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-slate-300">
-                                        {prop.location.zipCode}
-                                    </TableCell>
+
 
                                     <TableCell className="text-slate-300">
                                         {formatEnum(prop.attributes.constructionType)}

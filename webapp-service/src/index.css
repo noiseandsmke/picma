@@ -83,7 +83,6 @@
         }
     }
 
-    /* Orbit Animations */
     @keyframes orbit-cw {
         0% {
             transform: translate(-50%, -50%) rotate(0deg);

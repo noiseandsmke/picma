@@ -1,125 +1,48 @@
 import React from 'react';
 import {ResearchReport} from '../services/deepResearchService';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {AlertTriangle, Check, TrendingUp, Waves} from 'lucide-react';
-import {Badge} from '@/components/ui/badge';
-import {formatCurrency} from '@/lib/utils';
+import {Sparkles} from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ResearchReportViewProps {
     report: ResearchReport;
+    hideTitle?: boolean;
 }
 
-export const ResearchReportView: React.FC<ResearchReportViewProps> = ({report}) => {
-    const getRiskColor = (level?: string) => {
-        switch (level) {
-            case 'HIGH':
-                return 'text-red-400 bg-red-900/20 border-red-900/50';
-            case 'MEDIUM':
-                return 'text-amber-400 bg-amber-900/20 border-amber-900/50';
-            case 'LOW':
-                return 'text-emerald-400 bg-emerald-900/20 border-emerald-900/50';
-            default:
-                return 'text-slate-400 bg-slate-800';
-        }
-    };
-
+export const ResearchReportView: React.FC<ResearchReportViewProps> = ({report, hideTitle = false}) => {
     return (
-        <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="bg-slate-900/50 border-slate-800">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg text-white">
-                            <TrendingUp className="h-5 w-5 text-indigo-400"/>
-                            Market Valuation
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <div className="text-sm text-slate-400">Estimated Value</div>
-                            <div className="text-3xl font-bold text-white">
-                                {formatCurrency(report.valuation.estimatedValue)}
-                            </div>
-                            <div className="text-xs text-slate-500 mt-1">
-                                ~ {formatCurrency(report.valuation.pricePerM2)} / m²
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="text-xs font-medium text-slate-400 uppercase">Trend</div>
-                            <div className="flex items-center gap-2">
-                                <Badge variant="outline" className={
-                                    report.marketAnalysis.trend === 'RISING' ? 'text-emerald-400 border-emerald-500/30' :
-                                        report.marketAnalysis.trend === 'FALLING' ? 'text-red-400 border-red-500/30' :
-                                            'text-blue-400 border-blue-500/30'
-                                }>
-                                    {report.marketAnalysis.trend}
-                                </Badge>
-                                <span
-                                    className="text-xs text-slate-500">Demand: {report.marketAnalysis.demandLevel}</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-slate-900/50 border-slate-800">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg text-white">
-                            <AlertTriangle className="h-5 w-5 text-amber-400"/>
-                            Risk Assessment
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div
-                            className="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950/50">
-                            <div className="flex items-center gap-2">
-                                <Waves className="h-4 w-4 text-blue-400"/>
-                                <span className="text-sm text-slate-300">Flood Risk</span>
-                            </div>
-                            <Badge variant="outline"
-                                   className={`border ${getRiskColor(report.riskAssessment.floodRiskLevel)}`}>
-                                {report.riskAssessment.floodRiskLevel}
-                            </Badge>
-                        </div>
-                        <p className="text-xs text-slate-400">
-                            {report.riskAssessment.floodDetails}
-                        </p>
-                        {report.riskAssessment.nearbyHazards.length > 0 && (
-                            <div className="space-y-2">
-                                <div className="text-xs font-medium text-slate-400 uppercase">Hazards</div>
-                                <div className="flex flex-wrap gap-2">
-                                    {report.riskAssessment.nearbyHazards.map((hazard, i) => (
-                                        <Badge key={i} variant="secondary"
-                                               className="text-[10px] bg-slate-800 text-slate-300 hover:bg-slate-700">
-                                            {hazard}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-
-            <Card className="bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border-indigo-500/30">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg text-white">
-                        <Check className="h-5 w-5 text-emerald-400"/>
-                        AI Recommendation
+        <Card className="bg-[#0c0c14] border-indigo-500/20 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+            {!hideTitle && (
+                <CardHeader className="border-b border-indigo-500/10 bg-indigo-500/5">
+                    <CardTitle className="flex items-center gap-2 text-xl text-white">
+                        <Sparkles className="h-5 w-5 text-indigo-400"/>
+                        AI Research Report
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-300">Recommended Coverage</span>
-                        <span className="text-xl font-bold text-emerald-400">
-                            {formatCurrency(report.quoteRecommendation.recommendedSumInsured)}
-                        </span>
-                    </div>
-                    <div className="p-3 bg-black/20 rounded-lg border border-white/5">
-                        <p className="text-sm text-slate-300 leading-relaxed italic">
-                            "{report.quoteRecommendation.reasoning}"
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+            )}
+            <CardContent className="p-6">
+                <div className="prose prose-sm prose-invert max-w-none text-slate-300">
+                    <ReactMarkdown 
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                            h1: ({node, ...props}) => <h1 className="text-xl font-bold text-white mb-4 mt-6 border-b border-slate-700 pb-2" {...props} />,
+                            h2: ({node, ...props}) => <h2 className="text-lg font-bold text-indigo-400 mb-3 mt-5" {...props} />,
+                            h3: ({node, ...props}) => <h3 className="text-base font-bold text-slate-200 mb-2 mt-4" {...props} />,
+                            p: ({node, ...props}) => <p className="mb-3 leading-relaxed text-sm" {...props} />,
+                            ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-1" {...props} />,
+                            li: ({node, ...props}) => <li className="text-sm" {...props} />,
+                            strong: ({node, ...props}) => <strong className="font-semibold text-slate-100" {...props} />,
+                            table: ({node, ...props}) => <div className="overflow-x-auto my-4"><table className="w-full text-sm border-collapse" {...props} /></div>,
+                            th: ({node, ...props}) => <th className="border border-slate-700 bg-slate-800 p-2 text-left font-semibold text-slate-200" {...props} />,
+                            td: ({node, ...props}) => <td className="border border-slate-700 p-2 text-slate-300" {...props} />,
+                            blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-indigo-500 pl-4 py-1 my-4 italic text-slate-400 bg-indigo-500/5 rounded-r" {...props} />
+                        }}
+                    >
+                        {report}
+                    </ReactMarkdown>
+                </div>
+            </CardContent>
+        </Card>
     );
 };

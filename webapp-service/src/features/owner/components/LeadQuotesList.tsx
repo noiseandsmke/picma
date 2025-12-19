@@ -16,7 +16,7 @@ import { COVERAGE_CONFIG, CoverageCode } from '@/types/enums';
 
 interface LeadQuotesListProps {
     leadId: number;
-    leadStatus: string;
+    leadStatus: 'NEW' | 'IN_REVIEW';
 }
 
 export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({ leadId, leadStatus }) => {
@@ -84,7 +84,7 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({ leadId, leadStat
         id: leadId,
         userInfo: '', propertyInfo: '', status: leadStatus,
         createDate: new Date().toISOString(),
-        expiryDate: new Date().toISOString()
+
     };
 
     return (
@@ -166,7 +166,7 @@ const LeadQuoteItem = ({ quote, setSelectedQuote }: {
                 <div className="flex flex-col">
                     <span className="text-sm font-medium text-white">{agentName}</span>
                     <span className="text-xs text-slate-500">
-                        Valid until: {new Date(quote.validUntil).toLocaleDateString()}
+
                     </span>
                 </div>
                 <Badge variant="outline"
@@ -189,8 +189,8 @@ const LeadQuoteItem = ({ quote, setSelectedQuote }: {
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-slate-400 mt-1">
-                    <span>Sum Insured: <span className="text-slate-300">{formatCurrency(quote.sumInsured)}</span></span>
-                    {quote.status && quote.status !== 'PENDING' && (
+
+                    {quote.status && (
                         <Badge variant="secondary" className="text-[10px] h-5">
                             {quote.status}
                         </Badge>

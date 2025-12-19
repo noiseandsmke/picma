@@ -1,4 +1,4 @@
-/* Custom Toast Styling - Dark Slate Theme */
+
 .custom-toast {
     background: #0b0c15 !important;
     border: 1px solid #1e293b !important;
@@ -9,28 +9,28 @@
     padding: 16px !important;
 }
 
-/* Success Toast */
+
 .custom-toast[data-type="success"] {
     border-left: 3px solid #10b981 !important;
 }
 
-/* Error Toast */
+
 .custom-toast[data-type="error"] {
     border-left: 3px solid #ef4444 !important;
     background: #141124 !important;
 }
 
-/* Info/Default Toast */
+
 .custom-toast[data-type="info"] {
     border-left: 3px solid #6366f1 !important;
 }
 
-/* Warning Toast */
+
 .custom-toast[data-type="warning"] {
     border-left: 3px solid #f59e0b !important;
 }
 
-/* Toast Title */
+
 .custom-toast [data-title] {
     font-weight: 600 !important;
     font-size: 0.875rem !important;
@@ -38,14 +38,14 @@
     margin-bottom: 4px !important;
 }
 
-/* Toast Description */
+
 .custom-toast [data-description] {
     font-size: 0.8125rem !important;
     color: #94a3b8 !important;
     line-height: 1.4 !important;
 }
 
-/* Toast Close Button */
+
 .custom-toast [data-close-button] {
     color: #64748b !important;
     background: transparent !important;

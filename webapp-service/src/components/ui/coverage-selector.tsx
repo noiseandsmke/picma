@@ -1,7 +1,7 @@
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { COVERAGE_CONFIG, CoverageCode } from "@/types/enums";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -21,13 +21,13 @@ interface CoverageSelectorProps {
 export const CoverageSelector: React.FC<CoverageSelectorProps> = ({
     value,
     onChange,
-    className
+    className,
 }) => {
     const addCoverage = (code: CoverageCode) => {
         const newCoverage: CoverageSelection = {
             code,
-            limit: 1000000000,
-            deductible: 10000000
+            limit: 0,
+            deductible: 0
         };
         onChange([...value, newCoverage]);
     };
@@ -131,41 +131,38 @@ export const CoverageSelector: React.FC<CoverageSelectorProps> = ({
                                             Limit of Liability
                                         </Label>
                                         <div className="relative">
-                                            <Input
-                                                type="number"
+                                            <NumberInput
                                                 value={selection.limit}
-                                                onChange={(e) => handleUpdate(code, 'limit', Number(e.target.value))}
-                                                className="bg-slate-950 border-slate-700 text-slate-200 font-mono pl-3 pr-12"
+                                                onChange={(val) => handleUpdate(code, 'limit', val || 0)}
+                                                step={10000000}
                                                 min={0}
+                                                format={(val) => val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+                                                parse={(val) => Number(val.replace(/\./g, ''))}
+                                                className="bg-slate-950 border-slate-700 text-slate-200 pr-12"
                                             />
                                             <span
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">VND</span>
+                                                className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointers-events-none z-10">VND</span>
                                         </div>
-                                        <p className="text-xs text-slate-500 text-right">
-                                            {formatCurrency(selection.limit)}
-                                        </p>
                                     </div>
 
                                     <div className="space-y-2">
                                         <Label className="text-xs text-slate-400 uppercase tracking-wider">
-                                            Deductible
+                                            Deductible (%)
                                         </Label>
                                         <div className="relative">
-                                            <Input
-                                                type="number"
-                                                value={selection.deductible}
-                                                onChange={(e) => handleUpdate(code, 'deductible', Number(e.target.value))}
-                                                className="bg-slate-950 border-slate-700 text-slate-200 font-mono pl-3 pr-12"
+                                            <NumberInput
+                                                value={Number((selection.deductible * 100).toFixed(2))}
+                                                onChange={(val) => handleUpdate(code, 'deductible', (val || 0) / 100)}
+                                                step={0.1}
                                                 min={0}
+                                                max={100}
+                                                className="bg-slate-950 border-slate-700 text-slate-200 pr-12"
                                             />
                                             <span
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">VND</span>
+                                                className="absolute right-10 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointers-events-none z-10">%</span>
                                         </div>
-                                        {selection.deductible >= selection.limit && (
-                                            <p className="text-xs text-red-400">Must be less than limit</p>
-                                        )}
-                                        <p className="text-xs text-slate-500 text-right">
-                                            {formatCurrency(selection.deductible)}
+                                         <p className="text-xs text-slate-500 text-right">
+                                            {formatCurrency(selection.limit * selection.deductible)} (Est.)
                                         </p>
                                     </div>
                                 </div>

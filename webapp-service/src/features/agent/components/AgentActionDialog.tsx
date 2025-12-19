@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AgentLeadDto } from '../services/agentService';
-import { ArrowRight, Building2, FileText, MapPin, Ruler, User, Wallet, XCircle } from 'lucide-react';
+import { ArrowRight, Building2, FileText, MapPin, Ruler, User, Wallet } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchPropertyById } from '@/features/admin/services/propertyService';
 import { fetchUserById } from '@/features/admin/services/userService';
@@ -12,25 +12,22 @@ interface AgentActionDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     lead: AgentLeadDto | null;
+    quoteStatus?: 'NEW' | 'ACCEPTED' | 'REJECTED';
     onCreateQuote: (leadId: number) => void;
-    onReject: (lead: AgentLeadDto) => void;
-    isPending: boolean;
-    hasQuote?: boolean;
 }
 
 export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
     open,
     onOpenChange,
     lead,
-    onCreateQuote,
-    onReject,
-    isPending,
-    hasQuote
+    quoteStatus,
+    onCreateQuote
 }) => {
     if (!lead) return null;
 
-    const isRejected = lead.leadAction === 'REJECTED';
-    const isAccepted = lead.leadAction === 'ACCEPTED' || hasQuote;
+    const hasQuote = !!quoteStatus;
+    const isAccepted = quoteStatus === 'ACCEPTED';
+    const isRejected = quoteStatus === 'REJECTED';
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -39,11 +36,7 @@ export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
                 <div className="p-6">
                     <DialogHeader className="mb-4">
                         <DialogTitle className="text-white flex items-center gap-2">
-                            Lead Opportunity #{lead.leadId}
-                            {lead.leadAction === 'INTERESTED' && (
-                                <span
-                                    className="text-xs font-normal px-2 py-0.5 rounded bg-primary/10 text-blue-300 border border-primary/30">Interested</span>
-                            )}
+                            Lead Opportunity #{lead.id}
                         </DialogTitle>
                     </DialogHeader>
 
@@ -55,40 +48,25 @@ export const AgentActionDialog: React.FC<AgentActionDialogProps> = ({
                         Close
                     </Button>
 
-                    {!isRejected && (
-                        <div className="flex gap-2">
-                            {!isAccepted && (
-                                <Button
-                                    variant="destructive"
-                                    onClick={() => onReject(lead)}
-                                    disabled={isPending}
-                                    className="bg-red-900/20 text-red-400 hover:bg-red-900/40 border border-red-900/50"
-                                >
-                                    <XCircle className="w-4 h-4 mr-2" />
-                                    Reject Lead
-                                </Button>
-                            )}
-
-                            {isAccepted ? (
-                                <Button
-                                    onClick={() => onCreateQuote(lead.leadId)}
-                                    className="bg-primary hover:bg-primary-hover text-white shadow-[0_4px_14px_0_rgba(59,130,246,0.39)]"
-                                >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    View/Edit Quote
-                                </Button>
-                            ) : (
-                                <Button
-                                    onClick={() => onCreateQuote(lead.leadId)}
-                                    disabled={isPending}
-                                    className="bg-primary hover:bg-primary-hover text-white shadow-[0_4px_14px_0_rgba(59,130,246,0.39)]"
-                                >
-                                    Create Quote
-                                    <ArrowRight className="w-4 h-4 ml-2" />
-                                </Button>
-                            )}
-                        </div>
-                    )}
+                    <div className="flex gap-2">
+                        {hasQuote ? (
+                            <Button
+                                onClick={() => onCreateQuote(lead.id)}
+                                className="bg-primary hover:bg-primary-hover text-white shadow-[0_4px_14px_0_rgba(59,130,246,0.39)]"
+                            >
+                                <FileText className="w-4 h-4 mr-2" />
+                                {isAccepted || isRejected ? 'View Quote' : 'Edit Quote'}
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={() => onCreateQuote(lead.id)}
+                                className="bg-primary hover:bg-primary-hover text-white shadow-[0_4px_14px_0_rgba(59,130,246,0.39)]"
+                            >
+                                Create Quote
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                        )}
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -153,7 +131,7 @@ const ExpandedPropertyView: React.FC<{ lead: AgentLeadDto }> = ({ lead }) => {
                         <div>
                             <div className="font-medium text-white text-lg">{property.location?.street}</div>
                             <div className="text-slate-400">{property.location?.ward}, {property.location?.city}</div>
-                            <div className="text-slate-500 text-sm mt-1">Zip: {property.location?.zipCode}</div>
+                            <div className="text-slate-500 text-sm mt-1">Zip: {lead.zipCode}</div>
                         </div>
                     </div>
                 </div>

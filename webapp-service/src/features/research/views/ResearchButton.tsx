@@ -1,12 +1,14 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
 import {Button} from "@/components/ui/button";
-import {Sparkles} from 'lucide-react';
+import {Sparkles, FileText} from 'lucide-react';
 import {ResearchReport, ResearchStep, useResearchStream} from '../services/deepResearchService';
 import {ResearchProgress} from '../components/ResearchProgress';
 import {ResearchReportView} from '../components/ResearchReportView';
+import {ResearchReportDialog} from '../components/ResearchReportDialog';
 import {PropertyLeadDto} from '@/features/admin/services/leadService';
 import {toast} from "sonner";
+import { ENV } from '@/config/env';
 
 interface ResearchButtonProps {
     lead: PropertyLeadDto;
@@ -20,6 +22,63 @@ export const ResearchButton: React.FC<ResearchButtonProps> = ({lead, propertyId}
     const [steps, setSteps] = useState<ResearchStep[]>([]);
     const [report, setReport] = useState<ResearchReport | null>(null);
     const {startResearch} = useResearchStream();
+    
+    const [status, setStatus] = useState<'idle' | 'researched'>('idle');
+
+    useEffect(() => {
+        const checkStatus = async () => {
+            try {
+                 const res = await fetch(`${ENV.API_URL}/picma/research/status/${lead.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${sessionStorage.getItem('access_token')}`
+                    }
+                 });
+                 if (res.ok) {
+                    const isResearched = await res.json();
+                     if (isResearched === true) {
+                         setStatus('researched');
+                     }
+                 }
+            } catch (e) {
+                console.error("Failed to check research status", e);
+            }
+        };
+        if (lead?.id) checkStatus();
+    }, [lead]);
+
+    useEffect(() => {
+        if (isOpen && status === 'researched' && !report) {
+            const fetchReport = async () => {
+                try {
+                    const token = sessionStorage.getItem('access_token');
+                    const res = await fetch(`${ENV.API_URL}/picma/research/result/${lead.id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+
+
+                        let fullText = '';
+                        if (data.outputs && Array.isArray(data.outputs)) {
+                            const textOutput = data.outputs.find((o: any) => o.type === 'text');
+                            if (textOutput) fullText = textOutput.text;
+                        }
+                        
+                        if (fullText) {
+
+
+                            setReport(fullText);
+                            setIsComplete(true);
+                            setIsStarted(true);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch report", e);
+                }
+            };
+            fetchReport();
+        }
+    }, [isOpen, status, lead.id, report]);
 
     const handleStart = () => {
         setIsStarted(true);
@@ -40,6 +99,7 @@ export const ResearchButton: React.FC<ResearchButtonProps> = ({lead, propertyId}
                 setReport(finalReport);
                 setIsComplete(true);
                 toast.success("Research complete!");
+                setStatus('researched');
             },
             (error) => {
                 toast.error(error);
@@ -48,16 +108,36 @@ export const ResearchButton: React.FC<ResearchButtonProps> = ({lead, propertyId}
         );
     };
 
+    if (status === 'researched') {
+        return (
+            <ResearchReportDialog 
+                open={isOpen} 
+                onOpenChange={setIsOpen} 
+                report={report}
+                trigger={
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-indigo-500/10 text-green-400 border-green-500/50 hover:bg-green-500/10 px-4 font-bold"
+                    >
+                        <FileText className="w-4 h-4 mr-2"/>
+                        View
+                    </Button>
+                }
+            />
+        );
+    }
+
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 <Button
                     variant="outline"
                     size="sm"
-                    className="bg-indigo-500/10 text-indigo-400 border-indigo-500/50 hover:bg-indigo-500/20"
+                    className="bg-indigo-500/10 text-indigo-400 border-indigo-500/50 hover:bg-indigo-500/20 px-4 font-bold"
                 >
                     <Sparkles className="w-4 h-4 mr-2"/>
-                    AI Research
+                    AI
                 </Button>
             </DialogTrigger>
             <DialogContent className="bg-[#0f0e1a] border-slate-800 text-white max-w-3xl max-h-[85vh] overflow-y-auto">

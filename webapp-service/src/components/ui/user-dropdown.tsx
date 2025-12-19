@@ -9,6 +9,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/context/AuthContext';
+import { getUserInitials } from '@/lib/utils';
 import { ProfileDialog } from '@/components/ui/profile-dialog';
 
 interface UserDropdownProps {
@@ -22,7 +23,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({ displayName, usernam
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     const display = displayName || username;
-    const initials = display.substring(0, 2).toUpperCase();
+    const initials = getUserInitials(display);
 
     return (
         <>

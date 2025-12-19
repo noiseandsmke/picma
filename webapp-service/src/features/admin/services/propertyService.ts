@@ -6,7 +6,6 @@ export interface PropertyLocationDto {
     street: string;
     ward: string;
     city: string;
-    zipCode: string;
 }
 
 export interface PropertyAttributesDto {

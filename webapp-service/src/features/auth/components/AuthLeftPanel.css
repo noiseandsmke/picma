@@ -51,7 +51,7 @@
     z-index: 10;
 }
 
-/* Positions */
+
 .pos-0 {
     top: 0;
     left: 50%;
@@ -100,7 +100,7 @@
     transform: translate(-50%, -50%);
 }
 
-/* Orbit Animations */
+
 @keyframes orbit-cw {
     0% {
         transform: translate(-50%, -50%) rotate(0deg);
@@ -121,7 +121,7 @@
     }
 }
 
-/* Counter Rotation */
+
 @keyframes counter-rot {
     0% {
         transform: rotate(0deg);
@@ -142,7 +142,7 @@
     }
 }
 
-/* Specific Counter Rotation Classes */
+
 .c-rot-cw {
     animation: counter-rot 60s linear infinite;
 }

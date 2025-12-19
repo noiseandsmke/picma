@@ -13,12 +13,7 @@ export interface AgentDto {
 
 const PROPERTY_BASE_PATH = '/picma/properties';
 const AGENT_BASE_PATH = '/picma/agents';
-const LEAD_BASE_PATH = '/picma/leads';
 
-export const updateOwnerLead = async (leadId: number, leadData: object): Promise<object> => {
-    const response = await apiClient.put(`${LEAD_BASE_PATH}/${leadId}/details`, leadData);
-    return response.data;
-};
 
 export const fetchOwnerProperties = async (ownerId: string): Promise<PropertyInfoDto[]> => {
 
@@ -46,10 +41,10 @@ export const fetchAgentsForDirectory = async (zipCode: string): Promise<AgentDto
                 return {
                     id: user.id,
                     name: `${user.firstName || ''} ${user.lastName || user.username}`.trim(),
-                    firm: "Local Insurance Co.",
-                    rating: 5,
+                    firm: user.attributes?.firm?.[0] || undefined,
+                    rating: user.attributes?.rating ? parseInt(user.attributes.rating[0]) : undefined,
                     zipCode: user.zipcode || zipCode,
-                    phone: "555-0123"
+                    phone: user.mobile || ""
                 } as AgentDto;
             }
             return null;

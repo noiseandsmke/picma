@@ -4,20 +4,22 @@ export interface LeadDto {
     id: number;
     userInfo: string;
     propertyInfo: string;
-    status: string;
+    status: 'NEW' | 'IN_REVIEW';
     createDate: string;
-    expiryDate: string;
+
     assignedAgents?: string[];
     valuation?: number;
+    zipCode?: string;
 }
 
 export interface PropertyLeadDto {
     id: number;
     userInfo: string;
     propertyInfo: string;
-    status: string;
+    status: 'NEW' | 'IN_REVIEW';
     createDate: string;
-    expiryDate: string;
+
+    zipCode: string;
     assignedAgents?: string[];
     valuation?: number;
 }
@@ -25,15 +27,16 @@ export interface PropertyLeadDto {
 export interface CreateLeadDto {
     userInfo: string;
     propertyInfo: string;
-    status: string;
+    zipCode: string;
+    status: 'NEW' | 'IN_REVIEW';
     userId?: string;
 }
 
 export interface LeadStatsDto {
     totalLeads: number;
+    newLeads: number;
+    inReviewLeads: number;
     acceptedLeads: number;
-    rejectedLeads: number;
-    overdueLeads: number;
 }
 
 export interface LeadTrendData {
@@ -43,9 +46,9 @@ export interface LeadTrendData {
 
 const LEAD_SERVICE_URL = '/picma/leads';
 
-export const fetchAllLeads = async (sort = 'id', order = 'asc'): Promise<PropertyLeadDto[]> => {
-    const response = await apiClient.get<PropertyLeadDto[]>(`${LEAD_SERVICE_URL}/all`, {
-        params: {sort, order},
+export const fetchAllLeads = async (sortBy = 'id', sortDirection = 'asc', status?: string): Promise<PropertyLeadDto[]> => {
+    const response = await apiClient.get<PropertyLeadDto[]>(`${LEAD_SERVICE_URL}`, {
+        params: { sortBy, sortDirection, status },
     });
     return response.data;
 };

@@ -1,35 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { fetchPropertyById, PropertyInfoDto } from '../services/propertyService';
 import { fetchUserById, UserDto } from '../services/userService';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Building2, MapPin, Ruler, Wallet } from 'lucide-react';
+import { Building2, MapPin, Ruler, Wallet, FileText, Hammer, Calendar, Layers, Home } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-
-interface LeadDto {
-    id: number;
-    userInfo: string;
-    propertyInfo: string;
-    status: string;
-    createDate: string;
-}
+import { PropertyLeadDto } from '../services/leadService';
 
 interface LeadDetailDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    lead: LeadDto | null;
+    lead: PropertyLeadDto | null;
     hideUserInfo?: boolean;
 }
+
+const formatEnum = (val: string) => {
+    return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase().replaceAll('_', ' ');
+};
 
 export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ open, onOpenChange, lead, hideUserInfo }) => {
     const [propertyDetails, setPropertyDetails] = useState<PropertyInfoDto | null>(null);
     const [userDetails, setUserDetails] = useState<UserDto | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isLegacy, setIsLegacy] = useState(false);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+
     const [legacyDetails, setLegacyDetails] = useState<any>(null);
 
     useEffect(() => {
@@ -92,94 +90,130 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ open, onOpen
         }
 
         if (isLegacy && legacyDetails) {
-            return (
-                <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                        <div>
-                            <span className="text-slate-500 text-xs uppercase tracking-wider block mb-1">Address</span>
-                            <span
-                                className="text-slate-300">{legacyDetails.address || legacyDetails.location?.street}</span>
-                        </div>
-                        <div>
-                            <span className="text-slate-500 text-xs uppercase tracking-wider block mb-1">City</span>
-                            <span className="text-slate-300">{legacyDetails.city || legacyDetails.location?.city}</span>
-                        </div>
-                    </div>
+             return (
+                <div className="space-y-2 text-sm text-slate-400 italic">
+                    Legacy data format: {JSON.stringify(legacyDetails)}
                 </div>
             );
         }
 
         if (propertyDetails) {
             return (
-                <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                        <div className="bg-primary/10 p-2 rounded-lg text-primary mt-1">
-                            <MapPin size={18} />
+                <div className="space-y-6">
+                    <div className="flex items-center gap-3 pb-2 border-b border-slate-800">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary">
+                            <MapPin className="h-4 w-4" />
                         </div>
-                        <div className="space-y-1 flex-1">
-                            <h4 className="text-sm font-medium text-slate-300">Location</h4>
-                            <p className="text-sm text-white font-medium">{propertyDetails.location.street}</p>
-                            <p className="text-xs text-slate-500">
-                                {propertyDetails.location.ward}, {propertyDetails.location.city} {propertyDetails.location.zipCode && `(${propertyDetails.location.zipCode})`}
-                            </p>
-                        </div>
+                        <h4 className="text-sm font-medium uppercase tracking-wider text-slate-300">Property Location</h4>
                     </div>
-
-                    <Separator className="bg-slate-800" />
-
-                    <div className="flex items-start gap-3">
-                        <div className="bg-emerald-500/10 p-2 rounded-lg text-emerald-400 mt-1">
-                            <Building2 size={18} />
-                        </div>
-                        <div className="space-y-3 flex-1">
-                            <h4 className="text-sm font-medium text-slate-300">Attributes</h4>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                                <div>
-                                    <span className="text-[10px] uppercase text-slate-500 tracking-wider">Type</span>
-                                    <div className="mt-0.5">
-                                        <Badge variant="outline"
-                                            className="border-slate-700 text-slate-300 text-[10px] h-5">
-                                            {propertyDetails.attributes.constructionType.replace('_', ' ')}
-                                        </Badge>
-                                    </div>
-                                </div>
-                                <div>
-                                    <span
-                                        className="text-[10px] uppercase text-slate-500 tracking-wider">Year built</span>
-                                    <p className="text-sm text-slate-300">{propertyDetails.attributes.yearBuilt}</p>
-                                </div>
-                                <div>
-                                    <span className="text-[10px] uppercase text-slate-500 tracking-wider">Floors</span>
-                                    <p className="text-sm text-slate-300">{propertyDetails.attributes.noFloors}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <Separator className="bg-slate-800" />
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-start gap-3">
-                            <div className="bg-amber-500/10 p-2 rounded-lg text-amber-400 mt-1">
-                                <Ruler size={18} />
-                            </div>
-                            <div>
-                                <h4 className="text-sm font-medium text-slate-300">Area</h4>
-                                <p className="text-sm font-medium text-white">{propertyDetails.attributes.squareMeters} m²</p>
+                        <div className="space-y-2">
+                            <Label>City</Label>
+                            <Input 
+                                readOnly 
+                                value={propertyDetails.location.city} 
+                                className="bg-surface-dark border-slate-800 text-slate-400 focus-visible:ring-0 cursor-default"
+                            />
+                        </div>
+
+                         <div className="space-y-2">
+                            <Label>Zip Code</Label>
+                             <Input 
+                                readOnly 
+                                value={lead.zipCode || 'N/A'} 
+                                className="bg-surface-dark border-slate-800 text-slate-400 focus-visible:ring-0 cursor-default"
+                            />
+                        </div>
+
+                         <div className="space-y-2">
+                            <Label>Ward</Label>
+                             <Input 
+                                readOnly 
+                                value={propertyDetails.location.ward} 
+                                className="bg-surface-dark border-slate-800 text-slate-400 focus-visible:ring-0 cursor-default"
+                            />
+                        </div>
+                        
+                        <div className="space-y-2 col-span-2">
+                            <Label>Street / House number</Label>
+                            <div className="relative">
+                                <Home className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                                <Input
+                                    readOnly
+                                    value={propertyDetails.location.street}
+                                    className="pl-9 bg-surface-dark border-slate-800 text-slate-400 focus-visible:ring-0 cursor-default"
+                                />
                             </div>
                         </div>
-                        <div className="flex items-start gap-3">
-                            <div className="bg-rose-500/10 p-2 rounded-lg text-rose-400 mt-1">
-                                <Wallet size={18} />
+                    </div>
+
+
+                    <div className="flex items-center gap-3 pb-2 border-b border-slate-800 pt-2">
+                        <div className="bg-emerald-500/10 p-2 rounded-lg text-emerald-400">
+                            <Building2 className="h-4 w-4" />
+                        </div>
+                        <h4 className="text-sm font-medium uppercase tracking-wider text-slate-300">Property Attributes</h4>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Construction type</Label>
+                            <div className="relative">
+                                <Hammer className="absolute left-3 top-2.5 h-4 w-4 text-slate-500 z-10 pointer-events-none" />
+                                <Input 
+                                    readOnly
+                                    value={formatEnum(propertyDetails.attributes.constructionType)}
+                                    className="pl-9 bg-surface-dark border-slate-800 text-slate-400 focus-visible:ring-0 cursor-default"
+                                />
                             </div>
-                            <div>
-                                <h4 className="text-sm font-medium text-slate-300">Est. cost</h4>
-                                <p className="text-sm font-medium text-white">
-                                    {new Intl.NumberFormat('vi-VN', {
-                                        style: 'currency',
-                                        currency: 'VND'
-                                    }).format(propertyDetails.valuation.estimatedConstructionCost)}
-                                </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Year built</Label>
+                             <div className="relative">
+                                <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-slate-500 pointer-events-none z-10" />
+                                 <Input 
+                                    readOnly
+                                    value={propertyDetails.attributes.yearBuilt}
+                                    className="pl-9 bg-surface-dark border-slate-800 text-slate-400 focus-visible:ring-0 cursor-default"
+                                />
+                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>No. floors</Label>
+                            <div className="relative">
+                                <Layers className="absolute left-3 top-2.5 h-4 w-4 text-slate-500 pointer-events-none z-10" />
+                                <Input 
+                                    readOnly
+                                    value={propertyDetails.attributes.noFloors}
+                                    className="pl-9 bg-surface-dark border-slate-800 text-slate-400 focus-visible:ring-0 cursor-default"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Square meters</Label>
+                             <div className="relative">
+                                <Ruler className="absolute left-3 top-2.5 h-4 w-4 text-slate-500 pointer-events-none z-10" />
+                                <Input 
+                                    readOnly
+                                    value={`${propertyDetails.attributes.squareMeters} m²`}
+                                    className="pl-9 bg-surface-dark border-slate-800 text-slate-400 focus-visible:ring-0 cursor-default"
+                                />
+                            </div>
+                        </div>
+
+                         <div className="space-y-2 col-span-2">
+                            <Label>Est. cost</Label>
+                            <div className="relative">
+                                <Wallet className="absolute left-3 top-2.5 h-4 w-4 text-slate-500 pointer-events-none z-10" />
+                                <Input 
+                                    readOnly
+                                    value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(propertyDetails.valuation.estimatedConstructionCost)}
+                                    className="pl-9 bg-surface-dark border-slate-800 text-slate-400 focus-visible:ring-0 cursor-default"
+                                />
                             </div>
                         </div>
                     </div>
@@ -196,58 +230,65 @@ export const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ open, onOpen
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px] bg-slate-900 border-slate-800 text-slate-200">
-                <DialogHeader>
-                    <DialogTitle className="text-white">Lead details</DialogTitle>
+            <DialogContent className="sm:max-w-[600px] bg-slate-950 border-slate-800 text-slate-200 h-[85vh] flex flex-col p-0">
+                <DialogHeader className="px-6 py-4 border-b border-slate-800">
+                    <DialogTitle className="text-white text-lg">Lead Details</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-6 py-4">
-                    <div
-                        className="flex items-center justify-between bg-slate-950/50 p-3 rounded-lg border border-slate-700/50">
+                
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+
+                     <div className="flex items-center justify-between bg-slate-900 p-4 rounded-lg border border-slate-800">
                         <div className="space-y-1">
                             <Label className="text-slate-500 text-[10px] uppercase tracking-wider">Lead ID</Label>
                             <div className="font-mono text-sm font-medium text-white">#{lead.id}</div>
                         </div>
-                        <div className="text-right space-y-1">
+                         <div className="text-right space-y-1">
                             <Label className="text-slate-500 text-[10px] uppercase tracking-wider">Status</Label>
-                            <div>
-                                <Badge variant="secondary"
-                                    className="bg-primary/10 text-primary hover:bg-primary/20">
+                             <div>
+                                <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 pointer-events-none">
                                     {lead.status}
                                 </Badge>
-                            </div>
+                             </div>
                         </div>
                     </div>
 
                     {!hideUserInfo && (
-                        <div className="space-y-2">
-                            <Label className="text-slate-400 text-xs uppercase tracking-wider">User info</Label>
-                            <div
-                                className="p-3 rounded-lg bg-slate-950 border border-slate-700/50 text-sm text-slate-300">
+                         <>
+                            <div className="flex items-center gap-3 pb-2 border-b border-slate-800">
+                                <div className="bg-blue-500/10 p-2 rounded-lg text-blue-500">
+                                    <FileText className="h-4 w-4" />
+                                </div>
+                                <h4 className="text-sm font-medium uppercase tracking-wider text-slate-300">User Summary</h4>
+                            </div>
+                            
+                            <div className="p-4 rounded-lg bg-slate-900 border border-slate-800">
                                 {userDetails ? (
-                                    <div className="space-y-1">
-                                        <div
-                                            className="font-medium text-slate-200">{userDetails.firstName} {userDetails.lastName}</div>
-                                        <div className="text-xs text-slate-500">{userDetails.email}</div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-slate-500 text-xs">Name</Label>
+                                            <div className="text-sm font-medium text-slate-200">{userDetails.firstName} {userDetails.lastName}</div>
+                                        </div>
+                                         <div className="space-y-1">
+                                            <Label className="text-slate-500 text-xs">Email</Label>
+                                            <div className="text-sm text-slate-300 break-all">{userDetails.email}</div>
+                                        </div>
                                     </div>
                                 ) : (
-                                    lead.userInfo
+                                    <div className="text-sm text-slate-400 italic">
+                                        {lead.userInfo || "No user info available"}
+                                    </div>
                                 )}
                             </div>
-                        </div>
+                        </>
                     )}
 
-                    <div className="space-y-2">
-                        <Label className="text-slate-400 text-xs uppercase tracking-wider">Property info</Label>
-                        <div className="p-4 rounded-lg bg-slate-950 border border-slate-700/50">
-                            {renderPropertyContent()}
-                        </div>
-                    </div>
+                    {renderPropertyContent()}
                 </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}
-                        className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
-                        Close
-                    </Button>
+
+                <DialogFooter className="px-6 py-4 border-t border-slate-800">
+                     <DialogClose asChild>
+                        <Button variant="ghost" onClick={() => onOpenChange(false)}>Close</Button>
+                    </DialogClose>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

@@ -39,7 +39,7 @@ const App: React.FC = () => {
                     <Route path="/owner/*" element={<OwnerDashboard />} />
                 </Route>
 
-                <Route path="/" element={<Navigate to="/signup" replace />} />
+                <Route path="/" element={<Navigate to="/signin" replace />} />
             </Routes>
             <Toaster
                 position="top-right"

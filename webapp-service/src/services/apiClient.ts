@@ -25,8 +25,8 @@ const processQueue = (error: unknown, token: string | null = null) => {
     failedQueue = [];
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handleTokenRefresh = async (error: { config: any, response?: { status: number } }) => {
+
 
     const originalRequest = error.config;
 

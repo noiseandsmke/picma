@@ -1,97 +1,115 @@
 import {EventSourcePolyfill} from 'event-source-polyfill';
+import { ENV } from '@/config/env';
 
 export interface ResearchStep {
     id: string;
     type: 'PLAN' | 'SEARCH' | 'MAPS' | 'ANSWER' | 'ERROR';
     content: string;
     timestamp: number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     metadata?: Record<string, any>;
 }
 
-export interface ResearchReport {
-    valuation: {
-        estimatedValue: number;
-        currency: string;
-        pricePerM2: number;
-        comparables: string[];
-    };
-    riskAssessment: {
-        floodRiskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
-        floodDetails: string;
-        fireRiskLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
-        nearbyHazards: string[];
-    };
-    marketAnalysis: {
-        trend: 'RISING' | 'STABLE' | 'FALLING';
-        demandLevel: string;
-    };
-    quoteRecommendation: {
-        recommendedSumInsured: number;
-        reasoning: string;
-    };
-}
+export type ResearchReport = string;
 
 export const useResearchStream = () => {
 
     const startResearch = (
-        query: string,
-        propertyId: string,
+        _query: string,
+        _propertyId: string,
         leadId: number,
         onStep: (step: ResearchStep) => void,
         onComplete: (report: ResearchReport) => void,
         onError: (error: string) => void
     ) => {
-        const url = `/picma/research/stream?query=${encodeURIComponent(query)}&propertyId=${propertyId}&leadId=${leadId}`;
+        const url = `${ENV.API_URL}/picma/research/stream/${leadId}`;
 
         const eventSource = new EventSourcePolyfill(url, {
             headers: {
-                'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                'Authorization': `Bearer ${sessionStorage.getItem('access_token')}`
             }
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        eventSource.onmessage = (event: any) => {
-            try {
-                const data = JSON.parse(event.data);
+        let fullReport = '';
 
-                if (data.actionType === 'ANSWER') {
-                    try {
-                        const jsonMatch = data.answer.match(/```json\n([\s\S]*?)\n```/);
-                        const jsonStr = jsonMatch ? jsonMatch[1] : data.answer;
-                        const report = JSON.parse(jsonStr);
-                        onComplete(report);
-                    } catch (e) {
-                        console.warn("Could not parse report JSON", e);
-                        onStep({
-                            id: Date.now().toString(),
-                            type: 'ANSWER',
-                            content: data.answer,
-                            timestamp: Date.now()
-                        });
-                    }
-                    eventSource.close();
-                } else {
+
+
+        eventSource.addEventListener('interaction.start', (e: any) => {
+            try {
+                const data = JSON.parse(e.data);
+                onStep({
+                   id: Date.now().toString(),
+                   type: 'PLAN',
+                   content: `Starting research interaction (ID: ${data.interaction?.id || 'unknown'})...`,
+                   timestamp: Date.now()
+                });
+            } catch {
+                onStep({
+                    id: Date.now().toString(),
+                    type: 'PLAN',
+                    content: 'Starting research interaction...',
+                    timestamp: Date.now()
+                });
+            }
+        });
+
+
+
+        eventSource.addEventListener('interaction.status_update', (e: any) => {
+            try {
+                const data = JSON.parse(e.data);
+                if (data.status) {
                     onStep({
                         id: Date.now().toString(),
-                        type: data.actionType,
-                        content: data.reasoning || data.query || "Processing...",
-                        timestamp: Date.now(),
-                        metadata: {
-                            query: data.query,
-                            urls: data.urls
-                        }
+                        type: 'PLAN',
+                        content: `Status: ${data.status}`,
+                        timestamp: Date.now()
                     });
                 }
-            } catch (e) {
-                console.error("Error parsing SSE data", e);
+            } catch (err) {
+                console.error("Error parsing status update", err);
             }
-        };
+        });
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+
+        eventSource.addEventListener('content.delta', (e: any) => {
+            try {
+                const data = JSON.parse(e.data);
+                const delta = data.delta;
+                if (delta) {
+                    if (delta.type === 'thought_summary' && delta.content?.text) {
+                        onStep({
+                            id: Date.now().toString(),
+                            type: 'PLAN',
+
+                            content: delta.content.text,
+                            timestamp: Date.now()
+                        });
+                    } else if (delta.content?.text) {
+                        fullReport += delta.content.text;
+                    }
+                }
+            } catch (err) {
+                 console.error("Error parsing content delta", err);
+            }
+        });
+
+
+
+        eventSource.addEventListener('done', () => {
+             onComplete(fullReport);
+             eventSource.close();
+        });
+
+
+
         eventSource.onerror = (err: any) => {
             console.error("SSE Error", err);
-            onError("Connection to research service failed.");
+            if (eventSource.readyState === eventSource.CLOSED) {
+                 return;
+            }
+            onError("Connection to research service interrupted.");
             eventSource.close();
         };
 

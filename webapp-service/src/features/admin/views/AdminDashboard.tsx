@@ -2,6 +2,7 @@ import React from 'react';
 import {useQuery} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
 import {fetchLeadStats, fetchLeadTrend} from '../services/leadService';
+import {fetchAllQuotes, fetchQuoteTrend} from '../services/quoteService';
 import {
     CartesianGrid,
     Cell,
@@ -27,47 +28,72 @@ const AdminDashboard: React.FC = () => {
         queryFn: fetchLeadTrend
     });
 
+    const {data: quotes, isLoading: isLoadingQuotes} = useQuery({
+        queryKey: ['admin-quotes-stats'],
+        queryFn: () => fetchAllQuotes()
+    });
+
+    const {data: quoteTrendData} = useQuery({
+        queryKey: ['quote-trend'],
+        queryFn: fetchQuoteTrend
+    });
+
+    const quoteStats = React.useMemo(() => {
+        if (!quotes) return { total: 0, new: 0, accepted: 0, rejected: 0 };
+        return {
+            total: quotes.length,
+            new: quotes.filter(q => q.status === 'NEW').length,
+            accepted: quotes.filter(q => q.status === 'ACCEPTED').length,
+            rejected: quotes.filter(q => q.status === 'REJECTED').length
+        };
+    }, [quotes]);
+
     const statusData = [
-        {name: 'Accepted', value: stats?.acceptedLeads || 0, color: '#3b82f6'}, {
-            name: 'In review',
-            value: Math.max(0, (stats?.totalLeads || 0) - ((stats?.acceptedLeads || 0) + (stats?.rejectedLeads || 0) + (stats?.overdueLeads || 0))),
-            color: '#f59e0b'
-        }, {name: 'Rejected', value: stats?.rejectedLeads || 0, color: '#ef4444'}, {
-            name: 'Overdue',
-            value: stats?.overdueLeads || 0,
-            color: '#10b981'
-        },].filter(item => item.value > 0);
+        {name: 'New', value: stats?.newLeads || 0, color: '#10b981'},
+        {name: 'In Review', value: stats?.inReviewLeads || 0, color: '#f59e0b'},
+        {name: 'Accepted', value: stats?.acceptedLeads || 0, color: '#3b82f6'}
+    ].filter(item => item.value >= 0);
+
+    const quoteStatusData = [
+        {name: 'New', value: quoteStats.new, color: '#06b6d4', icon: 'fiber_new'},
+        {name: 'Accepted', value: quoteStats.accepted, color: '#6366f1', icon: 'check_circle'},
+        {name: 'Rejected', value: quoteStats.rejected, color: '#f43f5e', icon: 'cancel'}
+    ];
+
+    const chartData = React.useMemo(() => statusData.filter(item => item.value > 0), [statusData]);
+    const quoteChartData = React.useMemo(() => quoteStatusData.filter(item => item.value > 0), [quoteStatusData]);
 
     const lineChartData = React.useMemo(() => {
-        const weeks = [
-            {name: 'Week 1', thisMonth: 0, lastMonth: 0},
-            {name: 'Week 2', thisMonth: 0, lastMonth: 0},
-            {name: 'Week 3', thisMonth: 0, lastMonth: 0},
-            {name: 'Week 4', thisMonth: 0, lastMonth: 0},
-        ];
+        if (!trendData || trendData.length === 0) return [];
 
-        if (!trendData || trendData.length === 0) return weeks;
+        const quoteMap = new Map(quoteTrendData?.map((q: any) => [q.date, q.count]) || []);
 
-        return weeks;
-    }, [trendData]);
+        const sortedData = [...trendData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        
+        return sortedData.map(item => ({
+            name: new Date(item.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }),
+            leadCount: item.count,
+            quoteCount: quoteMap.get(item.date) || 0
+        }));
+    }, [trendData, quoteTrendData]);
 
 
-    const StatsCard = ({title, value, colorClass, icon, bgClass, overlayClass}: any) => (
+    const StatsCard = ({title, value, colorClass, icon, bgClass, overlayClass, loading}: any) => (
         <div
-            className="relative overflow-hidden flex flex-col gap-4 rounded-xl p-6 bg-slate-900 border border-slate-800 shadow-sm group hover:border-primary/50 transition-colors">
-            <div className="flex items-start justify-between">
-                <div className={`p-2 rounded-lg ${bgClass} ${colorClass} group-hover:bg-opacity-30 transition-colors`}>
-                    <span className="material-symbols-outlined">{icon}</span>
+            className="relative overflow-hidden flex items-center justify-between p-6 bg-slate-900 border border-slate-800 rounded-xl shadow-sm group hover:border-primary/50 transition-colors">
+            <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-lg ${bgClass} ${colorClass} group-hover:bg-opacity-30 transition-colors`}>
+                    <span className="material-symbols-outlined text-[24px]">{icon}</span>
                 </div>
-            </div>
-            <div>
                 <p className="text-slate-400 text-sm font-medium">{title}</p>
-                <h3 className="text-white text-3xl font-bold mt-1">
-                    {isLoadingStats ? <Skeleton className="h-8 w-16 bg-slate-800"/> : value}
-                </h3>
             </div>
+            
+            <h3 className="text-white text-3xl font-bold">
+                 {loading ? <Skeleton className="h-8 w-16 bg-slate-800"/> : value}
+            </h3>
+
             <div
-                className={`absolute -bottom-10 -right-10 w-24 h-24 rounded-full blur-xl group-hover:opacity-20 transition-opacity ${overlayClass} opacity-10`}></div>
+                className={`absolute -bottom-10 -right-10 w-24 h-24 rounded-full blur-xl group-hover:opacity-20 transition-opacity ${overlayClass} opacity-10 pointer-events-none`}></div>
         </div>
     );
 
@@ -82,30 +108,34 @@ const AdminDashboard: React.FC = () => {
                         colorClass="text-primary"
                         bgClass="bg-primary/10"
                         overlayClass="bg-primary"
+                        loading={isLoadingStats}
+                    />
+                    <StatsCard
+                        title="New"
+                        value={stats?.newLeads || 0}
+                        icon="fiber_new"
+                        colorClass="text-emerald-500"
+                        bgClass="bg-emerald-500/10"
+                        overlayClass="bg-emerald-500"
+                        loading={isLoadingStats}
+                    />
+                    <StatsCard
+                        title="In Review"
+                        value={stats?.inReviewLeads || 0}
+                        icon="hourglass_empty"
+                        colorClass="text-amber-500"
+                        bgClass="bg-amber-500/10"
+                        overlayClass="bg-amber-500"
+                        loading={isLoadingStats}
                     />
                     <StatsCard
                         title="Accepted"
                         value={stats?.acceptedLeads || 0}
                         icon="check_circle"
-                        colorClass="text-emerald-500"
-                        bgClass="bg-emerald-500/10"
-                        overlayClass="bg-emerald-500"
-                    />
-                    <StatsCard
-                        title="Rejected"
-                        value={stats?.rejectedLeads || 0}
-                        icon="cancel"
-                        colorClass="text-rose-500"
-                        bgClass="bg-rose-500/10"
-                        overlayClass="bg-rose-500"
-                    />
-                    <StatsCard
-                        title="Overdue"
-                        value={stats?.overdueLeads || 0}
-                        icon="warning"
-                        colorClass="text-amber-500"
-                        bgClass="bg-amber-500/10"
-                        overlayClass="bg-amber-500"
+                        colorClass="text-blue-500"
+                        bgClass="bg-blue-500/10"
+                        overlayClass="bg-blue-500"
+                        loading={isLoadingStats}
                     />
                 </div>
 
@@ -117,16 +147,16 @@ const AdminDashboard: React.FC = () => {
                                 <div className="bg-primary/10 p-1.5 rounded text-primary">
                                     <span className="material-symbols-outlined text-[20px]">analytics</span>
                                 </div>
-                                <h3 className="text-white text-base font-semibold">Total leads by month</h3>
+                                <h3 className="text-white text-base font-semibold">Trend for last week</h3>
                             </div>
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 rounded bg-primary shadow-glow"></div>
-                                    <span className="text-xs text-slate-400">This month</span>
+                                    <span className="text-xs text-slate-400">Total Leads</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded bg-orange-400"></div>
-                                    <span className="text-xs text-slate-400">Last month</span>
+                                    <div className="w-3 h-3 rounded bg-violet-500 shadow-glow"></div>
+                                    <span className="text-xs text-slate-400">Total Quotes</span>
                                 </div>
                             </div>
                         </div>
@@ -157,6 +187,7 @@ const AdminDashboard: React.FC = () => {
                                             fontSize={12}
                                             tickLine={false}
                                             axisLine={false}
+                                            allowDecimals={false}
                                         />
                                         <Tooltip
                                             contentStyle={{
@@ -170,18 +201,18 @@ const AdminDashboard: React.FC = () => {
                                         />
                                         <Line
                                             type="monotone"
-                                            dataKey="lastMonth"
-                                            stroke="#fb923c" strokeWidth={2}
-                                            dot={false}
-                                            strokeOpacity={0.5}
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="thisMonth"
+                                            dataKey="leadCount"
                                             stroke="#3b82f6" strokeWidth={3}
                                             dot={{r: 4, fill: '#0f172a', stroke: '#3b82f6', strokeWidth: 2}}
                                             activeDot={{r: 6, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2}}
                                             fill="url(#colorThisMonth)"
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="quoteCount"
+                                            stroke="#8b5cf6" strokeWidth={3}
+                                            dot={{r: 4, fill: '#0f172a', stroke: '#8b5cf6', strokeWidth: 2}}
+                                            activeDot={{r: 6, fill: '#8b5cf6', stroke: '#fff', strokeWidth: 2}}
                                         />
                                     </LineChart>
                                 </ResponsiveContainer>
@@ -194,77 +225,114 @@ const AdminDashboard: React.FC = () => {
                             <div className="bg-primary/10 p-1.5 rounded text-primary">
                                 <span className="material-symbols-outlined text-[20px]">donut_large</span>
                             </div>
-                            <h3 className="text-white text-base font-semibold">Leads by status</h3>
+                            <h3 className="text-white text-base font-semibold">Status by percentage</h3>
                         </div>
                         <div className="flex-1 flex flex-col justify-center items-center relative py-4">
                             {isLoadingStats ? (
                                 <Skeleton className="h-[200px] w-[200px] rounded-full bg-slate-800"/>
                             ) : (
-                                <div className="relative w-full h-[220px]">
+                                <>
+                                    <div className="flex flex-wrap justify-center gap-4 mb-4">
+                                        {statusData.map((entry, index) => (
+                                            <div key={index} className="flex items-center gap-2">
+                                                <div className="w-3 h-3 rounded-full"
+                                                     style={{backgroundColor: entry.color}}></div>
+                                                <span className="text-sm text-slate-400">
+                                                    {`${Math.round((entry.value / (stats?.totalLeads || 1)) * 100)}%`}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="relative w-full h-[220px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
                                             <Pie
-                                                data={statusData}
+                                                data={chartData}
                                                 cx="50%"
                                                 cy="50%"
-                                                innerRadius={65}
-                                                outerRadius={85}
+                                                innerRadius={60}
+                                                outerRadius={75}
                                                 paddingAngle={5}
                                                 dataKey="value"
                                                 stroke="none"
                                                 cornerRadius={4}
                                             >
-                                                {statusData.map((entry, index) => (
+                                                {chartData.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={entry.color}/>
+                                                ))}
+                                            </Pie>
+                                            <Pie
+                                                data={quoteChartData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={85}
+                                                outerRadius={100}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                                stroke="none"
+                                                cornerRadius={4}
+                                            >
+                                                {quoteChartData.map((entry, index) => (
+                                                    <Cell key={`cell-quote-${index}`} fill={entry.color}/>
                                                 ))}
                                             </Pie>
                                         </PieChart>
                                     </ResponsiveContainer>
-                                    <div
-                                        className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <span className="text-4xl font-bold text-white tracking-tight">
-                                            {stats?.acceptedLeads ? `${Math.round((stats.acceptedLeads / (stats.totalLeads || 1)) * 100)}%` : '0%'}
-                                        </span>
-                                        <span className="text-xs text-slate-400 font-medium mt-1">Accepted</span>
-                                    </div>
                                 </div>
+                                <div className="flex flex-wrap justify-center gap-4 mt-4">
+                                        {quoteStatusData.map((entry, index) => (
+                                            <div key={index} className="flex items-center gap-2">
+                                                <div className="w-3 h-3 rounded-full" style={{backgroundColor: entry.color}}></div>
+                                                <span className="text-sm text-slate-400">
+                                                    {`${Math.round((entry.value / (quoteStats.total || 1)) * 100)}%`}
+                                                </span>
+                                            </div>
+                                        ))}
+                                </div>
+                                </>
                             )}
                         </div>
                     </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden shadow-sm mt-2">
-                    <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-                        <h3 className="text-white text-base font-semibold">Recent activity</h3>
-                        <a href="#"
-                           className="text-sm text-primary hover:text-primary-hover font-medium transition-colors">View
-                            all</a>
-                    </div>
-                    <div>
-                        <table className="w-full text-left border-collapse table-fixed">
-                            <colgroup>
-                                <col style={{width: '25%'}}/>
-                                <col style={{width: '40%'}}/>
-                                <col style={{width: '20%'}}/>
-                                <col style={{width: '15%'}}/>
-                            </colgroup>
-                            <thead className="bg-transparent">
-                            <tr>
-                                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">User</th>
-                                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Action</th>
-                                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</th>
-                                <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider text-right">Status</th>
-                            </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-700/50">
-                            <tr>
-                                <td colSpan={4} className="p-8 text-center text-slate-500 text-sm">
-                                    No recent activity to display.
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <StatsCard
+                        title="Total Quotes"
+                        value={quoteStats.total}
+                        icon="assignment"
+                        colorClass="text-violet-500"
+                        bgClass="bg-violet-500/10"
+                        overlayClass="bg-violet-500"
+                        loading={isLoadingQuotes}
+                    />
+                    <StatsCard
+                        title="New"
+                        value={quoteStats.new}
+                        icon="fiber_new"
+                        colorClass="text-cyan-500"
+                        bgClass="bg-cyan-500/10"
+                        overlayClass="bg-cyan-500"
+                        loading={isLoadingQuotes}
+                    />
+                    <StatsCard
+                        title="Accepted"
+                        value={quoteStats.accepted}
+                        icon="check_circle"
+                        colorClass="text-indigo-500"
+                        bgClass="bg-indigo-500/10"
+                        overlayClass="bg-indigo-500"
+                        loading={isLoadingQuotes}
+                    />
+                    <StatsCard
+                        title="Rejected"
+                        value={quoteStats.rejected}
+                        icon="cancel"
+                        colorClass="text-rose-500"
+                        bgClass="bg-rose-500/10"
+                        overlayClass="bg-rose-500"
+                        loading={isLoadingQuotes}
+                    />
                 </div>
             </div>
         </AdminLayout>

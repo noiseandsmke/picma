@@ -13,21 +13,17 @@ import { fetchAllLeads, LeadDto } from '../services/leadService';
 import { fetchUsers } from '../services/userService';
 import { fetchPropertyById } from '../services/propertyService';
 import { PropertyQuoteDto } from '../services/quoteService';
-import { CalendarIcon, Home, Shield, User, Wallet } from 'lucide-react';
-import { addYears, format } from 'date-fns';
+import { Home, Shield, User, Wallet } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const quoteSchema = z.object({
     leadId: z.coerce.number().min(1, 'Lead is required'),
     agentId: z.string().min(1, 'Agent is required'),
     plan: z.enum(['BRONZE', 'SILVER', 'GOLD']),
-    propertyAddress: z.string().min(1, 'Property Address is required'),
-    sumInsured: z.coerce.number().positive('Sum Insured must be positive'),
-    startDate: z.date().optional(),
-    endDate: z.date().optional(),
+
     coverages: z.array(z.object({
         code: z.string().min(1, 'Code required'),
         limit: z.coerce.number().min(0),
@@ -49,10 +45,10 @@ interface QuoteFormProps {
     hideLeadInfo?: boolean;
 }
 
-const getDefaultCoverages = (plan: string, sumInsured: number) => {
-    const baseFire = { code: 'FIRE', limit: sumInsured, deductible: 2000000 };
-    const baseTheft = { code: 'THEFT', limit: Math.min(sumInsured * 0.1, 50000000), deductible: 500000 };
-    const baseFlood = { code: 'NATURAL_DISASTER', limit: sumInsured, deductible: 5000000 };
+const getDefaultCoverages = (plan: string) => {
+    const baseFire = { code: 'FIRE', limit: 1000000000, deductible: 0.02 };
+    const baseTheft = { code: 'THEFT', limit: 100000000, deductible: 0.01 };
+    const baseFlood = { code: 'NATURAL_DISASTER', limit: 1000000000, deductible: 0.05 };
 
     switch (plan) {
         case 'GOLD':
@@ -73,7 +69,10 @@ const formatCurrency = (val: number) => {
     }).format(val);
 };
 
-interface CurrencyInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+
+
+interface CurrencyInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+    onChange?: (value: number) => void;
     compact?: boolean;
 }
 
@@ -97,7 +96,6 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(({
         const num = raw ? Number.parseInt(raw, 10) : 0;
         setDisplayValue(new Intl.NumberFormat('vi-VN').format(num));
         if (onChange) {
-            // @ts-expect-error - onChange typing is incompatible with react-hook-form sometimes
             onChange(num);
         }
     };
@@ -145,10 +143,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
             agentId: initialData?.agentId || agentId || '',
 
             plan: 'BRONZE',
-            propertyAddress: initialData?.propertyAddress || '',
-            sumInsured: initialData?.sumInsured || 0,
-            startDate: initialData?.startDate ? new Date(initialData.startDate) : new Date(),
-            endDate: initialData?.endDate ? new Date(initialData.endDate) : addYears(new Date(), 1),
+
             coverages: initialData?.coverages || [],
         },
     });
@@ -179,8 +174,8 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
 
     const selectedLeadId = useWatch({ control, name: 'leadId' });
     const selectedPlan = useWatch({ control, name: 'plan' });
-    const sumInsured = useWatch({ control, name: 'sumInsured' });
-    const startDate = useWatch({ control, name: 'startDate' });
+
+
 
     const selectedLead = leads?.find(l => l.id === selectedLeadId);
 
@@ -190,9 +185,15 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
         enabled: !!selectedLead?.propertyInfo,
     });
 
+
+    const displayAddress = React.useMemo(() => {
+        if (!selectedProperty?.location) return '';
+        return `${selectedProperty.location.street}, ${selectedProperty.location.ward}, ${selectedProperty.location.city}`;
+    }, [selectedProperty]);
+
     const filteredAgents = React.useMemo(() => {
         if (!selectedProperty || !agents) return [];
-        const propertyZip = selectedProperty.location.zipCode;
+        const propertyZip = selectedLead?.zipCode;
         if (!propertyZip) return [];
 
         return agents.filter(agent => agent.zipcode === propertyZip);
@@ -223,34 +224,12 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
 
 
     useEffect(() => {
-        if (!initialData && selectedProperty) {
-            const currentAddress = getValues('propertyAddress');
-            if (!currentAddress) {
-                const addr = `${selectedProperty.location.street}, ${selectedProperty.location.ward}, ${selectedProperty.location.city}`;
-                setValue('propertyAddress', addr);
-            }
+        if (fields.length > 0 && initialData?.coverages?.length) {
+             return;
         }
-    }, [selectedProperty, setValue, getValues, initialData]);
-
-    useEffect(() => {
-        if (startDate && !getValues('endDate')) {
-            setValue('endDate', addYears(startDate, 1));
-        }
-    }, [startDate, setValue, getValues]);
-
-
-    useEffect(() => {
-        if (sumInsured > 0) {
-            const isInitialLoad = initialData?.sumInsured === sumInsured;
-
-            if (isInitialLoad && fields.length > 0) {
-                return;
-            }
-
-            const defaults = getDefaultCoverages(selectedPlan, sumInsured);
-            replace(defaults);
-        }
-    }, [selectedPlan, sumInsured, replace, initialData, fields.length]);
+        const defaults = getDefaultCoverages(selectedPlan);
+        replace(defaults);
+    }, [selectedPlan, replace, initialData, fields.length]);
 
     const getPremiumRate = (plan: string) => {
         switch (plan) {
@@ -277,17 +256,9 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
         return { net, tax, total };
     };
 
-    const calculatedPremium = calculatePremium(selectedPlan, sumInsured);
+    const calculatedPremium = calculatePremium(selectedPlan, 1000000000);
 
-    const handleUseValuation = () => {
-        if (selectedProperty?.valuation?.estimatedConstructionCost) {
-            setValue('sumInsured', selectedProperty.valuation.estimatedConstructionCost);
-        } else if (selectedLead?.valuation) {
-            if (typeof selectedLead.valuation === 'number') {
-                setValue('sumInsured', selectedLead.valuation);
-            }
-        }
-    };
+
 
     const handleFormSubmit: SubmitHandler<QuoteFormData> = (data) => {
         onSubmit({
@@ -315,11 +286,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
         sublabel: `@${a.username} - ${a.zipcode || 'No Zip'}`
     }));
 
-    const setQuickDuration = (years: number) => {
-        if (startDate) {
-            setValue('endDate', addYears(startDate, years));
-        }
-    };
+
 
     const getCoverageName = (code: string) => {
         const map: Record<string, string> = {
@@ -363,7 +330,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                         {!hideAgentSelect && (
                             <div className="space-y-1.5">
                                 <Label
-                                    className="text-xs">Agent {selectedProperty && `(Zip: ${selectedProperty.location.zipCode})`}</Label>
+                                    className="text-xs">Agent {selectedLead && `(Zip: ${selectedLead.zipCode})`}</Label>
                                 <Controller
                                     name="agentId"
                                     control={control}
@@ -385,105 +352,12 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                 {errors.agentId && <p className="text-red-500 text-[10px]">{errors.agentId.message}</p>}
                                 {selectedProperty && agentOptions.length === 0 && (
                                     <p className="text-amber-500 text-[10px]">No agents found for property
-                                        zipcode {selectedProperty.location.zipCode}</p>
+                                        zipcode {selectedLead?.zipCode}</p>
                                 )}
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="space-y-1.5">
-                                <Label className="text-xs">Start date</Label>
-                                <Controller
-                                    name="startDate"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Popover>
-                                            <PopoverTrigger asChild disabled={props.readOnly}>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full justify-start text-left font-normal bg-slate-950 border-slate-700 h-9 text-xs px-2",
-                                                        !field.value && "text-slate-500"
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-3 w-3" />
-                                                    {field.value ? format(field.value, "dd/MM/yyyy") :
-                                                        <span>Pick date</span>}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0 bg-slate-950 border-slate-800"
-                                                align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value}
-                                                    onSelect={field.onChange}
-                                                    autoFocus
-                                                    className="bg-slate-950 text-white"
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                    )}
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <div className="flex justify-between items-center">
-                                    <Label className="text-xs">End date</Label>
-                                    <div className="flex gap-1">
-                                        {!props.readOnly && (
-                                            <>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    onClick={() => setQuickDuration(1)}
-                                                    className="h-4 px-1 text-[10px] text-primary hover:underline bg-primary/20 rounded hover:bg-primary/40"
-                                                >
-                                                    1Y
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    onClick={() => setQuickDuration(2)}
-                                                    className="h-4 px-1 text-[10px] text-primary hover:underline bg-primary/20 rounded hover:bg-primary/40"
-                                                >
-                                                    2Y
-                                                </Button>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                                <Controller
-                                    name="endDate"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Popover>
-                                            <PopoverTrigger asChild disabled={props.readOnly}>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full justify-start text-left font-normal bg-slate-950 border-slate-700 h-9 text-xs px-2",
-                                                        !field.value && "text-slate-500"
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-3 w-3" />
-                                                    {field.value ? format(field.value, "dd/MM/yyyy") :
-                                                        <span>Pick date</span>}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0 bg-slate-950 border-slate-800"
-                                                align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value}
-                                                    onSelect={field.onChange}
-                                                    autoFocus
-                                                    className="bg-slate-950 text-white"
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                    )}
-                                />
-                            </div>
-                        </div>
+
                     </div>
                 </div>
                 <div className="space-y-4">
@@ -495,44 +369,15 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                         <div className="space-y-1.5">
                             <Label className="text-xs">Property address</Label>
                             <Input
-                                {...control.register('propertyAddress')}
-                                placeholder="Enter full address"
-                                className="bg-slate-950 border-slate-700 h-9 text-xs"
-                                disabled={props.readOnly}
+                                value={displayAddress}
+                                readOnly
+                                placeholder="Address will auto-fill from Lead"
+                                className="bg-slate-950 border-slate-700 h-9 text-xs opacity-70"
+                                disabled={true}
                             />
-                            {errors.propertyAddress &&
-                                <p className="text-red-500 text-[10px]">{errors.propertyAddress.message}</p>}
                         </div>
 
-                        <div className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                                <Label className="text-xs">Sum insured</Label>
-                                {(selectedProperty || selectedLead?.valuation) && !props.readOnly && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-4 text-[10px] text-primary px-0 hover:bg-transparent hover:text-primary-hover"
-                                        onClick={handleUseValuation}
-                                    >
-                                        Use valuation
-                                    </Button>
-                                )}
-                            </div>
-                            <Controller
-                                name="sumInsured"
-                                control={control}
-                                render={({ field }) => (
-                                    <CurrencyInput
-                                        {...field}
-                                        className="bg-slate-950 border-slate-700 h-9 text-xs"
-                                        disabled={props.readOnly}
-                                    />
-                                )}
-                            />
-                            {errors.sumInsured &&
-                                <p className="text-red-500 text-[10px]">{errors.sumInsured.message}</p>}
-                        </div>
+
 
                         <div className="space-y-1.5">
                             <Label className="text-xs">Insurance plan</Label>
@@ -613,12 +458,24 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                     name={`coverages.${index}.deductible`}
                                                     control={control}
                                                     render={({ field }) => (
-                                                        <CurrencyInput
-                                                            {...field}
-                                                            compact
-                                                            className="h-6 text-[10px] bg-slate-900 border-slate-800 px-1 text-right"
-                                                            disabled={props.readOnly}
-                                                        />
+                                                        <div className="relative w-full">
+                                                             <Input
+                                                                value={field.value ? (field.value * 100).toFixed(1) : ''}
+                                                                onChange={(e) => {
+                                                                    const val = parseFloat(e.target.value);
+                                                                        if (!isNaN(val)) {
+                                                                        field.onChange(val / 100);
+                                                                    } else {
+                                                                        field.onChange(0);
+                                                                    }
+                                                                }}
+                                                                className="h-6 text-[10px] bg-slate-900 border-slate-800 px-1 text-right pr-6"
+                                                                disabled={props.readOnly}
+                                                            />
+                                                            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-500 text-[10px]">
+                                                                %
+                                                            </div>
+                                                        </div>
                                                     )}
                                                 />
                                             </TableCell>

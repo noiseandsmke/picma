@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import AdminLayout from '../layouts/AdminLayout';
-import {fetchAllLeads, LeadDto} from '../services/leadService';
+import {fetchAllLeads, PropertyLeadDto} from '../services/leadService';
 import {fetchAllProperties} from '../services/propertyService';
 import {fetchUsers} from '../services/userService';
 import {cn} from '@/lib/utils';
@@ -24,8 +24,8 @@ import {LeadDetailDialog} from '@/features/admin/components/LeadDetailDialog';
 
 const AdminLeadsView: React.FC = () => {
     const [sortConfig, setSortConfig] = useState({key: 'id', direction: 'asc'});
-    const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-    const [selectedLead, setSelectedLead] = useState<LeadDto | null>(null);
+    const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+    const [selectedLead, setSelectedLead] = useState<PropertyLeadDto | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
     const {
@@ -47,11 +47,14 @@ const AdminLeadsView: React.FC = () => {
         isLoading: isLeadsLoading,
         isError: isLeadsError
     } = useQuery({
-        queryKey: ['admin-leads', sortConfig],
-        queryFn: () => fetchAllLeads(sortConfig.key, sortConfig.direction),
+        queryKey: ['admin-leads', sortConfig, selectedStatus],
+        queryFn: () => {
+            const sortBy = sortConfig.key === 'propertyInfo' ? 'zipCode' : sortConfig.key;
+            return fetchAllLeads(sortBy, sortConfig.direction, selectedStatus || undefined);
+        },
     });
 
-    const handleViewDetail = (lead: LeadDto) => {
+    const handleViewDetail = (lead: PropertyLeadDto) => {
         setSelectedLead(lead);
         setIsDetailOpen(true);
     };
@@ -65,32 +68,10 @@ const AdminLeadsView: React.FC = () => {
     };
 
     const toggleStatus = (status: string) => {
-        setSelectedStatuses(prev => {
-            if (prev.includes(status)) {
-                return prev.filter(s => s !== status);
-            } else {
-                return [...prev, status];
-            }
-        });
+        setSelectedStatus(prev => prev === status ? null : status);
     };
 
-    const formatDate = (dateStr: string) => {
-        try {
-            return new Date(dateStr).toLocaleDateString();
-        } catch {
-            return dateStr;
-        }
-    };
 
-    const calculateExpiry = (createDate: string) => {
-        try {
-            const date = new Date(createDate);
-            date.setDate(date.getDate() + 30);
-            return date.toLocaleDateString();
-        } catch {
-            return '-';
-        }
-    };
 
     const parseUserInfo = (userInfo: string) => {
         if (!userInfo) return {name: 'Unknown', details: ''};
@@ -181,12 +162,7 @@ const AdminLeadsView: React.FC = () => {
         );
     };
 
-    const filteredLeads = leads?.filter(lead => {
-
-        const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(lead.status);
-
-        return matchesStatus;
-    });
+    const filteredLeads = leads;
 
     const columns: Column[] = [
         {
@@ -233,8 +209,8 @@ const AdminLeadsView: React.FC = () => {
                                     aria-label="Filter by status"
                                     className="h-6 w-6 p-0 hover:bg-slate-800 rounded-full relative ml-1">
                                 <span
-                                    className={cn("material-symbols-outlined text-[16px]", selectedStatuses.length > 0 ? "text-primary" : "text-slate-500")}>filter_list</span>
-                                {selectedStatuses.length > 0 && (
+                                    className={cn("material-symbols-outlined text-[16px]", selectedStatus ? "text-primary" : "text-slate-500")}>filter_list</span>
+                                {selectedStatus && (
                                     <span
                                         className="absolute top-0 right-0 h-2 w-2 rounded-full bg-primary border-2 border-slate-900"/>
                                 )}
@@ -252,12 +228,12 @@ const AdminLeadsView: React.FC = () => {
                                 className="focus:bg-slate-800 focus:text-white cursor-pointer py-2 px-2"
                                 onSelect={(e) => {
                                     e.preventDefault();
-                                    setSelectedStatuses([]);
+                                    setSelectedStatus(null);
                                 }}
                             >
                                 <div className="flex items-center gap-3 w-full">
                                     <Checkbox
-                                        checked={selectedStatuses.length === 0}
+                                        checked={selectedStatus === null}
                                         className="border-slate-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary pointer-events-none"
                                     />
                                     <span className="text-sm">All Statuses</span>
@@ -275,7 +251,7 @@ const AdminLeadsView: React.FC = () => {
                                 >
                                     <div className="flex items-center gap-3 w-full">
                                         <Checkbox
-                                            checked={selectedStatuses.includes(config.value)}
+                                            checked={selectedStatus === config.value}
                                             className="border-slate-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary pointer-events-none"
                                         />
                                         <div className="flex items-center gap-2">
@@ -292,24 +268,8 @@ const AdminLeadsView: React.FC = () => {
             ),
             width: "15%",
         },
-        {
-            header: (
-                <div className="flex items-center gap-1">
-                    Expires at
-                </div>
-            ),
-            width: "10%",
-        },
-        {
-            header: (
-                <div className="flex items-center gap-1">
-                    Created {sortConfig.key === 'createDate' &&
-                    <span className="material-symbols-outlined text-[16px]">unfold_more</span>}
-                </div>
-            ),
-            width: "15%",
-            onClick: () => handleSort('createDate'),
-        },
+
+
         {
             header: "",
             width: "5%",
@@ -341,8 +301,7 @@ const AdminLeadsView: React.FC = () => {
                     </div>
                 </TableCell>
                 <TableCell><Skeleton className="h-6 w-20 bg-slate-800"/></TableCell>
-                <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
-                <TableCell><Skeleton className="h-4 w-24 bg-slate-800"/></TableCell>
+
                 <TableCell><Skeleton className="h-8 w-8 bg-slate-800 ml-auto"/></TableCell>
             </TableRow>
         ));
@@ -376,39 +335,16 @@ const AdminLeadsView: React.FC = () => {
                             {statusConfig.label}
                         </Badge>
                     </TableCell>
-                    <TableCell className="text-slate-400 text-sm">
-                        <div className="flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-[16px] text-slate-600">event_busy</span>
-                            {calculateExpiry(lead.createDate)}
-                        </div>
-                    </TableCell>
-                    <TableCell className="text-slate-400 text-sm">
-                        <div className="flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-[16px] text-slate-600">schedule</span>
-                            {formatDate(lead.createDate)}
-                        </div>
-                    </TableCell>
+
                     <TableCell className="text-right">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost"
-                                        className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-slate-800">
-                                    <span className="sr-only">Open menu</span>
-                                    <span className="material-symbols-outlined">more_horiz</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end"
-                                                 className="bg-slate-900 border-slate-700 text-slate-200">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem
-                                    className="focus:bg-slate-800 focus:text-white cursor-pointer"
-                                    onClick={() => handleViewDetail(lead)}
-                                >
-                                    <span className="material-symbols-outlined text-[18px] mr-2">visibility</span>
-                                    View lead details
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-slate-400 hover:text-white hover:bg-slate-800"
+                            onClick={() => handleViewDetail(lead)}
+                        >
+                            <span className="material-symbols-outlined text-[20px]">visibility</span>
+                        </Button>
                     </TableCell>
                 </TableRow>
             );

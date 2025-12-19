@@ -18,22 +18,23 @@ export interface PropertyQuoteDto {
     leadId: number;
     agentId: string;
 
-    validUntil: string;
-    startDate: string;
-    endDate: string;
-    propertyAddress: string;
-    sumInsured: number;
+
+    createdDate: string;
+
     coverages: CoverageDto[];
     premium: PremiumDto;
-    status: 'ACTIVE' | 'ACCEPTED' | 'REJECTED' | 'PENDING' | 'DRAFT';
+    status: 'NEW' | 'ACCEPTED' | 'REJECTED';
+}
+
+export interface QuoteTrendDto {
+    date: string;
+    count: number;
 }
 
 export type CreateQuoteDto = {
     leadId: number;
     agentId: string;
-    startDate: string;
-    endDate: string;
-    propertyAddress: string;
+
     coverages: Array<{
         code: 'FIRE' | 'THEFT' | 'NATURAL_DISASTER';
         limit: number;
@@ -43,16 +44,26 @@ export type CreateQuoteDto = {
 
 const QUOTE_SERVICE_URL = '/picma/quotes';
 
-export const fetchAllQuotes = async (sort = 'id', order = 'asc'): Promise<PropertyQuoteDto[]> => {
+export const fetchAllQuotes = async (sortBy = 'id', sortDirection = 'asc', status?: string, agentId?: string): Promise<PropertyQuoteDto[]> => {
     const response = await apiClient.get<PropertyQuoteDto[]>(`${QUOTE_SERVICE_URL}`, {
-        params: {sort, order},
+        params: {sortBy, sortDirection, status, agentId},
     });
+    return response.data;
+};
+
+export const fetchQuoteTrend = async (): Promise<QuoteTrendDto[]> => {
+    const response = await apiClient.get<QuoteTrendDto[]>(`${QUOTE_SERVICE_URL}/trend`);
     return response.data;
 };
 
 export const fetchQuotesByLeadId = async (leadId: number): Promise<PropertyQuoteDto[]> => {
     const response = await apiClient.get<PropertyQuoteDto[]>(`${QUOTE_SERVICE_URL}`);
     return response.data.filter(q => q.leadId === leadId);
+};
+
+export const fetchQuoteById = async (id: number): Promise<PropertyQuoteDto> => {
+    const response = await apiClient.get<PropertyQuoteDto>(`${QUOTE_SERVICE_URL}/${id}`);
+    return response.data;
 };
 
 

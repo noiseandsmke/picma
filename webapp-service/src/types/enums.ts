@@ -23,11 +23,8 @@ export const COVERAGE_CONFIG = {
 };
 
 export enum LeadStatus {
-    ACTIVE = "ACTIVE",
-    IN_REVIEWING = "IN_REVIEWING",
-    ACCEPTED = "ACCEPTED",
-    REJECTED = "REJECTED",
-    EXPIRED = "EXPIRED"
+    NEW = "NEW",
+    IN_REVIEW = "IN_REVIEW"
 }
 
 export enum ConstructionType {

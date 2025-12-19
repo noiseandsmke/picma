@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import AgentLayout from '../layouts/AgentLayout';
-import { Bell, DollarSign, FileText, Search, ShieldCheck, Settings } from 'lucide-react';
+import { Bell, DollarSign, FileText, Search, ShieldCheck } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AgentLeadDto, fetchAgentLeads, fetchAgentQuotes, updateLeadAction } from '../services/agentService';
+import { AgentLeadDto, fetchAgentLeads, fetchAgentQuotes, fetchLeadsByZipcode } from '../services/agentService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -13,22 +13,28 @@ import { createQuote, CreateQuoteDto, PropertyQuoteDto, updateQuote } from '@/fe
 import { AgentLeadCard } from '@/features/agent/components/AgentLeadCard';
 import { AgentActionDialog } from '@/features/agent/components/AgentActionDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AgentProfileSettings } from '@/features/agent/components/AgentProfileSettings';
+import { AgentQuoteCard } from '@/features/agent/components/AgentQuoteCard';
+import { fetchLeadById } from '@/features/agent/services/agentService';
+import { PropertyAddressDisplay } from '@/features/agent/components/PropertyAddressDisplay';
 
 const AgentDashboard: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const agentId = user?.id || '';
-    const [activeTab, setActiveTab] = useState<'new' | 'portfolio' | 'settings'>('new');
+    const [activeTab, setActiveTab] = useState<'new' | 'portfolio'>('new');
     const [selectedLead, setSelectedLead] = useState<AgentLeadDto | null>(null);
     const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
     const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false);
     const [editingQuote, setEditingQuote] = useState<PropertyQuoteDto | null>(null);
-    const [loadingLeadId, setLoadingLeadId] = useState<number | null>(null);
 
     const { data: leads, isLoading: isLeadsLoading } = useQuery({
-        queryKey: ['agent-leads', agentId],
-        queryFn: () => fetchAgentLeads(agentId),
+        queryKey: ['agent-leads', agentId, user?.zipcode],
+        queryFn: () => {
+            if (user?.zipcode) {
+                return fetchLeadsByZipcode(user.zipcode);
+            }
+            return fetchAgentLeads();
+        },
         enabled: !!agentId,
         refetchInterval: 30000
     });
@@ -39,65 +45,45 @@ const AgentDashboard: React.FC = () => {
         enabled: !!agentId
     });
 
+
+
+    const mergedLeads = useMemo(() => {
+        if (!leads) return [];
+        return leads.map(lead => {
+
+             const leadQuote = quotes?.find(q => q.leadId === lead.id);
+             return {
+                 ...lead,
+                 quoteStatus: leadQuote?.status
+             };
+        });
+    }, [leads, quotes]);
+
     const prevLeadsRef = React.useRef<AgentLeadDto[]>([]);
     React.useEffect(() => {
-        if (leads && prevLeadsRef.current.length > 0) {
-            const newLeadIds = leads.map(l => l.leadId);
-            const prevLeadIds = new Set(prevLeadsRef.current.map(l => l.leadId));
+        if (mergedLeads && prevLeadsRef.current.length > 0) {
+            const newLeadIds = mergedLeads.map(l => l.id);
+            const prevLeadIds = new Set(prevLeadsRef.current.map(l => l.id));
             const added = newLeadIds.filter(id => !prevLeadIds.has(id));
             if (added.length > 0) {
                 toast.info(`You have ${added.length} new lead opportunity!`);
             }
         }
-        if (leads) {
-            prevLeadsRef.current = leads;
+        if (mergedLeads) {
+            prevLeadsRef.current = mergedLeads;
         }
-    }, [leads]);
+    }, [mergedLeads]);
 
 
-    const leadActionMutation = useMutation({
-        mutationFn: updateLeadAction,
-        onSuccess: async (data, variables) => {
-            await queryClient.invalidateQueries({ queryKey: ['agent-leads'] });
-            setLoadingLeadId(null);
 
-            if (variables.leadAction === 'INTERESTED') {
-                setSelectedLead(data);
-                setIsActionDialogOpen(true);
-                toast.success("You are now interested in this lead");
-            } else if (variables.leadAction === 'REJECTED') {
-                toast.success("Lead rejected");
-                setIsActionDialogOpen(false);
-            }
-        },
-        onError: (error) => {
-            setLoadingLeadId(null);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const msg = (error as any).response?.data?.message || "Failed to update lead status";
-            toast.error(msg);
-        }
-    });
 
     const createMutation = useMutation({
         mutationFn: createQuote,
-        onSuccess: async (_data, variables) => {
+        onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ['agent-quotes'] });
-            await queryClient.invalidateQueries({ queryKey: ['agent-leads'] });
             setIsQuoteFormOpen(false);
             setIsActionDialogOpen(false);
-            toast.success("Quote created & lead accepted successfully");
-
-            if (variables.leadId) {
-                const lead = leads?.find(l => l.leadId === variables.leadId);
-                if (lead && lead.leadAction !== 'ACCEPTED') {
-                    leadActionMutation.mutate({
-                        id: lead.id,
-                        leadId: lead.leadId,
-                        agentId: agentId,
-                        leadAction: 'ACCEPTED'
-                    });
-                }
-            }
+            toast.success("Quote created successfully");
         },
         onError: () => toast.error("Failed to create quote")
     });
@@ -112,7 +98,6 @@ const AgentDashboard: React.FC = () => {
         onError: () => toast.error("Failed to update quote")
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleFormSubmit = (data: any) => {
         if (editingQuote) {
             updateMutation.mutate({
@@ -125,18 +110,8 @@ const AgentDashboard: React.FC = () => {
     };
 
     const handleViewDetail = (lead: AgentLeadDto) => {
-        if (lead.leadAction) {
-            setSelectedLead(lead);
-            setIsActionDialogOpen(true);
-        } else {
-            setLoadingLeadId(lead.leadId);
-            leadActionMutation.mutate({
-                id: lead.id,
-                leadId: lead.leadId,
-                agentId: lead.agentId,
-                leadAction: 'INTERESTED'
-            });
-        }
+        setSelectedLead(lead);
+        setIsActionDialogOpen(true);
     };
 
     const handleCreateQuote = (leadId: number) => {
@@ -150,30 +125,39 @@ const AgentDashboard: React.FC = () => {
         setIsActionDialogOpen(false);
     };
 
-    const handleRejectLead = (lead: AgentLeadDto) => {
-        leadActionMutation.mutate({
-            id: lead.id,
-            leadId: lead.leadId,
-            agentId: lead.agentId,
-            leadAction: 'REJECTED'
-        });
+
+
+    const areaLeads = useMemo(() => mergedLeads?.filter(l => l.leadAction !== 'REJECTED') || [], [mergedLeads]);
+    
+    const handleViewQuote = async (quote: PropertyQuoteDto) => {
+        try {
+            const lead = await fetchLeadById(quote.leadId);
+            setSelectedLead(lead);
+            setEditingQuote(quote);
+            setIsQuoteFormOpen(true);
+        } catch (error) {
+            toast.error("Failed to load lead details");
+        }
     };
 
-    const newLeads = useMemo(() => leads?.filter(l => !l.leadAction) || [], [leads]);
-    const allInteractedLeads = useMemo(() => leads?.filter(l => l.leadAction) || [], [leads]);
-
-    const newLeadsCount = newLeads.length;
+    const areaLeadsCount = areaLeads.length;
 
     const thisMonthValue = useMemo(() => {
         if (!quotes) return 0;
         const now = new Date();
         const thisMonth = now.getMonth();
         const thisYear = now.getFullYear();
+
         return quotes.reduce((acc, q) => {
-            if (q.startDate) {
-                const d = new Date(q.startDate);
-                if (d.getMonth() === thisMonth && d.getFullYear() === thisYear) {
-                    return acc + (q.premium?.total || 0);
+            if (q.status !== 'ACCEPTED') return acc;
+
+            
+            if (q.createdDate) {
+                const d = new Date(q.createdDate);
+                if (!isNaN(d.getTime())) {
+                    if (d.getMonth() === thisMonth && d.getFullYear() === thisYear) {
+                         return acc + (q.premium?.total || 0);
+                    }
                 }
             }
             return acc;
@@ -187,12 +171,12 @@ const AgentDashboard: React.FC = () => {
         if (!quotes) return 0;
         return quotes
             .filter(q => q.status === 'ACCEPTED')
-            .reduce((acc, q) => acc + (q.sumInsured || 0), 0);
+            .reduce((acc, q) => acc + (q.premium?.total || 0), 0);
     }, [quotes]);
 
     const activeQuotesCount = useMemo(() => {
         if (!quotes) return 0;
-        return quotes.filter(q => q.status === 'ACTIVE' || q.status === 'PENDING').length;
+        return quotes.filter(q => q.status === 'NEW').length;
     }, [quotes]);
 
     return (
@@ -246,9 +230,9 @@ const AgentDashboard: React.FC = () => {
                     <Card className="bg-slate-900 border border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 group hover:border-primary/50">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">New Opportunities</p>
+                                <p className="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">Leads in Area</p>
                                 <h3 className="text-2xl font-bold text-white mt-1">
-                                    {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800" /> : newLeadsCount}
+                                    {isLoading ? <Skeleton className="h-8 w-12 bg-slate-800" /> : areaLeadsCount}
                                 </h3>
                             </div>
                             <div
@@ -269,7 +253,7 @@ const AgentDashboard: React.FC = () => {
                                     activeTab === 'new' ? "text-primary border-b-2 border-primary" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-md px-2"
                                 )}
                             >
-                                New Leads
+                                Leads in Area
                             </button>
                             <button
                                 onClick={() => setActiveTab('portfolio')}
@@ -278,78 +262,86 @@ const AgentDashboard: React.FC = () => {
                                     activeTab === 'portfolio' ? "text-primary border-b-2 border-primary" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-md px-2"
                                 )}
                             >
-                                Quote History & Portfolio
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('settings')}
-                                className={cn(
-                                    "pb-3 text-sm font-medium transition-colors relative flex items-center gap-2",
-                                    activeTab === 'settings' ? "text-primary border-b-2 border-primary" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-md px-2"
-                                )}
-                            >
-                                <Settings className="w-4 h-4" />
-                                Profile
+                                My quotes
                             </button>
                         </div>
 
-                        {activeTab !== 'settings' && (
-                            <div className="relative w-64">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
-                                <input
-                                    type="text"
-                                    placeholder="Search leads..."
-                                    className="w-full pl-9 h-9 rounded-md bg-slate-900 border border-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-500"
-                                />
-                            </div>
-                        )}
+                        <div className="relative w-64">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                            <input
+                                type="text"
+                                placeholder="Search leads..."
+                                className="w-full pl-9 h-9 rounded-md bg-slate-900 border border-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-500"
+                            />
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="flex flex-col gap-4">
                         {isLoading ? (
                             [1, 2, 3].map((id) => (
-                                <Skeleton key={`skeleton-${id}`} className="h-64 w-full rounded-xl bg-slate-800" />
+                                <Skeleton key={`skeleton-${id}`} className="h-24 w-full rounded-xl bg-slate-800" />
                             ))
                         ) : (
                             <>
                                 {activeTab === 'new' && (
-                                    newLeads.length === 0 ? (
+                                    areaLeads.length === 0 ? (
                                         <div
                                             className="col-span-full py-12 text-center text-slate-500 bg-slate-900 rounded-xl border border-dashed border-slate-800">
-                                            <p>No new leads found in your area.</p>
+                                            <p>No leads found in your area.</p>
                                         </div>
                                     ) : (
-                                        newLeads.map(lead => (
+                                        areaLeads.map(lead => (
                                             <AgentLeadCard
                                                 key={lead.id}
                                                 lead={lead}
+                                                quoteStatus={lead.quoteStatus}
                                                 onViewDetail={handleViewDetail}
-                                                isLoadingAction={loadingLeadId === lead.leadId}
+                                                isLoadingAction={false}
                                             />
                                         ))
                                     )
                                 )}
 
                                 {activeTab === 'portfolio' && (
-                                    allInteractedLeads.length === 0 ? (
+                                    (!quotes || quotes.length === 0) ? (
                                         <div
                                             className="col-span-full py-12 text-center text-slate-500 bg-slate-900 rounded-xl border border-dashed border-slate-800">
-                                            <p>No active portfolio items yet.</p>
+                                            <p>No active quotes yet.</p>
                                         </div>
                                     ) : (
-                                        allInteractedLeads.map(lead => (
-                                            <AgentLeadCard
-                                                key={lead.id}
-                                                lead={lead}
-                                                onViewDetail={handleViewDetail}
-                                            />
-                                        ))
-                                    )
-                                )}
+                                        quotes.map(quote => {
+                                            const lead = leads?.find(l => l.id === quote.leadId);
+                                            let addressNode: React.ReactNode = 'Address unavailable';
+                                            
+                                            if (lead?.propertyInfo) {
+                                                const info = lead.propertyInfo.trim();
+                                                if (info.startsWith('{')) {
+                                                    try {
+                                                         const parsed = JSON.parse(info);
+                                                         if (parsed.address) addressNode = parsed.address;
+                                                         else if (parsed.location) {
+                                                             addressNode = `${parsed.location.street}, ${parsed.location.ward}, ${parsed.location.city}`;
+                                                         }
+                                                    } catch {
+                                                        addressNode = info;
+                                                    }
+                                                } else if (!info.includes(' ')) {
+                                                    addressNode = <PropertyAddressDisplay propertyId={info} />;
+                                                } else {
+                                                    addressNode = info;
+                                                }
+                                            }
 
-                                {activeTab === 'settings' && (
-                                    <div className="col-span-full">
-                                        <AgentProfileSettings />
-                                    </div>
+                                            return (
+                                                <AgentQuoteCard
+                                                    key={quote.id}
+                                                    quote={quote}
+                                                    propertyAddress={addressNode}
+                                                    onViewDetail={handleViewQuote}
+                                                />
+                                            );
+                                        })
+                                    )
                                 )}
                             </>
                         )}
@@ -361,10 +353,8 @@ const AgentDashboard: React.FC = () => {
                 open={isActionDialogOpen}
                 onOpenChange={setIsActionDialogOpen}
                 lead={selectedLead}
+                quoteStatus={quotes?.find(q => q.leadId === selectedLead?.id)?.status}
                 onCreateQuote={handleCreateQuote}
-                onReject={handleRejectLead}
-                isPending={leadActionMutation.isPending}
-                hasQuote={!!quotes?.find(q => q.leadId === selectedLead?.leadId)}
             />
 
             <Dialog open={isQuoteFormOpen} onOpenChange={setIsQuoteFormOpen}>
@@ -375,6 +365,7 @@ const AgentDashboard: React.FC = () => {
                     </DialogHeader>
                     <AgentQuoteForm
                         lead={selectedLead}
+                        quote={editingQuote}
                         agentId={agentId}
                         onSubmit={handleFormSubmit}
                         onCancel={() => setIsQuoteFormOpen(false)}

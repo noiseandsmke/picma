@@ -15,6 +15,7 @@ export interface UserDto {
     emailVerified?: boolean;
     enabled?: boolean;
     totp?: boolean;
+    attributes?: Record<string, string[]>;
 }
 
 const BASE_PATH = '/picma/users';
