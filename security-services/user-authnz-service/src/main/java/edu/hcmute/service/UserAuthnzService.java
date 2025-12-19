@@ -4,7 +4,7 @@ import edu.hcmute.dto.LoginRequest;
 import edu.hcmute.dto.RegisterRequest;
 import edu.hcmute.dto.TokenResponse;
 
-public interface AuthService {
+public interface UserAuthnzService {
     TokenResponse login(LoginRequest request);
 
     TokenResponse refresh(String refreshToken, String oldAccessToken);

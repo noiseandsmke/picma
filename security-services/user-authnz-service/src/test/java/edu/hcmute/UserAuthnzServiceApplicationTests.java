@@ -9,5 +9,4 @@ class UserAuthnzServiceApplicationTests {
     @Test
     void contextLoads() {
     }
-
 }

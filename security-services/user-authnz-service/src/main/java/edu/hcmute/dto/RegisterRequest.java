@@ -23,7 +23,7 @@ public record RegisterRequest(
 
         @NotBlank(message = "Last name is required")
         @JsonProperty String lastName,
-
+        
         @JsonProperty String zipcode
 ) {
 }

@@ -1,11 +1,6 @@
 spring:
   application:
     name: user-authnz-service
-  data:
-    redis:
-      host: ${REDIS_CACHE_HOST:localhost}
-      port: ${REDIS_CACHE_PORT:6379}
-      password: ${REDIS_CACHE_PASSWORD:password}
 
 keycloak:
   auth-server-url: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}
@@ -16,6 +11,7 @@ keycloak:
 
 picma:
   iam:
+    usersApi: ${PROTOCOL:http}://${IDP_HOST:localhost}:${IDP_PORT:8081}/admin/realms/${IDP_REALMS:picma}/users
     groups:
       owners: ${OWNERS_GROUP_ID:d41e9d41-afb7-408e-bbd0-970b093268ab}
       agents: ${AGENTS_GROUP_ID:2a576f8b-ee0d-4c57-be7a-de4a490e298d}
@@ -29,5 +25,11 @@ eureka:
     instance-id: ${spring.application.name}:${server.port}
     prefer-ip-address: ${REGISTRY_PREFER_IP:true}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health, info"
+
 server:
-  port: 5052
+  port: ${APP_PORT:5052}
