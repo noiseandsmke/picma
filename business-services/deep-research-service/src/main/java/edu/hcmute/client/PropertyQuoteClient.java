@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
-@FeignClient(name = "property-quote-service", url = "${application.config.property-quote-url:http://localhost:7102}")
+@FeignClient(name = "PROPERTY-QUOTE-SERVICE", path = "/property-quote")
 public interface PropertyQuoteClient {
-    @GetMapping("/property-quote/lead/{leadId}")
+    @GetMapping("/lead/{leadId}")
     List<QuoteDto> getQuotesByLeadId(@PathVariable Integer leadId);
 }

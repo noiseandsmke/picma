@@ -1,12 +1,12 @@
 package edu.hcmute.client;
 
-import edu.hcmute.dto.PropertyLeadDto;
+import edu.hcmute.dto.PropertyInfoDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "PROPERTY-LEAD-SERVICE", path = "/property-lead")
-public interface PropertyLeadClient {
+@FeignClient(name = "PROPERTY-MGMT-SERVICE", path = "/property-info")
+public interface PropertyInfoClient {
     @GetMapping("/{id}")
-    PropertyLeadDto getLeadById(@PathVariable Integer id);
+    PropertyInfoDto getPropertyInfoById(@PathVariable String id);
 }
