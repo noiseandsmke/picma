@@ -9,5 +9,4 @@ class PropertyQuoteServiceApplicationTests {
     @Test
     void contextLoads() {
     }
-
 }

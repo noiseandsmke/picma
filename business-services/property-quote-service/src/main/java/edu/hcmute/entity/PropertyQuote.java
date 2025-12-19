@@ -21,20 +21,24 @@ public class PropertyQuote {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false)
     private Integer leadId;
+
+    @Column(nullable = false)
     private String agentId;
-    private LocalDate validUntil;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private String propertyAddress;
-    private Long sumInsured;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDate createDate;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private QuoteStatus status;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn
-    private List<Coverage> coverages = new ArrayList<>();
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "quote_coverages",
+            joinColumns = @JoinColumn(name = "quote_id", nullable = false))
+    private List<QuoteCoverage> coverages = new ArrayList<>();
 
     @Embedded
     private Premium premium;

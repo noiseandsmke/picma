@@ -1,11 +1,11 @@
 package edu.hcmute.controller;
 
-import edu.hcmute.dto.CreatePropertyQuoteDto;
+import edu.hcmute.dto.CreateQuoteDto;
 import edu.hcmute.dto.PropertyQuoteDto;
-import edu.hcmute.dto.UpdatePropertyQuoteDto;
+import edu.hcmute.dto.QuoteTrendDto;
+import edu.hcmute.dto.UpdateQuoteDto;
 import edu.hcmute.service.PropertyQuoteService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,70 +22,70 @@ public class PropertyQuoteController {
     private final PropertyQuoteService propertyQuoteService;
 
     @PostMapping
-    @Operation(description = "Create a property quote for an existing lead", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<PropertyQuoteDto> createPropertyQuote(@RequestBody CreatePropertyQuoteDto createDto) {
-        log.info("### Create Property Quote for leadId = {} ###", createDto.leadId());
+    @Operation(description = "Create a property quote for an existing lead")
+    public ResponseEntity<PropertyQuoteDto> createPropertyQuote(@RequestBody CreateQuoteDto createDto) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(propertyQuoteService.createPropertyQuote(createDto));
     }
 
     @GetMapping
-    @Operation(description = "Get all property quotes", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Get all property quotes")
     public ResponseEntity<List<PropertyQuoteDto>> getAllPropertyQuotes(
-            @RequestParam(defaultValue = "id") String sort,
-            @RequestParam(defaultValue = "asc") String order) {
-        log.info("### Get All Property Quotes ###");
-        return ResponseEntity.ok(propertyQuoteService.getAllPropertyQuotes(sort, order));
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String agentId
+    ) {
+        return ResponseEntity.ok(propertyQuoteService.getAllPropertyQuotes(sortBy, sortDirection, status, agentId));
+    }
+
+    @GetMapping("/trend")
+    @Operation(description = "Get quote trend for last 7 days")
+    public ResponseEntity<List<QuoteTrendDto>> getQuoteTrend() {
+        return ResponseEntity.ok(propertyQuoteService.getQuoteTrend());
     }
 
     @GetMapping("/{quoteId}")
-    @Operation(description = "Get property quote by ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Get property quote by ID")
     public ResponseEntity<PropertyQuoteDto> getPropertyQuoteById(@PathVariable Integer quoteId) {
-        log.info("### Get Property Quote by id = {} ###", quoteId);
         return ResponseEntity.ok(propertyQuoteService.getPropertyQuoteById(quoteId));
     }
 
     @GetMapping("/lead/{leadId}")
-    @Operation(description = "Get all property quotes for a lead", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Get all property quotes for a lead")
     public ResponseEntity<List<PropertyQuoteDto>> getQuotesByLeadId(@PathVariable Integer leadId) {
-        log.info("### Get Property Quotes for leadId = {} ###", leadId);
         return ResponseEntity.ok(propertyQuoteService.getQuotesByLeadId(leadId));
     }
 
     @GetMapping("/agent/{agentId}")
-    @Operation(description = "Get all property quotes for an agent", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Get all property quotes for an agent")
     public ResponseEntity<List<PropertyQuoteDto>> getQuotesByAgentId(@PathVariable String agentId) {
-        log.info("### Get Property Quotes for agentId = {} ###", agentId);
         return ResponseEntity.ok(propertyQuoteService.getQuotesByAgentId(agentId));
     }
 
     @PutMapping("/{quoteId}")
-    @Operation(description = "Update property quote", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<PropertyQuoteDto> updatePropertyQuote(@PathVariable Integer quoteId, @RequestBody UpdatePropertyQuoteDto updateDto) {
-        log.info("### Update Property Quote by id = {} ###", quoteId);
+    @Operation(description = "Update property quote")
+    public ResponseEntity<PropertyQuoteDto> updatePropertyQuote(@PathVariable Integer quoteId, @RequestBody UpdateQuoteDto updateDto) {
         return ResponseEntity.ok(propertyQuoteService.updatePropertyQuote(quoteId, updateDto));
     }
 
     @DeleteMapping("/{quoteId}")
-    @Operation(description = "Delete property quote by ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Delete property quote by ID")
     public ResponseEntity<Void> deletePropertyQuoteById(@PathVariable Integer quoteId) {
-        log.info("### Delete Property Quote by id = {} ###", quoteId);
         propertyQuoteService.deletePropertyQuoteById(quoteId);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{quoteId}/accept")
-    @Operation(description = "Accept a property quote", security = @SecurityRequirement(name = "bearerAuth"))
+    @PutMapping("/{quoteId}/accept")
+    @Operation(description = "Accept a property quote")
     public ResponseEntity<Void> acceptQuote(@PathVariable Integer quoteId) {
-        log.info("### Accept Property Quote by id = {} ###", quoteId);
         propertyQuoteService.acceptQuote(quoteId);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{quoteId}/reject")
-    @Operation(description = "Reject a property quote", security = @SecurityRequirement(name = "bearerAuth"))
+    @PutMapping("/{quoteId}/reject")
+    @Operation(description = "Reject a property quote")
     public ResponseEntity<Void> rejectQuote(@PathVariable Integer quoteId) {
-        log.info("### Reject Property Quote by id = {} ###", quoteId);
         propertyQuoteService.rejectQuote(quoteId);
         return ResponseEntity.ok().build();
     }
