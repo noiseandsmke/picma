@@ -1,26 +1,24 @@
-server:
-  port: 7107
-
 spring:
   application:
     name: deep-research-service
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      password: ${REDIS_PASSWORD:password}
-    mongodb:
-      host: localhost
-      port: 27017
-      database: picma
-  ai:
-    google:
-      genai:
-        api-key: ${GOOGLE_API_KEY:AIzaSyB72wYSj8lOHx3Dggx-1GiYdxU_-PIf-sU}
-        chat:
-          options:
-            model: gemini-2.5-flash
-            temperature: 0.7
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5435}/${DB_NAME:deep_research_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+server:
+  port: 7104
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
 
 eureka:
   client:
@@ -30,3 +28,10 @@ eureka:
     hostname: ${REGISTRY_HOST:localhost}
     instance-id: ${spring.application.name}:${server.port}
     prefer-ip-address: ${REGISTRY_PREFER_IP:true}
+
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:}
+    base-url: https://generativelanguage.googleapis.com/v1beta
+    agent: deep-research-pro-preview-12-2025
+    timeout: 3600000

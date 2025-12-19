@@ -1,34 +1,98 @@
 package edu.hcmute.controller;
 
-import edu.hcmute.service.ResearchOrchestrator;
+import edu.hcmute.entity.ResearchInteraction;
+import edu.hcmute.service.DeepResearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
 @RestController
 @RequestMapping("/deep-research")
-@RequiredArgsConstructor
+@Tag(name = "Deep Research", description = "Property insurance deep research API using Gemini AI")
 public class DeepResearchController {
-    private final ResearchOrchestrator orchestrator;
+    private final DeepResearchService deepResearchService;
 
-    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @ApiResponse(responseCode = "200", description = "SSE Stream Established", content = @Content(mediaType = MediaType.TEXT_EVENT_STREAM_VALUE))
-    @Operation(summary = "Stream Deep Research Process", security = @SecurityRequirement(name = "bearerAuth"))
-    public SseEmitter streamResearch(
-            @Parameter(description = "The ID of the Lead to research", example = "8")
-            @RequestParam Integer leadId
+    public DeepResearchController(DeepResearchService deepResearchService) {
+        this.deepResearchService = deepResearchService;
+    }
+
+    @Operation(
+            summary = "Generate research prompt",
+            description = "Generate detailed prompt to send to Gemini Deep Research Agent"
+    )
+    @GetMapping("/prompt/{leadId}")
+    public ResponseEntity<String> getPrompt(
+            @Parameter(description = "ID of the property lead to research", required = true)
+            @PathVariable Integer leadId
     ) {
-        SseEmitter emitter = new SseEmitter(10 * 60 * 1000L);
-        orchestrator.executeLoop(leadId, emitter);
-        return emitter;
+        String prompt = deepResearchService.generatePrompt(leadId);
+        return ResponseEntity.ok(prompt);
+    }
+
+    @Operation(
+            summary = "Get research interaction by lead ID",
+            description = "Get the research interaction details (including ID and status) for a specific lead."
+    )
+    @GetMapping("/interaction/{leadId}")
+    public ResponseEntity<ResearchInteraction> getInteractionByLeadId(
+            @Parameter(description = "ID of the property lead", required = true)
+            @PathVariable Integer leadId
+    ) {
+        try {
+            ResearchInteraction interaction = deepResearchService.getInteractionByLeadId(leadId);
+            return ResponseEntity.ok(interaction);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @Operation(
+            summary = "Stream Deep Research",
+            description = "Stream the research process and results for a lead directly from the AI agent."
+    )
+    @GetMapping(value = "/stream/{leadId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> streamResearch(
+            @Parameter(description = "ID of the property lead to research", required = true)
+            @PathVariable Integer leadId
+    ) {
+        return deepResearchService.streamResearch(leadId);
+    }
+
+    @Operation(
+            summary = "Get deep research result",
+            description = "Get the full result of a deep research interaction for a lead."
+    )
+    @GetMapping(value = "/result/{leadId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getResearchResult(
+            @Parameter(description = "ID of the property lead", required = true)
+            @PathVariable Integer leadId
+    ) {
+        String result = deepResearchService.getResearchResult(leadId);
+        if (result != null) {
+            return ResponseEntity.ok(result);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @Operation(
+            summary = "Check if lead is researched",
+            description = "Check if research exists for a lead (returns boolean)."
+    )
+    @GetMapping("/status/{leadId}")
+    public ResponseEntity<Boolean> getResearchStatus(
+            @Parameter(description = "ID of the property lead", required = true)
+            @PathVariable Integer leadId
+    ) {
+        return ResponseEntity.ok(deepResearchService.isResearched(leadId));
     }
 }
