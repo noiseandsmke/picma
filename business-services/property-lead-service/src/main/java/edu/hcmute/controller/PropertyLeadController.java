@@ -5,12 +5,10 @@ import edu.hcmute.dto.LeadTrendDto;
 import edu.hcmute.dto.PropertyLeadDto;
 import edu.hcmute.service.PropertyLeadService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,91 +21,76 @@ public class PropertyLeadController {
     private final PropertyLeadService propertyLeadService;
 
     @PostMapping
-    @Operation(description = "Create a new property lead", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Create a new property lead")
     public ResponseEntity<PropertyLeadDto> createLead(@RequestBody PropertyLeadDto propertyLeadDto) {
-        log.info("### create property lead ###");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(propertyLeadService.createPropertyLead(propertyLeadDto));
     }
 
-    @PutMapping("/{leadId}/details")
-    @Operation(description = "Update property lead details", security = @SecurityRequirement(name = "bearerAuth"))
+    @PutMapping("/{leadId}")
+    @Operation(description = "Update property lead details")
     public ResponseEntity<PropertyLeadDto> updateLead(@PathVariable Integer leadId, @RequestBody PropertyLeadDto propertyLeadDto) {
-        log.info("### update property lead with id = {} ###", leadId);
         return ResponseEntity.ok(propertyLeadService.updatePropertyLead(leadId, propertyLeadDto));
     }
 
     @GetMapping
-    @Operation(description = "Get all active property leads", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<PropertyLeadDto>> getAllActiveLeads() {
-        return ResponseEntity.ok(propertyLeadService.findAllPropertyLeads());
-    }
-
-    @GetMapping("/all")
-    @Operation(description = "Get all property leads", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Get all property leads")
     public ResponseEntity<List<PropertyLeadDto>> getAllLeads(
-            @RequestParam(defaultValue = "id") String sort,
-            @RequestParam(defaultValue = "asc") String order) {
-        return ResponseEntity.ok(propertyLeadService.getAllLeads(sort, order));
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection,
+            @RequestParam(required = false) String status
+    ) {
+        return ResponseEntity.ok(propertyLeadService.getAllPropertyLeads(sortBy, sortDirection, status));
     }
 
     @GetMapping("/stats")
-    @Operation(description = "Get lead statistics", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Get lead statistics")
     public ResponseEntity<LeadStatsDto> getLeadStats() {
         return ResponseEntity.ok(propertyLeadService.getLeadStats());
     }
 
     @GetMapping("/stats/trend")
-    @Operation(description = "Get lead trend data", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Get lead trend data")
     public ResponseEntity<List<LeadTrendDto>> getLeadTrend() {
         return ResponseEntity.ok(propertyLeadService.getLeadTrend());
     }
 
     @GetMapping("/{leadId}")
-    @Operation(description = "Get property lead by ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Get property lead by ID")
     public ResponseEntity<PropertyLeadDto> getLeadById(@PathVariable Integer leadId) {
         return ResponseEntity.ok(propertyLeadService.getPropertyLeadById(leadId));
     }
 
     @GetMapping("/status/{status}")
-    @Operation(description = "Get property leads by status", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Get property leads by status")
     public ResponseEntity<List<PropertyLeadDto>> getLeadsByStatus(@PathVariable String status) {
         return ResponseEntity.ok(propertyLeadService.findPropertyLeadsByStatus(status));
     }
 
-    @GetMapping("/zipcode")
-    @Operation(description = "Get property leads by zipcode", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<PropertyLeadDto>> getAllLeadsByZipCode(@RequestHeader String zipCode) {
-        return ResponseEntity.ok(propertyLeadService.findPropertyLeadsByZipcode(zipCode));
-    }
-
-    @GetMapping("/agent/{agentId}")
-    @Operation(description = "Get property leads of an agent", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<List<PropertyLeadDto>> getLeadsByAgent(@PathVariable String agentId) {
-        return ResponseEntity.ok(propertyLeadService.findPropertyLeadsOfAgent(agentId));
+    @GetMapping("/zipcode/{zipCode}")
+    @Operation(description = "Get property leads by zipcode")
+    public ResponseEntity<List<PropertyLeadDto>> getLeadsByZipCode(@PathVariable String zipCode) {
+        return ResponseEntity.ok(propertyLeadService.findPropertyLeadsByZipCode(zipCode));
     }
 
     @GetMapping("/user/{userId}")
-    @Operation(description = "Get property leads of a user", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Get property leads of a user")
     public ResponseEntity<List<PropertyLeadDto>> getLeadsByUser(@PathVariable String userId) {
         return ResponseEntity.ok(propertyLeadService.findPropertyLeadsByUser(userId));
     }
 
-    @PutMapping("/{leadId}")
-    @Operation(description = "Update property lead status", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<Object> updateLeadStatus(@PathVariable Integer leadId, @RequestHeader String leadStatus) {
-        if (!StringUtils.hasText(leadStatus)) {
-            return ResponseEntity.badRequest().body("Header lead-status must be present");
-        }
+    @PutMapping("/{leadId}/status/{status}")
+    @Operation(description = "Update property lead status")
+    public ResponseEntity<Object> updateLeadStatus(@PathVariable Integer leadId, @PathVariable String status) {
         try {
-            return ResponseEntity.ok(propertyLeadService.updateLeadStatus(leadId, leadStatus));
+            return ResponseEntity.ok(propertyLeadService.updatePropertyLeadStatus(leadId, status));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{leadId}")
-    @Operation(description = "Delete property lead by Id", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(description = "Delete property lead by Id")
     public ResponseEntity<Void> deleteLeadById(@PathVariable Integer leadId) {
         propertyLeadService.deletePropertyLeadById(leadId);
         return ResponseEntity.noContent().build();

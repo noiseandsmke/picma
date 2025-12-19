@@ -2,8 +2,8 @@ package edu.hcmute.dto;
 
 public record LeadStatsDto(
         long totalLeads,
-        long acceptedLeads,
-        long rejectedLeads,
-        long overdueLeads
+        long newLeads,
+        long inReviewLeads,
+        long acceptedLeads
 ) {
 }

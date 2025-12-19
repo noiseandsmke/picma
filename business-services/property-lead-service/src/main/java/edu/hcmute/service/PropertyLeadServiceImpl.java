@@ -1,25 +1,29 @@
 package edu.hcmute.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.hcmute.config.PropertyAgentFeignClient;
-import edu.hcmute.config.PropertyMgmtFeignClient;
+import edu.hcmute.client.PropertyMgmtFeignClient;
+import edu.hcmute.client.PropertyQuoteFeignClient;
 import edu.hcmute.domain.LeadStatus;
-import edu.hcmute.dto.*;
+import edu.hcmute.dto.LeadStatsDto;
+import edu.hcmute.dto.LeadTrendDto;
+import edu.hcmute.dto.PropertyLeadDto;
+import edu.hcmute.dto.PropertyQuoteDto;
 import edu.hcmute.entity.PropertyLead;
-import edu.hcmute.event.PropertyLeadProducer;
 import edu.hcmute.exception.PropertyLeadException;
 import edu.hcmute.mapper.PropertyLeadMapper;
 import edu.hcmute.repo.PropertyLeadRepo;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,12 +31,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PropertyLeadServiceImpl implements PropertyLeadService {
     private final PropertyLeadRepo propertyLeadRepo;
+    private final PropertyQuoteFeignClient propertyQuoteFeignClient;
     private final PropertyMgmtFeignClient propertyMgmtFeignClient;
-    private final PropertyAgentFeignClient propertyAgentFeignClient;
+
     private final PropertyLeadMapper propertyLeadMapper;
-    private final PropertyLeadProducer propertyLeadProducer;
-    private final ObjectMapper objectMapper;
-    private final ObjectProvider<PropertyLeadService> propertyLeadServiceProvider;
 
     @Override
     @Transactional
@@ -41,10 +43,12 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         log.info("PropertyLeadDto: {}", propertyLeadDto);
         try {
             PropertyLead propertyLead = propertyLeadMapper.toEntity(propertyLeadDto);
+            if (!StringUtils.hasText(propertyLead.getZipCode())) {
+                throw new IllegalArgumentException("ZipCode is required to create a property lead.");
+            }
+            propertyLead.setStatus(LeadStatus.NEW);
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> PropertyLead saved with id: {}", propertyLead.getId());
-            boolean isPublished = propertyLeadProducer.publishLead(propertyLead);
-            log.info("~~> Lead published to Kafka: {}", isPublished);
             return propertyLeadMapper.toDto(propertyLead);
         } catch (Exception e) {
             log.error("~~> error creating PropertyLead: {}", e.getMessage(), e);
@@ -59,6 +63,9 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         try {
             PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
                     .orElseThrow(() -> new PropertyLeadException("PropertyLead not found with id: " + leadId));
+            if (propertyLead.getStatus() != LeadStatus.NEW) {
+                throw new PropertyLeadException("Cannot update PropertyLead. Lead is in " + propertyLead.getStatus() + " status. Only NEW leads can be updated.");
+            }
             propertyLeadMapper.updateEntity(propertyLead, propertyLeadDto);
             propertyLead = propertyLeadRepo.save(propertyLead);
             log.info("~~> PropertyLead updated with id: {}", propertyLead.getId());
@@ -84,85 +91,56 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
 
     @Override
     @Transactional
-    public PropertyLeadDto updateLeadStatus(Integer leadId, String status) {
-        log.info("### Updating lead status for leadId = {} to status = {} ###", leadId, status);
+    public PropertyLeadDto updatePropertyLeadStatus(Integer leadId, String status) {
+        log.info("### Updating lead status for leadId = {} to {} ###", leadId, status);
         try {
-            LeadStatus newStatus = parseLeadStatus(status);
             PropertyLead propertyLead = propertyLeadRepo.findById(leadId)
                     .orElseThrow(() -> new PropertyLeadException("PropertyLead not found with id: " + leadId));
-            LeadStatus currentStatus = propertyLead.getStatus();
-            validateStatusTransition(currentStatus, newStatus);
-            propertyLead.setStatus(newStatus);
-            propertyLead = propertyLeadRepo.save(propertyLead);
-            log.info("~~> successfully updated PropertyLead status from {} to {}", currentStatus.name(), newStatus.name());
-            propertyLeadProducer.publishLeadStatusChanged(propertyLead.getId(), currentStatus.name(), newStatus.name());
+            LeadStatus newStatus;
+            try {
+                newStatus = LeadStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new PropertyLeadException("Invalid status: " + status);
+            }
+            if (newStatus == LeadStatus.ACCEPTED || newStatus == LeadStatus.IN_REVIEW) {
+                if (propertyLead.getStatus() == LeadStatus.ACCEPTED) {
+                    log.warn("~~> Lead is already ACCEPTED. Ignoring status update.");
+                    return propertyLeadMapper.toDto(propertyLead);
+                }
+                propertyLead.setStatus(newStatus);
+                propertyLead = propertyLeadRepo.save(propertyLead);
+                log.info("~~> successfully updated PropertyLead status to {}", newStatus);
+            } else {
+                log.warn("~~> Unsupported status transition to {}. Only IN_REVIEW and ACCEPTED allowed via this endpoint.", newStatus);
+            }
             return propertyLeadMapper.toDto(propertyLead);
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.error("~~> validation error updating lead status: {}", e.getMessage());
-            throw e;
         } catch (Exception e) {
             log.error("~~> error updating lead status: {}", e.getMessage(), e);
             throw new PropertyLeadException("Failed to update lead status: " + e.getMessage(), e);
         }
     }
 
-    private LeadStatus parseLeadStatus(String status) {
-        try {
-            return LeadStatus.valueOf(status.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid status: " + status + ". Valid statuses are: " +
-                    String.join(", ", Arrays.stream(LeadStatus.values())
-                            .map(Enum::name).toArray(String[]::new)));
-        }
-    }
-
-    private void validateStatusTransition(LeadStatus currentStatus, LeadStatus newStatus) {
-        if (currentStatus == newStatus) {
-            log.info("~~> status unchanged: {}", currentStatus.name());
-            return;
-        }
-        switch (currentStatus) {
-            case ACTIVE:
-                if (newStatus != LeadStatus.IN_REVIEWING && newStatus != LeadStatus.ACCEPTED && newStatus != LeadStatus.REJECTED && newStatus != LeadStatus.EXPIRED) {
-                    throw new IllegalStateException(
-                            String.format("Invalid status transition from %s to %s. ACTIVE leads can only be changed to IN_REVIEWING, ACCEPTED, REJECTED, or EXPIRED.",
-                                    currentStatus, newStatus));
-                }
-                break;
-            case IN_REVIEWING:
-                if (newStatus != LeadStatus.ACTIVE && newStatus != LeadStatus.ACCEPTED && newStatus != LeadStatus.REJECTED && newStatus != LeadStatus.EXPIRED) {
-                    throw new IllegalStateException(
-                            String.format("Invalid status transition from %s to %s. IN_REVIEWING leads can be changed to ACTIVE, ACCEPTED, REJECTED, or EXPIRED.",
-                                    currentStatus, newStatus));
-                }
-                break;
-            case ACCEPTED:
-                if (newStatus != LeadStatus.EXPIRED) {
-                    throw new IllegalStateException(
-                            String.format("Invalid status transition from %s to %s. ACCEPTED leads can only be changed to EXPIRED.",
-                                    currentStatus, newStatus));
-                }
-                break;
-            case REJECTED, EXPIRED:
-                throw new IllegalStateException(
-                        String.format("Cannot change status from %s to %s. %s is a final state.",
-                                currentStatus, newStatus, currentStatus));
-            default:
-                throw new IllegalStateException(String.format("Unknown status: %s", currentStatus));
-        }
-        log.info("~~> status transition validated: {} -> {}", currentStatus.name(), newStatus.name());
-    }
-
     @Override
     @Transactional(readOnly = true)
-    public List<PropertyLeadDto> findAllPropertyLeads() {
-        log.info("### Get All ACTIVE PropertyLeads ###");
-        List<PropertyLead> propertyLeadList = propertyLeadRepo.findByStatus(LeadStatus.ACTIVE);
-        if (propertyLeadList.isEmpty()) {
-            log.warn("~~> no ACTIVE PropertyLeads found in database");
-            return List.of();
-        }
-        log.info("~~> found {} active PropertyLeads", propertyLeadList.size());
+
+    public List<PropertyLeadDto> getAllPropertyLeads(String sortBy, String sortDirection, String status) {
+        log.info("### Get all PropertyLeads sorted by {} {} with status filter {} ###", sortBy, sortDirection, status);
+        Sort.Direction direction = Sort.Direction.fromString(sortDirection);
+        Sort sort = Sort.by(direction, sortBy);
+        Specification<PropertyLead> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (StringUtils.hasText(status)) {
+                try {
+                    LeadStatus leadStatus = LeadStatus.valueOf(status.toUpperCase());
+                    predicates.add(cb.equal(root.get("status"), leadStatus));
+                } catch (IllegalArgumentException e) {
+                    log.warn("~~> invalid status filter: {}", status);
+                }
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        List<PropertyLead> propertyLeadList = propertyLeadRepo.findAll(spec, sort);
+        log.info("~~> found {} PropertyLeads", propertyLeadList.size());
         return propertyLeadList.stream().map(propertyLeadMapper::toDto).toList();
     }
 
@@ -187,81 +165,11 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PropertyLeadDto> findPropertyLeadsByZipcode(String zipcode) {
-        log.info("### Get PropertyLeads by zipcode = {} ###", zipcode);
-        try {
-            List<PropertyInfoDto> propertiesList = propertyMgmtFeignClient.fetchAllPropertiesByZipCode(zipcode);
-            if (propertiesList == null || propertiesList.isEmpty()) {
-                log.warn("~~> no properties found for zipcode: {}", zipcode);
-                return List.of();
-            }
-            List<String> propertyIds = propertiesList.stream()
-                    .map(PropertyInfoDto::id)
-                    .toList();
-            if (propertyIds.isEmpty()) {
-                log.warn("~~> no property IDs extracted for zipcode: {}", zipcode);
-                return List.of();
-            }
-            log.info("~~> found {} property Ids in zipcode {}", propertyIds.size(), zipcode);
-            List<PropertyLead> matchingLeads = propertyLeadRepo.findByStatusIn(Arrays.asList(LeadStatus.ACTIVE, LeadStatus.IN_REVIEWING)).stream()
-                    .filter(lead -> propertyIds.contains(lead.getPropertyInfo()))
-                    .toList();
-            log.info("~~> found {} ACTIVE or IN_REVIEWING leads for zipcode {}", matchingLeads.size(), zipcode);
-            return matchingLeads.stream().map(propertyLeadMapper::toDto).toList();
-        } catch (Exception e) {
-            log.error("~~> error fetching leads by zipcode {}: {}", zipcode, e.getMessage(), e);
-            return List.of();
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PropertyLeadDto> findPropertyLeadsOfAgent(String agentId) {
-        log.info("### Get property leads visible to agent {} ###", agentId);
-        try {
-            AgentDto agent = propertyAgentFeignClient.getAgentById(agentId);
-            String agentZipCode = agent.zipCode();
-            log.info("~~> agent {} has zipCode: {}", agentId, agentZipCode);
-            List<PropertyInfoDto> propertiesInZip = propertyMgmtFeignClient.fetchAllPropertiesByZipCode(agentZipCode);
-            Set<String> propertyIds = propertiesInZip.stream()
-                    .map(PropertyInfoDto::id)
-                    .collect(Collectors.toSet());
-            List<PropertyLead> availableLeads = propertyLeadRepo.findByStatusIn(Arrays.asList(LeadStatus.ACTIVE, LeadStatus.IN_REVIEWING)).stream()
-                    .filter(lead -> propertyIds.contains(lead.getPropertyInfo()))
-                    .toList();
-            log.info("~~> found {} available leads by zipcode {}", availableLeads.size(), agentZipCode);
-            List<AgentLeadDto> interactedAgentLeads = getAgentLeadsForAgent(agentId);
-            Map<Integer, String> interactionMap = interactedAgentLeads.stream()
-                    .collect(Collectors.toMap(AgentLeadDto::leadId, AgentLeadDto::leadAction, (a1, a2) -> a1));
-            Set<Integer> interactedLeadIds = interactionMap.keySet();
-            List<PropertyLead> interactedLeads = propertyLeadRepo.findAllById(interactedLeadIds);
-            Set<PropertyLead> uniqueLeads = new HashSet<>();
-            uniqueLeads.addAll(availableLeads);
-            uniqueLeads.addAll(interactedLeads);
-            uniqueLeads.removeIf(lead -> "REJECTED".equalsIgnoreCase(interactionMap.get(lead.getId())));
-            log.info("~~> total {} leads visible to agent {}", uniqueLeads.size(), agentId);
-            return uniqueLeads.stream()
-                    .map(lead -> mapToMaskedDto(lead, interactionMap.get(lead.getId())))
-                    .sorted(Comparator.comparing(PropertyLeadDto::id))
-                    .toList();
-        } catch (Exception e) {
-            log.error("~~> error fetching leads for agent {}: {}", agentId, e.getMessage(), e);
-            return propertyLeadServiceProvider.getObject().findAllPropertyLeads();
-        }
-    }
-
-    private PropertyLeadDto mapToMaskedDto(PropertyLead lead, String action) {
-        boolean isInterested = "INTERESTED".equalsIgnoreCase(action) || "ACCEPTED".equalsIgnoreCase(action);
-        if (isInterested) {
-            return propertyLeadMapper.toDto(lead);
-        } else {
-            return new PropertyLeadDto(
-                    lead.getId(),
-                    "HIDDEN", lead.getPropertyInfo(), lead.getStatus(),
-                    lead.getCreateDate(),
-                    lead.getExpiryDate()
-            );
-        }
+    public List<PropertyLeadDto> findPropertyLeadsByZipCode(String zipCode) {
+        log.info("### Get ALL PropertyLeads by zipcode = {} ###", zipCode);
+        List<PropertyLead> leads = propertyLeadRepo.findByZipCode(zipCode);
+        log.info("~~> found {} total leads for zipcode {}", leads.size(), zipCode);
+        return leads.stream().map(propertyLeadMapper::toDto).toList();
     }
 
     @Override
@@ -273,20 +181,6 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         return leads.stream().map(propertyLeadMapper::toDto).toList();
     }
 
-    private List<AgentLeadDto> getAgentLeadsForAgent(String agentId) {
-        try {
-            String agentLeadsJson = propertyAgentFeignClient.getAgentLeadsByAgentId(agentId);
-            if (agentLeadsJson == null || agentLeadsJson.trim().isEmpty()) {
-                return Collections.emptyList();
-            }
-            return objectMapper.readValue(agentLeadsJson, new TypeReference<>() {
-            });
-        } catch (Exception e) {
-            log.error("~~> error fetching agent leads: {}", e.getMessage());
-            return Collections.emptyList();
-        }
-    }
-
     @Override
     @Transactional
     public void deletePropertyLeadById(Integer leadId) {
@@ -294,54 +188,66 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
         if (!propertyLeadRepo.existsById(leadId)) {
             throw new PropertyLeadException("PropertyLead not found with id: " + leadId);
         }
+        try {
+            List<PropertyQuoteDto> quotes = propertyQuoteFeignClient.getQuotesByLeadId(leadId);
+            if (!quotes.isEmpty()) {
+                throw new PropertyLeadException("Cannot delete Lead with id " + leadId + " because it has associated Quotes. Please delete the quotes first.");
+            }
+        } catch (Exception e) {
+            if (e instanceof PropertyLeadException) {
+                throw e;
+            }
+            log.error("~~> Failed to check quotes for leadId {}: {}", leadId, e.getMessage());
+            throw new PropertyLeadException("Failed to verify if lead has quotes. Cannot delete safely.", e);
+        }
+        String propertyInfoId = propertyLeadRepo.findById(leadId)
+                .map(PropertyLead::getPropertyInfo)
+                .orElse(null);
         propertyLeadRepo.deleteById(leadId);
         log.info("~~> successfully deleted PropertyLead with id: {}", leadId);
+        if (StringUtils.hasText(propertyInfoId)) {
+            try {
+                propertyMgmtFeignClient.deletePropertyById(propertyInfoId);
+                log.info("~~> successfully deleted associated PropertyInfo with id: {}", propertyInfoId);
+            } catch (Exception e) {
+                log.error("~~> Failed to delete associated PropertyInfo {}: {}", propertyInfoId, e.getMessage());
+            }
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
+
     public LeadStatsDto getLeadStats() {
-        log.info("### Get Lead Stats ###");
+        log.info("### Get lead stats ###");
         List<PropertyLead> allLeads = propertyLeadRepo.findAll();
         long total = allLeads.size();
-        long accepted = allLeads.stream().filter(l -> LeadStatus.ACCEPTED == l.getStatus()).count();
-        long rejected = allLeads.stream().filter(l -> LeadStatus.REJECTED == l.getStatus()).count();
-        long overdue = allLeads.stream().filter(l -> LeadStatus.EXPIRED == l.getStatus() ||
-                (l.getExpiryDate() != null && l.getExpiryDate().isBefore(LocalDate.now()))).count();
-        return new LeadStatsDto(total, accepted, rejected, overdue);
+        long newLeads = allLeads.stream().filter(l -> LeadStatus.NEW == l.getStatus()).count();
+        long inReviewLeads = allLeads.stream().filter(l -> LeadStatus.IN_REVIEW == l.getStatus()).count();
+        long acceptedLeads = allLeads.stream().filter(l -> LeadStatus.ACCEPTED == l.getStatus()).count();
+        LeadStatsDto stats = new LeadStatsDto(total, newLeads, inReviewLeads, acceptedLeads);
+        log.info("~~> calculated stats: {}", stats);
+        return stats;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<LeadTrendDto> getLeadTrend() {
-        log.info("### Get Lead Trend ###");
-        List<PropertyLead> allLeads = propertyLeadRepo.findAll();
-        Map<LocalDate, Long> trendMap = allLeads.stream()
+        log.info("### Get lead trend last 7 days ###");
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(6);
+        List<PropertyLead> recentLeads = propertyLeadRepo.findByCreateDateGreaterThanEqual(startDate);
+        Map<LocalDate, Long> trendMap = recentLeads.stream()
                 .collect(Collectors.groupingBy(
                         PropertyLead::getCreateDate,
                         Collectors.counting()
                 ));
-        return trendMap.entrySet().stream()
-                .map(entry -> new LeadTrendDto(entry.getKey(), entry.getValue()))
-                .sorted(Comparator.comparing(LeadTrendDto::date))
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PropertyLeadDto> getAllLeads(String sort, String order) {
-        log.info("### Get All PropertyLeads ###");
-        Sort.Direction direction;
-        try {
-            direction = Sort.Direction.fromString(order);
-        } catch (IllegalArgumentException e) {
-            direction = Sort.Direction.ASC;
+        List<LeadTrendDto> trendList = new ArrayList<>();
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            long count = trendMap.getOrDefault(date, 0L);
+            trendList.add(new LeadTrendDto(date, count));
         }
-        Sort sorter = Sort.by(direction, sort);
-        List<PropertyLead> propertyLeadList = propertyLeadRepo.findAll(sorter);
-        if (propertyLeadList.isEmpty()) {
-            return List.of();
-        }
-        return propertyLeadList.stream().map(propertyLeadMapper::toDto).toList();
+        log.info("~~> found {} trend data points", trendList.size());
+        return trendList;
     }
 }

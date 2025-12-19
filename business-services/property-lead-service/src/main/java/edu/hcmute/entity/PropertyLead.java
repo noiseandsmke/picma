@@ -26,6 +26,9 @@ public class PropertyLead {
     @Column(nullable = false)
     private String propertyInfo;
 
+    @Column(nullable = false)
+    private String zipCode;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LeadStatus status;
@@ -33,18 +36,13 @@ public class PropertyLead {
     @Column(nullable = false)
     private LocalDate createDate;
 
-    private LocalDate expiryDate;
-
     @PrePersist
     protected void onCreate() {
         if (createDate == null) {
             createDate = LocalDate.now();
         }
         if (status == null) {
-            status = LeadStatus.ACTIVE;
-        }
-        if (expiryDate == null) {
-            expiryDate = createDate.plusDays(30);
+            status = LeadStatus.NEW;
         }
     }
 }

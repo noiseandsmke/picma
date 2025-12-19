@@ -13,15 +13,13 @@ public interface PropertyLeadService {
 
     PropertyLeadDto getPropertyLeadById(Integer leadId);
 
-    PropertyLeadDto updateLeadStatus(Integer leadId, String status);
+    PropertyLeadDto updatePropertyLeadStatus(Integer leadId, String status);
 
-    List<PropertyLeadDto> findAllPropertyLeads();
+    List<PropertyLeadDto> getAllPropertyLeads(String sortBy, String sortDirection, String status);
 
     List<PropertyLeadDto> findPropertyLeadsByStatus(String status);
 
-    List<PropertyLeadDto> findPropertyLeadsByZipcode(String zipcode);
-
-    List<PropertyLeadDto> findPropertyLeadsOfAgent(String agentId);
+    List<PropertyLeadDto> findPropertyLeadsByZipCode(String zipCode);
 
     List<PropertyLeadDto> findPropertyLeadsByUser(String userId);
 
@@ -30,6 +28,4 @@ public interface PropertyLeadService {
     LeadStatsDto getLeadStats();
 
     List<LeadTrendDto> getLeadTrend();
-
-    List<PropertyLeadDto> getAllLeads(String sort, String order);
 }
