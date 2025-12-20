@@ -1,275 +1,149 @@
 Research comprehensive property insurance requirements and risk assessment for the following property in Vietnam.
 
 # Property Information
-
 **Address:** <propertyInfo.location.street>, <propertyInfo.location.ward>, <propertyInfo.location.city>
 **Estimated Construction Cost:** <propertyInfo.valuation.estimatedConstructionCost> VND
 
 <if(quotes)>
 # Insurance Quotes Under Consideration
-
 <quotes:{q|**Quote ID:** <q.id>
-**Status:** <q.status>
 **Coverages:**
-<q.coverages:{c|  - **<c.code>**: Coverage Limit <c.limit> VND, Deductible <c.deductible>%}; separator="\n">
+<q.coverages:{c|  - **<c.code>**: Coverage Limit <c.limit> VND, Deductible <c.deductible>}; separator="\n">
 }; separator="\n\n">
 <endif>
 
-# Research Tasks
+# Research Persona & Objective
+**Role**: Act as a **"Strategic Property Risk Advisor"** for the property owner.
+**Tone**: Extremely helpful, educational, and transparent. avoid cold "underwriter" language. Explain *why* risks matter financially and legally.
+**Objective**: Empower the owner to make informed decisions about asset protection, compliance with 2024-2025 regulations, and cost optimization.
 
-Please conduct comprehensive research and provide a detailed report in ENGLISH with the following sections:
+# Research Tasks
+Please conduct comprehensive research and provide a detailed **Strategic Risk Advisory Report** in **ENGLISH** with the following sections:
 
 ## 1. Address Verification and Administrative Updates
-
 Verify the property address and check for any recent administrative changes:
-- **Strictly Validate Address Format**: Ensure the address aligns with the standard format for Ho Chi Minh City: **[House Number] - [Street Name], [New Ward Name], Ho Chi Minh City**.
-- **Ward Precision**: 
-    - Verify that the given Ward "<propertyInfo.location.ward>" is the correct and current administrative unit for the specific house number and street "<propertyInfo.location.street>".
-    - If the "Ward" name provided is outdated or incorrect (due to mergers or renaming), identify the **NEW OFFICIAL WARD NAME** immediately.
-    - Explicitly state if the provided Ward matches the official administrative records.
-- **Administrative Context**: Note that Ho Chi Minh City uses "Ward" (Phường) as the primary subdivision for districts (Quận), and there are no other intermediate city levels within standard districts.
-- Search for any 2024-2025 administrative reorganization resolutions affecting this specific location.
+- **Strictly Prioritize Street Name Over Provided Ward**: 
+    - The Property Owner may have provided an incorrect or outdated Ward name, but the **Street Name and House Number are the absolute source of truth**.
+    - **Visual Check**: Ignore the provided Ward "<propertyInfo.location.ward>" initially. Independently research the correct administrative Ward for **<propertyInfo.location.street>, <propertyInfo.location.city>**.
+    - **Conflict Resolution**: If the provided Ward differs from your research, **ALWAYS** use the Ward you found based on the street. The owner's input is likely outdated/incorrect.
+    - **Report**: Explicitly state: "Deep Research identified the correct administrative unit as [Researched Ward] (Input was [Input Ward]). All risk assessments (Flood, Fire, etc.) are based on the verified location [Street + Researched Ward]."
+    - Use this **VERIFIED ADDRESS** (and its legacy names) for ALL subsequent research, evaluations, and risk conclusions.
+- **Legacy Search Strategy**:
+    - Because administrative boundaries change (mergers/renaming), finding data for new ward names can be difficult.
+    - **MANDATORY**: You MUST conduct searches using BOTH:
+        1. **Current Address**: [Street] [Correct Ward] [District] [City]
+        2. **Legacy Address**: [Street] [Old Ward Name] [Old District Name] [City] (Research the history of this location to find old names).
+- **Handling Unavailable Data**:
+    - If specific crime/flood data for the *exact* Ward is unavailable even after trying legacy names, **explicitly state "Data Unavailable"**.
+    - **DO NOT ESTIMATE** or infer based on broad city-wide averages unless identifying them clearly as "general estimates".
+- **Administrative Context**: Note that Ho Chi Minh City uses "Ward" (Phường) as the primary subdivision for districts (Quận).
 
+## 2. Construction Quality & Structural Risk
+Assess the physical attributes of the property that impact insurance risk and premiums:
+- **Construction Class**: Identify the likely construction type (e.g., Concrete/Brick (Class 1) or Wood/Iron Sheet (Class 2/3)). **Why it matters**: Class 1 gets the best rates; lower classes have surcharges.
+- **Estimated Age & Condition**: Look for visual cues of degradation (cracks, old wiring signs from street view).
+- **Occupancy Check**: Confirm if it appears to be purely Residential or Mixed-Use (Shop/Trade). *Note: Mixed-use attracts higher fire rates.*
 
-## 2. Geographic Risk Assessment
-
-Analyze the property location for environmental and geographic risks:
-
-**Proximity Analysis** - Using maps and geographic data, determine distance to:
-- Gas stations and fuel distribution centers within 500m radius
-- Rivers, canals, and water bodies within 1km radius
-- Industrial zones and manufacturing facilities within 2km radius
-- Flood-prone areas and historical flood zones
-- Commercial high-density areas
+## 3. Geographic Risk Assessment & "Why This Matters"
+Analyze the property location for environmental and geographic risks. For each risk, explain the **financial implication** to the owner.
 
 **Flood Risk Assessment:**
-- Research historical flooding incidents in <propertyInfo.location.ward> ward (past 12-24 months)
-- Check if this ward is designated as a flood hotspot (Vietnamese: "điểm ngập")
-- Assess drainage infrastructure and ongoing drainage improvement projects
-- Evaluate tidal surge vulnerability if near coastal areas
-- Determine elevation relative to sea level and nearby water bodies
+- Research historical flooding incidents in the verified Ward (past 12-24 months) using both new and old administrative names.
+- Check if this ward is designated as a flood hotspot (Vietnamese: "điểm ngập").
+- **Why This Matters**: Explain how flood frequency impacts property valuation and the necessity of "Water Damage" extensions in policies.
 
 **Fire Risk Factors:**
-- Analyze building density in the area
-- Check for nearby fire incidents (past 12 months with dates)
-- Assess access for fire trucks and emergency vehicles
-- Proximity to high-risk fire facilities
+- Analyze building density and alleyway accessibility (hẻm) for fire trucks.
+- Check for nearby fire incidents (past 12 months).
+- **Why This Matters**: Explain how "Inaccessible Locations" can lead to total loss in fire events, justifying higher coverage limits.
 
 **Natural Disaster Exposure:**
-- Typhoon and storm frequency and severity for <propertyInfo.location.city>
-- Historical weather events affecting this specific ward
-- Earthquake risk assessment (if applicable)
-- Other regional hazards specific to Vietnam
+- Typhoon and storm frequency for <propertyInfo.location.city>.
+- **Why This Matters**: Clarify that standard "Fire" policies often *exclude* storm damage unless explicitly added.
 
-## 3. Recent News and Incident Analysis
+## 4. Third-Party Liability Assessment
+Evaluate the risk of the property causing damage to neighbors (Public Liability):
+- **Proximity**: Is the house connected/adjacent to other structures? (Row houses = High Spread Risk).
+- **Public Traffic**: Is it on a busy street or quiet alley? (Higher traffic = Higher risk of injury claims).
+- **Recommendation**: Suggest a "Public Liability" (Trách nhiệm công cộng) extension limit (e.g., 500M - 1B VND) to protect the owner from lawsuits.
 
-Search for recent news and reports using **BOTH** address strategies to maximize results:
-1. **New/Current Format**: Search using "<propertyInfo.location.street>", "<propertyInfo.location.ward>", "<propertyInfo.location.city>" (without District).
-2. **Old/Legacy Format**: Identify the District (Quận) associated with this Ward and Street. Search using the format including the District (e.g., "Street, Ward, District, City") to find historical news, as many records still use the District name.
+## 5. Compliance Status (Latest Vietnamese Regulations)
+Conduct a strict compliance check against the **latest and most current** Vietnamese regulations regarding compulsory fire insurance:
 
-Specific incidents to search for:
-- Flooding incidents and tidal surge events (2023-2025, include specific dates)
-- Major storms or typhoons affecting the area
-- Infrastructure upgrade projects: road repairs, drainage system improvements
-- Security incidents: theft, burglary, property crimes in the neighborhood
-- Any major insurance claims or property disasters reported
-- Fire incidents or building safety issues
-- Include publication dates and source links for all news items
+**Mandatory Fire Insurance Assessment:**
+- **Regulatory Reference**: Research and cite the currently effective Decrees and Laws on Fire Prevention and Fighting applicable to this property type.
+- **Assessment**: Does this specific property type (Residential at <propertyInfo.valuation.estimatedConstructionCost> VND) require mandatory fire insurance under current law?
+- **Implication**:
+    - If **YES**: "PASS" or "FAIL" status based on whether the owner currently has a quote/policy. Explain potential fines or penalties.
+    - If **NO**: Explain that it is "Voluntary but Recommended".
 
-## 4. Vietnamese Insurance Regulatory Framework
+## 6. Coverage Analysis & Cost Savings Opportunities
+Analyze the provided quotes. **IMPORTANT**: Only analyze coverages supported by the system: **FIRE**, **THEFT**, and **NATURAL_DISASTER**.
 
-Research and explain the legal requirements for property insurance in Vietnam:
+### Coverage Adequacy
+- **Fire Limit**: Compare Quote (<quotes:{q|<q.fireLimit>}; separator=", "> VND) vs Replacement Cost (<propertyInfo.valuation.estimatedConstructionCost> VND).
+- **Advisory**: Warning about the "Average Clause" (proportional payout) if under-insured.
 
-**Mandatory Fire Insurance:**
-- Explain why FIRE coverage is mandatory for residential properties under Vietnamese law
-- Cite Decree 105/2025/ND-CP (effective July 1, 2025) on mandatory fire insurance
-- Reference Law on Fire Prevention and Fighting 2001 (amended 2013)
-- Cite Civil Code provisions related to property protection
-- List the 44 types of facilities requiring compulsory fire insurance
-- Determine if this residential property falls under mandatory coverage requirements
-- Explain penalties for non-compliance (fines of 40-100 million VND)
-- Reference Ministry of Finance regulations and circulars
+### Cost Savings Opportunities
+- **Premium Logic Explanation**:
+    - Explain to the owner how their premium is calculated so they understand the trade-offs:
+    - **Formula**: `Premium = (Limit * Rate) * DiscountFactor`
+    - **Base Rates**: FIRE (2%), THEFT (1.5%), NATURAL_DISASTER (2.5%).
+    - **Discount Factor**: `Math.max(0.6, Math.exp(-5.0 * deductible))` (A floor of 0.6 means the max discount is 40%).
+- **Deductible Optimization**:
+    - Analyze the current deductible (<quotes:{q|<q.fireDeductible>}; separator=", ">).
+    - Calculate/Estimate potential premium savings if the owner increases the deductible (e.g., from 0.1% to 0.2% or 0.5%).
+    - **Trade-off**: Explain "Lower Premium vs. Higher Out-of-Pocket Cost in event of claim". Use the formula above to demonstrate.
 
-**Coverage Requirements:**
-- Minimum coverage limits per Decree 105/2025/ND-CP
-- Standard deductible regulations: typically 1% of loss, minimum 4,000,000 VND
-- Insurance claim settlement procedures under Vietnamese law
-- Average Clause implications for under-insurance
+## 7. Risk-Based Recommendations
+Provide specific, actionable advice:
 
-## 5. Coverage Type Analysis
+**For Compulsory Fire Insurance:**
+- Recommendation on the exact limit to avoid penalties vs. over-payment.
 
-For each coverage type available in the quotes, provide detailed analysis:
+**For Optional Coverages (Theft, Natural Disaster):**
+- **Theft**: Recommend based on specific neighborhood crime rate research (Verified Ward level).
+- **Flood/Storm**: Recommend based on the "Flood Hotspot" status of the location.
 
-### FIRE Coverage
-- Legal mandate status for this residential property type
-<if(quotes)>
-- Compare quoted coverage limit (<quotes:{q|<q.fireLimit>}; separator=", "> VND) vs construction cost (<propertyInfo.valuation.estimatedConstructionCost> VND)
-- Calculate if property is adequately insured or under-insured
-<endif>
-- Explain "Average Clause" risk: if under-insured, claims are proportionally reduced
-- Typical market rates: 0.05% - 0.15% of sum insured for concrete residential buildings
-- Standard deductible assessment: should be 1% of loss, minimum 4,000,000 VND
-- Claims statistics for fire damage in Vietnam
-
-### THEFT Coverage
-- Crime statistics for <propertyInfo.location.ward> ward, <propertyInfo.location.city>
-- Burglary and theft trends in this specific neighborhood (cite police reports if available)
-- Suitability assessment based on property type and location security
-- Typical coverage limits: 20-30% of building value for contents/theft
-- Cost-benefit analysis for this coverage type
-- Market rates: 0.03% - 0.10% of sum insured
-
-### NATURAL_DISASTER Coverage
-- Specific risks for this location: flood, storm, typhoon, wind damage, landslide
-- Historical weather events affecting <propertyInfo.location.ward>, <propertyInfo.location.city>
-- Flood zone classification (if available from government data)
-- Critical importance assessment given geographic location
-- Recommended coverage limit based on flood/storm risk level
-- Premium justification: 0.10% - 0.30% of sum insured (higher for flood zones)
-- Typical exclusions and limitations
-
-### Other Coverage Types
-Analyze any additional coverage types mentioned in the quotes:
-- Earthquake coverage (low priority in Vietnam)
-- Water damage coverage
-- Civil commotion or riot coverage
-- Assess relevance and necessity for this property
-
-## 6. Risk-Based Recommendations
-
-Based on all research findings, provide specific recommendations:
-
-### Coverage Limits Recommendation
-
-For each coverage type, recommend appropriate limits:
-
-**FIRE Coverage:**
-- Recommended Limit: Should equal or exceed <propertyInfo.valuation.estimatedConstructionCost> VND
-- Justification: Avoid Average Clause penalties, ensure full replacement cost coverage
-- Risk Assessment: [Based on fire risk analysis]
-
-**THEFT Coverage:**
-- Recommended Limit: [Calculate based on typical contents value]
-- Justification: Based on crime statistics and property location security assessment
-- Risk Assessment: [Based on theft risk in the area]
-
-**NATURAL_DISASTER Coverage:**
-- Recommended Limit: [Calculate based on flood/storm risk]
-- Justification: Based on flood zone classification and historical weather data
-- Risk Assessment: [Based on natural disaster exposure analysis]
-
-### Deductible Percentages Recommendation
-
-- Standard Deductible: 1% of loss (minimum 4,000,000 VND) per Decree 105/2025/ND-CP
-- Alternative Options: 2% or 5% deductible for premium savings (10-30% reduction)
-- Recommendation for this property: [Based on risk profile and property value]
-
-### Coverage Priority Ranking
-
-Rank coverages by importance for this specific property:
-1. FIRE Coverage - MANDATORY by law, CRITICAL priority
-2. [Second priority coverage] - HIGHLY RECOMMENDED (explain why)
-3. [Third priority coverage] - RECOMMENDED (explain why)
-4. [Optional coverage] - OPTIONAL (explain conditions)
-
-### Premium Estimation
-
-Provide estimated annual premium calculation:
-```
-FIRE: <propertyInfo.valuation.estimatedConstructionCost> VND × 0.10% = [X] VND
-THEFT: [Limit] VND × 0.05% = [X] VND
-NATURAL_DISASTER: [Limit] VND × 0.20% = [X] VND
----------------------------------------------------
-Net Premium: [Total] VND
-VAT (10%): [X] VND
-TOTAL ESTIMATED ANNUAL PREMIUM: [X] VND
-```
-
-## 7. Data Sources and Citations
-
-Provide a comprehensive list of all sources used in this research:
-
-**Government Sources:**
-- Vietnamese government websites (chinhphu.vn, legal database URLs)
-- Ministry of Finance regulations (cite specific circular/decree numbers)
-- Ministry of Construction building standards
-- Local government announcements for <propertyInfo.location.city>
-
-**Legal References:**
-- Decree 105/2025/ND-CP on mandatory fire insurance
-- Law on Fire Prevention and Fighting 2001 (amended 2013)
-- Civil Code 2015 relevant articles
-- Insurance Business Law 2000 (amended 2010)
-- Other relevant decrees and circulars
-
-**News Sources:**
-- News articles (include publication name, date, and URL)
-- Weather reports and flood warnings
-- Local news about <propertyInfo.location.ward> ward
-
-**Data Sources:**
-- Geographic/mapping data sources (Google Maps, OpenStreetMap)
-- Weather and climate databases
-- Insurance industry reports and statistics
-- Police crime statistics (if available)
-
-**Industry Sources:**
-- Vietnamese insurance association reports
-- Insurance company guidelines
-- Risk assessment databases
+**Physical Improvement Recommendations (Risk Mitigation):**
+- Suggest practical upgrades to reduce risk (e.g., Install smoke detectors, reinforce door locks, clear gutters before storm season).
+- Explain how these low-cost fixes can prevent major losses.
 
 # Output Format Requirements
 
-Structure your research report with:
+Structure your report clearly for a Property Owner (not an insurance expert):
 
-1. **Executive Summary** - Brief overview (150-200 words) summarizing:
-   - Key risks identified for this property
-   - Compliance status with mandatory insurance laws
-   - Primary recommendations
-   - Estimated total premium range
+1. **Executive Summary**: A simplified 150-word overview of the property's risk profile and immediate action items.
+2. **Lead vs. Research Comparison Table**: Create a markdown table comparing the owner's input with your findings:
+   | Attribute | Original Lead Data | Deep Research Recommendation |
+   | :--- | :--- | :--- |
+   | **Address** | <propertyInfo.location.street>, <propertyInfo.location.city> | [Verified Street/City] |
+   | **Ward** | <propertyInfo.location.ward> | [Verified Ward] (**Highlight if different**) |
+   | **Valuation** | <propertyInfo.valuation.estimatedConstructionCost> VND | [Market Value Comment] |
+   | **Quotes** | <quotes:{q| **ID <q.id>**<br><q.coverages:{c|<c.code>: <c.limit>}; separator="<br>">}; separator="<br><br>"> | [Recommended Use of Coverages/Limits] |
+3. **Risk Assessment Matrix**: Create a professional insurance-standard table summarizing the risks:
+   | Risk Type | Exposure Level (Low/Med/High) | Key Risk Factors | Financial Impact | Recommendation |
+   | :--- | :--- | :--- | :--- | :--- |
+   | **FIRE** | [Level] | [e.g., Alley width, density] | [Potential Loss Value] | [Limit/Coverage Advice] |
+   | **THEFT** | [Level] | [e.g., Crime rate, area security] | [Asset Loss Risk] | [Security/Insurance Advice] |
+   | **NATURAL DISASTER** | [Level] | [e.g., Flood zone, storm history] | [Repair Cost Est.] | [Specific Extension Required] |
+4. **Property & Liability Findings**: Summary of Construction Quality and Third-Party Risk.
+5. **Citation Style**: Use inline numbered citations (e.g., [1], [2]) for every fact/regulation mentioned.
+6. **Compliance Advice**: clear "Pass/Fail" visualization regarding Decree 105/2025.
+7. **Detailed Risk Analysis**: The in-depth findings (Flood, Fire, Theft, Liability) with sources.
+8. **Strategic Recommendations**:
+    - "Must Have" Coverages.
+    - "Smart Savings" (Deductible adjustments).
+    - "Physical Improvements" to mitigate risks.
+9. **Data Sources**: List of all URL citations, numbered [1], [2], etc., corresponding exactly to the inline citations.
+10. **Legal Disclaimer**: Mandatory Standard Disclaimer.
 
-2. **Detailed Analysis Sections** - Follow the structure of tasks 1-6 above:
-   - Use clear section headers and subheaders
-   - Include bullet points for key findings
-   - Add data tables where appropriate
-   - Provide specific numbers, distances, dates, amounts
-   - Use inline citations [Source: XYZ]
+# Critical Instructions needed for the "Risk Advisory Partner" Persona
+- **Legacy Search**: ALWAYS use old administrative names for research if current ones are quiet.
+- **No Guessing**: If data is missing for the Verified Ward, say "Unavailable". Do not use the user-provided ward if it was incorrect.
+- **Educational Tone**: Don't just list risks; explain their financial impact on the owner's wallet.
+- **Language**: English only.
 
-3. **Risk Summary Table** - Create a table:
-   | Risk Factor | Level (Low/Medium/High) | Details | Mitigation |
-   |-------------|------------------------|---------|------------|
-   | Flood | [Level] | [Details] | [Recommendation] |
-   | Fire | [Level] | [Details] | [Recommendation] |
-   | Theft | [Level] | [Details] | [Recommendation] |
-   | Natural Disaster | [Level] | [Details] | [Recommendation] |
-
-<if(quotes)>
-4. **Coverage Comparison Table** - Compare quoted coverages:
-   | Coverage Type | Quoted Limit | Recommended Limit | Adequacy Assessment |
-   |--------------|--------------|-------------------|---------------------|
-   | FIRE | [X] VND | [Y] VND | [Adequate/Inadequate] |
-   | THEFT | [X] VND | [Y] VND | [Adequate/Inadequate] |
-   | NATURAL_DISASTER | [X] VND | [Y] VND | [Adequate/Inadequate] |
-<endif>
-
-5. **Final Recommendations** - Conclude with:
-   <if(quotes)>- Accept/Modify/Reject assessment for each quoted coverage<endif>
-   - Specific changes needed to make quotes acceptable
-   - Action items for property owner
-   - Timeline for decision making
-
-6. **Complete Citations List** - At the end, list all sources with full URLs
-
-# Critical Instructions
-
-- **Language**: All output MUST be in ENGLISH only
-- **Accuracy**: Provide exact distances, dates, amounts, percentages
-- **Citations**: Every fact must cite its source
-- **Vietnamese Context**: All laws and regulations must be Vietnam-specific
-- **Current Data**: Focus on 2024-2025 information
-- **Professional Tone**: Write as an official insurance risk assessment report
-- **Specificity**: Avoid generalizations, use data from <propertyInfo.location.ward>, <propertyInfo.location.city>
-- **Compliance Focus**: Clearly identify any compliance gaps with Vietnamese regulations
-- **Practical Recommendations**: All recommendations must be implementable and realistic
-
-Begin your comprehensive research and analysis now. Provide thorough, well-researched, and properly cited information to enable informed insurance decision-making for this property.
+# Legal Disclaimer Template
+At the end of the report, you MUST include this exact disclaimer:
+> **Disclaimer**: This Strategic Risk Advisory Report is generated by an AI assistant for informational purposes only. It does not constitute a professional appraisal, legal advice, or a binding insurance offer. Risk assessments are based on available public data and user inputs. Property owners are advised to consult with a licensed insurance broker and conduct a physical survey before making final coverage decisions.
