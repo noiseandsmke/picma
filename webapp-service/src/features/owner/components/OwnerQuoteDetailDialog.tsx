@@ -129,7 +129,7 @@ export const OwnerQuoteDetailDialog: React.FC<OwnerQuoteDetailDialogProps> = ({
                                         else if (c.code === 'NATURAL_DISASTER') rate = 0.025;
                                         
                                         const basePremium = c.limit * rate;
-                                        const discountFactor = Math.exp(-5 * c.deductible);
+                                        const discountFactor = Math.max(0.6, Math.exp(-5 * c.deductible));
                                         const finalPremium = basePremium * discountFactor;
 
                                         return (
