@@ -5,14 +5,10 @@ import edu.hcmute.service.DeepResearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
 @RestController
@@ -47,12 +43,25 @@ public class DeepResearchController {
             @Parameter(description = "ID of the property lead", required = true)
             @PathVariable Integer leadId
     ) {
-        try {
-            ResearchInteraction interaction = deepResearchService.getInteractionByLeadId(leadId);
-            return ResponseEntity.ok(interaction);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+        ResearchInteraction interaction = deepResearchService.getInteractionByLeadId(leadId);
+        return ResponseEntity.ok(interaction);
+    }
+
+    @Operation(
+            summary = "Initiate Deep Research",
+            description = "Start a background deep research process for a lead."
+    )
+    @PostMapping("/initiate/{leadId}")
+    public ResponseEntity<Object> initiateResearch(
+            @Parameter(description = "ID of the property lead to research", required = true)
+            @PathVariable Integer leadId
+    ) {
+        if (deepResearchService.isResearched(leadId)) {
+            ResearchInteraction existing = deepResearchService.getInteractionByLeadId(leadId);
+            return ResponseEntity.status(409).body(existing);
         }
+        String response = deepResearchService.initiateResearch(leadId);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(
@@ -85,7 +94,7 @@ public class DeepResearchController {
     }
 
     @Operation(
-            summary = "Check if lead is researched",
+            summary = "Check research status",
             description = "Check if research exists for a lead (returns boolean)."
     )
     @GetMapping("/status/{leadId}")

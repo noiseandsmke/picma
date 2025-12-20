@@ -22,22 +22,30 @@ public class GeminiApiService {
         this.webClient = geminiWebClient;
     }
 
-    public Flux<ServerSentEvent<String>> streamBackgroundResearch(String prompt) {
-        log.info("### Stream background research ###");
+    public String startBackgroundResearch(String prompt) {
+        log.info("### Start background research ###");
         InteractionRequest request = new InteractionRequest();
         request.setInput(prompt);
         request.setAgent(defaultAgent);
         request.setBackground(true);
-        request.setStream(true);
         InteractionRequest.AgentConfig config = new InteractionRequest.AgentConfig();
         config.setType("deep-research");
         config.setThinkingSummaries("auto");
         request.setAgentConfig(config);
+        return webClient.post()
+                .uri("/interactions")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+    }
+
+    public Flux<ServerSentEvent<String>> resumeResearch(String interactionId) {
+        log.info("### Resume research stream for {} ###", interactionId);
         ParameterizedTypeReference<ServerSentEvent<String>> type = new ParameterizedTypeReference<>() {
         };
-        return webClient.post()
-                .uri("/interactions?alt=sse")
-                .bodyValue(request)
+        return webClient.get()
+                .uri("/interactions/" + interactionId + "?stream=true&alt=sse")
                 .accept(MediaType.TEXT_EVENT_STREAM)
                 .retrieve()
                 .bodyToFlux(type)

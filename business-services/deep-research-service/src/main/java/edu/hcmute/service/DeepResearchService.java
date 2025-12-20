@@ -10,6 +10,7 @@ import edu.hcmute.dto.PropertyLeadDto;
 import edu.hcmute.dto.QuoteDto;
 import edu.hcmute.entity.ResearchInteraction;
 import edu.hcmute.repository.ResearchInteractionRepository;
+import edu.hcmute.exception.DeepResearchException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.codec.ServerSentEvent;
@@ -29,6 +30,8 @@ import java.util.Map;
 @Slf4j
 public class DeepResearchService {
     private static final String TEMPLATE_NAME = "deep-research.st";
+    private static final String STATUS_COMPLETED = "completed";
+    
     private final PropertyLeadClient propertyLeadClient;
     private final PropertyInfoClient propertyInfoClient;
     private final PropertyQuoteClient propertyQuoteClient;
@@ -55,12 +58,12 @@ public class DeepResearchService {
         PropertyLeadDto lead = propertyLeadClient.getLeadById(leadId);
         if (lead == null) {
             log.warn("~~> lead not found: {}", leadId);
-            throw new IllegalArgumentException("Lead not found: " + leadId);
+            throw new DeepResearchException("Lead not found: " + leadId);
         }
         PropertyInfoDto propertyInfo = propertyInfoClient.getPropertyInfoById(lead.propertyInfo());
         if (propertyInfo == null) {
             log.warn("~~> property info not found for lead: {}", leadId);
-            throw new IllegalArgumentException("Property Info not found for ID: " + lead.propertyInfo());
+            throw new DeepResearchException("Property Info not found for ID: " + lead.propertyInfo());
         }
         List<QuoteDto> quotes = propertyQuoteClient.getQuotesByLeadId(leadId);
         Map<String, Object> propertyInfoMap = objectMapper.convertValue(propertyInfo, new TypeReference<>() {
@@ -111,76 +114,89 @@ public class DeepResearchService {
     public ResearchInteraction getInteractionByLeadId(Integer leadId) {
         log.info("### Get interaction by lead {} ###", leadId);
         return interactionRepository.findByLeadId(leadId)
-                .orElseThrow(() -> new IllegalArgumentException("No research interaction found for lead ID: " + leadId));
+                .orElseThrow(() -> new DeepResearchException("No research interaction found for lead ID: " + leadId));
     }
 
     public Flux<ServerSentEvent<String>> streamResearch(Integer leadId) {
         log.info("### Stream research for lead {} ###", leadId);
+        ResearchInteraction interaction = getInteractionByLeadId(leadId);
+        return geminiApiService.resumeResearch(interaction.getInteractionId());
+    }
+
+    public String initiateResearch(Integer leadId) {
+        log.info("### Initiate research for lead {} ###", leadId);
+        if (isResearched(leadId)) {
+            throw new IllegalStateException("Deep research already performed for lead " + leadId);
+        }
         String prompt = generatePrompt(leadId);
-        return geminiApiService.streamBackgroundResearch(prompt)
-                .doOnNext(sse -> {
-                    if (sse.data() != null) {
-                        try {
-                            Map<String, Object> data = objectMapper.readValue(sse.data(), new TypeReference<>() {});
-                            if ("interaction.start".equals(data.get("event_type"))) {
-                                @SuppressWarnings("unchecked")
-                                Map<String, Object> interaction = (Map<String, Object>) data.get("interaction");
-                                if (interaction != null) {
-                                    String interactionId = (String) interaction.get("id");
-                                    String status = (String) interaction.get("status");
-                                    
-                                    ResearchInteraction entity = ResearchInteraction.builder()
-                                            .leadId(leadId)
-                                            .interactionId(interactionId)
-                                            .status(status)
-                                            .created(LocalDateTime.now())
-                                            .updated(LocalDateTime.now())
-                                            .build();
-                                    
-                                    interactionRepository.save(entity);
-                                    log.info("~~> interaction started: {}", interactionId);
-                                }
-                            }
-                        } catch (Exception e) {
-                            log.warn("~~> failed to parse interaction start: {}", e.getMessage());
-                        }
-                    }
-                });
+        String jsonResponse = geminiApiService.startBackgroundResearch(prompt);
+        
+        try {
+            Map<String, Object> data = objectMapper.readValue(jsonResponse, new TypeReference<>() {});
+            String id = (String) data.get("id");
+            String status = (String) data.get("status");
+            
+            if (id != null) {
+                ResearchInteraction entity = ResearchInteraction.builder()
+                        .leadId(leadId)
+                        .interactionId(id)
+                        .status(status != null ? status : "created")
+                        .created(LocalDateTime.now())
+                        .updated(LocalDateTime.now())
+                        .build();
+                interactionRepository.save(entity);
+                log.info("~~> interaction initiated: {}", id);
+            }
+        } catch (Exception e) {
+            log.error("~~> failed to parse initiate response", e);
+            throw new DeepResearchException("Failed to initiate research", e);
+        }
+        
+        return jsonResponse;
     }
 
     public String getResearchResult(Integer leadId) {
         log.info("### Get research result for lead {} ###", leadId);
         return interactionRepository.findByLeadId(leadId)
-                .map(interaction -> {
-                    try {
-                        String json = geminiApiService.getInteraction(interaction.getInteractionId());
-                        if (json != null) {
-                            Map<String, Object> data = objectMapper.readValue(json, new TypeReference<>() {});
-                            String status = (String) data.get("status");
-                            
-                            if ("completed".equalsIgnoreCase(status) && !"completed".equalsIgnoreCase(interaction.getStatus())) {
-                                interaction.setStatus("completed");
-                                String updatedStr = (String) data.get("updated");
-                                if (updatedStr != null) {
-                                    try {
-                                        interaction.setUpdated(ZonedDateTime.parse(updatedStr).toLocalDateTime());
-                                    } catch (Exception e) {
-                                        interaction.setUpdated(LocalDateTime.now());
-                                    }
-                                } else {
-                                    interaction.setUpdated(LocalDateTime.now());
-                                }
-                                interactionRepository.save(interaction);
-                                log.info("~~> synced interaction status to completed");
-                            }
-                        }
-                        return json;
-                    } catch (Exception e) {
-                        log.warn("~~> failed to get interaction result: {}", e.getMessage());
-                        return null; 
-                    }
-                })
+                .map(this::processResearchInteraction)
                 .orElse(null);
+    }
+    
+    private String processResearchInteraction(ResearchInteraction interaction) {
+        try {
+            String json = geminiApiService.getInteraction(interaction.getInteractionId());
+            if (json != null) {
+                Map<String, Object> data = objectMapper.readValue(json, new TypeReference<>() {});
+                String status = (String) data.get("status");
+
+                if (STATUS_COMPLETED.equalsIgnoreCase(status) && !STATUS_COMPLETED.equalsIgnoreCase(interaction.getStatus())) {
+                    updateInteractionStatus(interaction, data);
+                }
+            }
+            return json;
+        } catch (Exception e) {
+            log.warn("~~> failed to get interaction result: {}", e.getMessage());
+            return null;
+        }
+    }
+    
+    private void updateInteractionStatus(ResearchInteraction interaction, Map<String, Object> data) {
+         interaction.setStatus(STATUS_COMPLETED);
+         String updatedStr = (String) data.get("updated");
+         interaction.setUpdated(parseUpdatedDate(updatedStr));
+         interactionRepository.save(interaction);
+         log.info("~~> synced interaction status to completed");
+    }
+
+    private LocalDateTime parseUpdatedDate(String updatedStr) {
+        if (updatedStr != null) {
+            try {
+                return ZonedDateTime.parse(updatedStr).toLocalDateTime();
+            } catch (Exception e) {
+                return LocalDateTime.now();
+            }
+        }
+        return LocalDateTime.now();
     }
 
     public boolean isResearched(Integer leadId) {
