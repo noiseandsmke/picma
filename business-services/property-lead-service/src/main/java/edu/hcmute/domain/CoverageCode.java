@@ -1,6 +1,6 @@
 package edu.hcmute.domain;
 
-public enum  {
+public enum CoverageCode {
     FIRE,
     THEFT,
     NATURAL_DISASTER
