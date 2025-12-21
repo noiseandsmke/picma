@@ -33,6 +33,10 @@ Verify the property address and check for any recent administrative changes:
     - **Conflict Resolution**: If the provided Ward differs from your research, **ALWAYS** use the Ward you found based on the street. The owner's input is likely outdated/incorrect.
     - **Report**: Explicitly state: "Deep Research identified the correct administrative unit as [Researched Ward] (Input was [Input Ward]). All risk assessments (Flood, Fire, etc.) are based on the verified location [Street + Researched Ward]."
     - Use this **VERIFIED ADDRESS** (and its legacy names) for ALL subsequent research, evaluations, and risk conclusions.
+- **Administrative Unit Updates (HCMC 2024-2025 Protocol)**:
+    - **District Removal**: Verify if the "District" (Quận) administrative level has been abolished or merged in this specific area. If so, OMIT "District" from the verified address and use the new City/Town name.
+    - **Named Wards Only**: Ho Chi Minh City is phasing out numbered wards (e.g., Ward 1, Ward 2). You **MUST** identify the new NAMED WARD (e.g., "Dakao Ward", "Ben Nghe Ward") that corresponds to the location. **Do not use numbered wards** unless strictly verified as still valid under the latest resolution.
+    - **Example**: Input "240 Nguyen Trong Tuyen, Cau Ong Lanh Ward" -> Verified "240 Nguyen Trong Tuyen, Phu Nhuan Ward" (if administrative units merged).
 - **Legacy Search Strategy**:
     - Because administrative boundaries change (mergers/renaming), finding data for new ward names can be difficult.
     - **MANDATORY**: You MUST conduct searches using BOTH:
@@ -125,7 +129,7 @@ Structure your report clearly for a Property Owner (not an insurance expert):
    | **Address** | <propertyInfo.location.street>, <propertyInfo.location.city> | [Verified Street/City] |
    | **Ward** | <propertyInfo.location.ward> | [Verified Ward] (**Highlight if different**) |
    | **Valuation** | <propertyInfo.valuation.estimatedConstructionCost> VND | [Market Value Comment] |
-   | **Quotes** | <quotes:{q| **ID <q.id>**<br><q.coverages:{c|<c.code>: <c.limit>}; separator="<br>">}; separator="<br><br>"> | [Recommended Use of Coverages/Limits] |
+   | **Quotes** | <quotes:{q| **ID <q.id>**\<br><q.coverages:{c|<c.code>: <c.limit>}; separator="<br>">}; separator="<br><br>"> | [Recommended Use of Coverages/Limits] |
 3. **Risk Assessment Matrix**: Create a professional insurance-standard table summarizing the risks:
    | Risk Type | Exposure Level (Low/Med/High) | Key Risk Factors | Financial Impact | Recommendation |
    | :--- | :--- | :--- | :--- | :--- |
