@@ -13,7 +13,6 @@ interface ResearchButtonProps {
 export const ResearchButton: React.FC<ResearchButtonProps> = ({lead}) => {
     const [isOpen, setIsOpen] = useState(false);
     
-    // Status: boolean (false = red/idle, true = green/researched)
     const [isResearched, setIsResearched] = useState(false);
 
     useEffect(() => {
@@ -35,7 +34,6 @@ export const ResearchButton: React.FC<ResearchButtonProps> = ({lead}) => {
         if (lead?.id) checkStatus();
     }, [lead]);
 
-    // Color logic
     const buttonClass = isResearched 
         ? "bg-green-500/10 text-green-400 border-green-500/50 hover:bg-green-500/20"
         : "bg-red-500/10 text-red-400 border-red-500/50 hover:bg-red-500/20";

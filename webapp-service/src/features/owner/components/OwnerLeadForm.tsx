@@ -107,8 +107,7 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({ onSuccess, onCance
         formState,
         formState: { errors },
     } = useForm<CreateLeadFormData, any, CreateLeadFormData>({
-        // @ts-expect-error - zodResolver type mismatch
-        resolver: zodResolver(createLeadSchema),
+        resolver: zodResolver(createLeadSchema) as any,
         defaultValues: {
             property: {
                 location: {

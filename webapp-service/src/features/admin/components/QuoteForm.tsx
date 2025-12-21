@@ -136,8 +136,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
         getValues,
         formState: { errors },
     } = useForm<QuoteFormData, any, QuoteFormData>({
-        // @ts-expect-error - zodResolver type mismatch
-        resolver: zodResolver(quoteSchema),
+        resolver: zodResolver(quoteSchema) as any,
         defaultValues: {
             leadId: initialData?.leadId || 0,
             agentId: initialData?.agentId || agentId || '',

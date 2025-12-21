@@ -15,18 +15,12 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ content }) => {
     const [isMainExpanded, setIsMainExpanded] = useState(true);
     const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
 
-    // Parse content into sections based on **Title** headers
     const parseSections = (text: string): ThoughtSection[] => {
         const sections: ThoughtSection[] = [];
-        // Split by lines that start with ** and end with ** (loosely)
-        // actually looking at the stream, it's usually **Title**\nContent
-        // We can use a regex to capture Title and Content pairs
-        // Pattern: **Title** followed by content until next ** or end of string
         const regex = /\*\*(.*?)\*\*([\s\S]*?)(?=\*\*|$)/g;
         
+        
         let match;
-        // If text doesn't start with **, handle preamble? 
-        // For now, let's just run the regex.
         
         while ((match = regex.exec(text)) !== null) {
             sections.push({
@@ -35,7 +29,6 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ content }) => {
             });
         }
 
-        // If no sections found but there is content, treat entire content as one section with default title
         if (sections.length === 0 && text.trim()) {
              sections.push({
                 title: "Thinking Process",
@@ -67,7 +60,6 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ content }) => {
 
     return (
         <div className="border border-indigo-500/20 rounded-lg bg-indigo-500/5 overflow-hidden mb-4">
-            {/* Main Header */}
             <div 
                 onClick={() => setIsMainExpanded(!isMainExpanded)}
                 className="w-full flex items-center justify-between p-3 hover:bg-indigo-500/10 transition-colors cursor-pointer border-b border-indigo-500/10"
@@ -105,7 +97,6 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ content }) => {
                 </div>
             </div>
             
-            {/* Inner Content (List of Tiles) */}
             {isMainExpanded && (
                 <div className="p-4 space-y-3 bg-black/20">
                     {sections.map((section, idx) => (

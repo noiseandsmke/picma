@@ -30,7 +30,6 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
     open, 
     onOpenChange, 
     lead,
-    status,
     onStatusChange
 }) => {
     const [activeView, setActiveView] = useState<'menu' | 'streaming' | 'report'>('menu');
@@ -42,14 +41,12 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
     const eventSourceRef = useRef<EventSourcePolyfill | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    // Auto-scroll to bottom
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [streamContent]);
 
-    // Clean up SSE on unmount/close
     useEffect(() => {
         return () => {
             if (eventSourceRef.current) eventSourceRef.current.close();
@@ -69,30 +66,36 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
                 const data = await res.json();
                 setInitiationStatus({ status: data.status, id: data.id });
                 toast.success("Deep Research Initiated in Background");
-                onStatusChange('researched'); // Optimistically update
+                onStatusChange('researched');
             } else if (res.status === 409) {
                 const existing = await res.json();
-                const startDate = new Date(existing.created);
-                const endDate = new Date(existing.updated);
-                // Calculate duration in ms
-                const durationMs = endDate.getTime() - startDate.getTime();
-                
-                // Format duration
-                const seconds = Math.floor((durationMs / 1000) % 60);
-                const minutes = Math.floor((durationMs / (1000 * 60)) % 60);
-                const hours = Math.floor((durationMs / (1000 * 60 * 60)));
-
                 let durationStr = '';
-                if (hours > 0) durationStr += `${hours}h `;
-                if (minutes > 0) durationStr += `${minutes}m `;
-                durationStr += `${seconds}s`;
+                
+                if ((existing.status === 'completed' || existing.status === 'researched') && existing.updated) {
+                    const startDate = new Date(existing.created);
+                    const endDate = new Date(existing.updated);
+                    const durationMs = Math.max(0, endDate.getTime() - startDate.getTime());
+                    
+                    const seconds = Math.floor((durationMs / 1000) % 60);
+                    const minutes = Math.floor((durationMs / (1000 * 60)) % 60);
+                    const hours = Math.floor((durationMs / (1000 * 60 * 60)));
 
-                setInitiationStatus({ status: "already_exists", id: "existing", duration: durationStr });
+                    if (hours > 0) durationStr += `${hours}h `;
+                    if (minutes > 0) durationStr += `${minutes}m `;
+                    durationStr += `${seconds}s`;
+                } else {
+                     durationStr = 'In Progress...';
+                }
+
+                setInitiationStatus({ 
+                    status: existing.status || "already_exists", 
+                    id: existing.interactionId || "existing", 
+                    duration: durationStr 
+                });
                 onStatusChange('researched');
             } else {
                 const err = await res.text();
                 if (res.status === 400 && err.includes("already performed")) {
-                     // Fallback for old behavior if needed, though 409 covers it now
                     toast.error("Deep Research already initiated for this lead.");
                     setInitiationStatus({ status: "already_exists", id: "existing" });
                     onStatusChange('researched');
@@ -126,11 +129,9 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
             const index = data.index;
             currentBlockIndex = index;
             
-            // Index 0 = Thinking, Index 1 = Report
             const type = index === 0 ? 'thinking' : 'report';
             
             setStreamContent(prev => {
-                // If block exists, don't re-create (though .start usually means new)
                 if (prev.find(p => p.index === index)) return prev;
                 return [...prev, { index, type, content: '', isComplete: false }];
             });
@@ -140,9 +141,6 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
             try {
                 const data = JSON.parse(e.data);
                 
-                // Handle different delta structures
-                // Index 0 (Thinking): delta.content.text
-                // Index 1 (Report): delta.text
                 let delta = '';
                 if (data.delta?.content?.text) {
                     delta = data.delta.content.text;
@@ -161,7 +159,6 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
                     }));
                 }
             } catch (err) {
-                // Ignore parsing errors for empty deltas
             }
         });
 
@@ -181,11 +178,6 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
             eventSource.close();
             setLoading(false);
         });
-
-        // Backend might send a specific "done" event or just close. 
-        // We'll assume stream stays open until user closes or error.
-        
-        // Also handle legacy/standard 'message' if needed, but sticking to user req `content.start`
     };
 
     const handleFinalReport = async () => {
@@ -231,7 +223,6 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
                     </DialogTitle>
                 </DialogHeader>
 
-                {/* Toolbar */}
                 <div className="flex items-center gap-2 p-4 border-b border-white/10 bg-black/20 overflow-x-auto shrink-0">
                     <Button 
                         variant="ghost" 
@@ -265,9 +256,7 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
                     </Button>
                 </div>
 
-                {/* Content Area */}
                 <div className="flex-1 overflow-hidden bg-[#0f0e1a] relative flex flex-col">
-                    {/* Initiation Status Overlay */}
                     {initiationStatus && activeView === 'menu' && (
                         <div className="p-8 text-center space-y-4">
                             <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
@@ -277,8 +266,8 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
                             <div className="flex items-center justify-center gap-2">
                                 <span className="text-slate-400">Interaction Status:</span>
                                 <Badge variant="outline" className="border-green-500/50 text-green-400">
-                                    {initiationStatus.status === 'already_exists' && initiationStatus.duration 
-                                        ? `Completed in ${initiationStatus.duration}` 
+                                    {initiationStatus.status === 'already_exists' || initiationStatus.status === 'completed' || initiationStatus.status === 'researched' 
+                                        ? (initiationStatus.duration === 'In Progress...' ? 'In Progress' : `Completed in ${initiationStatus.duration}`)
                                         : initiationStatus.status}
                                 </Badge>
                             </div>
@@ -288,7 +277,6 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
                         </div>
                     )}
 
-                    {/* Streaming View */}
                     {activeView === 'streaming' && (
                         <div className="h-full flex flex-col p-4" ref={scrollRef}>
                              <div className="h-full overflow-y-auto pr-2 space-y-4 custom-scrollbar">
@@ -328,7 +316,6 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
                         </div>
                     )}
 
-                    {/* Report View */}
                     {activeView === 'report' && finalReport && (
                         <div className="h-full overflow-y-auto p-6 scroll-smooth">
                              <div className="prose prose-invert max-w-none pb-12">
