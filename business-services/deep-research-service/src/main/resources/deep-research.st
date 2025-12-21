@@ -3,6 +3,11 @@ Research comprehensive property insurance requirements and risk assessment for t
 # Property Information
 **Address:** <propertyInfo.location.street>, <propertyInfo.location.ward>, <propertyInfo.location.city>
 **Estimated Construction Cost:** <propertyInfo.valuation.estimatedConstructionCost> VND
+**Attributes:**
+- **Construction Type:** <propertyInfo.attributes.constructionType>
+- **Year Built:** <propertyInfo.attributes.yearBuilt>
+- **Floors:** <propertyInfo.attributes.noFloors>
+- **Area:** <propertyInfo.attributes.squareMeters> m2
 
 <if(quotes)>
 # Insurance Quotes Under Consideration
