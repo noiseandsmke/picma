@@ -17,7 +17,7 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ content }) => {
 
     const parseSections = (text: string): ThoughtSection[] => {
         const sections: ThoughtSection[] = [];
-        const regex = /\*\*(.*?)\*\*([\s\S]*?)(?=\*\*|$)/g;
+        const regex = /(?:^|\n\n)\*\*(.*?)\*\*\n\n([\s\S]*?)(?=(?:^|\n\n)\*\*|$)/g;
         
         
         let match;
