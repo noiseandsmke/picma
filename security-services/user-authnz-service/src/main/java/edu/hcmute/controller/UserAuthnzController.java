@@ -1,7 +1,6 @@
 package edu.hcmute.controller;
 
 import edu.hcmute.dto.LoginRequest;
-import edu.hcmute.dto.RefreshTokenRequest;
 import edu.hcmute.dto.RegisterRequest;
 import edu.hcmute.dto.TokenResponse;
 import edu.hcmute.service.UserAuthnzService;
@@ -40,25 +39,12 @@ public class UserAuthnzController {
         return ResponseEntity.ok(Map.of("message", "User registered successfully"));
     }
 
-    @Operation(summary = "Refresh access token", description = "Obtains a new access token using a refresh token.")
-    @ApiResponse(responseCode = "200", description = "Successful operation", content = @Content(schema = @Schema(implementation = TokenResponse.class)))
-    @PostMapping("/refresh")
-    public ResponseEntity<TokenResponse> refresh(
-            @RequestBody RefreshTokenRequest request,
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        String oldAccessToken = null;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            oldAccessToken = authHeader.substring(7);
-        }
-        TokenResponse response = userAuthnzService.refresh(request.refreshToken(), oldAccessToken);
-        return ResponseEntity.ok(response);
-    }
 
-    @Operation(summary = "Logout", description = "Logs out the user by invalidating the refresh token.")
+    @Operation(summary = "Logout", description = "Logs out the user.")
     @ApiResponse(responseCode = "200", description = "Logged out successfully")
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout(@RequestParam("refresh_token") String refreshToken) {
-        userAuthnzService.logout(refreshToken);
+    public ResponseEntity<Map<String, String>> logout() {
+        userAuthnzService.logout();
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 }

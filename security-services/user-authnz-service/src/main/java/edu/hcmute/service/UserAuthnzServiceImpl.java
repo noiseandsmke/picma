@@ -29,7 +29,6 @@ public class UserAuthnzServiceImpl implements UserAuthnzService {
     private static final String CLIENT_SECRET = "client_secret";
     private static final String PASSWORD = "password";
     private static final String GRANT_TYPE = "grant_type";
-    private static final String REFRESH_TOKEN = "refresh_token";
 
     private final KeycloakAuthClient keycloakAuthClient;
     private final KeycloakAdminClient keycloakAdminClient;
@@ -63,29 +62,10 @@ public class UserAuthnzServiceImpl implements UserAuthnzService {
         return tokenResponse;
     }
 
-    @Override
-    public TokenResponse refresh(String refreshToken, String oldAccessToken) {
-        log.info("### Refreshing token ###");
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add(CLIENT_ID, resource);
-        map.add(CLIENT_SECRET, clientSecret);
-        map.add(GRANT_TYPE, REFRESH_TOKEN);
-        map.add(REFRESH_TOKEN, refreshToken);
-        TokenResponse tokenResponse = keycloakAuthClient.getToken(map);
-        if (tokenResponse == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Failed to refresh token");
-        }
-        return tokenResponse;
-    }
 
     @Override
-    public void logout(String refreshToken) {
+    public void logout() {
         log.info("### Logging out user ###");
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add(CLIENT_ID, resource);
-        map.add(CLIENT_SECRET, clientSecret);
-        map.add(REFRESH_TOKEN, refreshToken);
-        keycloakAuthClient.logout(map);
     }
 
     @Override
