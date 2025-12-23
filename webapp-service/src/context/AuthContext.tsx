@@ -19,13 +19,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
     });
 
     const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const warningTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const clearTokenExpiryMonitor = () => {
         if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
-        if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
         logoutTimerRef.current = null;
-        warningTimerRef.current = null;
     };
 
     const setupTokenExpiryMonitor = (expiresAt: number) => {
@@ -35,25 +32,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
         const timeLeft = expiresAt - now;
 
         if (timeLeft <= 0) {
-            logout();
+            void logout();
             return;
         }
 
-        const warningTime = timeLeft - (5 * 60 * 1000);
-        if (warningTime > 0) {
-            warningTimerRef.current = setTimeout(() => {
-                toast.warning("Session Expiring Soon", {
-                    description: "Your session will expire in 5 minutes. Please save your work.",
-                    duration: 60000,
-                    action: {
-                        label: "Refresh Session",
-                        onClick: () => {
-                            globalThis.location.reload();
-                        }
-                    }
-                });
-            }, warningTime);
-        }
 
         logoutTimerRef.current = setTimeout(() => {
             toast.error('Session Expired', {
@@ -74,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
 
                 const expiresAt = sessionStorage.getItem('token_expires_at');
                 if (expiresAt) {
-                    setupTokenExpiryMonitor(parseInt(expiresAt, 10));
+                    setupTokenExpiryMonitor(Number.parseInt(expiresAt, 10));
                 } else if (user.exp) {
                     setupTokenExpiryMonitor(user.exp * 1000);
                 }
@@ -84,33 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
             }
         }
 
-        const handleTokenRefresh = () => {
-            const newToken = sessionStorage.getItem('access_token');
-            const newUserStr = sessionStorage.getItem('user');
-            if (newToken && newUserStr) {
-                try {
-                    const newUser = JSON.parse(newUserStr);
-                    setAuth({isAuthenticated: true, user: newUser, token: newToken});
-                } catch (e) {
-                    console.error("Failed to parse user from session storage during refresh", e);
-                }
-            }
-        };
-
-        const handleTokenRefreshedEvent = (event: Event) => {
-            handleTokenRefresh();
-            const customEvent = event as CustomEvent;
-            if (customEvent.detail?.expiresAt) {
-                setupTokenExpiryMonitor(customEvent.detail.expiresAt);
-            } else {
-                const expiresAt = sessionStorage.getItem('token_expires_at');
-                if (expiresAt) setupTokenExpiryMonitor(parseInt(expiresAt, 10));
-            }
-        };
-
-        globalThis.addEventListener('auth:token-refreshed', handleTokenRefreshedEvent);
         return () => {
-            globalThis.removeEventListener('auth:token-refreshed', handleTokenRefreshedEvent);
             clearTokenExpiryMonitor();
         };
     }, []);
@@ -123,19 +79,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
             setupTokenExpiryMonitor(user.exp * 1000);
         } else {
             const expiresAt = sessionStorage.getItem('token_expires_at');
-            if (expiresAt) setupTokenExpiryMonitor(parseInt(expiresAt, 10));
+            if (expiresAt) setupTokenExpiryMonitor(Number.parseInt(expiresAt, 10));
         }
     };
 
     const logout = async () => {
         clearTokenExpiryMonitor();
-        const refreshToken = sessionStorage.getItem('refresh_token');
-
         try {
-            if (refreshToken) {
-                const {authService} = await import('@/services/authService');
-                await authService.logout(refreshToken);
-            }
+            const {authService} = await import('@/services/authService');
+            await authService.logout();
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
@@ -153,10 +105,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
 
     const getPrimaryRole = (): UserRole | null => {
         if (!auth.user?.roles) return null;
-        const userRoles = auth.user.roles.map(r => r.toUpperCase());
-        if (userRoles.includes(UserRole.ADMIN)) return UserRole.ADMIN;
-        if (userRoles.includes(UserRole.AGENT)) return UserRole.AGENT;
-        if (userRoles.includes(UserRole.OWNER)) return UserRole.OWNER;
+        const userRoles = new Set(auth.user.roles.map(r => r.toUpperCase()));
+        if (userRoles.has(UserRole.ADMIN.toUpperCase() as UserRole)) return UserRole.ADMIN;
+        if (userRoles.has(UserRole.AGENT.toUpperCase() as UserRole)) return UserRole.AGENT;
+        if (userRoles.has(UserRole.OWNER.toUpperCase() as UserRole)) return UserRole.OWNER;
 
         return null;
     };

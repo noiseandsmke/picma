@@ -16,8 +16,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
     const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
     return (
-        <div className="flex h-screen bg-slate-950 font-display overflow-hidden selection:bg-sky-500/30">
-            <aside className="bg-slate-900 flex flex-col w-64 shrink-0 border-r border-slate-700 h-full z-20">
+        <div className="flex h-screen bg-background-main font-display overflow-hidden selection:bg-primary/30">
+            <aside className="bg-surface-main flex flex-col w-64 shrink-0 border-r border-border-main h-full z-20">
                 <div className="flex flex-col h-full justify-between p-4">
                     <div className="flex flex-col gap-6">
                         <div className="flex items-center gap-3 px-2 py-2">
@@ -26,7 +26,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
                                 <span className="text-xl font-bold">P</span>
                             </div>
                             <div className="flex flex-col">
-                                <h1 className="text-white text-base font-bold leading-tight tracking-tight">PICMA
+                                <h1 className="text-text-main text-base font-bold leading-tight tracking-tight">PICMA
                                     platform</h1>
                             </div>
                         </div>
@@ -38,7 +38,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
                                     "flex items-center gap-3 px-3 py-3 rounded-lg transition-all group",
                                     isActive('/admin/dashboard')
                                         ? "bg-primary/10 text-primary shadow-sm border border-primary/20"
-                                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                                        : "text-text-secondary hover:text-text-main hover:bg-muted"
                                 )}
                             >
                                 <span
@@ -52,7 +52,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
                                     "flex items-center gap-3 px-3 py-3 rounded-lg transition-all group",
                                     isActive('/admin/users')
                                         ? "bg-primary/10 text-primary shadow-sm border border-primary/20"
-                                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                                        : "text-text-secondary hover:text-text-main hover:bg-muted"
                                 )}
                             >
                                 <span
@@ -63,7 +63,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
                             <div className="relative group">
                                 <button
                                     onClick={() => setIsDocumentsOpen(!isDocumentsOpen)}
-                                    className="flex items-center justify-between px-3 py-3 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-colors w-full cursor-pointer"
+                                    className="flex items-center justify-between px-3 py-3 rounded-lg text-text-secondary hover:text-text-main hover:bg-muted transition-colors w-full cursor-pointer"
+                                    type="button"
                                 >
                                     <div className="flex items-center gap-3">
                                         <span
@@ -76,14 +77,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
 
                                 {isDocumentsOpen && (
                                     <div
-                                        className="pl-11 pr-3 flex flex-col gap-1 mt-1 border-l border-slate-700/50 ml-4 mb-2">
+                                        className="pl-11 pr-3 flex flex-col gap-1 mt-1 border-l border-border-main ml-4 mb-2">
                                         <Link
                                             to="/admin/leads"
                                             className={cn(
                                                 "py-2 text-sm block pl-2 transition-colors border-l-2",
                                                 isActive('/admin/leads')
                                                     ? "text-primary font-medium border-primary bg-primary/5"
-                                                    : "text-slate-500 hover:text-slate-300 border-transparent hover:bg-slate-800/30"
+                                                    : "text-text-muted hover:text-text-secondary border-transparent hover:bg-muted/50"
                                             )}
                                         >
                                             Leads
@@ -94,7 +95,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
                                                 "py-2 text-sm block pl-2 transition-colors border-l-2",
                                                 isActive('/admin/quotes')
                                                     ? "text-primary font-medium border-primary bg-primary/5"
-                                                    : "text-slate-500 hover:text-slate-300 border-transparent hover:bg-slate-800/30"
+                                                    : "text-text-muted hover:text-text-secondary border-transparent hover:bg-muted/50"
                                             )}
                                         >
                                             Quotes
@@ -105,7 +106,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
                                                 "py-2 text-sm block pl-2 transition-colors border-l-2",
                                                 isActive('/admin/properties')
                                                     ? "text-primary font-medium border-primary bg-primary/5"
-                                                    : "text-slate-500 hover:text-slate-300 border-transparent hover:bg-slate-800/30"
+                                                    : "text-text-muted hover:text-text-secondary border-transparent hover:bg-muted/50"
                                             )}
                                         >
                                             Properties info
@@ -126,11 +127,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({children}) => {
                 </div>
 
                 <header
-                    className="flex-shrink-0 bg-background-dark/80 backdrop-blur-md border-b border-white/5 px-8 py-5 z-10">
+                    className="flex-shrink-0 bg-surface-main/80 backdrop-blur-md border-b border-border-main px-8 py-5 z-10">
                     <div className="flex flex-wrap justify-between items-center gap-4">
                         <div className="flex flex-col gap-1">
-                            <h2 className="text-white text-xl font-bold tracking-tight">Admin dashboard</h2>
-                            <p className="text-slate-400 text-xs">Total system oversight</p>
+                            <h2 className="text-text-main text-xl font-bold tracking-tight">Admin dashboard</h2>
+                            <p className="text-text-muted text-xs">Total system oversight</p>
                         </div>
                         <div className="flex items-center gap-4">
                             <UserDropdown displayName={user?.name} username={user?.username} roleLabel="Administrator"/>

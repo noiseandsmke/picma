@@ -48,7 +48,7 @@ const LEAD_SERVICE_URL = '/picma/leads';
 
 export const fetchAllLeads = async (sortBy = 'id', sortDirection = 'asc', status?: string): Promise<PropertyLeadDto[]> => {
     const response = await apiClient.get<PropertyLeadDto[]>(`${LEAD_SERVICE_URL}`, {
-        params: { sortBy, sortDirection, status },
+        params: {sortBy, sortDirection, status},
     });
     return response.data;
 };

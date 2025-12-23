@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { PropertyQuoteDto } from '@/features/admin/services/quoteService';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { FileText, MapPin, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import React, {useState} from 'react';
+import {PropertyQuoteDto} from '@/features/admin/services/quoteService';
+import {Button} from '@/components/ui/button';
+import {Badge} from '@/components/ui/badge';
+import {ArrowUpRight, Calendar, FileText, MapPin} from 'lucide-react';
+import {formatCurrency} from '@/lib/utils';
 
 interface AgentQuoteCardProps {
     quote: PropertyQuoteDto;
     propertyAddress?: React.ReactNode;
-    onViewDetail: (quote: PropertyQuoteDto) => void;
+    onViewDetail: (quote: PropertyQuoteDto) => Promise<void> | void;
 }
 
-export const AgentQuoteCard: React.FC<AgentQuoteCardProps> = ({ quote, propertyAddress, onViewDetail }) => {
+export const AgentQuoteCard: React.FC<AgentQuoteCardProps> = ({quote, propertyAddress, onViewDetail}) => {
     const [isLoading, setIsLoading] = useState(false);
 
     const handleClick = async () => {
@@ -24,61 +24,52 @@ export const AgentQuoteCard: React.FC<AgentQuoteCardProps> = ({ quote, propertyA
     };
 
     return (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4 hover:border-primary/30 transition-all duration-300 group">
+        <div
+            className="bg-surface-main border border-border-main rounded-xl p-4 flex items-center justify-between gap-4 hover:border-primary/30 transition-all duration-300 group">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div
+                    className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-110 transition-transform">
+                    <FileText className="w-6 h-6"/>
+                </div>
 
-            <div className="flex-shrink-0 w-24">
-                <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">Quote ID</p>
-                <div className="text-slate-300 font-mono font-medium">#{quote.id}</div>
-                <div className="text-xs text-slate-500 mt-1">
-                    {new Date(quote.createdDate).toLocaleDateString()}
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span
+                            className="font-bold text-text-main truncate">#{quote.id.toString().padStart(6, '0')}</span>
+                        <Badge variant="outline"
+                               className="text-[10px] py-0 border-primary/20 bg-primary/5 text-primary">
+                            {quote.status}
+                        </Badge>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-muted">
+                        <div className="flex items-center gap-1.5 whitespace-nowrap">
+                            <MapPin className="w-3.5 h-3.5 shrink-0"/>
+                            <span className="truncate max-w-[200px]">{propertyAddress || quote.leadId}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5"/>
+                            <span>{new Date(quote.createdDate).toLocaleDateString()}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                    <MapPin className="h-4 w-4 text-primary shrink-0" />
-                    <h3 className="font-bold text-white truncate">
-                        {propertyAddress || 'Address unavailable'}
-                    </h3>
+            <div className="flex items-center gap-6 shrink-0">
+                <div className="text-right">
+                    <p className="text-xs text-text-muted mb-0.5 uppercase tracking-wider">Total Premium</p>
+                    <p className="text-lg font-bold text-primary">{formatCurrency(quote.premium?.total || 0)}</p>
                 </div>
-                <div className="pl-6 mt-1 flex gap-2 items-center">
-                    <Badge variant="outline" className="text-[10px] border-slate-700 text-slate-400 h-5">
-                       Limit: {formatCurrency(quote.coverages.find(c => c.code === 'FIRE')?.limit || 0)}
-                    </Badge>
-                     <p className="text-xs text-slate-500 ml-2">
-                        Premium: <span className="text-emerald-400 font-medium">{formatCurrency(quote.premium.total)}</span>
-                    </p>
-                </div>
-            </div>
 
-            <div className="flex-shrink-0 flex items-center justify-end gap-3 w-24 mr-4">
-                 {quote.status === 'ACCEPTED' && (
-                    <div className="h-8 w-8 rounded-full flex items-center justify-center border bg-green-500/10 border-green-500/50 text-green-500" title="Accepted">
-                        <CheckCircle className="h-5 w-5" />
-                    </div>
-                )}
-                 {quote.status === 'REJECTED' && (
-                    <div className="h-8 w-8 rounded-full flex items-center justify-center border bg-red-500/10 border-red-500/50 text-red-500" title="Rejected">
-                        <XCircle className="h-5 w-5" />
-                    </div>
-                )}
-                 {quote.status === 'NEW' && (
-                    <div className="h-8 w-8 rounded-full flex items-center justify-center border bg-blue-500/10 border-blue-500/50 text-blue-500" title="New / Pending">
-                        <Clock className="h-5 w-5" />
-                    </div>
-                )}
-            </div>
-
-            <div className="flex-shrink-0 flex items-center justify-center px-4">
                 <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-32 transition-all bg-slate-800 hover:bg-slate-700 text-slate-300"
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full hover:bg-primary hover:text-white transition-colors border border-border-main"
                     onClick={handleClick}
                     disabled={isLoading}
                 >
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
-                    {quote.status === 'NEW' ? 'Edit' : 'View'}
+                    {isLoading ? <span className="animate-spin text-sm">...</span> :
+                        <ArrowUpRight className="w-4 h-4"/>}
                 </Button>
             </div>
         </div>

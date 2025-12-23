@@ -1,20 +1,22 @@
-import React, {createContext, useContext, useEffect, useState} from 'react';
+import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeProviderProps {
-    children: React.ReactNode;
-    defaultTheme?: Theme;
-    storageKey?: string;
+    readonly children: React.ReactNode;
+    readonly defaultTheme?: Theme;
+    readonly storageKey?: string;
 }
 
 interface ThemeProviderState {
     theme: Theme;
+    resolvedTheme: 'light' | 'dark';
     setTheme: (theme: Theme) => void;
 }
 
 const initialState: ThemeProviderState = {
     theme: 'system',
+    resolvedTheme: 'light',
     setTheme: () => null,
 };
 
@@ -23,40 +25,55 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 export function ThemeProvider({
                                   children,
                                   defaultTheme = 'system',
-                                  storageKey = 'vite-ui-theme',
+                                  storageKey = 'picma-theme',
                               }: ThemeProviderProps) {
-    const [theme, setTheme] = useState<Theme>(
-        () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
+    const [theme, setThemeState] = useState<Theme>(
+        () => (globalThis.localStorage.getItem(storageKey) as Theme) || defaultTheme
     );
+    const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
 
     useEffect(() => {
-        const root = window.document.documentElement;
+        const root = globalThis.document.documentElement;
 
-        root.classList.remove('light', 'dark');
+        const applyTheme = (t: Theme) => {
+            root.classList.remove('light', 'dark');
+            let resolved: 'light' | 'dark';
+
+            if (t === 'system') {
+                resolved = globalThis.matchMedia('(prefers-color-scheme: dark)').matches
+                    ? 'dark'
+                    : 'light';
+            } else {
+                resolved = t as 'light' | 'dark';
+            }
+
+            root.classList.add(resolved);
+            setResolvedTheme(resolved);
+        };
+
+        applyTheme(theme);
 
         if (theme === 'system') {
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-                .matches
-                ? 'dark'
-                : 'light';
-
-            root.classList.add(systemTheme);
-            return;
+            const mediaQuery = globalThis.matchMedia('(prefers-color-scheme: dark)');
+            const listener = () => applyTheme('system');
+            mediaQuery.addEventListener('change', listener);
+            return () => mediaQuery.removeEventListener('change', listener);
         }
-
-        root.classList.add(theme);
     }, [theme]);
 
-    const value = {
+    const setTheme = useCallback((theme: Theme) => {
+        globalThis.localStorage.setItem(storageKey, theme);
+        setThemeState(theme);
+    }, [storageKey]);
+
+    const value = useMemo(() => ({
         theme,
-        setTheme: (theme: Theme) => {
-            localStorage.setItem(storageKey, theme);
-            setTheme(theme);
-        },
-    };
+        resolvedTheme,
+        setTheme,
+    }), [theme, resolvedTheme, setTheme]);
 
     return (
-        <ThemeProviderContext.Provider {...value} value={value}>
+        <ThemeProviderContext.Provider value={value}>
             {children}
         </ThemeProviderContext.Provider>
     );

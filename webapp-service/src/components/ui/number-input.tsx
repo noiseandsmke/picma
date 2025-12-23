@@ -1,8 +1,8 @@
 import * as React from "react"
-import { ChevronDown, ChevronUp } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import {ChevronDown, ChevronUp} from "lucide-react"
+import {cn} from "@/lib/utils"
+import {Input} from "@/components/ui/input"
+import {Button} from "@/components/ui/button"
 
 export interface NumberInputProps
     extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange"> {
@@ -13,12 +13,12 @@ export interface NumberInputProps
 }
 
 const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
-    ({ className, onChange, value, step = 1, min, max, disabled, format, parse, ...props }, ref) => {
+    ({className, onChange, value, step = 1, min, max, disabled, format, parse, ...props}, ref) => {
         const handleIncrement = (e: React.MouseEvent) => {
             e.preventDefault()
             if (disabled) return
 
-            const currentValue = value === undefined ? (min !== undefined ? Number(min) : 0) : Number(value)
+            const currentValue = value !== undefined ? Number(value) : (min !== undefined ? Number(min) : 0)
             const stepValue = Number(step)
 
             const precision = step.toString().split('.')[1]?.length || 0
@@ -32,7 +32,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
             e.preventDefault()
             if (disabled) return
 
-            const currentValue = value === undefined ? (min !== undefined ? Number(min) : 0) : Number(value)
+            const currentValue = value !== undefined ? Number(value) : (min !== undefined ? Number(min) : 0)
             const stepValue = Number(step)
 
             const precision = step.toString().split('.')[1]?.length || 0
@@ -54,15 +54,15 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
             if (parse) {
                 numVal = parse(val)
             } else {
-                numVal = parseFloat(val)
+                numVal = Number.parseFloat(val)
             }
 
-            if (!isNaN(numVal)) {
+            if (!Number.isNaN(numVal)) {
                 onChange(numVal)
             }
         }
 
-        const displayValue = format && value !== undefined ? format(value) : (value === undefined ? '' : value)
+        const displayValue = format && value !== undefined ? format(value) : (value ?? '')
         const inputType = format ? "text" : "number"
 
         return (
@@ -70,7 +70,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
                 <Input
                     type={inputType}
                     className={cn(
-                        "pr-10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
+                        "pr-10 [appearance:text-field] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
                         className
                     )}
                     ref={ref}
@@ -82,26 +82,26 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
                     disabled={disabled}
                     {...props}
                 />
-                <div className="absolute right-0 top-0 h-full flex flex-col border-l border-slate-800">
+                <div className="absolute right-0 top-0 h-full flex flex-col border-l border-border-main">
                     <Button
                         type="button"
                         variant="ghost"
-                        className="h-1/2 w-8 p-0 rounded-none rounded-tr-md hover:bg-slate-800 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-1/2 w-8 p-0 rounded-none rounded-tr-md hover:bg-muted text-text-muted hover:text-text-main disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleIncrement}
                         disabled={disabled || (max !== undefined && Number(value) >= Number(max))}
                         tabIndex={-1}
                     >
-                        <ChevronUp className="h-3 w-3" />
+                        <ChevronUp className="h-3 w-3"/>
                     </Button>
                     <Button
                         type="button"
                         variant="ghost"
-                        className="h-1/2 w-8 p-0 rounded-none rounded-br-md hover:bg-slate-800 text-slate-400 hover:text-white border-t border-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-1/2 w-8 p-0 rounded-none rounded-br-md hover:bg-muted text-text-muted hover:text-text-main border-t border-border-main disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleDecrement}
                         disabled={disabled || (min !== undefined && Number(value) <= Number(min))}
                         tabIndex={-1}
                     >
-                        <ChevronDown className="h-3 w-3" />
+                        <ChevronDown className="h-3 w-3"/>
                     </Button>
                 </div>
             </div>
@@ -110,4 +110,4 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
 )
 NumberInput.displayName = "NumberInput"
 
-export { NumberInput }
+export {NumberInput}

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Brain, ChevronDown, ChevronUp } from 'lucide-react';
+import React, {useState} from 'react';
+import {Brain, ChevronDown, ChevronUp} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 interface ThinkingBlockProps {
@@ -11,17 +11,17 @@ interface ThoughtSection {
     content: string;
 }
 
-export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ content }) => {
+export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({content}) => {
     const [isMainExpanded, setIsMainExpanded] = useState(true);
-    const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
     const parseSections = (text: string): ThoughtSection[] => {
         const sections: ThoughtSection[] = [];
         const regex = /(?:^|\n\n)\*\*(.*?)\*\*\n\n([\s\S]*?)(?=(?:^|\n\n)\*\*|$)/g;
-        
-        
+
+
         let match;
-        
+
         while ((match = regex.exec(text)) !== null) {
             sections.push({
                 title: match[1].trim(),
@@ -30,26 +30,26 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ content }) => {
         }
 
         if (sections.length === 0 && text.trim()) {
-             sections.push({
+            sections.push({
                 title: "Thinking Process",
                 content: text.trim()
             });
         }
-        
+
         return sections;
     };
 
     const sections = parseSections(content);
-    const toggleSection = (index: number) => {
+    const toggleSection = (title: string) => {
         setExpandedSections(prev => ({
             ...prev,
-            [index]: !prev[index]
+            [title]: !prev[title]
         }));
     };
 
     const expandAll = (e: React.MouseEvent) => {
         e.stopPropagation();
-        const allExpanded = sections.reduce((acc, _, idx) => ({...acc, [idx]: true}), {});
+        const allExpanded = sections.reduce((acc, section) => ({...acc, [section.title]: true}), {});
         setExpandedSections(allExpanded);
     };
 
@@ -59,65 +59,75 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ content }) => {
     };
 
     return (
-        <div className="border border-indigo-500/20 rounded-lg bg-indigo-500/5 overflow-hidden mb-4">
-            <div 
+        <div className="border border-primary/20 rounded-lg bg-primary/5 overflow-hidden mb-4">
+            <div
+                role="button"
+                tabIndex={0}
                 onClick={() => setIsMainExpanded(!isMainExpanded)}
-                className="w-full flex items-center justify-between p-3 hover:bg-indigo-500/10 transition-colors cursor-pointer border-b border-indigo-500/10"
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setIsMainExpanded(!isMainExpanded);
+                    }
+                }}
+                className="w-full flex items-center justify-between p-3 hover:bg-primary/10 transition-colors cursor-pointer border-b border-primary/10"
             >
                 <div className="flex items-center gap-3">
-                    <div className="bg-indigo-500/20 p-1.5 rounded-md text-indigo-400">
-                        <Brain className="w-4 h-4" />
+                    <div className="bg-primary/20 p-1.5 rounded-md text-primary">
+                        <Brain className="w-4 h-4"/>
                     </div>
-                    <span className="font-medium text-indigo-300 text-sm">Thought</span>
+                    <span className="font-medium text-primary text-sm">Thought</span>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                     {isMainExpanded && (
                         <div className="flex items-center gap-1 mr-2">
-                             <button 
+                            <button
                                 onClick={expandAll}
-                                className="text-xs text-indigo-400 hover:text-white px-2 py-1 rounded hover:bg-indigo-500/20 transition-colors"
+                                className="text-xs text-primary hover:text-text-main px-2 py-1 rounded hover:bg-primary/20 transition-colors"
                             >
                                 Expand All
                             </button>
-                            <span className="text-slate-600">|</span>
-                            <button 
+                            <span className="text-border-main">|</span>
+                            <button
                                 onClick={collapseAll}
-                                className="text-xs text-indigo-400 hover:text-white px-2 py-1 rounded hover:bg-indigo-500/20 transition-colors"
+                                className="text-xs text-primary hover:text-text-main px-2 py-1 rounded hover:bg-primary/20 transition-colors"
                             >
                                 Collapse All
                             </button>
                         </div>
                     )}
                     {isMainExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-slate-500" />
+                        <ChevronUp className="w-4 h-4 text-text-muted"/>
                     ) : (
-                        <ChevronDown className="w-4 h-4 text-slate-500" />
+                        <ChevronDown className="w-4 h-4 text-text-muted"/>
                     )}
                 </div>
             </div>
-            
+
             {isMainExpanded && (
                 <div className="p-4 space-y-3 bg-black/20">
-                    {sections.map((section, idx) => (
-                        <div key={idx} className="border border-indigo-500/10 rounded-md overflow-hidden bg-indigo-500/5">
+                    {sections.map((section) => (
+                        <div key={section.title}
+                             className="border border-primary/10 rounded-md overflow-hidden bg-primary/5">
                             <button
-                                onClick={() => toggleSection(idx)}
-                                className="w-full flex items-center justify-between p-3 hover:bg-indigo-500/10 transition-colors text-left"
+                                onClick={() => toggleSection(section.title)}
+                                className="w-full flex items-center justify-between p-3 hover:bg-primary/10 transition-colors text-left"
+                                aria-expanded={expandedSections[section.title] || false}
                             >
                                 <div className="flex items-center gap-2">
-                                     <Brain className="w-4 h-4 text-indigo-400 opacity-70" />
-                                     <span className="text-slate-200 text-sm font-medium">{section.title}</span>
+                                    <Brain className="w-4 h-4 text-primary opacity-70"/>
+                                    <span className="font-semibold text-text-main text-sm">{section.title}</span>
                                 </div>
-                                {expandedSections[idx] ? (
-                                    <ChevronUp className="w-3 h-3 text-slate-500" />
+                                {expandedSections[section.title] ? (
+                                    <ChevronUp className="w-3 h-3 text-text-muted"/>
                                 ) : (
-                                    <ChevronDown className="w-3 h-3 text-slate-500" />
+                                    <ChevronDown className="w-3 h-3 text-text-muted"/>
                                 )}
                             </button>
-                            
-                            {expandedSections[idx] && (
-                                <div className="p-3 text-sm text-slate-300 border-t border-indigo-500/10 bg-black/10">
+
+                            {expandedSections[section.title] && (
+                                <div className="p-3 text-sm text-text-secondary border-t border-primary/10 bg-muted/10">
                                     <div className="prose prose-invert prose-sm max-w-none">
                                         <ReactMarkdown>{section.content}</ReactMarkdown>
                                     </div>

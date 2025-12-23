@@ -17,6 +17,25 @@ import {
 } from 'recharts';
 import {Skeleton} from '@/components/ui/skeleton';
 
+const StatsCard = ({title, value, colorClass, icon, bgClass, overlayClass, loading}: any) => (
+    <div
+        className="relative overflow-hidden flex items-center justify-between p-6 bg-surface-main border border-border-main rounded-xl shadow-sm group hover:border-primary/50 transition-colors">
+        <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${bgClass} ${colorClass} group-hover:bg-opacity-30 transition-colors`}>
+                <span className="material-symbols-outlined text-[24px]">{icon}</span>
+            </div>
+            <p className="text-text-secondary text-sm font-medium">{title}</p>
+        </div>
+
+        <h3 className="text-text-main text-3xl font-bold">
+            {loading ? <Skeleton className="h-8 w-16 bg-muted"/> : value}
+        </h3>
+
+        <div
+            className={`absolute -bottom-10 -right-10 w-24 h-24 rounded-full blur-xl group-hover:opacity-20 transition-opacity ${overlayClass} opacity-10 pointer-events-none`}></div>
+    </div>
+);
+
 const AdminDashboard: React.FC = () => {
     const {data: stats, isLoading: isLoadingStats} = useQuery({
         queryKey: ['admin-stats'],
@@ -39,7 +58,7 @@ const AdminDashboard: React.FC = () => {
     });
 
     const quoteStats = React.useMemo(() => {
-        if (!quotes) return { total: 0, new: 0, accepted: 0, rejected: 0 };
+        if (!quotes) return {total: 0, new: 0, accepted: 0, rejected: 0};
         return {
             total: quotes.length,
             new: quotes.filter(q => q.status === 'NEW').length,
@@ -69,33 +88,14 @@ const AdminDashboard: React.FC = () => {
         const quoteMap = new Map(quoteTrendData?.map((q: any) => [q.date, q.count]) || []);
 
         const sortedData = [...trendData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        
+
         return sortedData.map(item => ({
-            name: new Date(item.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }),
+            name: new Date(item.date).toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit'}),
             leadCount: item.count,
             quoteCount: quoteMap.get(item.date) || 0
         }));
     }, [trendData, quoteTrendData]);
 
-
-    const StatsCard = ({title, value, colorClass, icon, bgClass, overlayClass, loading}: any) => (
-        <div
-            className="relative overflow-hidden flex items-center justify-between p-6 bg-slate-900 border border-slate-800 rounded-xl shadow-sm group hover:border-primary/50 transition-colors">
-            <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-lg ${bgClass} ${colorClass} group-hover:bg-opacity-30 transition-colors`}>
-                    <span className="material-symbols-outlined text-[24px]">{icon}</span>
-                </div>
-                <p className="text-slate-400 text-sm font-medium">{title}</p>
-            </div>
-            
-            <h3 className="text-white text-3xl font-bold">
-                 {loading ? <Skeleton className="h-8 w-16 bg-slate-800"/> : value}
-            </h3>
-
-            <div
-                className={`absolute -bottom-10 -right-10 w-24 h-24 rounded-full blur-xl group-hover:opacity-20 transition-opacity ${overlayClass} opacity-10 pointer-events-none`}></div>
-        </div>
-    );
 
     return (
         <AdminLayout>
@@ -141,28 +141,28 @@ const AdminDashboard: React.FC = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div
-                        className="lg:col-span-2 flex flex-col rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-sm">
+                        className="lg:col-span-2 flex flex-col rounded-xl border border-border-main bg-surface-main p-6 shadow-sm">
                         <div className="flex items-center justify-between gap-4 mb-8">
                             <div className="flex items-center gap-3">
                                 <div className="bg-primary/10 p-1.5 rounded text-primary">
                                     <span className="material-symbols-outlined text-[20px]">analytics</span>
                                 </div>
-                                <h3 className="text-white text-base font-semibold">Trend for last week</h3>
+                                <h3 className="text-text-main text-base font-semibold">Trend for last week</h3>
                             </div>
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 rounded bg-primary shadow-glow"></div>
-                                    <span className="text-xs text-slate-400">Total Leads</span>
+                                    <span className="text-xs text-text-secondary">Total Leads</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 rounded bg-violet-500 shadow-glow"></div>
-                                    <span className="text-xs text-slate-400">Total Quotes</span>
+                                    <span className="text-xs text-text-secondary">Total Quotes</span>
                                 </div>
                             </div>
                         </div>
                         <div className="w-full h-[280px] mt-auto">
                             {isLoadingTrend ? (
-                                <Skeleton className="h-full w-full bg-slate-800 rounded-lg"/>
+                                <Skeleton className="h-full w-full bg-muted rounded-lg"/>
                             ) : (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={lineChartData} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
@@ -172,18 +172,19 @@ const AdminDashboard: React.FC = () => {
                                                 <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155"
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false}
+                                                       stroke="var(--color-border-main)"
                                                        opacity={0.5}/>
                                         <XAxis
                                             dataKey="name"
-                                            stroke="#64748b"
+                                            stroke="var(--color-text-muted)"
                                             fontSize={12}
                                             tickLine={false}
                                             axisLine={false}
                                             dy={10}
                                         />
                                         <YAxis
-                                            stroke="#64748b"
+                                            stroke="var(--color-text-muted)"
                                             fontSize={12}
                                             tickLine={false}
                                             axisLine={false}
@@ -191,19 +192,24 @@ const AdminDashboard: React.FC = () => {
                                         />
                                         <Tooltip
                                             contentStyle={{
-                                                backgroundColor: '#0f172a',
-                                                borderColor: '#334155',
-                                                color: '#f8fafc',
+                                                backgroundColor: 'var(--color-surface-card)',
+                                                borderColor: 'var(--color-border-main)',
+                                                color: 'var(--color-text-main)',
                                                 borderRadius: '8px',
-                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.4)'
+                                                boxShadow: 'var(--shadow-card)'
                                             }}
-                                            itemStyle={{color: '#fff'}}
+                                            itemStyle={{color: 'var(--color-text-main)'}}
                                         />
                                         <Line
                                             type="monotone"
                                             dataKey="leadCount"
                                             stroke="#3b82f6" strokeWidth={3}
-                                            dot={{r: 4, fill: '#0f172a', stroke: '#3b82f6', strokeWidth: 2}}
+                                            dot={{
+                                                r: 4,
+                                                fill: 'var(--color-surface-main)',
+                                                stroke: '#3b82f6',
+                                                strokeWidth: 2
+                                            }}
                                             activeDot={{r: 6, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2}}
                                             fill="url(#colorThisMonth)"
                                         />
@@ -211,7 +217,12 @@ const AdminDashboard: React.FC = () => {
                                             type="monotone"
                                             dataKey="quoteCount"
                                             stroke="#8b5cf6" strokeWidth={3}
-                                            dot={{r: 4, fill: '#0f172a', stroke: '#8b5cf6', strokeWidth: 2}}
+                                            dot={{
+                                                r: 4,
+                                                fill: 'var(--color-surface-main)',
+                                                stroke: '#8b5cf6',
+                                                strokeWidth: 2
+                                            }}
                                             activeDot={{r: 6, fill: '#8b5cf6', stroke: '#fff', strokeWidth: 2}}
                                         />
                                     </LineChart>
@@ -220,75 +231,76 @@ const AdminDashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-sm">
+                    <div className="flex flex-col rounded-xl border border-border-main bg-surface-main p-6 shadow-sm">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="bg-primary/10 p-1.5 rounded text-primary">
                                 <span className="material-symbols-outlined text-[20px]">donut_large</span>
                             </div>
-                            <h3 className="text-white text-base font-semibold">Status by percentage</h3>
+                            <h3 className="text-text-main text-base font-semibold">Status by percentage</h3>
                         </div>
                         <div className="flex-1 flex flex-col justify-center items-center relative py-4">
                             {isLoadingStats ? (
-                                <Skeleton className="h-[200px] w-[200px] rounded-full bg-slate-800"/>
+                                <Skeleton className="h-[200px] w-[200px] rounded-full bg-muted"/>
                             ) : (
                                 <>
                                     <div className="flex flex-wrap justify-center gap-4 mb-4">
-                                        {statusData.map((entry, index) => (
-                                            <div key={index} className="flex items-center gap-2">
+                                        {statusData.map((entry) => (
+                                            <div key={entry.name} className="flex items-center gap-2">
                                                 <div className="w-3 h-3 rounded-full"
                                                      style={{backgroundColor: entry.color}}></div>
-                                                <span className="text-sm text-slate-400">
+                                                <span className="text-sm text-text-secondary">
                                                     {`${Math.round((entry.value / (stats?.totalLeads || 1)) * 100)}%`}
                                                 </span>
                                             </div>
                                         ))}
                                     </div>
                                     <div className="relative w-full h-[220px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={chartData}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={60}
-                                                outerRadius={75}
-                                                paddingAngle={5}
-                                                dataKey="value"
-                                                stroke="none"
-                                                cornerRadius={4}
-                                            >
-                                                {chartData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={entry.color}/>
-                                                ))}
-                                            </Pie>
-                                            <Pie
-                                                data={quoteChartData}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={85}
-                                                outerRadius={100}
-                                                paddingAngle={5}
-                                                dataKey="value"
-                                                stroke="none"
-                                                cornerRadius={4}
-                                            >
-                                                {quoteChartData.map((entry, index) => (
-                                                    <Cell key={`cell-quote-${index}`} fill={entry.color}/>
-                                                ))}
-                                            </Pie>
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                                <div className="flex flex-wrap justify-center gap-4 mt-4">
-                                        {quoteStatusData.map((entry, index) => (
-                                            <div key={index} className="flex items-center gap-2">
-                                                <div className="w-3 h-3 rounded-full" style={{backgroundColor: entry.color}}></div>
-                                                <span className="text-sm text-slate-400">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={chartData}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={75}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                    stroke="none"
+                                                    cornerRadius={4}
+                                                >
+                                                    {chartData.map((entry) => (
+                                                        <Cell key={`cell-${entry.name}`} fill={entry.color}/>
+                                                    ))}
+                                                </Pie>
+                                                <Pie
+                                                    data={quoteChartData}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={85}
+                                                    outerRadius={100}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                    stroke="none"
+                                                    cornerRadius={4}
+                                                >
+                                                    {quoteChartData.map((entry) => (
+                                                        <Cell key={`cell-quote-${entry.name}`} fill={entry.color}/>
+                                                    ))}
+                                                </Pie>
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div className="flex flex-wrap justify-center gap-4 mt-4">
+                                        {quoteStatusData.map((entry) => (
+                                            <div key={entry.name} className="flex items-center gap-2">
+                                                <div className="w-3 h-3 rounded-full"
+                                                     style={{backgroundColor: entry.color}}></div>
+                                                <span className="text-sm text-text-secondary">
                                                     {`${Math.round((entry.value / (quoteStats.total || 1)) * 100)}%`}
                                                 </span>
                                             </div>
                                         ))}
-                                </div>
+                                    </div>
                                 </>
                             )}
                         </div>

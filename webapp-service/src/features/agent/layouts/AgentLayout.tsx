@@ -1,9 +1,9 @@
-import React, { ReactNode, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { LayoutDashboard } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import SidebarNavigation, { NavItem } from '@/components/ui/sidebar-navigation';
-import { UserDropdown } from '@/components/ui/user-dropdown';
+import React, {ReactNode, useState} from 'react';
+import {cn} from '@/lib/utils';
+import {LayoutDashboard} from 'lucide-react';
+import {useAuth} from '@/context/AuthContext';
+import SidebarNavigation, {NavItem} from '@/components/ui/sidebar-navigation';
+import {UserDropdown} from '@/components/ui/user-dropdown';
 
 const navItems: NavItem[] = [
     {
@@ -17,8 +17,8 @@ interface AgentLayoutProps {
     children: ReactNode;
 }
 
-const AgentLayout: React.FC<AgentLayoutProps> = ({ children }) => {
-    const { user } = useAuth();
+const AgentLayout: React.FC<AgentLayoutProps> = ({children}) => {
+    const {user} = useAuth();
     const [openMenus, setOpenMenus] = useState<string[]>([]);
 
     const toggleMenu = (label: string) => {
@@ -28,37 +28,37 @@ const AgentLayout: React.FC<AgentLayoutProps> = ({ children }) => {
     };
 
     return (
-        <div className="flex h-screen bg-slate-950 font-sans overflow-hidden">
+        <div className="flex h-screen bg-background-main font-sans overflow-hidden">
             <aside
-                className="w-64 flex-shrink-0 border-r border-slate-800 bg-slate-950 text-slate-300 flex flex-col shadow-sm">
-                <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
+                className="w-64 flex-shrink-0 border-r border-border-main bg-surface-main text-text-secondary flex flex-col shadow-sm">
+                <div className="h-16 flex items-center justify-between px-4 border-b border-border-main">
                     <div className="flex items-center gap-2">
                         <div
                             className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl">P
                         </div>
-                        <span className="font-semibold text-white tracking-tight">PICMA Agent</span>
+                        <span className="font-semibold text-text-main tracking-tight">PICMA Agent</span>
                     </div>
                 </div>
 
                 <div className="flex-1 py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar">
-                    <SidebarNavigation items={navItems} openMenus={openMenus} toggleMenu={toggleMenu} />
+                    <SidebarNavigation items={navItems} openMenus={openMenus} toggleMenu={toggleMenu}/>
                 </div>
             </aside>
 
-            <main className="flex-1 flex flex-col overflow-hidden bg-slate-950 relative">
+            <main className="flex-1 flex flex-col overflow-hidden bg-background-main relative">
                 <header
-                    className="h-16 flex items-center justify-between px-8 border-b border-slate-800 bg-slate-950 flex-shrink-0 shadow-sm z-10">
+                    className="h-16 flex items-center justify-between px-8 border-b border-border-main bg-surface-main flex-shrink-0 shadow-sm z-10">
                     <div>
-                        <h1 className="text-xl font-semibold text-white">Agent dashboard</h1>
+                        <h1 className="text-xl font-semibold text-text-main">Agent dashboard</h1>
                         <div className="flex items-center gap-2">
                             <span
-                                className={cn("text-xs font-medium px-2 py-0.5 rounded-full", "bg-blue-500/20 text-blue-300")}>
+                                className={cn("text-xs font-medium px-2 py-0.5 rounded-full", "bg-primary/10 text-primary")}>
                                 Insurance agent
                             </span>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <UserDropdown displayName={user?.name} username={user?.username} roleLabel="Agent" />
+                        <UserDropdown displayName={user?.name} username={user?.username} roleLabel="Agent"/>
                     </div>
                 </header>
 

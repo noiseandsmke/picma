@@ -8,6 +8,7 @@ import {jwtDecode} from 'jwt-decode';
 
 import {authService} from '@/services/authService';
 import {toast} from "sonner";
+import {Eye, EyeOff, Loader2, Lock, User} from 'lucide-react';
 
 const loginSchema = z.object({
     username: z.string().min(1, 'Username is required'),
@@ -91,80 +92,80 @@ const LoginForm: React.FC = () => {
                 description: 'Redirecting to dashboard...',
             });
 
-            const upperRoles = new Set(roles.map((r: string) => r.toUpperCase()));
-            if (upperRoles.has('ADMIN')) {
-                navigate('/admin/dashboard');
-            } else if (upperRoles.has('AGENT')) {
-                navigate('/agent/dashboard');
-            } else {
-                navigate('/owner/dashboard');
-            }
+            const targetDashboard = getDashboardPath(roles);
+            navigate(targetDashboard);
 
         } catch (error: any) {
-            console.error('Login error:', error);
-            const errData = error.response?.data;
-            const status = error.response?.status;
-
-            if (errData?.error === "invalid_grant") {
-                if (errData?.error_description === "Account disabled") {
-                    toast.error('Account Disabled', {
-                        description: 'Your account has been disabled. Please contact support.',
-                    });
-                } else {
-                    toast.error('Login Failed', {
-                        description: 'Incorrect username or password',
-                    });
-                }
-                return;
-            }
-
-            if (errData?.error === "unauthorized_client") {
-                toast.error('Authorization Error', {
-                    description: 'Client not authorized',
-                });
-                return;
-            }
-
-            if (status === 500) {
-                toast.error('Server Error', {
-                    description: 'Something went wrong on our end. Please try again later.',
-                });
-                return;
-            }
-
-            if (error.code === 'ERR_NETWORK') {
-                toast.error('Connection Error', {
-                    description: 'Unable to connect to server. Please check your internet connection.',
-                });
-                return;
-            }
-
-            const errorMessage = errData?.error_description || errData?.message || 'An unexpected error occurred during login.';
-            toast.error('Login Failed', {
-                description: errorMessage,
-            });
+            handleLoginError(error);
         } finally {
             setIsLoading(false);
         }
     };
 
+    const getDashboardPath = (roles: string[]) => {
+        const upperRoles = new Set(roles.map((r: string) => r.toUpperCase()));
+        if (upperRoles.has('ADMIN')) return '/admin/dashboard';
+        if (upperRoles.has('AGENT')) return '/agent/dashboard';
+        return '/owner/dashboard';
+    };
+
+    const handleLoginError = (error: any) => {
+        console.error('Login error:', error);
+        const errData = error.response?.data;
+        const status = error.response?.status;
+
+        if (errData?.error === "invalid_grant") {
+            toast.error('Login Failed', {
+                description: errData?.error_description === "Account disabled"
+                    ? 'Your account has been disabled. Please contact support.'
+                    : 'Incorrect username or password',
+            });
+            return;
+        }
+
+        if (errData?.error === "unauthorized_client") {
+            toast.error('Authorization Error', {
+                description: 'Client not authorized',
+            });
+            return;
+        }
+
+        if (status === 500) {
+            toast.error('Server Error', {
+                description: 'Something went wrong on our end. Please try again later.',
+            });
+            return;
+        }
+
+        if (error.code === 'ERR_NETWORK') {
+            toast.error('Connection Error', {
+                description: 'Unable to connect to server. Please check your internet connection.',
+            });
+            return;
+        }
+
+        toast.error('Login Failed', {
+            description: errData?.error_description || errData?.message || 'An unexpected error occurred during login.',
+        });
+    };
+
     return (
         <div className="w-full max-w-[440px] flex flex-col gap-8 relative z-10">
             <div className="space-y-2 text-center lg:text-left">
-                <h1 className="text-white text-3xl font-bold tracking-tight">Log in to your account</h1>
-                <p className="text-slate-400 text-sm">Enter your credentials to access the dashboard.</p>
+                <h1 className="text-text-main text-3xl font-bold tracking-tight">Log in to your account</h1>
+                <p className="text-text-secondary text-sm">Enter your credentials to access the dashboard.</p>
             </div>
 
             <form className="flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)}>
                 <div className="space-y-1.5">
-                    <label className="text-slate-300 text-xs font-semibold uppercase tracking-wide ml-1"
+                    <label className="text-text-secondary text-xs font-semibold uppercase tracking-wide ml-1"
                            htmlFor="username">Username</label>
                     <div className="relative group">
-                        <span
-                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors material-symbols-outlined text-[20px]">person</span>
+                        <User
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors h-5 w-5"/>
                         <input
                             {...register("username")}
-                            className="w-full rounded-lg bg-surface-dark border border-slate-700 focus:border-primary focus:ring-1 focus:ring-primary text-slate-200 placeholder:text-slate-600 h-11 pl-10 pr-3 text-sm transition-all shadow-sm"
+                            className="w-full rounded-lg bg-surface-main border border-border-main focus:border-primary focus:ring-1 focus:ring-primary text-text-main placeholder:text-text-muted h-11 pl-10 pr-3 text-sm transition-all shadow-sm"
                             id="username"
                             placeholder="Enter your username"
                             type="text"
@@ -175,15 +176,15 @@ const LoginForm: React.FC = () => {
 
                 <div className="space-y-1.5">
                     <div className="flex justify-between items-center ml-1">
-                        <label className="text-slate-300 text-xs font-semibold uppercase tracking-wide"
+                        <label className="text-text-secondary text-xs font-semibold uppercase tracking-wide"
                                htmlFor="password">Password</label>
                     </div>
                     <div className="relative group">
-                        <span
-                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors material-symbols-outlined text-[20px]">lock</span>
+                        <Lock
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors h-5 w-5"/>
                         <input
                             {...register("password")}
-                            className="w-full rounded-lg bg-surface-dark border border-slate-700 focus:border-primary focus:ring-1 focus:ring-primary text-slate-200 placeholder:text-slate-600 h-11 pl-10 pr-10 text-sm transition-all shadow-sm"
+                            className="w-full rounded-lg bg-surface-main border border-border-main focus:border-primary focus:ring-1 focus:ring-primary text-text-main placeholder:text-text-muted h-11 pl-10 pr-10 text-sm transition-all shadow-sm"
                             id="password"
                             placeholder="••••••••"
                             type={showPassword ? "text" : "password"}
@@ -193,22 +194,28 @@ const LoginForm: React.FC = () => {
                             type="button"
                             className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer group bg-transparent border-0 outline-none"
                             onClick={() => setShowPassword(!showPassword)}>
-                            <span
-                                className="material-symbols-outlined text-slate-500 group-hover:text-slate-300 transition-colors text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                            {showPassword ? <EyeOff
+                                    className="text-text-muted group-hover:text-text-main transition-colors h-5 w-5"/> :
+                                <Eye className="text-text-muted group-hover:text-text-main transition-colors h-5 w-5"/>}
                         </button>
                     </div>
                 </div>
 
                 <button
-                    className="mt-4 w-full flex items-center justify-center rounded-lg h-11 bg-primary hover:bg-primary-hover text-white text-sm font-semibold tracking-wide transition-all shadow-[0_4px_14px_0_rgba(59,130,246,0.39)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.23)] active:scale-[0.98]"
+                    className="mt-4 w-full flex items-center justify-center rounded-lg h-11 bg-primary hover:bg-primary-hover text-white text-sm font-semibold tracking-wide transition-all shadow-[0_4px_14px_0_rgba(59,130,246,0.39)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.23)] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                     type="submit"
                     disabled={isLoading}
                 >
-                    {isLoading ? 'Logging in...' : 'Log in'}
+                    {isLoading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                            Logging in...
+                        </>
+                    ) : 'Log in'}
                 </button>
 
                 <div className="mt-2 text-center">
-                    <span className="text-slate-400 text-sm">New to PICMA? </span>
+                    <span className="text-text-secondary text-sm">New to PICMA? </span>
                     <Link to="/signup"
                           className="text-primary font-semibold text-sm hover:underline hover:text-primary-hover transition-colors">Create
                         an account</Link>

@@ -34,7 +34,7 @@ export const fetchAllProperties = async (sort?: string, direction?: string): Pro
     if (sort) params.sort = sort;
     if (direction) params.direction = direction;
 
-    const response = await apiClient.get<PropertyInfoDto[]>(`${BASE_PATH}`, { params });
+    const response = await apiClient.get<PropertyInfoDto[]>(`${BASE_PATH}`, {params});
     return response.data;
 };
 

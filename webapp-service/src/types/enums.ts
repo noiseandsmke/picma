@@ -36,7 +36,7 @@ export enum ConstructionType {
 export const COVERAGE_CODES = Object.values(CoverageCode);
 export const LEAD_STATUSES = Object.values(LeadStatus);
 export const CONSTRUCTION_TYPES = [
-    { value: ConstructionType.WOOD, label: 'Wood Frame' },
-    { value: ConstructionType.CONCRETE, label: 'Concrete' },
-    { value: ConstructionType.HYBRID, label: 'Hybrid' }
+    {value: ConstructionType.WOOD, label: 'Wood Frame'},
+    {value: ConstructionType.CONCRETE, label: 'Concrete'},
+    {value: ConstructionType.HYBRID, label: 'Hybrid'}
 ];

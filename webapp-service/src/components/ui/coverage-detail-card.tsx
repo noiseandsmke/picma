@@ -44,14 +44,14 @@ export const CoverageDetailCard: React.FC<CoverageDetailCardProps> = ({
 
     return (
         <Card className={cn(
-            "overflow-hidden border transition-all duration-200 hover:bg-slate-900/80",
+            "overflow-hidden border transition-all duration-200 hover:bg-muted",
             styles.bg, styles.border,
             className
         )}>
             <div className="p-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                     <div className={cn(
-                        "h-8 w-8 rounded-lg flex items-center justify-center text-sm shrink-0 bg-slate-950/50",
+                        "h-8 w-8 rounded-lg flex items-center justify-center text-sm shrink-0 bg-muted",
                         styles.border
                     )}>
                         <span className={cn("font-bold", styles.text)}>#{code.substring(0, 1)}</span>
@@ -61,7 +61,7 @@ export const CoverageDetailCard: React.FC<CoverageDetailCardProps> = ({
                             {config.label}
                             {config.mandatory && (
                                 <Badge variant="secondary"
-                                       className="h-4 text-[9px] px-1.5 bg-slate-900/50 text-slate-400 border-0">
+                                       className="h-4 text-[9px] px-1.5 bg-muted text-text-muted border-0">
                                     Required
                                 </Badge>
                             )}
@@ -70,13 +70,13 @@ export const CoverageDetailCard: React.FC<CoverageDetailCardProps> = ({
                 </div>
 
                 <div className="flex items-center gap-4 text-xs">
-                     <div className="text-right">
-                        <p className="text-[9px] uppercase tracking-wider text-slate-500 mb-0.5">Limit</p>
-                        <p className="font-mono font-medium text-slate-200">{formatCurrency(coverage.limit)}</p>
+                    <div className="text-right">
+                        <p className="text-[9px] uppercase tracking-wider text-text-muted mb-0.5">Limit</p>
+                        <p className="font-mono font-medium text-text-main">{formatCurrency(coverage.limit)}</p>
                     </div>
-                    <div className="text-right pl-4 border-l border-slate-700/50">
-                        <p className="text-[9px] uppercase tracking-wider text-slate-500 mb-0.5">Deductible</p>
-                        <p className="font-mono font-medium text-slate-200">{(coverage.deductible * 100).toFixed(1)}%</p>
+                    <div className="text-right pl-4 border-l border-border-main/50">
+                        <p className="text-[9px] uppercase tracking-wider text-text-muted mb-0.5">Deductible</p>
+                        <p className="font-mono font-medium text-text-main">{(coverage.deductible * 100).toFixed(1)}%</p>
                     </div>
                 </div>
             </div>

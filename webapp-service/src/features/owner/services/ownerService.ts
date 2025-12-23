@@ -1,6 +1,6 @@
 import apiClient from '@/services/apiClient';
-import { fetchUserById } from '../../admin/services/userService';
-import { PropertyInfoDto } from "@/features/admin/services/propertyService";
+import {fetchUserById} from '../../admin/services/userService';
+import {PropertyInfoDto} from "@/features/admin/services/propertyService";
 
 export interface AgentDto {
     id: string;

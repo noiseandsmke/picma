@@ -32,7 +32,7 @@ export function ConfirmDialog({
                               }: ConfirmDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] bg-slate-950 border-slate-800 text-slate-200">
+            <DialogContent className="sm:max-w-[425px] bg-surface-main border-border-main text-text-main">
                 <DialogHeader className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                         {variant === 'destructive' && (
@@ -40,9 +40,9 @@ export function ConfirmDialog({
                                 <AlertTriangle className="h-5 w-5 text-red-500"/>
                             </div>
                         )}
-                        <DialogTitle className="text-lg font-semibold text-white">{title}</DialogTitle>
+                        <DialogTitle className="text-lg font-semibold text-text-main">{title}</DialogTitle>
                     </div>
-                    <DialogDescription className="text-slate-400">
+                    <DialogDescription className="text-text-muted">
                         {description}
                     </DialogDescription>
                 </DialogHeader>
@@ -50,7 +50,7 @@ export function ConfirmDialog({
                     <Button
                         variant="ghost"
                         onClick={() => onOpenChange(false)}
-                        className="text-slate-400 hover:text-white hover:bg-slate-800"
+                        className="text-text-muted hover:text-text-main hover:bg-muted"
                     >
                         {cancelText}
                     </Button>
@@ -60,10 +60,10 @@ export function ConfirmDialog({
                             onConfirm();
                             onOpenChange(false);
                         }}
-                        className={variant === 'destructive' ? "bg-red-600 hover:bg-red-700 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white"}
                     >
                         {confirmText}
                     </Button>
+                    Riverside: removed redundant manual class overrides.
                 </DialogFooter>
             </DialogContent>
         </Dialog>

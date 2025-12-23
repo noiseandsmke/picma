@@ -1,8 +1,8 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { useAuth } from '@/context/AuthContext';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,} from "@/components/ui/dialog";
+import {Label} from "@/components/ui/label";
+import {useAuth} from '@/context/AuthContext';
+import {ScrollArea} from "@/components/ui/scroll-area";
 
 
 interface ProfileDialogProps {
@@ -10,8 +10,8 @@ interface ProfileDialogProps {
     onOpenChange: (open: boolean) => void;
 }
 
-export const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onOpenChange }) => {
-    const { user } = useAuth();
+export const ProfileDialog: React.FC<ProfileDialogProps> = ({open, onOpenChange}) => {
+    const {user} = useAuth();
 
     if (!user) return null;
 
@@ -20,9 +20,9 @@ export const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onOpenChange
 
         return (
             <div className={`space-y-1.5 ${fullWidth ? 'col-span-2' : ''}`}>
-                <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">{label}</Label>
+                <Label className="text-xs font-medium text-text-muted uppercase tracking-wider">{label}</Label>
                 <div
-                    className="text-sm font-medium text-slate-200 bg-slate-950 p-2.5 rounded-md border border-slate-800 hover:border-primary/50 transition-colors break-all">
+                    className="text-sm font-medium text-text-main bg-muted p-2.5 rounded-md border border-border-main hover:border-primary/50 transition-colors break-all">
                     {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
                 </div>
             </div>
@@ -32,12 +32,13 @@ export const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onOpenChange
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className="sm:max-w-[600px] bg-slate-950 border-slate-800 text-slate-100 p-0 overflow-hidden flex flex-col max-h-[85vh]">
-                <DialogHeader className="px-6 py-4 border-b border-slate-700 bg-slate-950 relative overflow-hidden">
+                className="sm:max-w-[600px] bg-surface-main border-border-main text-text-main p-0 overflow-hidden flex flex-col max-h-[85vh]">
+                <DialogHeader
+                    className="px-6 py-4 border-b border-border-main bg-surface-main relative overflow-hidden">
                     <DialogTitle className="text-xl">Profile Details</DialogTitle>
-                    <div className="absolute bottom-0 left-0 w-full h-[1px] bg-slate-700"></div>
+                    <div className="absolute bottom-0 left-0 w-full h-[1px] bg-border-main"></div>
                     <div className="absolute bottom-0 left-6 w-16 h-[2px] bg-primary"></div>
-                    <DialogDescription className="text-slate-400">
+                    <DialogDescription className="text-text-muted">
                         View your account information and security details.
                     </DialogDescription>
                 </DialogHeader>
@@ -71,15 +72,13 @@ export const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onOpenChange
                         </section>
 
 
-
-
                     </div>
                 </ScrollArea>
 
-                <div className="p-4 border-t border-slate-800 bg-slate-950 flex justify-end">
+                <div className="p-4 border-t border-border-main bg-surface-main flex justify-end">
                     <button
                         onClick={() => onOpenChange(false)}
-                        className="px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-md shadow-[0_4px_14px_0_rgba(59,130,246,0.39)] transition-colors"
+                        className="px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-md shadow-lg transition-colors"
                     >
                         Close
                     </button>

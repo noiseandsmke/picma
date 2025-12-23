@@ -1,5 +1,5 @@
 import apiClient from '@/services/apiClient';
-import { PropertyQuoteDto } from "@/features/admin/services/quoteService";
+import {PropertyQuoteDto} from "@/features/admin/services/quoteService";
 
 export type LeadAction = 'INTERESTED' | 'ACCEPTED' | 'REJECTED' | null;
 
@@ -111,7 +111,7 @@ export const fetchAgentsByZip = async (zipCode: string): Promise<string[]> => {
 
 export const fetchAgentActions = async (agentId: string): Promise<AgentActionDto[]> => {
     const response = await apiClient.get<AgentActionDto[]>(`${AGENT_BASE_PATH}/leads/actions`, {
-        params: { agentId }
+        params: {agentId}
     });
     return response.data;
 };

@@ -2,7 +2,7 @@ import React from 'react';
 import LoginForm from '../components/LoginForm';
 
 const SigninView: React.FC = () => {
-    return <LoginForm />;
+    return <LoginForm/>;
 };
 
 export default SigninView;

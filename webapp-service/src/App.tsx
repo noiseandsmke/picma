@@ -1,7 +1,8 @@
 import React from 'react';
-import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
-import { Toaster } from 'sonner';
+import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom';
+import {Toaster} from 'sonner';
 import ProtectedRoute from '@/layouts/ProtectedRoute';
+import {ThemeToggle} from '@/components/ThemeToggle';
 import AuthLayout from '@/layouts/AuthLayout';
 import SigninView from '@/features/auth/views/SigninView';
 import SignupView from '@/features/auth/views/SignupView';
@@ -12,49 +13,51 @@ import AgentDashboard from '@/features/agent/views/AgentDashboard';
 import OwnerDashboard from '@/features/owner/views/OwnerDashboard';
 import AdminUsersView from '@/features/admin/views/AdminUsersView';
 import AdminPropertiesView from '@/features/admin/views/AdminPropertiesView';
-import { UserRole } from '@/types/auth.types';
+import {UserRole} from '@/types/auth.types';
 
 const App: React.FC = () => {
     return (
         <Router>
-            <Routes>
-                <Route element={<AuthLayout />}>
-                    <Route path="/signin" element={<SigninView />} />
-                    <Route path="/signup" element={<SignupView />} />
-                </Route>
-                <Route element={<ProtectedRoute allowedRoles={[UserRole.ADMIN]} />}>
-                    <Route path="/admin">
-                        <Route path="dashboard" element={<AdminDashboard />} />
-                        <Route path="users/*" element={<AdminUsersView />} />
-                        <Route path="properties" element={<AdminPropertiesView />} />
-                        <Route path="leads" element={<AdminLeadsView />} />
-                        <Route path="quotes" element={<AdminQuotesView />} />
-                        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <div className="relative min-h-screen bg-background-main text-text-main transition-colors duration-300">
+                <ThemeToggle/>
+                <Routes>
+                    <Route element={<AuthLayout/>}>
+                        <Route path="/signin" element={<SigninView/>}/>
+                        <Route path="/signup" element={<SignupView/>}/>
                     </Route>
-                </Route>
-                <Route element={<ProtectedRoute allowedRoles={[UserRole.AGENT]} />}>
-                    <Route path="/agent/*" element={<AgentDashboard />} />
-                </Route>
-                <Route element={<ProtectedRoute allowedRoles={[UserRole.OWNER]} />}>
-                    <Route path="/owner/*" element={<OwnerDashboard />} />
-                </Route>
+                    <Route element={<ProtectedRoute allowedRoles={[UserRole.ADMIN]}/>}>
+                        <Route path="/admin">
+                            <Route path="dashboard" element={<AdminDashboard/>}/>
+                            <Route path="users/*" element={<AdminUsersView/>}/>
+                            <Route path="properties" element={<AdminPropertiesView/>}/>
+                            <Route path="leads" element={<AdminLeadsView/>}/>
+                            <Route path="quotes" element={<AdminQuotesView/>}/>
+                            <Route index element={<Navigate to="/admin/dashboard" replace/>}/>
+                        </Route>
+                    </Route>
+                    <Route element={<ProtectedRoute allowedRoles={[UserRole.AGENT]}/>}>
+                        <Route path="/agent/*" element={<AgentDashboard/>}/>
+                    </Route>
+                    <Route element={<ProtectedRoute allowedRoles={[UserRole.OWNER]}/>}>
+                        <Route path="/owner/*" element={<OwnerDashboard/>}/>
+                    </Route>
 
-                <Route path="/" element={<Navigate to="/signin" replace />} />
-            </Routes>
-            <Toaster
-                position="top-right"
-                theme="dark"
-                richColors={false}
-                toastOptions={{
-                    className: 'custom-toast',
-                    duration: 4000,
-                    style: {
-                        background: '#0b0c15',
-                        border: '1px solid #1e293b',
-                        color: '#e2e8f0',
-                    }
-                }}
-            />
+                    <Route path="/" element={<Navigate to="/signin" replace/>}/>
+                </Routes>
+                <Toaster
+                    position="top-right"
+                    theme="system"
+                    richColors={false}
+                    toastOptions={{
+                        duration: 4000,
+                        style: {
+                            background: 'var(--color-surface-card)',
+                            border: '1px solid var(--color-border-main)',
+                            color: 'var(--color-text-main)',
+                        }
+                    }}
+                />
+            </div>
         </Router>
     );
 };

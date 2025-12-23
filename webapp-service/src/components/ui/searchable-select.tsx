@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Check, ChevronDown, Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
+import React, {useEffect, useRef, useState} from 'react';
+import {Check, ChevronDown, Search} from 'lucide-react';
+import {cn} from '@/lib/utils';
+import {Input} from '@/components/ui/input';
 
 interface Option {
     value: string | number;
@@ -20,14 +20,14 @@ interface SearchableSelectProps {
 }
 
 export const SearchableSelect: React.FC<SearchableSelectProps> = ({
-    options,
-    value,
-    onChange,
-    placeholder = "Select...",
-    className,
-    isLoading = false,
-    disabled = false
-}) => {
+                                                                      options,
+                                                                      value,
+                                                                      onChange,
+                                                                      placeholder = "Select...",
+                                                                      className,
+                                                                      isLoading = false,
+                                                                      disabled = false
+                                                                  }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState("");
     const containerRef = useRef<HTMLDivElement>(null);
@@ -66,8 +66,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
             <button
                 type="button"
                 className={cn(
-                    "flex h-10 w-full items-center justify-between rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm ring-offset-slate-950 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 cursor-pointer text-slate-200",
-                    isOpen && "ring-2 ring-slate-400 ring-offset-2 border-slate-600",
+                    "flex h-10 w-full items-center justify-between rounded-md border border-border-main bg-muted px-3 py-2 text-sm ring-offset-background placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer text-text-main",
+                    isOpen && "ring-2 ring-primary ring-offset-2 border-primary/50",
                     disabled && "cursor-not-allowed opacity-50",
                     className
                 )}
@@ -82,19 +82,19 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     }
                 }}
             >
-                <span className={cn(!selectedOption && "text-slate-500")}>
+                <span className={cn(!selectedOption && "text-text-muted")}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
-                <ChevronDown className="h-4 w-4 opacity-50" />
+                <ChevronDown className="h-4 w-4 opacity-50"/>
             </button>
 
             {isOpen && !disabled && (
                 <div
-                    className="absolute z-50 mt-1 max-h-[300px] w-full min-w-[300px] overflow-hidden rounded-md border border-slate-700 bg-slate-900 text-slate-50 shadow-md animate-in fade-in-0 zoom-in-95">
-                    <div className="flex items-center border-b border-slate-800 px-3">
-                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                    className="absolute z-50 mt-1 max-h-[300px] w-full min-w-[300px] overflow-hidden rounded-md border border-border-main bg-surface-main text-text-main shadow-md animate-in fade-in-0 zoom-in-95">
+                    <div className="flex items-center border-b border-border-main px-3">
+                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50"/>
                         <Input
-                            className="border-0 bg-transparent px-0 py-3 text-sm placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 h-9"
+                            className="border-0 bg-transparent px-0 py-3 text-sm placeholder:text-text-muted focus-visible:ring-0 focus-visible:ring-offset-0 h-9"
                             placeholder="Search..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -107,9 +107,9 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                         className="max-h-[200px] overflow-y-auto p-1"
                         id="searchable-struct-listbox"
                         role="listbox">
-                        {isLoading && <div className="py-6 text-center text-sm text-slate-500">Loading...</div>}
+                        {isLoading && <div className="py-6 text-center text-sm text-text-muted">Loading...</div>}
                         {!isLoading && filteredOptions.length === 0 && (
-                            <div className="py-6 text-center text-sm text-slate-500">No results found.</div>
+                            <div className="py-6 text-center text-sm text-text-muted">No results found.</div>
                         )}
                         {!isLoading && filteredOptions.length > 0 && (
                             filteredOptions.map((option) => (
@@ -119,8 +119,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                                     aria-selected={value === option.value}
                                     tabIndex={0}
                                     className={cn(
-                                        "relative flex select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-slate-800 hover:text-slate-50 cursor-pointer focus:bg-slate-800 focus:text-slate-50",
-                                        value === option.value && "bg-slate-800 text-slate-50"
+                                        "relative flex select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-muted hover:text-text-main cursor-pointer focus:bg-muted focus:text-text-main",
+                                        value === option.value && "bg-muted text-text-main"
                                     )}
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -143,7 +143,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                                     <div className="flex flex-col">
                                         <span>{option.label}</span>
                                         {option.sublabel && (
-                                            <span className="text-xs text-slate-500">{option.sublabel}</span>
+                                            <span className="text-xs text-text-muted">{option.sublabel}</span>
                                         )}
                                     </div>
                                 </div>

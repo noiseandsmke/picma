@@ -1,12 +1,12 @@
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import {useEffect} from "react";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { UserDto } from "../services/userService";
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,} from "@/components/ui/dialog";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {UserDto} from "../services/userService";
 
 const editUserSchema = z.object({
     firstName: z.string().optional(),
@@ -24,10 +24,10 @@ interface EditUserDialogProps {
 }
 
 export function EditUserDialog({
-    open,
-    onOpenChange,
-    user,
-}: Readonly<EditUserDialogProps>) {
+                                   open,
+                                   onOpenChange,
+                                   user,
+                               }: Readonly<EditUserDialogProps>) {
     const {
         register,
         reset,
@@ -56,50 +56,50 @@ export function EditUserDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] bg-slate-900 border-slate-800 text-slate-200">
+            <DialogContent className="sm:max-w-[425px] bg-surface-main border-border-main text-text-main">
                 <DialogHeader>
-                    <DialogTitle className="text-white">View user profile</DialogTitle>
+                    <DialogTitle className="text-text-main">View user profile</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="firstName" className="text-slate-300">First name</Label>
+                            <Label htmlFor="firstName" className="text-text-secondary">First name</Label>
                             <Input
                                 id="firstName"
                                 {...register("firstName")}
                                 disabled
-                                className="bg-slate-950 border-slate-700 text-slate-400 cursor-not-allowed"
+                                className="bg-input-bg border-input-border text-text-muted cursor-not-allowed"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="lastName" className="text-slate-300">Last name</Label>
+                            <Label htmlFor="lastName" className="text-text-secondary">Last name</Label>
                             <Input
                                 id="lastName"
                                 {...register("lastName")}
                                 disabled
-                                className="bg-slate-950 border-slate-700 text-slate-400 cursor-not-allowed"
+                                className="bg-input-bg border-input-border text-text-muted cursor-not-allowed"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="email" className="text-slate-300">Email</Label>
+                        <Label htmlFor="email" className="text-text-secondary">Email</Label>
                         <Input
                             id="email"
                             {...register("email")}
                             disabled
-                            className="bg-slate-950 border-slate-700 text-slate-400 cursor-not-allowed"
+                            className="bg-input-bg border-input-border text-text-muted cursor-not-allowed"
                         />
                     </div>
 
                     {isAgent && (
                         <div className="space-y-2">
-                            <Label htmlFor="zipcode" className="text-slate-300">Zip code</Label>
+                            <Label htmlFor="zipcode" className="text-text-secondary">Zip code</Label>
                             <Input
                                 id="zipcode"
                                 {...register("zipcode")}
                                 disabled
-                                className="bg-slate-950 border-slate-700 text-slate-400 cursor-not-allowed"
+                                className="bg-input-bg border-input-border text-text-muted cursor-not-allowed"
                             />
                         </div>
                     )}
@@ -109,7 +109,7 @@ export function EditUserDialog({
                             type="button"
                             variant="outline"
                             onClick={() => onOpenChange(false)}
-                            className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+                            className="border-input-border text-text-secondary hover:bg-muted hover:text-text-main"
                         >
                             Close
                         </Button>

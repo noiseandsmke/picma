@@ -7,16 +7,9 @@ export const authService = {
         return response.data;
     },
 
-    refresh: async (refreshToken: string, oldAccessToken?: string): Promise<TokenResponse> => {
-        const response = await apiClient.post('/auth/refresh',
-            {refresh_token: refreshToken},
-            {headers: oldAccessToken ? {Authorization: `Bearer ${oldAccessToken}`} : {}}
-        );
-        return response.data;
-    },
 
-    logout: async (refreshToken: string): Promise<void> => {
-        await apiClient.post(`/auth/logout?refresh_token=${refreshToken}`);
+    logout: async (): Promise<void> => {
+        await apiClient.post(`/auth/logout`);
     },
 
     register: async (data: any): Promise<void> => {

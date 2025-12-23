@@ -1,30 +1,28 @@
 import React from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { acceptQuote, fetchQuotesByLeadId, PropertyQuoteDto, rejectQuote } from '@/features/admin/services/quoteService';
-import { formatCurrency } from '@/lib/utils';
-import { fetchUserById } from '@/features/admin/services/userService';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from "@/components/ui/accordion";
-import { FileText } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { OwnerQuoteDetailDialog } from './OwnerQuoteDetailDialog';
-import { LeadDto } from '@/features/admin/services/leadService';
-import { COVERAGE_CONFIG, CoverageCode } from '@/types/enums';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import {acceptQuote, fetchQuotesByLeadId, PropertyQuoteDto, rejectQuote} from '@/features/admin/services/quoteService';
+import {formatCurrency} from '@/lib/utils';
+import {fetchUserById} from '@/features/admin/services/userService';
+import {Skeleton} from '@/components/ui/skeleton';
+import {Badge} from '@/components/ui/badge';
+import {Accordion, AccordionContent, AccordionItem, AccordionTrigger,} from "@/components/ui/accordion";
+import {FileText} from 'lucide-react';
+import {Button} from "@/components/ui/button";
+import {toast} from "sonner";
+import {ConfirmDialog} from "@/components/ui/confirm-dialog";
+import {OwnerQuoteDetailDialog} from './OwnerQuoteDetailDialog';
+import {COVERAGE_CONFIG, CoverageCode} from '@/types/enums';
 
 interface LeadQuotesListProps {
     leadId: number;
-    leadStatus: 'NEW' | 'IN_REVIEW';
 }
 
-export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({ leadId, leadStatus }) => {
+export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({leadId}) => {
     const queryClient = useQueryClient();
     const [actionId, setActionId] = React.useState<{ id: number, type: 'accept' | 'reject' } | null>(null);
     const [selectedQuote, setSelectedQuote] = React.useState<PropertyQuoteDto | null>(null);
 
-    const { data: quotes, isLoading } = useQuery({
+    const {data: quotes, isLoading} = useQuery({
         queryKey: ['quotes', leadId],
         queryFn: () => fetchQuotesByLeadId(leadId),
     });
@@ -32,8 +30,8 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({ leadId, leadStat
     const acceptMutation = useMutation({
         mutationFn: acceptQuote,
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['quotes'] });
-            await queryClient.invalidateQueries({ queryKey: ['owner-leads'] });
+            await queryClient.invalidateQueries({queryKey: ['quotes']});
+            await queryClient.invalidateQueries({queryKey: ['owner-leads']});
             toast.success("Quote accepted successfully");
             setActionId(null);
             setSelectedQuote(null);
@@ -44,7 +42,7 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({ leadId, leadStat
     const rejectMutation = useMutation({
         mutationFn: rejectQuote,
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['quotes'] });
+            await queryClient.invalidateQueries({queryKey: ['quotes']});
             toast.success("Quote rejected successfully");
             setActionId(null);
             setSelectedQuote(null);
@@ -62,17 +60,17 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({ leadId, leadStat
     };
 
     const handleActionFromDetail = (quoteId: number, type: 'accept' | 'reject') => {
-        setActionId({ id: quoteId, type });
+        setActionId({id: quoteId, type});
         setSelectedQuote(null);
     };
 
     if (isLoading) {
-        return <Skeleton className="h-10 w-full bg-slate-800" />;
+        return <Skeleton className="h-10 w-full bg-muted"/>;
     }
 
     if (!quotes || quotes.length === 0) {
         return (
-            <div className="text-sm text-slate-500 py-2 italic text-center border-t border-slate-800">
+            <div className="text-sm text-text-muted py-2 italic text-center border-t border-border-main">
                 No quotes received yet.
             </div>
         );
@@ -80,26 +78,20 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({ leadId, leadStat
 
     const pendingQuotes = quotes.filter(q => q.status !== 'ACCEPTED' && q.status !== 'REJECTED');
 
-    const leadDto: LeadDto = {
-        id: leadId,
-        userInfo: '', propertyInfo: '', status: leadStatus,
-        createDate: new Date().toISOString(),
-
-    };
-
     return (
         <>
-            <Accordion type="single" collapsible className="w-full border-t border-slate-800">
+            <Accordion type="single" collapsible className="w-full border-t border-border-main">
                 <AccordionItem value="quotes" className="border-b-0">
-                    <AccordionTrigger className="text-sm py-3 px-1 hover:no-underline text-slate-300 hover:text-white">
+                    <AccordionTrigger
+                        className="text-sm py-3 px-1 hover:no-underline text-text-secondary hover:text-text-main">
                         <div className="flex items-center justify-between w-full pr-2">
                             <div className="flex items-center gap-2">
-                                <FileText className="h-3 w-3 text-indigo-400" />
+                                <FileText className="h-3 w-3 text-indigo-400"/>
                                 <span>View Received Quotes</span>
                             </div>
                             {pendingQuotes.length > 0 && (
                                 <Badge variant="secondary"
-                                    className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30">
+                                       className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30">
                                     {pendingQuotes.length} Action Required
                                 </Badge>
                             )}
@@ -108,7 +100,7 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({ leadId, leadStat
                     <AccordionContent>
                         <div className="space-y-3 pt-1 pb-2">
                             {quotes.map((quote) => (
-                                <LeadQuoteItem key={quote.id} quote={quote} setSelectedQuote={setSelectedQuote} />
+                                <LeadQuoteItem key={quote.id} quote={quote} setSelectedQuote={setSelectedQuote}/>
                             ))}
                         </div>
                     </AccordionContent>
@@ -119,7 +111,6 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({ leadId, leadStat
                 open={!!selectedQuote}
                 onOpenChange={(open) => !open && setSelectedQuote(null)}
                 quote={selectedQuote}
-                lead={leadDto}
                 onAccept={(id) => handleActionFromDetail(id, 'accept')}
                 onReject={(id) => handleActionFromDetail(id, 'reject')}
                 isPendingAction={acceptMutation.isPending || rejectMutation.isPending}
@@ -140,11 +131,11 @@ export const LeadQuotesList: React.FC<LeadQuotesListProps> = ({ leadId, leadStat
     );
 };
 
-const LeadQuoteItem = ({ quote, setSelectedQuote }: {
+const LeadQuoteItem = ({quote, setSelectedQuote}: {
     quote: PropertyQuoteDto,
     setSelectedQuote: (quote: PropertyQuoteDto) => void
 }) => {
-    const { data: agent } = useQuery({
+    const {data: agent} = useQuery({
         queryKey: ['user', quote.agentId],
         queryFn: () => fetchUserById(quote.agentId),
         staleTime: 1000 * 60 * 5,
@@ -161,16 +152,15 @@ const LeadQuoteItem = ({ quote, setSelectedQuote }: {
 
     return (
         <div key={quote.id}
-            className="bg-slate-950 rounded-lg p-3 border border-slate-700/50 flex flex-col gap-2 transition-colors hover:border-indigo-500/30">
+             className="bg-muted rounded-lg p-3 border border-border-main flex flex-col gap-2 transition-colors hover:border-indigo-500/30">
             <div className="flex justify-between items-start">
                 <div className="flex flex-col">
-                    <span className="text-sm font-medium text-white">{agentName}</span>
-                    <span className="text-xs text-slate-500">
-
+                    <span className="text-sm font-medium text-text-main">{agentName}</span>
+                    <span className="text-xs text-text-muted">
                     </span>
                 </div>
                 <Badge variant="outline"
-                    className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                       className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
                     {formatCurrency(quote.premium.total)}
                 </Badge>
             </div>
@@ -181,14 +171,14 @@ const LeadQuoteItem = ({ quote, setSelectedQuote }: {
                         const config = COVERAGE_CONFIG[c.code as CoverageCode];
                         return config ? (
                             <Badge key={c.code} variant="secondary"
-                                className="text-[10px] h-5 bg-slate-800 text-slate-300 border border-slate-700 gap-1 px-1.5">
+                                   className="text-[10px] h-5 bg-background-main text-text-secondary border border-border-main gap-1 px-1.5">
                                 <span className="">{config.label}</span>
                             </Badge>
                         ) : null;
                     })}
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-slate-400 mt-1">
+                <div className="flex items-center justify-between text-xs text-text-muted mt-1">
 
                     {quote.status && (
                         <Badge variant="secondary" className="text-[10px] h-5">
@@ -198,14 +188,14 @@ const LeadQuoteItem = ({ quote, setSelectedQuote }: {
                 </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-2 border-t border-slate-700/50 pt-2">
+            <div className="flex justify-end gap-2 mt-2 border-t border-border-main/50 pt-2">
                 <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+                    className="h-7 text-xs border-border-main text-text-secondary hover:bg-muted hover:text-text-main"
                     onClick={() => setSelectedQuote(quote)}
                 >
-                    <FileText className="w-3 h-3 mr-1" />
+                    <FileText className="w-3 h-3 mr-1"/>
                     View Details
                 </Button>
             </div>

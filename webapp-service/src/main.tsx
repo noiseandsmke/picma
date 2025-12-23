@@ -12,7 +12,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
-                <ThemeProvider>
+                <ThemeProvider defaultTheme="system" storageKey="picma-theme">
                     <App/>
                 </ThemeProvider>
             </AuthProvider>

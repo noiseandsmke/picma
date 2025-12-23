@@ -21,6 +21,7 @@ import {
 import {Checkbox} from '@/components/ui/checkbox';
 import {LEAD_STATUS_CONFIG} from '../utils/statusMapping';
 import {LeadDetailDialog} from '@/features/admin/components/LeadDetailDialog';
+import {Building2, Eye, Info, ListFilter, MapPin, User} from 'lucide-react';
 
 const AdminLeadsView: React.FC = () => {
     const [sortConfig, setSortConfig] = useState({key: 'id', direction: 'asc'});
@@ -72,7 +73,6 @@ const AdminLeadsView: React.FC = () => {
     };
 
 
-
     const parseUserInfo = (userInfo: string) => {
         if (!userInfo) return {name: 'Unknown', details: ''};
 
@@ -92,12 +92,12 @@ const AdminLeadsView: React.FC = () => {
             return (
                 <div className="flex items-center gap-3">
                     <div
-                        className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-700/50">
-                        <span className="material-symbols-outlined text-[20px]">person</span>
+                        className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-text-muted border border-border-main">
+                        <User className="h-5 w-5"/>
                     </div>
                     <div className="flex flex-col">
-                        <span className="font-semibold text-white">{owner.firstName} {owner.lastName}</span>
-                        <span className="text-xs text-slate-400">{owner.email}</span>
+                        <span className="font-semibold text-text-main">{owner.firstName} {owner.lastName}</span>
+                        <span className="text-xs text-text-muted">{owner.email}</span>
                     </div>
                 </div>
             );
@@ -106,12 +106,12 @@ const AdminLeadsView: React.FC = () => {
         return (
             <div className="flex items-center gap-3">
                 <div
-                    className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-700/50">
-                    <span className="material-symbols-outlined text-[20px]">person</span>
+                    className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-text-muted border border-border-main">
+                    <User className="h-5 w-5"/>
                 </div>
                 <div className="flex flex-col">
-                    <span className="font-semibold text-white">{name}</span>
-                    <span className="text-xs text-slate-400">{details}</span>
+                    <span className="font-semibold text-text-main">{name}</span>
+                    <span className="text-xs text-text-muted">{details}</span>
                 </div>
             </div>
         );
@@ -124,14 +124,14 @@ const AdminLeadsView: React.FC = () => {
                 return (
                     <div className="flex items-center gap-3">
                         <div
-                            className="h-10 w-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 border border-slate-700/50">
-                            <span className="material-symbols-outlined text-[20px]">apartment</span>
+                            className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center text-text-muted border border-border-main">
+                            <Building2 className="h-5 w-5"/>
                         </div>
                         <div className="flex flex-col">
                             <span
-                                className="font-medium text-slate-200 line-clamp-1">{matchedProp.location.street}</span>
-                            <div className="text-xs text-slate-500 flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[12px]">location_on</span>
+                                className="font-medium text-text-secondary line-clamp-1">{matchedProp.location.street}</span>
+                            <div className="text-xs text-text-muted flex items-center gap-1">
+                                <MapPin className="h-3 w-3"/>
                                 {matchedProp.location.city}, {matchedProp.location.ward}
                             </div>
                         </div>
@@ -145,17 +145,18 @@ const AdminLeadsView: React.FC = () => {
             if (obj?.address) {
                 return (
                     <div className="flex flex-col">
-                        <span className="font-medium text-slate-200 truncate">{obj.address}</span>
-                        <span className="text-xs text-slate-500 truncate">{obj.city}</span>
+                        <span className="font-medium text-text-secondary truncate">{obj.address}</span>
+                        <span className="text-xs text-text-muted truncate">{obj.city}</span>
                     </div>
                 );
             }
         } catch {
+            // Silently ignore parsing errors
         }
 
         return (
             <div className="flex items-center gap-2">
-                <span className="truncate max-w-[200px] text-slate-300" title={propertyInfoStr}>
+                <span className="truncate max-w-[200px] text-text-secondary" title={propertyInfoStr}>
                     {propertyInfoStr}
                 </span>
             </div>
@@ -169,7 +170,7 @@ const AdminLeadsView: React.FC = () => {
             header: (
                 <div className="flex items-center gap-1">
                     ID {sortConfig.key === 'id' &&
-                    <span className="material-symbols-outlined text-[16px]">unfold_more</span>}
+                    <ListFilter className="h-4 w-4"/>}
                 </div>
             ),
             width: "5%",
@@ -179,7 +180,7 @@ const AdminLeadsView: React.FC = () => {
             header: (
                 <div className="flex items-center gap-1">
                     User Info {sortConfig.key === 'userInfo' &&
-                    <span className="material-symbols-outlined text-[16px]">unfold_more</span>}
+                    <ListFilter className="h-4 w-4"/>}
                 </div>
             ),
             width: "25%",
@@ -189,7 +190,7 @@ const AdminLeadsView: React.FC = () => {
             header: (
                 <div className="flex items-center gap-2">
                     Property address {sortConfig.key === 'propertyInfo' &&
-                    <span className="material-symbols-outlined text-[16px]">unfold_more</span>}
+                    <ListFilter className="h-4 w-4"/>}
                 </div>
             ),
             width: "25%",
@@ -199,33 +200,33 @@ const AdminLeadsView: React.FC = () => {
             header: (
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" onClick={() => handleSort('status')}
-                            className="h-auto p-0 font-normal hover:bg-transparent hover:text-white text-xs uppercase tracking-wider text-slate-400">
+                            className="h-auto p-0 font-normal hover:bg-transparent hover:text-text-main text-xs uppercase tracking-wider text-text-secondary">
                         Status {sortConfig.key === 'status' &&
-                        <span className="material-symbols-outlined text-[16px]">unfold_more</span>}
+                        <ListFilter className="h-4 w-4"/>}
                     </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost"
                                     aria-label="Filter by status"
-                                    className="h-6 w-6 p-0 hover:bg-slate-800 rounded-full relative ml-1">
-                                <span
-                                    className={cn("material-symbols-outlined text-[16px]", selectedStatus ? "text-primary" : "text-slate-500")}>filter_list</span>
+                                    className="h-6 w-6 p-0 hover:bg-muted rounded-full relative ml-1">
+                                <ListFilter
+                                    className={cn("h-4 w-4", selectedStatus ? "text-primary" : "text-text-muted")}/>
                                 {selectedStatus && (
                                     <span
-                                        className="absolute top-0 right-0 h-2 w-2 rounded-full bg-primary border-2 border-slate-900"/>
+                                        className="absolute top-0 right-0 h-2 w-2 rounded-full bg-primary border-2 border-surface-main"/>
                                 )}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start"
-                                             className="bg-slate-900 border-slate-700 text-slate-200 w-56">
+                                             className="bg-surface-main border-border-main text-text-main w-56">
                             <DropdownMenuLabel
-                                className="text-xs font-normal text-slate-500 uppercase tracking-wider px-2 py-1.5">
+                                className="text-xs font-normal text-text-muted uppercase tracking-wider px-2 py-1.5">
                                 Filter by status
                             </DropdownMenuLabel>
-                            <DropdownMenuSeparator className="bg-white/5"/>
+                            <DropdownMenuSeparator className="bg-border-main/20"/>
 
                             <DropdownMenuItem
-                                className="focus:bg-slate-800 focus:text-white cursor-pointer py-2 px-2"
+                                className="focus:bg-muted focus:text-text-main cursor-pointer py-2 px-2"
                                 onSelect={(e) => {
                                     e.preventDefault();
                                     setSelectedStatus(null);
@@ -234,7 +235,7 @@ const AdminLeadsView: React.FC = () => {
                                 <div className="flex items-center gap-3 w-full">
                                     <Checkbox
                                         checked={selectedStatus === null}
-                                        className="border-slate-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary pointer-events-none"
+                                        className="border-input-border data-[state=checked]:bg-primary data-[state=checked]:border-primary pointer-events-none"
                                     />
                                     <span className="text-sm">All Statuses</span>
                                 </div>
@@ -243,7 +244,7 @@ const AdminLeadsView: React.FC = () => {
                             {Object.values(LEAD_STATUS_CONFIG).map((config) => (
                                 <DropdownMenuItem
                                     key={config.value}
-                                    className="focus:bg-slate-800 focus:text-white cursor-pointer py-2 px-2"
+                                    className="focus:bg-muted focus:text-text-main cursor-pointer py-2 px-2"
                                     onSelect={(e) => {
                                         e.preventDefault();
                                         toggleStatus(config.value);
@@ -252,7 +253,7 @@ const AdminLeadsView: React.FC = () => {
                                     <div className="flex items-center gap-3 w-full">
                                         <Checkbox
                                             checked={selectedStatus === config.value}
-                                            className="border-slate-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary pointer-events-none"
+                                            className="border-input-border data-[state=checked]:bg-primary data-[state=checked]:border-primary pointer-events-none"
                                         />
                                         <div className="flex items-center gap-2">
                                             <span
@@ -280,29 +281,29 @@ const AdminLeadsView: React.FC = () => {
     let content;
     if (isLeadsLoading) {
         content = [1, 2, 3, 4, 5].map((id) => (
-            <TableRow key={`skeleton-${id}`} className="border-b border-slate-700/50">
-                <TableCell><Skeleton className="h-4 w-8 bg-slate-800"/></TableCell>
+            <TableRow key={`skeleton-${id}`} className="border-b border-border-main">
+                <TableCell><Skeleton className="h-4 w-8 bg-muted"/></TableCell>
                 <TableCell>
                     <div className="flex items-center gap-3">
-                        <Skeleton className="h-10 w-10 rounded-full bg-slate-800"/>
+                        <Skeleton className="h-10 w-10 rounded-full bg-muted"/>
                         <div className="space-y-1">
-                            <Skeleton className="h-4 w-24 bg-slate-800"/>
-                            <Skeleton className="h-3 w-32 bg-slate-800"/>
+                            <Skeleton className="h-4 w-24 bg-muted"/>
+                            <Skeleton className="h-3 w-32 bg-muted"/>
                         </div>
                     </div>
                 </TableCell>
                 <TableCell>
                     <div className="flex items-center gap-3">
-                        <Skeleton className="h-10 w-10 rounded-lg bg-slate-800"/>
+                        <Skeleton className="h-10 w-10 rounded-lg bg-muted"/>
                         <div className="space-y-1">
-                            <Skeleton className="h-4 w-32 bg-slate-800"/>
-                            <Skeleton className="h-3 w-20 bg-slate-800"/>
+                            <Skeleton className="h-4 w-32 bg-muted"/>
+                            <Skeleton className="h-3 w-20 bg-muted"/>
                         </div>
                     </div>
                 </TableCell>
-                <TableCell><Skeleton className="h-6 w-20 bg-slate-800"/></TableCell>
+                <TableCell><Skeleton className="h-6 w-20 bg-muted"/></TableCell>
 
-                <TableCell><Skeleton className="h-8 w-8 bg-slate-800 ml-auto"/></TableCell>
+                <TableCell><Skeleton className="h-8 w-8 bg-muted ml-auto"/></TableCell>
             </TableRow>
         ));
     } else if (isLeadsError) {
@@ -310,7 +311,7 @@ const AdminLeadsView: React.FC = () => {
             <TableRow className="border-slate-700/50 hover:bg-transparent">
                 <TableCell colSpan={columns.length} className="h-32 text-center text-red-400">
                     <div className="flex flex-col items-center justify-center gap-2">
-                        <span className="material-symbols-outlined text-4xl opacity-50">error</span>
+                        <Info className="h-8 w-8 opacity-50"/>
                         <p>Failed to load leads data.</p>
                     </div>
                 </TableCell>
@@ -321,8 +322,8 @@ const AdminLeadsView: React.FC = () => {
             const statusConfig = LEAD_STATUS_CONFIG[lead.status] || LEAD_STATUS_CONFIG.ACTIVE;
             return (
                 <TableRow key={lead.id}
-                          className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors group">
-                    <TableCell className="font-medium text-slate-400">#{lead.id}</TableCell>
+                          className="border-b border-border-main hover:bg-muted transition-colors group">
+                    <TableCell className="font-medium text-text-muted">#{lead.id}</TableCell>
                     <TableCell className="py-3">
                         {renderUserCell(lead.userInfo)}
                     </TableCell>
@@ -340,10 +341,10 @@ const AdminLeadsView: React.FC = () => {
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="text-slate-400 hover:text-white hover:bg-slate-800"
+                            className="text-text-secondary hover:text-text-main hover:bg-muted"
                             onClick={() => handleViewDetail(lead)}
                         >
-                            <span className="material-symbols-outlined text-[20px]">visibility</span>
+                            <Eye className="h-5 w-5"/>
                         </Button>
                     </TableCell>
                 </TableRow>

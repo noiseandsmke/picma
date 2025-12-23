@@ -1,2 +1,2 @@
-export { DeepResearchDialog } from './DeepResearchDialog';
-export { DeepResearchButton } from './DeepResearchButton';
+export {DeepResearchDialog} from './DeepResearchDialog';
+export {DeepResearchButton} from './DeepResearchButton';

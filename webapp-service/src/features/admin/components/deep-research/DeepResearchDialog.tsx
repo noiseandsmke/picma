@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Brain, CheckCircle2, XCircle, Sparkles, AlertTriangle, Copy, Download } from 'lucide-react';
-import { PropertyLeadDto } from '../../services/leadService';
+import React, {useEffect, useRef, useState} from 'react';
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Button} from '@/components/ui/button';
+import {Card, CardContent} from '@/components/ui/card';
+import {ScrollArea} from '@/components/ui/scroll-area';
+import {Badge} from '@/components/ui/badge';
+import {Alert, AlertDescription} from '@/components/ui/alert';
+import {AlertTriangle, Brain, CheckCircle2, Copy, Download, Loader2, Sparkles, XCircle} from 'lucide-react';
+import {PropertyLeadDto} from '../../services/leadService';
 
 import {EventSourcePolyfill} from 'event-source-polyfill';
-import { ENV } from '@/config/env';
+import {ENV} from '@/config/env';
 
 interface DeepResearchDialogProps {
     open: boolean;
@@ -28,7 +28,7 @@ interface ResearchState {
 
 const DEEP_RESEARCH_API = `${ENV.API_URL}/picma/research`;
 
-export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({ open, onOpenChange, lead }) => {
+export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({open, onOpenChange, lead}) => {
     const [research, setResearch] = useState<ResearchState>({
         status: 'idle',
         interactionId: null,
@@ -53,7 +53,7 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({ open, on
     const addMessage = (type: string, content: string) => {
         setResearch(prev => ({
             ...prev,
-            messages: [...prev.messages, { type, content, timestamp: new Date() }],
+            messages: [...prev.messages, {type, content, timestamp: new Date()}],
         }));
     };
 
@@ -64,61 +64,57 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({ open, on
                     'Authorization': `Bearer ${sessionStorage.getItem('access_token')}`
                 }
             })
-            .then(res => {
-                if (res.ok) {
-                    return res.json();
-                }
-                throw new Error('No result found');
-            })
-            .then(data => {
-                if (data) {
-                    setResearch(prev => ({
-                        ...prev,
-                        status: data.status === 'in_progress' ? 'researching' : 'completed',
-                        interactionId: data.id,
-                        leadId: lead.id,
-                        fullReport: '',
-                        messages: []
-                    }));
-
-
-                    if (data.status === 'in_progress') {
-                         addMessage('status', 'Research is in progress...');
-                    } else if (data.status === 'completed') {
-                         addMessage('success', 'Research completed!');
+                .then(res => {
+                    if (res.ok) {
+                        return res.json();
                     }
+                    throw new Error('No result found');
+                })
+                .then(data => {
+                    if (data) {
+                        setResearch(prev => ({
+                            ...prev,
+                            status: data.status === 'in_progress' ? 'researching' : 'completed',
+                            interactionId: data.id,
+                            leadId: lead.id,
+                            fullReport: '',
+                            messages: []
+                        }));
 
 
-                    if (data.outputs && Array.isArray(data.outputs)) {
-                        data.outputs.forEach((output: any) => {
-                            if (output.type === 'thought' && Array.isArray(output.summary)) {
-                                output.summary.forEach((thought: any) => {
-                                    if (thought.text) {
-                                        addMessage('thinking', thought.text);
-                                    }
-                                });
-                            }
-                            else if (output.type === 'text' && output.text) {
-                                setResearch(prev => ({
-                                    ...prev,
-                                    fullReport: prev.fullReport + output.text
-                                }));
-                            }
-                            else if (output.text) {
-                                 setResearch(prev => ({
-                                    ...prev,
-                                    fullReport: prev.fullReport + output.text
-                                }));
-                            }
-                        });
+                        if (data.status === 'in_progress') {
+                            addMessage('status', 'Research is in progress...');
+                        } else if (data.status === 'completed') {
+                            addMessage('success', 'Research completed!');
+                        }
+
+
+                        if (data?.outputs && Array.isArray(data.outputs)) {
+                            processOutputs(data.outputs);
+                        }
                     }
-                }
-            })
-
-            .catch(() => {
-            });
+                })
+                .catch(() => {
+                });
         }
     }, [open, lead]);
+
+    const processOutputs = (outputs: any[]) => {
+        outputs.forEach((output: any) => {
+            if (output.type === 'thought' && Array.isArray(output.summary)) {
+                output.summary.forEach((thought: any) => {
+                    if (thought.text) {
+                        addMessage('thinking', thought.text);
+                    }
+                });
+            } else if (output.text) {
+                setResearch(prev => ({
+                    ...prev,
+                    fullReport: prev.fullReport + output.text
+                }));
+            }
+        });
+    };
 
     const startResearch = () => {
         if (!lead) return;
@@ -180,20 +176,15 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({ open, on
                     const parsed = JSON.parse(messageEvent.data);
                     const delta = parsed.delta;
 
-                    if (delta) {
-                        if (delta.type === 'thought_summary' && delta.content?.text) {
+                    if (delta?.content?.text) {
+                        if (delta.type === 'thought_summary') {
                             addMessage('thinking', delta.content.text);
-                        } else if (delta.content?.text) {
+                        } else {
                             setResearch(prev => ({
                                 ...prev,
                                 fullReport: prev.fullReport + delta.content.text,
                             }));
-                            if (scrollAreaRef.current) {
-                                const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-                                if (scrollElement) {
-                                    scrollElement.scrollTop = scrollElement.scrollHeight;
-                                }
-                            }
+                            updateScroll();
                         }
                     }
                 } catch (error) {
@@ -202,14 +193,23 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({ open, on
             }
         });
 
+        const updateScroll = () => {
+            if (scrollAreaRef.current) {
+                const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+                if (scrollElement) {
+                    scrollElement.scrollTop = scrollElement.scrollHeight;
+                }
+            }
+        };
+
         eventSource.addEventListener('resuming', (e) => {
             const messageEvent = e as MessageEvent;
             try {
                 const data = JSON.parse(messageEvent.data);
-                setResearch(prev => ({ ...prev, status: 'resuming' }));
+                setResearch(prev => ({...prev, status: 'resuming'}));
                 addMessage('warning', `Deadline exceeded - Resuming stream...`);
                 console.log('=== Resuming Stream ===');
-                console.log('Interaction ID:', data.interactionId); 
+                console.log('Interaction ID:', data.interactionId);
             } catch (error) {
                 console.error('Error parsing resuming:', error);
             }
@@ -218,7 +218,7 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({ open, on
 
         eventSource.addEventListener('done', () => {
 
-            setResearch(prev => ({ ...prev, status: 'completed' }));
+            setResearch(prev => ({...prev, status: 'completed'}));
             addMessage('success', 'Research completed!');
             eventSource.close();
             eventSourceRef.current = null;
@@ -276,21 +276,21 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({ open, on
 
     const copyReport = () => {
         if (research.fullReport) {
-            navigator.clipboard.writeText(research.fullReport);
+            void navigator.clipboard.writeText(research.fullReport);
             addMessage('system', 'Report copied to clipboard');
         }
     };
 
     const downloadReport = () => {
         if (research.fullReport) {
-            const blob = new Blob([research.fullReport], { type: 'text/markdown' });
+            const blob = new Blob([research.fullReport], {type: 'text/markdown'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `deep-research-lead-${lead?.id}-${Date.now()}.md`;
             document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
+            a.remove();
             URL.revokeObjectURL(url);
             addMessage('system', 'Report downloaded');
         }
@@ -331,15 +331,15 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({ open, on
         switch (research.status) {
             case 'starting':
             case 'researching':
-                return <Loader2 className="h-4 w-4 animate-spin" />;
+                return <Loader2 className="h-4 w-4 animate-spin"/>;
             case 'resuming':
-                return <AlertTriangle className="h-4 w-4 animate-pulse" />;
+                return <AlertTriangle className="h-4 w-4 animate-pulse"/>;
             case 'completed':
-                return <CheckCircle2 className="h-4 w-4" />;
+                return <CheckCircle2 className="h-4 w-4"/>;
             case 'failed':
-                return <XCircle className="h-4 w-4" />;
+                return <XCircle className="h-4 w-4"/>;
             default:
-                return <Brain className="h-4 w-4" />;
+                return <Brain className="h-4 w-4"/>;
         }
     };
 
@@ -348,7 +348,7 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({ open, on
             <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 text-purple-500" />
+                        <Sparkles className="h-5 w-5 text-purple-500"/>
                         AI Deep Research - Lead #{lead?.id}
                     </DialogTitle>
                     <DialogDescription>
@@ -376,24 +376,25 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({ open, on
                                 <div className="flex gap-2">
                                     {research.status === 'idle' && (
                                         <Button onClick={startResearch} className="gap-2">
-                                            <Brain className="h-4 w-4" />
+                                            <Brain className="h-4 w-4"/>
                                             Start Research
                                         </Button>
                                     )}
                                     {(research.status === 'researching' || research.status === 'resuming') && (
                                         <Button onClick={stopResearch} variant="destructive" className="gap-2">
-                                            <XCircle className="h-4 w-4" />
+                                            <XCircle className="h-4 w-4"/>
                                             Stop
                                         </Button>
                                     )}
                                     {research.status === 'completed' && research.fullReport && (
                                         <>
                                             <Button onClick={copyReport} variant="outline" size="sm" className="gap-2">
-                                                <Copy className="h-4 w-4" />
+                                                <Copy className="h-4 w-4"/>
                                                 Copy
                                             </Button>
-                                            <Button onClick={downloadReport} variant="outline" size="sm" className="gap-2">
-                                                <Download className="h-4 w-4" />
+                                            <Button onClick={downloadReport} variant="outline" size="sm"
+                                                    className="gap-2">
+                                                <Download className="h-4 w-4"/>
                                                 Download
                                             </Button>
                                         </>
@@ -405,7 +406,7 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({ open, on
 
                     {research.error && (
                         <Alert variant="destructive">
-                            <XCircle className="h-4 w-4" />
+                            <XCircle className="h-4 w-4"/>
                             <AlertDescription>{research.error}</AlertDescription>
                         </Alert>
                     )}
@@ -415,28 +416,37 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({ open, on
                             <ScrollArea ref={scrollAreaRef} className="h-[400px] w-full rounded-md border p-4">
                                 {research.messages.length === 0 && (
                                     <div className="text-center text-muted-foreground py-8">
-                                        <Brain className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                                        <Brain className="h-12 w-12 mx-auto mb-4 opacity-20"/>
                                         <p>Click "Start Research" to begin AI-powered analysis</p>
                                         <p className="text-sm mt-2">This process typically takes 5-20 minutes</p>
                                     </div>
                                 )}
                                 <div className="space-y-3">
                                     {research.messages.map((msg, idx) => (
-                                        <div key={idx} className="flex items-start gap-2">
+                                        <div key={`msg-${msg.timestamp.getTime()}-${idx}`}
+                                             className="flex items-start gap-2">
                                             <div className="mt-0.5">
-                                                {msg.type === 'system' && <div className="h-2 w-2 rounded-full bg-gray-400" />}
-                                                {msg.type === 'status' && <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />}
-                                                {msg.type === 'interaction' && <div className="h-2 w-2 rounded-full bg-purple-400" />}
-                                                {msg.type === 'thinking' && <div className="h-2 w-2 rounded-full bg-yellow-400 animate-pulse" />}
-                                                {msg.type === 'warning' && <div className="h-2 w-2 rounded-full bg-orange-400 animate-pulse" />}
-                                                {msg.type === 'success' && <div className="h-2 w-2 rounded-full bg-green-400" />}
-                                                {msg.type === 'error' && <div className="h-2 w-2 rounded-full bg-red-400" />}
+                                                {msg.type === 'system' &&
+                                                    <div className="h-2 w-2 rounded-full bg-gray-400"/>}
+                                                {msg.type === 'status' &&
+                                                    <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse"/>}
+                                                {msg.type === 'interaction' &&
+                                                    <div className="h-2 w-2 rounded-full bg-purple-400"/>}
+                                                {msg.type === 'thinking' &&
+                                                    <div className="h-2 w-2 rounded-full bg-yellow-400 animate-pulse"/>}
+                                                {msg.type === 'warning' &&
+                                                    <div className="h-2 w-2 rounded-full bg-orange-400 animate-pulse"/>}
+                                                {msg.type === 'success' &&
+                                                    <div className="h-2 w-2 rounded-full bg-green-400"/>}
+                                                {msg.type === 'error' &&
+                                                    <div className="h-2 w-2 rounded-full bg-red-400"/>}
                                             </div>
                                             <div className="flex-1">
                                                 <div className="text-xs text-muted-foreground">
                                                     {msg.timestamp.toLocaleTimeString()}
                                                 </div>
-                                                <div className={`text-sm ${msg.type === 'error' ? 'text-red-600' : ''}`}>
+                                                <div
+                                                    className={`text-sm ${msg.type === 'error' ? 'text-red-600' : ''}`}>
                                                     {msg.content}
                                                 </div>
                                             </div>
