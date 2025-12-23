@@ -1,34 +1,31 @@
 package edu.hcmute.exception;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(DeepResearchException.class)
-    public ResponseEntity<Object> handleDeepResearchException(DeepResearchException ex) {
-        Map<String, String> body = new HashMap<>();
-        body.put("error", ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    public ProblemDetail handleDeepResearchException(DeepResearchException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problemDetail.setTitle("Deep Research Error");
+        return problemDetail;
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Object> handleIllegalStateException(IllegalStateException ex) {
-        Map<String, String> body = new HashMap<>();
-        body.put("error", ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    public ProblemDetail handleIllegalStateException(IllegalStateException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setTitle("Invalid State");
+        return problemDetail;
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleException(Exception ex) {
-        Map<String, String> body = new HashMap<>();
-        body.put("error", "An unexpected error occurred: " + ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ProblemDetail handleException(Exception ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+        problemDetail.setTitle("Internal Server Error");
+        return problemDetail;
     }
 }
