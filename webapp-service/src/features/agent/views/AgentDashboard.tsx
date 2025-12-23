@@ -250,7 +250,7 @@ const AgentDashboard: React.FC = () => {
                         </CardContent>
                     </Card>
                     <Card
-                        className="bg-slate-900 border border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 group hover:border-primary/50">
+                        className="bg-surface-main border border-border-main shadow-sm hover:shadow-md transition-all duration-300 group hover:border-primary/50">
                         <CardContent className="p-6 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-text-muted group-hover:text-text-secondary transition-colors">Leads

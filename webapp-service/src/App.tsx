@@ -48,13 +48,10 @@ const App: React.FC = () => {
                     position="top-right"
                     theme="system"
                     richColors={false}
+                    closeButton
                     toastOptions={{
                         duration: 4000,
-                        style: {
-                            background: 'var(--color-surface-card)',
-                            border: '1px solid var(--color-border-main)',
-                            color: 'var(--color-text-main)',
-                        }
+                        className: 'custom-toast',
                     }}
                 />
             </div>

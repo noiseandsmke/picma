@@ -68,7 +68,7 @@ export const AgentLeadCard: React.FC<AgentLeadCardProps> = ({lead, onViewDetail,
                 <Button
                     variant="secondary"
                     size="sm"
-                    className="w-32 transition-all bg-muted hover:bg-muted/80 text-text-secondary"
+                    className="w-32 transition-all bg-muted/40 hover:bg-muted/60 text-text-secondary"
                     onClick={() => onViewDetail(lead)}
                     disabled={isLoadingAction}
                 >

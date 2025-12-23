@@ -60,7 +60,7 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({items, openMenus, 
                         )}
 
                         {hasChildren && isOpen && (
-                            <div className="ml-4 mt-1 space-y-1 border-l border-slate-800 pl-2">
+                            <div className="ml-4 mt-1 space-y-1 border-l border-border-main pl-2">
                                 {item.children!.map((child) => {
                                     const isChildActive = child.href ? location.pathname.startsWith(child.href) : false;
                                     return (

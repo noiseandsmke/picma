@@ -1,58 +1,51 @@
 
 .custom-toast {
-    background: #0b0c15 !important;
-    border: 1px solid #1e293b !important;
+    background: var(--color-surface-card) !important;
+    border: 1px solid var(--color-border) !important;
     border-radius: 12px !important;
-    color: #e2e8f0 !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3) !important;
+    color: var(--color-text-main) !important;
+    box-shadow: var(--shadow-sonner) !important;
     font-family: inherit !important;
     padding: 16px !important;
 }
 
-
 .custom-toast[data-type="success"] {
-    border-left: 3px solid #10b981 !important;
+    border-left: 3px solid var(--color-accent-emerald) !important;
 }
-
 
 .custom-toast[data-type="error"] {
-    border-left: 3px solid #ef4444 !important;
-    background: #141124 !important;
+    border-left: 3px solid var(--color-accent-rose) !important;
+    background: var(--color-surface-card) !important;
 }
-
 
 .custom-toast[data-type="info"] {
-    border-left: 3px solid #6366f1 !important;
+    border-left: 3px solid var(--color-primary) !important;
 }
-
 
 .custom-toast[data-type="warning"] {
-    border-left: 3px solid #f59e0b !important;
+    border-left: 3px solid var(--color-accent-amber) !important;
 }
-
 
 .custom-toast [data-title] {
     font-weight: 600 !important;
     font-size: 0.875rem !important;
-    color: #fff !important;
+    color: var(--color-text-main) !important;
     margin-bottom: 4px !important;
 }
 
-
 .custom-toast [data-description] {
     font-size: 0.8125rem !important;
-    color: #94a3b8 !important;
+    color: var(--color-text-secondary) !important;
     line-height: 1.4 !important;
 }
 
-
 .custom-toast [data-close-button] {
-    color: #64748b !important;
+    color: var(--color-text-muted) !important;
     background: transparent !important;
     border: none !important;
 }
 
 .custom-toast [data-close-button]:hover {
-    color: #e2e8f0 !important;
-    background: rgba(255, 255, 255, 0.05) !important;
+    color: var(--color-text-main) !important;
+    background: var(--color-border-lighter) !important;
 }
