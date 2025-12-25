@@ -12,6 +12,7 @@ import {Info, Plus, Shield, Trash2, Zap} from 'lucide-react';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {Badge} from '@/components/ui/badge';
 import {NumberInput} from '@/components/ui/number-input';
+import {formatNumber, parseNumber} from '@/lib/utils';
 import {fetchLeadById} from '@/features/agent/services/agentService';
 import {fetchPropertyById} from '@/features/admin/services/propertyService';
 
@@ -165,17 +166,7 @@ export const AgentQuoteForm: React.FC<AgentQuoteFormProps> = ({
                     {watchedCoverages?.map((coverage, idx) => (
                         <div key={`${coverage.code}-${idx}`}
                              className="bg-surface-main border border-border-main rounded-xl p-4 space-y-4 relative group">
-                            <div className="absolute top-4 right-4 flex gap-1 items-center">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-rose-500 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={() => removeCoverage(idx)}
-                                >
-                                    <Trash2 className="w-4 h-4"/>
-                                </Button>
-                            </div>
+                                {/* Removed absolute trash button */}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
@@ -212,15 +203,15 @@ export const AgentQuoteForm: React.FC<AgentQuoteFormProps> = ({
                                         render={({field}) => (
                                             <div className="relative">
                                                 <NumberInput
-                                                    value={field.value * 100}
+                                                    value={field.value !== undefined ? Number((field.value * 100).toFixed(1)) : 0}
                                                     onChange={(v) => field.onChange((v ?? 0) / 100)}
                                                     step={0.1}
                                                     min={0}
                                                     max={10.3}
-                                                    className="bg-muted border-border-main pr-8"
+                                                    className="bg-muted border-border-main pr-14"
                                                 />
                                                 <span
-                                                    className="absolute right-8 top-1/2 -translate-y-1/2 text-text-muted font-medium">%</span>
+                                                    className="absolute right-10 top-1/2 -translate-y-1/2 text-text-muted font-medium">%</span>
                                             </div>
                                         )}
                                     />
@@ -250,14 +241,29 @@ export const AgentQuoteForm: React.FC<AgentQuoteFormProps> = ({
                                                 <NumberInput
                                                     value={field.value}
                                                     onChange={(v) => field.onChange(v ?? 0)}
-                                                    className="bg-muted border-border-main pr-12"
+                                                    format={formatNumber}
+                                                    parse={parseNumber}
+                                                    className="bg-muted border-border-main pr-16"
                                                 />
                                                 <span
-                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted text-xs font-medium">VNĐ</span>
+                                                    className="absolute right-10 top-1/2 -translate-y-1/2 text-text-muted text-xs font-medium">VNĐ</span>
                                             </div>
                                         )}
                                     />
                                 </div>
+                            </div>
+
+                            <div className="flex justify-end pt-1">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-rose-500 hover:bg-rose-500/10 transition-colors"
+                                    onClick={() => removeCoverage(idx)}
+                                    title="Remove Coverage"
+                                >
+                                    <Trash2 className="w-4 h-4"/>
+                                </Button>
                             </div>
                         </div>
                     ))}

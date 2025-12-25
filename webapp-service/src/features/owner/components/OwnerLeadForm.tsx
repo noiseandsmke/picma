@@ -19,6 +19,7 @@ import {
 import {toast} from 'sonner';
 import {City, VN_LOCATIONS} from '@/lib/vn-locations';
 import {NumberInput} from '@/components/ui/number-input';
+import {formatNumber, parseNumber} from '@/lib/utils';
 import {useAuth} from '@/context/AuthContext';
 import {Activity, Building2, Calendar, FileText, Hammer, Hash, Home, Layers, MapPin, Ruler, Wallet} from 'lucide-react';
 import {Badge} from '@/components/ui/badge';
@@ -466,12 +467,12 @@ export const OwnerLeadForm: React.FC<OwnerLeadFormProps> = ({
                                         step={1000000}
                                         min={1}
                                         placeholder="0"
-                                        format={(val) => val.toString().replaceAll(/\B(?=(\d{3})+(?!\d))/g, ".")}
-                                        parse={(val) => Number(val.replaceAll(/\./g, ''))}
-                                        className="pl-9 bg-muted border-border-main pr-8"
+                                        format={formatNumber}
+                                        parse={parseNumber}
+                                        className="pl-9 bg-muted border-border-main pr-16"
                                     />
                                     <span
-                                        className="absolute right-8 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none font-medium">₫</span>
+                                        className="absolute right-10 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none font-medium">₫</span>
                                     <Wallet
                                         className="absolute left-3 top-2.5 h-4 w-4 text-text-muted pointer-events-none z-10"/>
                                 </div>

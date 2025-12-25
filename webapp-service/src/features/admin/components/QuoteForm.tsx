@@ -445,7 +445,7 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                             <CurrencyInput
                                                                 {...field}
                                                                 compact
-                                                                className="h-6 text-[10px] bg-muted border-border-main px-1 text-right"
+                                                                className="h-6 text-[10px] bg-muted border-border-main px-1 text-right pr-14"
                                                                 disabled={props.readOnly}
                                                             />
                                                         )}
@@ -471,16 +471,16 @@ export const QuoteForm: React.FC<QuoteFormProps> = ({
                                                     render={({field}) => (
                                                         <div className="relative w-full">
                                                             <NumberInput
-                                                                value={field.value ? Number((field.value * 100).toFixed(1)) : 0}
+                                                                value={field.value !== undefined ? Number((field.value * 100).toFixed(1)) : 0}
                                                                 onChange={(v) => field.onChange((v ?? 0) / 100)}
                                                                 step={0.1}
                                                                 min={0}
                                                                 max={10.3}
-                                                                className="h-6 text-[10px] bg-muted border-border-main px-1 text-right pr-6"
+                                                                className="h-6 text-[10px] bg-muted border-border-main px-1 text-right pr-14"
                                                                 disabled={props.readOnly}
                                                             />
                                                             <div
-                                                                className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-text-muted text-[10px]">
+                                                                className="absolute inset-y-0 right-10 flex items-center pointer-events-none text-text-muted text-[10px]">
                                                                 %
                                                             </div>
                                                         </div>
