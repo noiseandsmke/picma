@@ -31,7 +31,6 @@ public class AuthorizationFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
-
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
                 .filter(Authentication::isAuthenticated)
@@ -48,7 +47,6 @@ public class AuthorizationFilter implements GlobalFilter, Ordered {
                                 .build();
                         mutatedExchange = exchange.mutate().request(request).build();
                     }
-
                     for (Map.Entry<String, String> entry : PATH_ROLE_MAP.entrySet()) {
                         if (path.startsWith(entry.getKey())) {
                             String requiredRole = entry.getValue();

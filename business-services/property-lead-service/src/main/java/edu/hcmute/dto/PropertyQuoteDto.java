@@ -9,9 +9,7 @@ public record PropertyQuoteDto(
         Integer id,
         Integer leadId,
         String agentId,
-
         LocalDate createdDate,
-
         QuoteStatus status,
         List<CoverageDto> coverages,
         PremiumDto premium

@@ -21,14 +21,10 @@ public class ResearchInteraction {
     @Id
     @Column(name = "lead_id")
     private Integer leadId;
-
     @Column(name = "interaction_id")
     private String interactionId;
-
     @Column(name = "status")
     private String status;
-
     private LocalDateTime created;
     private LocalDateTime updated;
-
 }

@@ -29,19 +29,14 @@ public class UserAuthnzServiceImpl implements UserAuthnzService {
     private static final String CLIENT_SECRET = "client_secret";
     private static final String PASSWORD = "password";
     private static final String GRANT_TYPE = "grant_type";
-
     private final KeycloakAuthClient keycloakAuthClient;
     private final KeycloakAdminClient keycloakAdminClient;
-
     @Value("${keycloak.resource}")
     private String resource;
-
     @Value("${keycloak.credentials.secret}")
     private String clientSecret;
-
     @Value("${picma.iam.groups.owners}")
     private String ownersGroupId;
-
     @Value("${picma.iam.groups.agents}")
     private String agentsGroupId;
 
@@ -61,7 +56,6 @@ public class UserAuthnzServiceImpl implements UserAuthnzService {
         }
         return tokenResponse;
     }
-
 
     @Override
     public void logout() {

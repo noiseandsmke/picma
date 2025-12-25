@@ -7,12 +7,11 @@ import {Button} from '@/components/ui/button';
 import {Label} from '@/components/ui/label';
 import {DialogClose, DialogFooter} from '@/components/ui/dialog';
 import {PropertyQuoteDto} from '@/features/admin/services/quoteService';
-import {formatCurrency} from '@/lib/utils';
+import {formatCurrency, formatNumber, parseNumber} from '@/lib/utils';
 import {Info, Plus, Shield, Trash2, Zap} from 'lucide-react';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {Badge} from '@/components/ui/badge';
 import {NumberInput} from '@/components/ui/number-input';
-import {formatNumber, parseNumber} from '@/lib/utils';
 import {fetchLeadById} from '@/features/agent/services/agentService';
 import {fetchPropertyById} from '@/features/admin/services/propertyService';
 
@@ -166,7 +165,7 @@ export const AgentQuoteForm: React.FC<AgentQuoteFormProps> = ({
                     {watchedCoverages?.map((coverage, idx) => (
                         <div key={`${coverage.code}-${idx}`}
                              className="bg-surface-main border border-border-main rounded-xl p-4 space-y-4 relative group">
-                                {/* Removed absolute trash button */}
+                            {/* Removed absolute trash button */}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">

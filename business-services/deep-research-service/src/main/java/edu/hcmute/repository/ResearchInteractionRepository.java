@@ -9,5 +9,6 @@ import java.util.Optional;
 @Repository
 public interface ResearchInteractionRepository extends JpaRepository<ResearchInteraction, Integer> {
     Optional<ResearchInteraction> findByLeadId(Integer leadId);
+
     boolean existsByLeadId(Integer leadId);
 }

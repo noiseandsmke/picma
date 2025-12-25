@@ -7,7 +7,6 @@ public record QuoteDto(
         Integer leadId,
         String agentId,
         String createdDate,
-
         String status,
         List<CoverageDto> coverages,
         PremiumDto premium

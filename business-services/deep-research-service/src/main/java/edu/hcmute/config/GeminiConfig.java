@@ -11,10 +11,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class GeminiConfig {
     @Value("${gemini.api.key}")
     private String apiKey;
-
     @Value("${gemini.api.base-url}")
     private String baseUrl;
-
     @Value("${gemini.api.timeout}")
     private long timeout;
 

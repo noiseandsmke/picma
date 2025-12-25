@@ -24,11 +24,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserMgmtServiceImpl implements UserMgmtService {
     private static final String GROUP_AGENTS = "agents";
-
     private final UserMapper userMapper;
     private final KeycloakAdminClient keycloakAdminClient;
     private final KeycloakGroupClient keycloakGroupClient;
-
     @Value("${picma.iam.groups.owners}")
     private String ownersGroupId;
     @Value("${picma.iam.groups.agents}")

@@ -14,10 +14,8 @@ import org.springframework.util.MultiValueMap;
 @RequiredArgsConstructor
 public class KeycloakServiceAccountConfig {
     private final KeycloakAuthClient keycloakAuthClient;
-
     @Value("${keycloak.resource}")
     private String clientId;
-
     @Value("${keycloak.credentials.secret}")
     private String clientSecret;
 

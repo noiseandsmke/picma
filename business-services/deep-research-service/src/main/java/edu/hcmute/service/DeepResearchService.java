@@ -9,8 +9,8 @@ import edu.hcmute.dto.PropertyInfoDto;
 import edu.hcmute.dto.PropertyLeadDto;
 import edu.hcmute.dto.QuoteDto;
 import edu.hcmute.entity.ResearchInteraction;
-import edu.hcmute.repository.ResearchInteractionRepository;
 import edu.hcmute.exception.DeepResearchException;
+import edu.hcmute.repository.ResearchInteractionRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.codec.ServerSentEvent;
@@ -31,7 +31,6 @@ import java.util.Map;
 public class DeepResearchService {
     private static final String TEMPLATE_NAME = "deep-research.st";
     private static final String STATUS_COMPLETED = "completed";
-    
     private final PropertyLeadClient propertyLeadClient;
     private final PropertyInfoClient propertyInfoClient;
     private final PropertyQuoteClient propertyQuoteClient;
@@ -130,12 +129,11 @@ public class DeepResearchService {
         }
         String prompt = generatePrompt(leadId);
         String jsonResponse = geminiApiService.startBackgroundResearch(prompt);
-        
         try {
-            Map<String, Object> data = objectMapper.readValue(jsonResponse, new TypeReference<>() {});
+            Map<String, Object> data = objectMapper.readValue(jsonResponse, new TypeReference<>() {
+            });
             String id = (String) data.get("id");
             String status = (String) data.get("status");
-            
             if (id != null) {
                 ResearchInteraction entity = ResearchInteraction.builder()
                         .leadId(leadId)
@@ -151,7 +149,6 @@ public class DeepResearchService {
             log.error("~~> failed to parse initiate response", e);
             throw new DeepResearchException("Failed to initiate research", e);
         }
-        
         return jsonResponse;
     }
 
@@ -161,14 +158,14 @@ public class DeepResearchService {
                 .map(this::processResearchInteraction)
                 .orElse(null);
     }
-    
+
     private String processResearchInteraction(ResearchInteraction interaction) {
         try {
             String json = geminiApiService.getInteraction(interaction.getInteractionId());
             if (json != null) {
-                Map<String, Object> data = objectMapper.readValue(json, new TypeReference<>() {});
+                Map<String, Object> data = objectMapper.readValue(json, new TypeReference<>() {
+                });
                 String status = (String) data.get("status");
-
                 if (STATUS_COMPLETED.equalsIgnoreCase(status) && !STATUS_COMPLETED.equalsIgnoreCase(interaction.getStatus())) {
                     updateInteractionStatus(interaction, data);
                 }
@@ -179,13 +176,13 @@ public class DeepResearchService {
             return null;
         }
     }
-    
+
     private void updateInteractionStatus(ResearchInteraction interaction, Map<String, Object> data) {
-         interaction.setStatus(STATUS_COMPLETED);
-         String updatedStr = (String) data.get("updated");
-         interaction.setUpdated(parseUpdatedDate(updatedStr));
-         interactionRepository.save(interaction);
-         log.info("~~> synced interaction status to completed");
+        interaction.setStatus(STATUS_COMPLETED);
+        String updatedStr = (String) data.get("updated");
+        interaction.setUpdated(parseUpdatedDate(updatedStr));
+        interactionRepository.save(interaction);
+        log.info("~~> synced interaction status to completed");
     }
 
     private LocalDateTime parseUpdatedDate(String updatedStr) {

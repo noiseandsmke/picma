@@ -15,22 +15,16 @@ import java.util.List;
 public class InteractionRequest {
     @JsonProperty("input")
     private String input;
-
     @JsonProperty("agent")
     private String agent;
-
     @JsonProperty("background")
     private Boolean background;
-
     @JsonProperty("stream")
     private Boolean stream;
-
     @JsonProperty("agent_config")
     private AgentConfig agentConfig;
-
     @JsonProperty("tools")
     private List<Tool> tools;
-
     @JsonProperty("previous_interaction_id")
     private String previousInteractionId;
 
@@ -41,7 +35,6 @@ public class InteractionRequest {
     public static class AgentConfig {
         @JsonProperty("type")
         private String type;
-
         @JsonProperty("thinking_summaries")
         private String thinkingSummaries;
     }

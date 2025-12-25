@@ -23,7 +23,6 @@ export const LEAD_STATUS_CONFIG: Record<string, {
         dotClass: "bg-blue-500"
     }
 };
-
 export const QUOTE_STATUS_CONFIG: Record<string, {
     label: string;
     value: string;

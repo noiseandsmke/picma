@@ -10,16 +10,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
 @RequestMapping("/auth")
 @RestController
 @RequiredArgsConstructor
-
 public class UserAuthnzController {
     private final UserAuthnzService userAuthnzService;
 
@@ -38,7 +39,6 @@ public class UserAuthnzController {
         userAuthnzService.register(registerRequest);
         return ResponseEntity.ok(Map.of("message", "User registered successfully"));
     }
-
 
     @Operation(summary = "Logout", description = "Logs out the user.")
     @ApiResponse(responseCode = "200", description = "Logged out successfully")

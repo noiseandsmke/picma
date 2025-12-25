@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PropertyQuoteServiceImpl implements PropertyQuoteService {
     private static final String QUOTE_NOT_FOUND = "PropertyQuote not found with id: ";
-
     private final PropertyQuoteRepo propertyQuoteRepo;
     private final PropertyQuoteMapper propertyQuoteMapper;
     private final PremiumCalculationService premiumCalculationService;

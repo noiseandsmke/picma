@@ -17,10 +17,8 @@ public class QuoteCoverage {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CoverageCode code;
-
     @Column(nullable = false)
     private Long coverageLimit;
-
     @Column(nullable = false)
     private Double deductible;
 }

@@ -7,7 +7,6 @@ public enum CoverageCode {
     FIRE(true),
     THEFT(false),
     NATURAL_DISASTER(false);
-
     private final boolean mandatory;
 
     CoverageCode(boolean mandatory) {

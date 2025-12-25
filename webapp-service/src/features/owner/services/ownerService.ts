@@ -13,10 +13,7 @@ export interface AgentDto {
 
 const PROPERTY_BASE_PATH = '/picma/properties';
 const AGENT_BASE_PATH = '/picma/agents';
-
-
 export const fetchOwnerProperties = async (ownerId: string): Promise<PropertyInfoDto[]> => {
-
     try {
         const response = await apiClient.get<PropertyInfoDto[]>(`${PROPERTY_BASE_PATH}/user/${ownerId}`);
         return response.data;
@@ -25,16 +22,13 @@ export const fetchOwnerProperties = async (ownerId: string): Promise<PropertyInf
         return [];
     }
 };
-
 export const fetchAgentsForDirectory = async (zipCode: string): Promise<AgentDto[]> => {
     try {
         const response = await apiClient.get<string[]>(`${AGENT_BASE_PATH}/agents/zipcode/${zipCode}`);
         const agentIds = response.data;
-
         if (!agentIds || agentIds.length === 0) {
             return [];
         }
-
         const agentPromises = agentIds.map(async (id) => {
             const user = await fetchUserById(id);
             if (user) {
@@ -49,10 +43,8 @@ export const fetchAgentsForDirectory = async (zipCode: string): Promise<AgentDto
             }
             return null;
         });
-
         const agents = await Promise.all(agentPromises);
         return agents.filter((a): a is AgentDto => a !== null);
-
     } catch (error) {
         console.error("Failed to fetch agents directory", error);
         return [];

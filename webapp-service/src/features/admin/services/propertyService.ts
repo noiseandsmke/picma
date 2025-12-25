@@ -28,16 +28,13 @@ export interface PropertyInfoDto {
 }
 
 const BASE_PATH = '/picma/properties';
-
 export const fetchAllProperties = async (sort?: string, direction?: string): Promise<PropertyInfoDto[]> => {
     const params: Record<string, string> = {};
     if (sort) params.sort = sort;
     if (direction) params.direction = direction;
-
     const response = await apiClient.get<PropertyInfoDto[]>(`${BASE_PATH}`, {params});
     return response.data;
 };
-
 export const fetchPropertyById = async (id: string): Promise<PropertyInfoDto> => {
     try {
         const response = await apiClient.get<PropertyInfoDto>(`${BASE_PATH}/${id}`);
@@ -49,17 +46,14 @@ export const fetchPropertyById = async (id: string): Promise<PropertyInfoDto> =>
         throw error;
     }
 };
-
 export const createProperty = async (property: Omit<PropertyInfoDto, 'id'>): Promise<PropertyInfoDto> => {
     const response = await apiClient.post<PropertyInfoDto>(`${BASE_PATH}`, property);
     return response.data;
 };
-
 export const updateProperty = async (id: string, property: Omit<PropertyInfoDto, 'id'>): Promise<PropertyInfoDto> => {
     const response = await apiClient.put<PropertyInfoDto>(`${BASE_PATH}/${id}`, property);
     return response.data;
 };
-
 export const deleteProperty = async (id: string): Promise<void> => {
     const response = await apiClient.delete(`${BASE_PATH}/${id}`);
     return response.data;

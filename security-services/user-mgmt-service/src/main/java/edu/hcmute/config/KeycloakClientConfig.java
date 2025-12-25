@@ -13,10 +13,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class KeycloakClientConfig {
     private final KeycloakAuthClient keycloakAuthClient;
-
     @Value("${keycloak.resource}")
     private String clientId;
-
     @Value("${keycloak.credentials.secret}")
     private String clientSecret;
 

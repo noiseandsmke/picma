@@ -12,7 +12,6 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface PropertyQuoteMapper {
-
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "premium", ignore = true)
     @Mapping(target = "status", ignore = true)

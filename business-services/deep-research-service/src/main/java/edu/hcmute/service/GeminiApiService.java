@@ -14,7 +14,6 @@ import reactor.core.publisher.Flux;
 @Slf4j
 public class GeminiApiService {
     private final WebClient webClient;
-
     @Value("${gemini.api.agent}")
     private String defaultAgent;
 

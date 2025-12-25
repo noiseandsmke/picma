@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PropertyAttributes {
     private ConstructionType constructionType;
-
     private int yearBuilt;
     private int noFloors;
     private double squareMeters;

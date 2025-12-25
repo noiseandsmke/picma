@@ -87,7 +87,7 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({content}) => {
                             >
                                 Expand All
                             </button>
-                            <div className="w-[1px] h-3 bg-slate-200" />
+                            <div className="w-[1px] h-3 bg-slate-200"/>
                             <button
                                 onClick={collapseAll}
                                 className="text-xs font-medium text-indigo-500 hover:text-indigo-700 transition-colors"
@@ -116,16 +116,19 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({content}) => {
                                     <div className="p-1.5 rounded-md bg-indigo-50 text-indigo-600">
                                         <Brain className="w-4 h-4"/>
                                     </div>
-                                    <span className="font-semibold text-slate-800 text-sm tracking-tight">{section.title}</span>
+                                    <span
+                                        className="font-semibold text-slate-800 text-sm tracking-tight">{section.title}</span>
                                 </div>
-                                <div className={`transition-transform duration-200 ${expandedSections[section.title] ? 'rotate-0' : 'rotate-180'}`}>
+                                <div
+                                    className={`transition-transform duration-200 ${expandedSections[section.title] ? 'rotate-0' : 'rotate-180'}`}>
                                     <ChevronUp className="w-4 h-4 text-slate-300"/>
                                 </div>
                             </button>
 
                             {expandedSections[section.title] && (
                                 <div className="p-4 pt-0 text-sm text-slate-600 bg-white">
-                                    <div className="prose prose-sm max-w-none text-slate-600 prose-headings:text-indigo-700 prose-strong:text-indigo-900 border-t border-slate-50 pt-4">
+                                    <div
+                                        className="prose prose-sm max-w-none text-slate-600 prose-headings:text-indigo-700 prose-strong:text-indigo-900 border-t border-slate-50 pt-4">
                                         <ReactMarkdown>{section.content}</ReactMarkdown>
                                     </div>
                                 </div>

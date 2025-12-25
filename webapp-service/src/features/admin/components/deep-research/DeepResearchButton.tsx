@@ -40,7 +40,7 @@ export const DeepResearchButton: React.FC<DeepResearchButtonProps> = ({
                     }
                 }
             } catch {
-                // Ignore errors as requested by SonarQube rules if they are not to be handled
+
             }
         };
 

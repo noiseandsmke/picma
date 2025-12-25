@@ -19,20 +19,15 @@ public class PropertyLead {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
     @Column(nullable = false)
     private String userInfo;
-
     @Column(nullable = false)
     private String propertyInfo;
-
     @Column(nullable = false)
     private String zipCode;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LeadStatus status;
-
     @Column(nullable = false)
     private LocalDate createDate;
 

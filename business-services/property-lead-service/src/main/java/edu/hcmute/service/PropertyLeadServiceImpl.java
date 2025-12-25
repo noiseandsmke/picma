@@ -33,7 +33,6 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
     private final PropertyLeadRepo propertyLeadRepo;
     private final PropertyQuoteFeignClient propertyQuoteFeignClient;
     private final PropertyMgmtFeignClient propertyMgmtFeignClient;
-
     private final PropertyLeadMapper propertyLeadMapper;
 
     @Override
@@ -122,7 +121,6 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
 
     @Override
     @Transactional(readOnly = true)
-
     public List<PropertyLeadDto> getAllPropertyLeads(String sortBy, String sortDirection, String status) {
         log.info("### Get all PropertyLeads sorted by {} {} with status filter {} ###", sortBy, sortDirection, status);
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
@@ -217,7 +215,6 @@ public class PropertyLeadServiceImpl implements PropertyLeadService {
 
     @Override
     @Transactional(readOnly = true)
-
     public LeadStatsDto getLeadStats() {
         log.info("### Get lead stats ###");
         List<PropertyLead> allLeads = propertyLeadRepo.findAll();
