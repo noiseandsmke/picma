@@ -10,6 +10,9 @@ import {ThinkingBlock} from './ThinkingBlock';
 import ReactMarkdown from 'react-markdown';
 import {Badge} from '@/components/ui/badge';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 interface DeepResearchDialogProps {
     open: boolean;
@@ -339,7 +342,8 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
                                             <div
                                                 className="prose prose-invert max-w-none bg-muted/30 p-6 rounded-lg border border-border-main">
                                                 <ReactMarkdown
-                                                    remarkPlugins={[remarkGfm]}
+                                                    remarkPlugins={[remarkGfm, remarkMath]}
+                                                    rehypePlugins={[rehypeKatex]}
                                                     components={MarkdownStyles}
                                                 >{block.content}</ReactMarkdown>
                                             </div>
@@ -361,7 +365,8 @@ export const DeepResearchDialog: React.FC<DeepResearchDialogProps> = ({
                         <div className="h-full overflow-y-auto p-6 scroll-smooth">
                             <div className="prose prose-invert max-w-none pb-12">
                                 <ReactMarkdown
-                                    remarkPlugins={[remarkGfm]}
+                                    remarkPlugins={[remarkGfm, remarkMath]}
+                                    rehypePlugins={[rehypeKatex]}
                                     components={MarkdownStyles}
                                 >{finalReport}</ReactMarkdown>
                             </div>
