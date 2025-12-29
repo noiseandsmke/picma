@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {Brain, ChevronUp} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
+import remarkBreaks from 'remark-breaks';
 import rehypeKatex from 'rehype-katex';
 
 interface ThinkingBlockProps {
@@ -132,7 +133,7 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({content}) => {
                                     <div
                                         className="prose prose-sm max-w-none text-slate-600 prose-headings:text-indigo-700 prose-strong:text-indigo-900 border-t border-slate-50 pt-4">
                                         <ReactMarkdown
-                                            remarkPlugins={[remarkMath]}
+                                            remarkPlugins={[remarkMath, remarkBreaks]}
                                             rehypePlugins={[rehypeKatex]}
                                         >{section.content}</ReactMarkdown>
                                     </div>

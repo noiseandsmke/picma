@@ -138,20 +138,18 @@ export const OwnerQuoteDetailDialog: React.FC<OwnerQuoteDetailDialogProps> = ({
                                                     <span>{c.code.replace('_', ' ')}</span>
                                                     <span>{(rate * 100).toFixed(1)}% Base Rate</span>
                                                 </div>
-                                                <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                                                    <span>Base Premium ({formatCurrency(c.limit)} × {rate})</span>
-                                                    <span className="font-mono">{formatCurrency(basePremium)}</span>
+                                                <div className="grid grid-cols-[1fr_auto] gap-2 items-center text-sm">
+                                                    <span className="text-text-muted">Base Premium ({formatCurrency(c.limit)} × {rate})</span>
+                                                    <span className="font-mono text-text-main">{formatCurrency(basePremium)}</span>
                                                 </div>
-                                                <div
-                                                    className="grid grid-cols-[1fr_auto] gap-2 items-center text-emerald-400">
-                                                    <span>Discount (Deductible {(c.deductible * 100).toFixed(1)}%)</span>
-                                                    <span className="font-mono">× {discountFactor.toFixed(4)}</span>
-                                                </div>
-                                                <div
-                                                    className="grid grid-cols-[1fr_auto] gap-2 items-center font-bold text-text-main mt-1 pt-1 border-t border-border-main/30">
-                                                    <span>Coverage Premium</span>
-                                                    <span className="font-mono">{formatCurrency(finalPremium)}</span>
-                                                </div>
+                                                {c.deductible > 0 && (
+                                                    <div
+                                                        className="grid grid-cols-[1fr_auto] gap-2 items-center text-sm text-emerald-400">
+                                                        <span>Deductible ({(c.deductible * 100).toFixed(1)}%)</span>
+                                                        <span
+                                                            className="font-mono">-{formatCurrency(Math.floor(basePremium) - Math.floor(finalPremium))}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}

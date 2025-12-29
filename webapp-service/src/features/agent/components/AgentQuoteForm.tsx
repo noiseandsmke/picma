@@ -300,7 +300,7 @@ export const AgentQuoteForm: React.FC<AgentQuoteFormProps> = ({
                                 {c.deductible > 0 && (
                                     <div
                                         className="grid grid-cols-[1fr_auto] gap-2 items-center text-sm text-emerald-400">
-                                        <span>Deductible Discount ({(c.deductible * 100).toFixed(1)}%)</span>
+                                        <span>Deductible ({(c.deductible * 100).toFixed(1)}%)</span>
                                         <span
                                             className="font-mono">-{formatCurrency(Math.floor(basePremium) - finalPremium)}</span>
                                     </div>
