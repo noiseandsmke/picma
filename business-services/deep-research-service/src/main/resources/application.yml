@@ -34,4 +34,3 @@ gemini:
     key: ${GEMINI_API_KEY:}
     base-url: https://generativelanguage.googleapis.com/v1beta
     agent: deep-research-pro-preview-12-2025
-    timeout: 3600000
